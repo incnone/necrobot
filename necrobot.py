@@ -198,6 +198,7 @@ class Necrobot(object):
             seed = seedgen.get_new_seed()
             asyncio.ensure_future(self._client.send_message(message.channel, 'Seed generated for {0}: {1}'.format(message.author.mention, seed)))       
 
-        
+        elif command == 'info':
+            asyncio.ensure_future(self._client.send_message(message.channel, Necrobot.infostr()))
         
   
