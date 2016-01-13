@@ -11,13 +11,20 @@ RacerStatusInv = {'1':'Not ready.', '2':'Ready!', '3':'Racing!', '4':'Forfeit', 
 
 class Racer(object):
     
-    def __init__(self, racer_name, racer_id):
-        self.name = racer_name
-        self.id = racer_id
+    def __init__(self, member):
+        self.member = member    #the Discord member who is this racer
         self._state = 1         #see RacerState notes above
         self.time = int(-1)     #hundredths of a second
         self.igt = int(-1)      #hundredths of a second
         self.comment = ''       #a comment added with .comment
+
+    @property
+    def name(self):
+        return self.member.name
+
+    @property
+    def id(self):
+        return self.member.id
 
     @property
     def status_str(self):

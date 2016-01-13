@@ -33,6 +33,25 @@ class DailyManager(object):
             if channel.name == DAILY_LEADERBOARDS_CHANNEL_NAME:
                 self._leaderboard_channel = channel
 
+    # Returns a string with the current daily's date and time until the next daily.
+    def daily_time_info_str(self):
+        now = datetime.datetime.utcnow()
+        date_str = now.strftime("%B %d")
+        
+        hours = 23 - now.hour
+        minutes = 60 - now.minute
+        if minutes == 60:
+            minutes = 0
+            hours += 1
+
+        if hours == 0 and minutes == 0:
+            return 'The {0} daily is currently active. The next daily will become active in under a minute.'.format(date_str)
+        else:
+            min_str = 'minute' if minutes == 1 else 'minutes'
+            hr_str = 'hour' if hours == 1 else 'hours'
+
+            return 'The {0} daily is currently active. The next daily will become active in {1} {2}, {3} {4}.'.format(date_str, hours, hr_str, minutes, min_str)
+
     # Return today's daily number
     def today_number(self):
         utc_today = datetime.datetime.utcnow().date()
@@ -49,12 +68,19 @@ class DailyManager(object):
         return today == daily_number or (today == int(daily_number)+1 and self.within_grace_period())
 
     # Return the text for the daily with the given daily number #DB_acc
-    def leaderboard_text(self, daily_number):
+    def leaderboard_text(self, daily_number, display_seed=False):
         date_str = daily_to_datestr(daily_number)
         text = "```Cadence Speedrun Daily -- {0}\n".format(date_str)
 
         db_cursor = self._db_conn.cursor()
         params = (daily_number,)
+
+        if display_seed:
+            db_cursor.execute("SELECT seed FROM daily_seeds WHERE date=?", params)
+            for row in db_cursor:
+                text += "Seed: {}".format(row[0])
+                break
+        
         db_cursor.execute("SELECT * FROM daily_races WHERE date=? ORDER BY level DESC, time ASC", params)
 
         no_entries = True
@@ -167,7 +193,7 @@ class DailyManager(object):
         for row in db_cursor:
             return row[0]
 
-        #if we made it here, there was no entry in the table
+        #if we made it here, there was no entry in the table, so make one, and make the leaderboard message
         today_seed = seedgen.get_new_seed()
         date_str = daily_to_datestr(daily_number)
         if self._leaderboard_channel:
@@ -177,11 +203,17 @@ class DailyManager(object):
             db_cursor.execute("INSERT INTO daily_seeds VALUES (?,?,?)", values)
             self._db_conn.commit()
 
+        #update the most recent leaderboard with the seed
+        db_cursor.execute("SELECT date FROM daily_seeds ORDER BY date DESC")
+        for row in db_cursor:
+            asyncio.ensure_future(self.update_leaderboard(row[0], True))
+            break #only do the most recent one
+
         return today_seed
         
     # Update an existing leaderboard message for the given daily number #DB_acc
     @asyncio.coroutine
-    def update_leaderboard(self, daily_number):
+    def update_leaderboard(self, daily_number, display_seed=False):
         db_cursor = self._db_conn.cursor()
         params = (daily_number,)
         db_cursor.execute("SELECT * FROM daily_seeds WHERE date=?", params)
@@ -192,4 +224,4 @@ class DailyManager(object):
                 msg_list = yield from self._client.logs_from(self._leaderboard_channel, 10)
                 for msg in msg_list:
                     if int(msg.id) == int(msg_id):
-                        asyncio.ensure_future(self._client.edit_message(msg, self.leaderboard_text(daily_number)))
+                        asyncio.ensure_future(self._client.edit_message(msg, self.leaderboard_text(daily_number, display_seed)))

@@ -16,10 +16,12 @@ BOT_COMMAND_PREFIX = '.'                                    #the prefix used for
 HELP_INFO = {
     "help":"`.help`: Help.",
     "dailyseed":"`.dailyseed`: Register for today's speedrun daily. You will receive today's seed via PM.",
+    "dailystatus":"`.dailystatus`: Find out whether you've submitted to today's daily.",
     "dailysubmit":"`.dailysubmit`: Submit a result for your most recent daily. Daily submissions close an hour after the next " \
                     "daily opens. If you complete the game during the daily, submit your time in the form [m]:ss.hh, e.g.: " \
                     "`.dailysubmit 12:34.56`. If you die during the daily, you may submit your run as `.dailysubmit death` " \
                     "or provide the level of death, e.g. `.dailysubmit death 4-4` for a death on dead ringer.",
+    "dailywhen":"`.dailywhen`: Get the date for the current daily, and the time until the next daily opens.",
     "make":"`.make`: Create a new race room. By default this creates a seeded Cadence race (the bot will generate a seed), " \
                     "but you can add the following parameters:\n" \
                     "```\n" \
@@ -38,7 +40,7 @@ class Necrobot(object):
 
     ## Info string
     def infostr():
-        return 'Necrobot ver. 0.2. See #necrobot_reference for a list of commands.'
+        return 'Necrobot ver. 0.2.2. See #command_list for a list of commands.'
 
     ## Barebones constructor
     def __init__(self, client,):
@@ -132,6 +134,26 @@ class Necrobot(object):
                 dm.register(today, user_id)
                 asyncio.ensure_future(self._client.send_message(message.author, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), seed)))
 
+        #.dailystatus : Get your current status for the current daily (unregistered, registered, can still submit for yesterday, submitted)
+        elif command == 'dailystatus':
+            status = ''        
+            dm = self._daily_manager
+            user_id = message.author.id
+            daily_number = dm.registered_daily(user_id)
+            days_since_registering = dm.today_number() - daily_number
+            submitted = dm.has_submitted(daily_number, user_id)
+
+            if days_since_registering == 1 and not submitted and dm.within_grace_period():
+                status = "You have not gotten today's seed, but you are still able to submit for yesterday's daily."
+            elif days_since_registering != 0:
+                status = "You have not yet registered: Use `.dailyseed` to get today's seed."
+            elif submitted:
+                status = "You have submitted to the daily."
+            else:
+                status = "You have not yet submitted to the daily: Use `.dailysubmit` to submit a result."
+
+            asyncio.ensure_future(self._client.send_message(message.channel, '{0}: {1}'.format(message.author.mention, status)))        
+    
         #.dailysubmit : Submit a result for your most recently registered daily (if possible)
         elif command == 'dailysubmit':
             dm = self._daily_manager
@@ -153,6 +175,14 @@ class Necrobot(object):
                     asyncio.ensure_future(self._client.send_message(message.channel,
                         "Submitted for {0}: {1} {2}.".format(daily.daily_to_shortstr(daily_number), message.author.mention, submission_string)))
                     asyncio.ensure_future(dm.update_leaderboard(daily_number))
+                else: # parse failed
+                    asyncio.ensure_future(self._client.send_message(message.channel,
+                        "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(message.author.mention)))
+
+        #.dailywhen : Gives time info re the daily
+        elif command == 'dailywhen':
+            info_str = self._daily_manager.daily_time_info_str()
+            asyncio.ensure_future(self._client.send_message(message.channel, info_str))
 
         #.make : create a new race room
         elif command == 'make':
@@ -161,7 +191,7 @@ class Necrobot(object):
                 race_channel = yield from self._race_manager.make_race(race_info)
                 if race_channel:
                     asyncio.ensure_future(self._client.send_message(message.channel,
-                        'Race created for {0} in {1}.'.format(message.author.mention, race_channel.mention)))
+                        'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_info.format_str())))
             
         #.randomseed : Generate a new random seed
         elif command == 'randomseed':

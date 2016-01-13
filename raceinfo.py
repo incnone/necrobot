@@ -155,22 +155,43 @@ def parse_args(args):
         else:
             return None
 
-    if race_info.seeded and not set_seed:
-        race_info.seed = seedgen.get_new_seed()
+    if race_info.seeded:
+        race_info.seed_fixed = set_seed
+        if not set_seed:
+            race_info.seed = seedgen.get_new_seed()
 
-    print('returning race info')
     return race_info
 
 class RaceInfo(object):
     seed = int(0)                   #the seed for the race
+    seed_fixed = False              #True means the specific seed is part of the race rules (seed doesn't change on rematch)
     seeded = True                   #whether the race is run in seeded mode
     character = 'Cadence'           #the character for the race
     descriptor = 'All-zones'        #a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
     sudden_death = False            #whether the race is sudden-death (cannot restart race after death)
     flagplant = False               #whether flagplanting is considered as a victory condition
+
+    def copy(self):
+        the_copy = RaceInfo()
+        the_copy.seed = self.seed if self.seed_fixed else seedgen.get_new_seed()
+        the_copy.seed_fixed = self.seed_fixed
+        the_copy.seeded = self.seeded
+        the_copy.character = self.character
+        the_copy.descriptor = self.descriptor
+        the_copy.sudden_death = self.sudden_death
+        the_copy.flagplant = self.flagplant
+        return the_copy
     
     #returns a (possibly multi-line) string that can be used to header results for the race
     def info_str(self):             
+        seeded_rider = '\n'
+        if self.seeded:
+            seeded_rider += 'Seed: {0}\n'.format(self.seed)
+        
+        return self.format_str() + seeded_rider
+
+    #returns a one-line string for identifying race format
+    def format_str(self):
         char_str = (self.character.title() + ' ') if (self.character.title() in NDChars) else ''
         desc_str = (self.descriptor + ' ') if not self.descriptor == 'All-zones' else ''
         seeded_str = 'Seeded' if self.seeded else 'Unseeded'
@@ -180,15 +201,11 @@ class RaceInfo(object):
         if self.flagplant:
             addon_str += "Flagplant "
         if addon_str:
-            addon_str = ' -- {0}\n'.format(addon_str.rstrip())
+            addon_str = ' -- {0}'.format(addon_str.rstrip())
 
-        seeded_rider = '\n'
-        if self.seeded:
-            seeded_rider += 'Seed: {0}\n'.format(self.seed)
-        
-        return char_str + desc_str + seeded_str + addon_str + seeded_rider
-
-    #returns a short string suitable for identifying this race
+        return char_str + desc_str + seeded_str + addon_str
+    
+    #returns an abbreviated string suitable for identifying this race
     def raceroom_name(self):
         main_identifier = ''
         if self.character.title() in NDChars:

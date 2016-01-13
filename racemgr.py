@@ -39,8 +39,12 @@ class RaceManager(object):
     ## Make a race with the given RaceInfo
     @asyncio.coroutine
     def make_race(self, race_info):
+        #Get rid of closed races (Now seems like a good time to garbage collect)
+        self._races = [r for r in self._races if not r.is_closed]
+        
+        #Make the new race
         race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_info), type='text')
-        new_race = race.Race(self._client, race_channel, self._results_channel, race_info)
+        new_race = race.Race(self._client, self, race_channel, self._results_channel, race_info)
         self._races.append(new_race)
         asyncio.ensure_future(new_race.initialize())
         return race_channel
@@ -48,7 +52,7 @@ class RaceManager(object):
     ## Parse a command entered somewhere on the server
     @asyncio.coroutine
     def parse_message(self, message):
-        for race in self._races:
+        for race in self._races:                
             if race.channel.id == message.channel.id:
                 asyncio.ensure_future(race.parse_message(message))
 

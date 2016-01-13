@@ -1,0 +1,7 @@
+data/init_info
+*.db
+data/login_info
+*.pyc
+*.log
+discord.log
+*.log
