@@ -4,6 +4,12 @@ Current version: 0.2.2
 
 ## Small improvements
 
+* Cause an error on `.make` if the user sets a -seed and also sets the unseeded -u flag
+
+* Don't create more than one rematch of a race from a public room
+
+* Update the leaderboard when a user is kicked
+
 * Add the raceroom command list to the "topic" (headbar) of each newly generated
 race room.
 
@@ -18,33 +24,9 @@ Complex form:
 Any words between `.make` and the first `-` sign in this form are attempted to be
 interpreted as a specification of a character or seeded/unseeded.
 
-* The .help command should make a Discord-mention of the command list channel.
+* The `.help` command should make a Discord-mention of the command list channel.
 
-* (?) Add options for setting personal defaults on .make (or .makeprivate)
-
-## Major code improvements
-
-### RaceRoom class
-
-Create a class RaceRoom handling the channel-related functionality of Race,
-and keep the race-related functionality in Race. This should assist in the 
-coding of "private" race rooms, for which the race-related code should be identical
-but the channel-related code may be different (and, need to keep list of admins
-for the room, etc). This will also help encapsulate things like "this is a best-of-x"
-away from the code that it takes to run a single race.
-
-### Encapsulate database access, and make "thread-safe"
-
-Currently the bot accesses two databases, daily.db and races.db, which keep track of
-the times for the speedrun daily and results of public races. Presumably more will be
-added. It does this through sqlite3.
-
-I would like to encapsulate all these accesses in a single class responsible for handling
-the databases. One primary objective of doing this is to make these database accesses
-"thread-safe" -- by this, I mean that because this program uses asyncio, it's possible
-for two subroutines to be accessing the database at the same time, which may cause
-problems with sqlite. We should add some sort of simple mutex to these accesses to
-prevent this.
+* (?) Add options for setting personal defaults on `.make` (or `.makeprivate`)
 
 ## Major features
 
@@ -114,3 +96,26 @@ voice channel to the race channel. In a public race, users entering the race wil
 to this voice channel; in a private race, all admins and racers will be moved to the channel. The channel
 should be destroyed when the race room is destroyed.
 
+## Major code improvements
+
+### RaceRoom class
+
+Create a class RaceRoom handling the channel-related functionality of Race,
+and keep the race-related functionality in Race. This should assist in the 
+coding of "private" race rooms, for which the race-related code should be identical
+but the channel-related code may be different (and, need to keep list of admins
+for the room, etc). This will also help encapsulate things like "this is a best-of-x"
+away from the code that it takes to run a single race.
+
+### Encapsulate database access, and make "thread-safe"
+
+Currently the bot accesses two databases, daily.db and races.db, which keep track of
+the times for the speedrun daily and results of public races. Presumably more will be
+added. It does this through sqlite3.
+
+I would like to encapsulate all these accesses in a single class responsible for handling
+the databases. One primary objective of doing this is to make these database accesses
+"thread-safe" -- by this, I mean that because this program uses asyncio, it's possible
+for two subroutines to be accessing the database at the same time, which may cause
+problems with sqlite. We should add some sort of simple mutex to these accesses to
+prevent this.
