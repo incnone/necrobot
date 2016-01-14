@@ -12,18 +12,9 @@ import sqlite3
 import textwrap
 import time
 
+import config
 from raceinfo import RaceInfo
 from racer import Racer
-
-BOT_COMMAND_PREFIX = '.'                #the prefix used for all bot commands
-COUNTDOWN_LENGTH = int(10)              #number of seconds between the final .ready and race start
-INCREMENTAL_COUNTDOWN_START = int(5)    #number of seconds at which to start counting down each second in chat
-FINALIZE_TIME_SEC = 30                  #seconds after race end to finalize+record race
-##FINALIZE_WARNING_TIME_SEC = 0         #seconds before finalizing to warn via text (if zero, no warning)
-CLEANUP_TIME_MIN = 3                    #minutes of no chatting until the room may be cleaned (only applies if race has been finalized)
-NO_ENTRANTS_CLEANUP_SEC = 120           #room is cleaned if there are no race entrants for this duration of time
-NO_ENTRANTS_CLEANUP_WARNING_SEC = 90    #give a warning re: cleaning race room if no entrants for this duration of time
-REQUIRE_AT_LEAST_TWO_FOR_RACE = False   #if True, then races with only one entrant cannot be started
 
 SUFFIXES = {1: 'st', 2: 'nd', 3: 'rd'}
 def ordinal(num):
@@ -199,13 +190,13 @@ class Race(object):
 ##            return
         
         args = message.content.split()
-        command = args.pop(0).replace(BOT_COMMAND_PREFIX, '', 1)
+        command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
 
         #.help command
         if command == 'help':
             if len(args) == 1:
                 if args[0] in cmd_help_info:
-                    yield from self._write(cmd_help_info[args[0].lstrip('.')])
+                    yield from self._write(cmd_help_info[args[0].lstrip(config.BOT_COMMAND_PREFIX)])
             else:   
                 yield from self._write(textwrap.dedent("""\
                     Command list:
@@ -279,12 +270,12 @@ class Race(object):
                     success = yield from self.ready_racer(racer)    #success is True if the racer was unready and now is ready
                     if success:
                         num_not_ready = self.num_not_ready()
-                        if len(self._racers) == 1 and REQUIRE_AT_LEAST_TWO_FOR_RACE:
+                        if len(self._racers) == 1 and config.REQUIRE_AT_LEAST_TWO_FOR_RACE:
                             yield from self._write('Waiting on at least one other person to join the race.')
                         else:
                             yield from self._write('{0} is ready! {1} remaining.'.format(message.author.mention, num_not_ready))
     
-                        if num_not_ready == 0 and (not REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self._racers) > 1):
+                        if num_not_ready == 0 and (not config.REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self._racers) > 1):
                             yield from self.begin_race_countdown()
                     elif racer.is_ready:
                         yield from self._write('{0} is already ready!'.format(message.author.mention))
@@ -401,12 +392,12 @@ class Race(object):
     # Warning: Do not call this -- use begin_countdown instead.
     @asyncio.coroutine
     def race_countdown(self):
-        countdown_timer = COUNTDOWN_LENGTH
+        countdown_timer = config.COUNTDOWN_LENGTH
         yield from asyncio.sleep(1) #Pause before countdown
         
         yield from self._write('The race will begin in {0} seconds.'.format(countdown_timer))
         while countdown_timer > 0:
-            if countdown_timer <= INCREMENTAL_COUNTDOWN_START:
+            if countdown_timer <= config.INCREMENTAL_COUNTDOWN_START:
                 yield from self._write('{}'.format(countdown_timer))
             yield from asyncio.sleep(1) #sleep for a second
             countdown_timer -= 1
@@ -426,17 +417,11 @@ class Race(object):
 
         yield from asyncio.sleep(1) # Waiting for a short time feels good UI-wise
         if self.num_finished():
-            yield from self._write('The race is over. Results will be recorded in {} seconds. Until then, you may comment with `.comment [text]` or add an in-game-time with `.igt [time]`.'.format(FINALIZE_TIME_SEC))
+            yield from self._write('The race is over. Results will be recorded in {} seconds. Until then, you may comment with `.comment [text]` or add an in-game-time with `.igt [time]`.'.format(config.FINALIZE_TIME_SEC))
         else:
-            yield from self._write('All racers have forfeit. This race will be cancelled in {} seconds.'.format(FINALIZE_TIME_SEC))
+            yield from self._write('All racers have forfeit. This race will be cancelled in {} seconds.'.format(config.FINALIZE_TIME_SEC))
 
-        yield from asyncio.sleep(FINALIZE_TIME_SEC)
-            
-##        yield from asyncio.sleep( FINALIZE_TIME_SEC - FINALIZE_WARNING_TIME_SEC)
-##        if FINALIZE_WARNING_TIME_SEC:
-##            yield from self._write('Results will be recorded in {} seconds.'.format(FINALIZE_WARNING_TIME_SEC))
-##            yield from asyncio.sleep(FINALIZE_WARNING_TIME_SEC)
-
+        yield from asyncio.sleep(config.FINALIZE_TIME_SEC)
         yield from self.finalize_race()
             
     # Finalizes the race
@@ -633,8 +618,8 @@ class Race(object):
         while not self.is_closed and self.is_before_race:
             yield from asyncio.sleep(30) #Wait between check times
             if (not self._racers) and self._no_entrants_time: #if there are no entrants (and we've stored the last time this was not the case)
-                if time.clock() - self._no_entrants_time > NO_ENTRANTS_CLEANUP_WARNING_SEC:
-                    time_remaining = NO_ENTRANTS_CLEANUP_SEC - NO_ENTRANTS_CLEANUP_WARNING_SEC
+                if time.clock() - self._no_entrants_time > config.NO_ENTRANTS_CLEANUP_WARNING_SEC:
+                    time_remaining = config.NO_ENTRANTS_CLEANUP_SEC - config.NO_ENTRANTS_CLEANUP_WARNING_SEC
                     yield from self._write('Warning: Race has had zero entrants for some time and will be cleaned in {} seconds.'.format(time_remaining))
                     yield from asyncio.sleep(time_remaining)
                     if not self._racers:
@@ -648,7 +633,7 @@ class Race(object):
             yield from asyncio.sleep(30) #Wait between check times
             msg_list = yield from self._client.logs_from(self.channel, 1)
             for msg in msg_list:
-                if (datetime.datetime.utcnow() - msg.timestamp).total_seconds() > 60*CLEANUP_TIME_MIN:
+                if (datetime.datetime.utcnow() - msg.timestamp).total_seconds() > config.CLEANUP_TIME_SEC:
                     yield from self.close()
                     return
 

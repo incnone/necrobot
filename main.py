@@ -5,15 +5,18 @@ import asyncio
 import datetime
 import discord
 import logging
+import os
 import sqlite3
 import textwrap
 import time
 
+import config
 import seedgen
 
 from necrobot import Necrobot
 from raceinfo import RaceInfo
 from race import Race
+
 
 ##-Logging-------------------------------
 logger = logging.getLogger('discord')
@@ -23,7 +26,6 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 ##--------------------------------------
 
-RACE_RESULTS_CHANNEL_NAME = 'race_results'                  #the name of the channel for posting daily results
 
 class LoginData(object):
     email = ''
@@ -73,45 +75,51 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 
 ## Set up the databases for the first time.    
 def set_up_databases():
-    races_db_conn = sqlite3.connect('data/races.db')
-    races_db_cur = races_db_conn.cursor()
-    races_db_cur.execute("""CREATE TABLE race_data
-                        (raceid int, timestamp bigint, character varchar(255), descriptor varchar(255), seeded boolean, seed int, sudden_death boolean, flagplant boolean)""")
-    races_db_cur.execute("""CREATE TABLE racer_data
-                        (raceid int, playerid bigint, name varchar(255), finished boolean, time int, rank tinyint, igt int, comment varchar(255))""")
-    races_db_conn.commit()
-    races_db_conn.close()
-        
-    daily_db_conn = sqlite3.connect('data/daily.db')
-    daily_db_cur = daily_db_conn.cursor()
-    daily_db_cur.execute("""CREATE TABLE daily_races
-                        (date smallint, name varchar(255), playerid bigint, level tinyint, time int)""")
-    daily_db_cur.execute("""CREATE TABLE daily_seeds (date smallint, seed int, msgid bigint)""")
-    daily_db_cur.execute("""CREATE TABLE last_daily (playerid bigint, date smallint)""")
-    daily_db_conn.commit()
-    daily_db_conn.close()  
+
+##    if config.RACE_DB_DO_RESET:
+##        if os.path.isfile(config.RACE_DB_FILENAME):
+##            backup_daily_db_filename = config.RACE_DB_FILENAME[:-3] + '_backup.db'
+##            if os.path.isfile(backup_daily_db_filename):
+##                os.remove(backup_daily_db_filename)
+##            os.rename(config.RACE_DB_FILENAME, backup_daily_db_filename)
+
+    if not os.path.isfile(config.RACE_DB_FILENAME):
+        races_db_conn = sqlite3.connect(config.RACE_DB_FILENAME)
+        races_db_cur = races_db_conn.cursor()
+        races_db_cur.execute("""CREATE TABLE race_data
+                            (raceid int, timestamp bigint, character varchar(255), descriptor varchar(255), seeded boolean, seed int, sudden_death boolean, flagplant boolean)""")
+        races_db_cur.execute("""CREATE TABLE racer_data
+                            (raceid int, playerid bigint, name varchar(255), finished boolean, time int, rank tinyint, igt int, comment varchar(255))""")
+        races_db_conn.commit()
+        races_db_conn.close()
+
+##    if config.DAILY_DB_DO_RESET:
+##        if os.path.isfile(config.DAILY_DB_FILENAME):
+##            backup_daily_db_filename = config.DAILY_DB_FILENAME[:-3] + '_backup.db'
+##            if os.path.isfile(backup_daily_db_filename):
+##                os.remove(backup_daily_db_filename)
+##            os.rename(config.DAILY_DB_FILENAME, backup_daily_db_filename)
+
+    if not os.path.isfile(config.DAILY_DB_FILENAME):
+        daily_db_conn = sqlite3.connect(config.DAILY_DB_FILENAME)
+        daily_db_cur = daily_db_conn.cursor()
+        daily_db_cur.execute("""CREATE TABLE daily_races
+                            (date smallint, name varchar(255), playerid bigint, level tinyint, time int)""")
+        daily_db_cur.execute("""CREATE TABLE daily_seeds (date smallint, seed int, msgid bigint)""")
+        daily_db_cur.execute("""CREATE TABLE last_daily (playerid bigint, date smallint)""")
+        daily_db_conn.commit()
+        daily_db_conn.close()  
 
 #----Main------------------------------------------------------
-   
+config.init()
+
+set_up_databases()
+
 login_info = open('data/login_info', 'r')
 login_data.email = login_info.readline().rstrip('\n')
 login_data.password = login_info.readline().rstrip('\n')
 login_data.admin_id = login_info.readline().rstrip('\n')
 login_data.server_id = login_info.readline().rstrip('\n')
-
-found_init = False
-try:
-    init_info = open('data/init_info', 'r') #there must be a better way to check if the databases exist
-    if init_info and not init_info.read() == '':
-        found_init = True
-except IOError:
-    pass
-
-if not found_init:
-    init_info = open('data/init_info', 'w')
-    init_info.write('database setup complete.\n')
-    init_info.close()
-    set_up_databases()
 
 seedgen.init_seed()
      

@@ -2,12 +2,11 @@ import asyncio
 import discord
 import sqlite3
 
+import config
 import race
 import raceinfo
 import racetime
 import seedgen
-
-RACE_RESULTS_CHANNEL_NAME = 'race_results'
 
 class RaceManager(object):
 
@@ -18,7 +17,7 @@ class RaceManager(object):
         self._results_channel = None
         self._races = []
         for channel in self._client.get_all_channels():
-            if channel.name == RACE_RESULTS_CHANNEL_NAME:
+            if channel.name == config.RACE_RESULTS_CHANNEL_NAME:
                 self._results_channel = channel
         
     ## Return a new (unique) race room name from the race info

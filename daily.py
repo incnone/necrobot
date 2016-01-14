@@ -5,13 +5,12 @@ import datetime
 import discord
 import sqlite3
 
+import config
 import level
 import racetime
 import seedgen
 
 DATE_ZERO = datetime.date(2016, 1, 1)
-DAILY_GRACE_PERIOD = 60                                     #minutes to allow for submissions on old dailies after new ones are rolled out
-DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'      #the name of the channel for posting daily results
 
 def daily_to_date(daily_number):
     return (DATE_ZERO + datetime.timedelta(days=daily_number))
@@ -30,7 +29,7 @@ class DailyManager(object):
 
         self._leaderboard_channel = None
         for channel in self._client.get_all_channels():
-            if channel.name == DAILY_LEADERBOARDS_CHANNEL_NAME:
+            if channel.name == config.DAILY_LEADERBOARDS_CHANNEL_NAME:
                 self._leaderboard_channel = channel
 
     # Returns a string with the current daily's date and time until the next daily.
@@ -60,7 +59,7 @@ class DailyManager(object):
     # Returns whether we're in the grace period between daily rollouts
     def within_grace_period(self):
         utc_now = datetime.datetime.utcnow()
-        return (utc_now.time().hour * 60) + utc_now.time().minute <= DAILY_GRACE_PERIOD
+        return (utc_now.time().hour * 60) + utc_now.time().minute <= config.DAILY_GRACE_PERIOD
 
     # Returns true if the given daily is still open for submissions.
     def is_open(self, daily_number):

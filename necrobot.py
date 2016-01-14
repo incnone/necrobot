@@ -9,10 +9,8 @@ import daily
 import racemgr
 import raceinfo
 
-MAIN_CHANNEL_NAME = 'necrobot_main'                         
-DAILY_DB_FILENAME = 'data/daily.db'
-RACE_DB_FILENAME = 'data/races.db'
-BOT_COMMAND_PREFIX = '.'                                    #the prefix used for all bot commands
+import config
+
 HELP_INFO = {
     "help":"`.help`: Help.",
     "dailyseed":"`.dailyseed`: Register for today's speedrun daily. You will receive today's seed via PM.",
@@ -40,7 +38,7 @@ class Necrobot(object):
 
     ## Info string
     def infostr():
-        return 'Necrobot ver. 0.2.2. See #command_list for a list of commands.'
+        return 'Necrobot v-{}. See #command_list for a list of commands.'.format(config.BOT_VERSION)
 
     ## Barebones constructor
     def __init__(self, client,):
@@ -56,20 +54,30 @@ class Necrobot(object):
         self._admin_id = admin_id if admin_id != 0 else None
         
         #set up server
+        id_is_int = False
+        try:
+            server_id_int = int(server_id)
+            id_is_int = True
+        except ValueError:
+            id_is_int = False
+            
         if self._client.servers:
             for s in self._client.servers:
-                if s.id == server_id:
+                if id_is_int and s.id == server_id:
+                    self._server = s
+                elif s.name == server_id:
+                    print("Server id: {}".format(s.id))
                     self._server = s
         else:
             print('Error: Could not find the server.')
             exit(1)
 
         #set up daily manager
-        daily_db_connection = sqlite3.connect(DAILY_DB_FILENAME)
+        daily_db_connection = sqlite3.connect(config.DAILY_DB_FILENAME)
         self._daily_manager = daily.DailyManager(self._client, daily_db_connection)
 
         #set up race manager
-        race_db_connection = sqlite3.connect(RACE_DB_FILENAME)
+        race_db_connection = sqlite3.connect(config.RACE_DB_FILENAME)
         self._race_manager = racemgr.RaceManager(self._client, self._server, race_db_connection)
 
     ## Log out of discord
@@ -88,11 +96,11 @@ class Necrobot(object):
             return
 
         # check for command prefix
-        if not message.content.startswith(BOT_COMMAND_PREFIX):
+        if not message.content.startswith(config.BOT_COMMAND_PREFIX):
             return
 
         # parse the command, depending on the channel it was typed in (this just restricts which commands are available from where)
-        if message.channel.name == MAIN_CHANNEL_NAME:
+        if message.channel.name == config.MAIN_CHANNEL_NAME:
             yield from self.main_channel_command(message)
         else:
             yield from self._race_manager.parse_message(message)
@@ -100,7 +108,7 @@ class Necrobot(object):
     @asyncio.coroutine
     def main_channel_command(self, message):
         args = message.content.split()
-        command = args.pop(0).replace(BOT_COMMAND_PREFIX, '', 1)
+        command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
 
         #.die (super-admin only) : Clean up and log out
         if command == 'die' and message.author.id == self._admin_id:
@@ -113,7 +121,7 @@ class Necrobot(object):
         #.help : Quick help reference
         elif command == 'help':
             if len(args) == 1:
-                cmd = args[0].lstrip(BOT_COMMAND_PREFIX)
+                cmd = args[0].lstrip(config.BOT_COMMAND_PREFIX)
                 if cmd in HELP_INFO:
                     asyncio.ensure_future(self._client.send_message(message.channel, HELP_INFO[cmd]))
             else:   
