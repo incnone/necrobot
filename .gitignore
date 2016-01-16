@@ -5,3 +5,5 @@ data/login_info
 *.log
 discord.log
 *.log
+data/login_info_main
+data/login_info_test

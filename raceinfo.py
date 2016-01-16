@@ -159,13 +159,17 @@ def parse_args(args):
         race_info.seed_fixed = set_seed
         if not set_seed:
             race_info.seed = seedgen.get_new_seed()
+    elif set_seed and set_seeded: #user set a seed and asked for unseeded, so throw up our hands
+        return None
+    elif set_seed:
+        race_info.seeded = True
 
     return race_info
 
 class RaceInfo(object):
     seed = int(0)                   #the seed for the race
     seed_fixed = False              #True means the specific seed is part of the race rules (seed doesn't change on rematch)
-    seeded = True                   #whether the race is run in seeded mode
+    seeded = False                  #whether the race is run in seeded mode
     character = 'Cadence'           #the character for the race
     descriptor = 'All-zones'        #a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
     sudden_death = False            #whether the race is sudden-death (cannot restart race after death)

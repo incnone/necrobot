@@ -24,6 +24,16 @@ def ordinal(num):
         suffix = SUFFIXES.get(num % 10, 'th')
     return str(num) + suffix
 
+raceroom_topic = textwrap.dedent("""\
+    [Click for command list]
+    `.enter` : Join the race (undo with `.unenter`)
+    `.ready` : Tell bot you're ready (undo with `.unready`)
+    `.done`  : Finish the race. (undo with `.undone`)
+    `.forfeit` : Forfeit the race (undo with `.unforfeit`)
+    `.comment` : Add a comment
+    `.igt` : Add an in-game time
+    """)
+
 cmd_help_info = {
     'enter':'`.enter` : Enters (registers for) the race. After entering, use `.ready` to indicate you are ready to begin the race. You may use `.join` instead of `.enter` if preferred.',
     'join':'`.join` : Enters (registers for) the race. After entering, use `.ready` to indicate you are ready to begin the race. You may use `.enter` instead of `.join` if preferred.',
@@ -39,8 +49,8 @@ cmd_help_info = {
     'quit':"`.forfeit` : Forfeits from the race. You may instead use `.forfeit` if preferred.",
     'unforfeit':"`.unforfeit` : Undoes an earlier `.forfeit`.",
     'unquit':"`.unquit` : Undoes an earlier `.quit`.",
-    'comment':"`.comment [text]` : Adds the text as a comment to your race.",
-    'igt':"`.igt [time]` : Adds an in-game-time to your race. [time] takes the form 12:34.56.",
+    'comment':"`.comment text` : Adds  text as a comment to your race.",
+    'igt':"`.igt time` : Adds an in-game-time to your race. time takes the form 12:34.56.",
     'rematch':"`.rematch` : If the race is complete, creates a new race with the same rules in a separate room."
     }
 
@@ -59,29 +69,34 @@ def status_str(race_status):
 class Race(object):
 
     # NB: Call the coroutine initialize() to set up the room
-    def __init__(self, discord_client, race_manager, race_channel, results_channel, race_info):
+    def __init__(self, discord_client, race_manager, race_channel, race_info):
+        #discord objects
         self._client = discord_client           
         self._manager = race_manager
-        self._countdown = int(0)                  #the current countdown (TODO: is this the right implementation? unclear what is best)
-        self._racers = dict()                     #a dictionary of racers indexed by user id
-        self._results_channel = results_channel   #channel in which to record the race
-        self._no_entrants_time = None             #whenever there becomes zero entrance for the race, the time is stored here; used for cleanup code
-        self._start_time = float(0)               #system clock time for the beginning of the race
-        self._start_datetime = None               #UTC time for the beginning of the race
-        self._finalization_timer = None           #Timer object that, when it finishes, causes the race to be finalized
-        self._leaderboard = None                  #Message object for the leaderboard
-        self._countdown_future = None             #The Future object for the race countdown
-        self._finalize_future = None              #The Future object for the finalization countdown
-        self.is_closed = False                    #Whether the race room has been closed
-        self.race_info = race_info                #Information on the type of race (e.g. seeded, seed, character) -- see RaceInfo for details
-        self.channel = race_channel               #The channel in which this race is taking place
-        self._status = RaceStatus['uninitialized']#see RaceStatus
+        self.channel = race_channel                 #The channel in which this race is taking place
+        self._leaderboard = None                    #Message object for the leaderboard
 
+        #race & room metadata
+        self._status = RaceStatus['uninitialized']  #see RaceStatus
+        self._racers = dict()                       #a dictionary of racers indexed by user id
+        self.race_info = race_info                  #Information on the type of race (e.g. seeded, seed, character) -- see RaceInfo for details
+        self.is_closed = False                      #Whether the race room has been closed
+
+        #race data (during the race)
+        self._countdown = int(0)                    #the current countdown (TODO: is this the right implementation? unclear what is best)
+        self._start_time = float(0)                 #system clock time for the beginning of the race
+        self._no_entrants_time = None               #whenever there becomes zero entrance for the race, the time is stored here; used for cleanup code
+        self._start_datetime = None                 #UTC time for the beginning of the race
+        self._countdown_future = None               #The Future object for the race countdown
+        self._finalize_future = None                #The Future object for the finalization countdown
+        self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
+        
     #True if the user has admin permissions for this race
-    def _is_admin(self, member):
+    def _is_race_admin(self, member):
         for role in member.roles:
-            if role.name == 'Admin': #TODO be more flexible; allow for defining this role on the fly etc
+            if role in self._manager.get_admin_roles():
                 return True
+        
         return False
 
     #True if there are no racers in the 'racing' state (NB: returns true before the race has begun)
@@ -165,6 +180,7 @@ class Race(object):
         self._no_entrants_time = time.clock()
         self._status = RaceStatus['entry_open']  #see RaceStatus
         self._leaderboard = yield from self._client.send_message(self.channel, '```' + self._leaderboard_header() + status_str(self._status) + '```') 
+        asyncio.ensure_future(self._client.edit_channel(self.channel, topic=raceroom_topic))
         asyncio.ensure_future(self.monitor_for_prerace_cleanup())
         yield from self._write('Enter the race with `.enter`, and type `.ready` when ready. Finish the race with `.done` or `.forfeit`. Use `.help` for a command list.')
 
@@ -185,12 +201,13 @@ class Race(object):
 
     # Attempt to read an incoming command
     @asyncio.coroutine
-    def parse_message(self, message):
-##        if not message.channel.id == self.channel.id: #checked in racemgr
-##            return
-        
+    def parse_message(self, message):      
         args = message.content.split()
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
+
+        # Allow derived classes the opportunity to parse this message first
+        if yield from self._derived_parse_message(self, message):
+            return
 
         #.help command
         if command == 'help':
@@ -207,15 +224,16 @@ class Race(object):
                     """))
 
         # Admin commands
-        if self._is_admin(message.author): 
+        if self._is_race_admin(message.author): 
 
             ## General TODO here: In principle, usernames can be duplicated, in which case these kick/ban commands are awkward. This could be avoided
             ## by forcing these commands to be used with Discord mentions, which contain user id's. Best behavior is probably to refuse to kick/ban/forceforfeit
             ## on racers where other racers have duplicate usernames.
-                    
+                
             #.forcecancel : Cancels the race.
             if command == 'forcecancel':
                 yield from self.cancel_race()
+                asyncio.ensure_future(self._update_leaderboard())
 
             #.forceclose: Immediately closes the race (deletes the channel)
             elif command == 'forceclose':
@@ -229,6 +247,7 @@ class Race(object):
                         racer = self._racers[r_id]
                         if racer.name == name:
                             asyncio.ensure_future(self.forfeit_racer(racer))
+                asyncio.ensure_future(self._update_leaderboard())
 
             #.forceforfeitall: Forces all racers still racing to forfeit.
             elif command == 'forceforfeitall' and not self.is_before_race:
@@ -236,15 +255,17 @@ class Race(object):
                     racer = self._racers[r_id]
                     if racer.is_racing:
                         asyncio.ensure_future(self.forfeit_racer(racer))
+                asyncio.ensure_future(self._update_leaderboard())
 
             #.kick username: Removes any racer with the given username from the race 
             elif command == 'kick':
                 if len(args) == 1:
                     name_to_kick = args[0]
-                    for r_id in self._racers.keys():
-                        racer = self._racers[r_id]
+                    for r_id, racer in list(self._racers.items()):
                         if racer.name == name_to_kick:
                             del self._racers[r_id]
+                            self._write('Kicked {} from the race.'.format(racer.name))
+                asyncio.ensure_future(self._update_leaderboard())
                             
         # Commands before the race
         if self.is_before_race: 
@@ -343,11 +364,17 @@ class Race(object):
                     asyncio.ensure_future(self._update_leaderboard())
 
             #.rematch : Create a new race with the same race info
-            elif command == 'rematch' and self.race_complete:
+            elif command == 'rematch' and self.race_complete and not self._rematch_made and not self._is_private:
                 new_race_info = self.race_info.copy()
                 new_race_channel = yield from self._manager.make_race(new_race_info)
                 if new_race_channel:
+                    self._rematch_made = True
                     yield from self._write('Rematch created in {}!'.format(new_race_channel.mention))
+
+    # Skeleton method, does nothing. Override to add message-parsing functionality in derived classes.
+    @asyncio.coroutine
+    def _derived_parse_message(self, message):
+        return False
               
     # Begins the race. Called by the countdown.
     @asyncio.coroutine
@@ -485,7 +512,6 @@ class Race(object):
             asyncio.ensure_future(self._update_leaderboard())
             return True
         else:
-            print('c')
             return False
 
     # Unenters the given discord Member in the race
@@ -574,8 +600,8 @@ class Race(object):
         time_str = ''
         if self._start_datetime:
             time_str = self._start_datetime.strftime("%d %B %Y, UTC %H:%M")
-        if self._results_channel:
-            asyncio.ensure_future(self._client.send_message(self._results_channel, 'Race begun at {0}:\n```{1}{2}```'.format(time_str, self._leaderboard_header(), self._leaderboard_text())))
+
+        self._race_manager.post_result('Race begun at {0}:\n```{1}{2}```'.format(time_str, self._leaderboard_header(), self._leaderboard_text()))           
 
         db_conn = sqlite3.connect('data/races.db')
         db_cur = db_conn.cursor()

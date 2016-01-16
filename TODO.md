@@ -1,32 +1,13 @@
 # Necrobot TODO
 
-Current version: 0.2.2
+Current version: 0.2.3
 
 ## Small improvements
 
-* Cause an error on `.make` if the user sets a -seed and also sets the unseeded -u flag
-
-* Don't create more than one rematch of a race from a public room
-
-* Update the leaderboard when a user is kicked
-
-* Add the raceroom command list to the "topic" (headbar) of each newly generated
-race room.
-
-* The parameters to .make should be better documented. Simple form:
-```
-.make [char] [s | u]
-```
-Complex form:
-```
-.make [-c char] [-s | -u] [-seed num] [-custom text]
-```
-Any words between `.make` and the first `-` sign in this form are attempted to be
-interpreted as a specification of a character or seeded/unseeded.
-
-* The `.help` command should make a Discord-mention of the command list channel.
-
-* (?) Add options for setting personal defaults on `.make` (or `.makeprivate`)
+- Update the leaderboard when a user is kicked
+- The `.help` command should make a Discord-mention of the command list channel.
+- (?) Add options for setting personal defaults on `.make` (or `.makeprivate`)
+- (?) Make race channels vanish for non-admin, non-racer when the race has begun
 
 ## Major features
 
@@ -89,11 +70,15 @@ A command like this could also record races in a separate database, and in a sep
 record channel, for easier lookup later. Being able to tag the specific races that are
 for the tournament would make doing other database thigns to them possible.
 
+It would be nice to do this in a similar way to the CF/DD bot, where staff can place users
+in a private voice room (since this is easy to do with the discord API), and then the bot
+can automatically generate a race room that's private to staff + users in the voice channel.
+
 ### Support for voice rooms attached to race rooms
 
-Create either a raceroom command or a parameter for `.make` and `.makeprivate` that attaches a private
-voice channel to the race channel. In a public race, users entering the race will be automatically moved
-to this voice channel; in a private race, all admins and racers will be moved to the channel. The channel
+Create a raceroom command `.addvoice` that attaches a private voice channel to the race channel. 
+In a public race, users entering the race could be automatically moved to this voice channel; 
+in a private race, both admins and racers will be moved to the channel. The channel
 should be destroyed when the race room is destroyed.
 
 ## Major code improvements
