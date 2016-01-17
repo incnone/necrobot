@@ -35,6 +35,7 @@ def init():
         'bot_command_prefix':'.',
         'bot_version':'0.2.3',
         'channel_main':'necrobot_main',
+        'channel_reference':'command_list',
         'channel_daily_leaderboards':'daily_leaderboards',
         'channel_race_results':'race_results',
         'daily_grace_period_length_minutes':'60',
@@ -59,14 +60,13 @@ def init():
             args = line.split('=')
             if len(args) == 2:
                 if args[0] in defaults:
-                    if len(arglist) == 1:
-                        defaults[args[0]] = args[1].rstrip('\n')
+                    defaults[args[0]] = args[1].rstrip('\n')
                 elif args[0] == 'admin_roles':
                     arglist = args[1].rstrip('\n').split(',')
                     for arg in arglist:
                         admin_roles.append(arg)
                 else:
-                    print("Error in {0}: variable {1} isn't recognized.".format(filename, args[0]))
+                    print("Error in {0}: variable {1} isn't recognized.".format(CONFIG_FILE, args[0]))
 
     BOT_COMMAND_PREFIX = defaults['bot_command_prefix']
     BOT_VERSION = defaults['bot_version']

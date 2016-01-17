@@ -206,7 +206,8 @@ class Race(object):
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
 
         # Allow derived classes the opportunity to parse this message first
-        if yield from self._derived_parse_message(self, message):
+        success = yield from self._derived_parse_message(message)
+        if success:
             return
 
         #.help command

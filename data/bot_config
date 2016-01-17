@@ -2,7 +2,7 @@ bot_command_prefix=.
 bot_version=0.2.3
 
 channel_main=necrobot_main
-channel_reference=necrobot_reference
+channel_reference=command_list
 channel_daily_leaderboards=daily_leaderboards
 channel_race_results=race_results
 

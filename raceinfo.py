@@ -18,46 +18,24 @@
 ## bolt-sdf
 ## 4-shrine-uf
 
+import clparse
 import seedgen
 
-NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']
-
-## The "parse" commands below attempt to parse the leftmost arguments of an argument list as commands to modify a race_info.
-## If successful, they pop the relevant args from the list, add to the race_info, and return True. Otherwise, they return false.
-
-# For any word cmd in cmd_list, returns as below if args has one of the following forms:
-# args = [cmd=x, ...] ---> returns [1, x]
-# args = [-cmd, x, ...] ---> returns [2, x]
-# Otherwise, returns [0, ''].
-def _get_parseval_for_cmd(cmd_list, args):
-    if args:
-        cmd = args[0]
-        if cmd.startswith('-') and (cmd[1:] in cmd_list) and len(args) >= 2:
-            return [2, args[1]]
-        else:
-           cmd_split = cmd.split('=', 1)
-           if len(cmd_split) == 2 and cmd_split[0] in cmd_list:
-               return [1, cmd_split[1]]
-    return [0, '']
-        
+NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']       
 
 def _parse_seed(args, race_info):
     command_list = ['seed']
-    parseval = _get_parseval_for_cmd(command_list, args)
-
-    try:
-        race_info.seed = int(parseval[1])
-        pop_num = parseval[0]
-        while pop_num > 0:
-            pop_num -= 1
-            args.pop(0)
-        return True
-    except ValueError:
-        return False
+    if args and len(args) >= 2 and args[0] in command_list:
+        try:
+            race_info.seed = int(args[1])
+            args = args[2:]
+            return True
+        except ValueError:
+            return False
         
 def _parse_seeded(args, race_info):
-    seeded_commands = ['s', '-s', 'seeded', '-seeded', 'seeded=true']
-    unseeded_commands = ['u', '-u', 'unseeded', '-unseeded', 'seeded=false']
+    seeded_commands = ['s', 'seeded']
+    unseeded_commands = ['u', 'unseeded']
 
     if args:
         if args[0] in seeded_commands:
@@ -74,19 +52,15 @@ def _parse_char(args, race_info):
     command_list = ['c', 'char', 'character']
 
     if args:
-        if args[0].capitalize() in NDChars:
-            race_info.character = args[0].capitalize()
-            args.pop(0)
-            return True
-        else:
-            parseval = _get_parseval_for_cmd(command_list, args)
-            if parseval[1].capitalize() in NDChars:
-                race_info.character = parseval[1].capitalize()
-                pop_num = parseval[0]
-                while pop_num > 0:
-                    pop_num -= 1
-                    args.pop(0)
+        if len(args) >= 2 and args[0] in command_list:
+            if args[1].capitalize() in NDChars:
+                race_info.character = args[1].capitalize()
+                args = args[2:]
                 return True
+        elif args[0].capitalize() in NDChars:
+            race_info.character = args[0].capitalize()
+            args = args[1:]
+            return True            
             
     return False
 
@@ -96,14 +70,13 @@ def _parse_char(args, race_info):
 
 def _parse_desc(args, race_info):
     command_list = ['custom']
-    
-    parseval = _get_parseval_for_cmd(command_list, args)
-    pop_num = parseval[0]
-    if pop_num:
-        race_info.descriptor = parseval[1]
-        while pop_num > 0:
-            pop_num -= 1
-            args.pop(0)
+
+    if args and len(args) >= 2 and args[0] in command_list:
+        args.pop(0)
+        desc = ''
+        for arg in args:
+            desc += arg + ' '
+        race_info.descriptor = desc[:-1]
         return True
     return False
     
@@ -122,17 +95,22 @@ def parse_args(args):
     set_fp = False
 
     while args:
-        if _parse_seed(args, race_info):
+        next_cmd_args = clparse.pop_command(args)
+        if not next_cmd_args:
+            next_cmd_args.append(args[0])
+            args.pop(0)
+            
+        if _parse_seed(next_cmd_args, race_info):
             if set_seed:
                 return None
             else:
                 set_seed = True
-        elif _parse_seeded(args, race_info):
+        elif _parse_seeded(next_cmd_args, race_info):
             if set_seeded:
                 return None
             else:
                 set_seeded = True
-        elif _parse_char(args, race_info):
+        elif _parse_char(next_cmd_args, race_info):
             if set_char:
                 return None
             else:
@@ -147,7 +125,7 @@ def parse_args(args):
 ##                return False
 ##            else:
 ##                set_seeded = True
-        elif _parse_desc(args, race_info):
+        elif _parse_desc(next_cmd_args, race_info):
             if set_desc:
                 return None
             else:

@@ -8,6 +8,7 @@ import sqlite3
 import daily
 import racemgr
 import raceinfo
+import raceprivateinfo
 
 import config
 
@@ -36,6 +37,15 @@ HELP_INFO = {
                     "makes a race with character char, and seeded/unseeded determined by the `-u` or `-s` flag. If instead number is specified, " \
                     "the race will be seeded and forced to use the seed given. Number must be an integer (text seeds are not currently supported). " \
                     "Finally, desc allows you to give any custom one-word description of the race (e.g., '4-shrine').",
+    "makeprivate":"`.makeprivate`: Create a new private race room. This takes the same command-line options as `.make`, as well as " \
+                    "a few more:\n" \
+                    "```" \
+                    ".makeprivate [-a admin...] [-r racer...] [-bestof x | -repeat y]" \
+                    "```" \
+                    "Here `admin...` is a list of names of 'admins' for the race, which are users that can both see the race channel and " \
+                    "use special admin commands for managing the race, and `racer...` is a list of users that can see the race channel. " \
+                    "(Both admins and racers can enter the race.) `x` causes the race to become a best-of-x match, and `y` causes it to " \
+                    "simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
     "randomseed":"`.randomseed`: Get a randomly generated seed.",
     "info":"`.info`: Necrobot version information.",
     }
@@ -211,7 +221,16 @@ class Necrobot(object):
                 if race_channel:
                     asyncio.ensure_future(self._client.send_message(message.channel,
                         'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_info.format_str())))
-            
+
+        #.makeprivate : create a new race room
+        elif command == 'makeprivate':
+            race_private_info = raceprivateinfo.parse_args(args)
+            if race_private_info:
+                race_channel = yield from self._race_manager.make_private_race(race_private_info)
+                if race_channel:
+                    asyncio.ensure_future(self._client.send_message(message.channel,
+                        'A private race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_private_info.race_info.format_str()))) 
+        
         #.randomseed : Generate a new random seed
         elif command == 'randomseed':
             seed = seedgen.get_new_seed()
