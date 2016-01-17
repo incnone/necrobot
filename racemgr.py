@@ -3,7 +3,7 @@ import discord
 import sqlite3
 
 import config
-import race
+import raceroom
 import raceprivate
 import raceinfo
 import raceprivateinfo
@@ -61,23 +61,23 @@ class RaceManager(object):
         
         #Make the new race
         race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_info), type='text')
-        new_race = race.Race(self._client, self, race_channel, race_info)
+        new_race = raceroom.RaceRoom(self._client, self, race_channel, race_info)
         self._races.append(new_race)
         asyncio.ensure_future(new_race.initialize())
         return race_channel
 
-    ## Make a private race with the given RaceInfo
-    @asyncio.coroutine
-    def make_private_race(self, race_private_info):
-        #Get rid of closed races (Now seems like a good time to garbage collect)
-        self._races = [r for r in self._races if not r.is_closed]
-        
-        #Make the new race
-        race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_private_info.race_info), type='text')
-        new_race = raceprivate.RacePrivate(self._client, self, race_channel, race_private_info)
-        self._races.append(new_race)
-        asyncio.ensure_future(new_race.initialize())
-        return race_channel
+##    ## Make a private race with the given RaceInfo
+##    @asyncio.coroutine
+##    def make_private_race(self, race_private_info):
+##        #Get rid of closed races (Now seems like a good time to garbage collect)
+##        self._races = [r for r in self._races if not r.is_closed]
+##        
+##        #Make the new race
+##        race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_private_info.race_info), type='text')
+##        new_race = raceprivate.RacePrivate(self._client, self, race_channel, race_private_info)
+##        self._races.append(new_race)
+##        asyncio.ensure_future(new_race.initialize())
+##        return race_channel
 
     ## Parse a command entered somewhere on the server
     @asyncio.coroutine
