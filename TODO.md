@@ -101,6 +101,6 @@ added. It does this through sqlite3.
 I would like to encapsulate all these accesses in a single class responsible for handling
 the databases. One primary objective of doing this is to make these database accesses
 "thread-safe" -- by this, I mean that because this program uses asyncio, it's possible
-for two subroutines to be accessing the database at the same time, which may cause
-problems with sqlite. We should add some sort of simple mutex to these accesses to
-prevent this.
+for two coroutines to be accessing the database at the same time, which may cause
+problems with sqlite (I am not sure). What is the right way to deal with this? (It's possible
+that a simple mutex will do the job fine.)

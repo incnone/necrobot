@@ -56,6 +56,7 @@ class RaceRoom(object):
     def __init__(self, discord_client, race_manager, race_channel, race_info):
         self.client = discord_client           
         self.channel = race_channel                 #The channel in which this race is taking place
+        self.creator_id = None                      #Can store a user that created this room. Not used internally.
         self._manager = race_manager                #Used for server-specific calls (e.g. getting all admin roles)
         self._race = Race(self, race_info)  
 
@@ -83,13 +84,13 @@ class RaceRoom(object):
     # Attempt to read an incoming command
     @asyncio.coroutine
     def parse_message(self, message):      
-        args = message.content.split()
-        command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
-
         # Allow derived classes the opportunity to parse this message first
         success = yield from self._derived_parse_message(message)
         if success:
             return
+
+        args = message.content.split()
+        command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
 
         #.help command
         if command == 'help':
@@ -148,34 +149,39 @@ class RaceRoom(object):
         # Commands before the race
         if self._race.is_before_race: 
 
-            #.enter and .join : Enter the race
-            if command == 'enter' or command == 'join':
-                new_entry = yield from self._race.enter_racer(message.author)
-                if new_entry:
-                    yield from self.write('{0} has entered the race. {1} entrants.'.format(message.author.mention, len(self._race.racers)))
-                else:
-                    yield from self.write('{0} is already entered.'.format(message.author.mention))
+            # Commands while entry is open
+            if self._race.entry_open:
+                #.enter and .join : Enter the race
+                if command == 'enter' or command == 'join':
+                    new_entry = yield from self._race.enter_racer(message.author)
+                    if new_entry:
+                        yield from self.write('{0} has entered the race. {1} entrants.'.format(message.author.mention, len(self._race.racers)))
+                    else:
+                        yield from self.write('{0} is already entered.'.format(message.author.mention))
 
-            #.unenter and .unjoin : Leave the race
-            elif command == 'unenter' or command == 'unjoin':
-                success = yield from self._race.unenter_racer(message.author)
-                if success:
-                    self.write('{0} is no longer entered.'.format(message.author.mention))
+                #.unenter and .unjoin : Leave the race
+                elif command == 'unenter' or command == 'unjoin':
+                    success = yield from self._race.unenter_racer(message.author)
+                    if success:
+                        self.write('{0} is no longer entered.'.format(message.author.mention))
 
             #.ready : Tell bot you are ready to begin
-            elif command == 'ready':
+            if command == 'ready':
                 racer = self._race.get_racer(message.author)
                 if racer:
                     success = yield from self._race.ready_racer(racer)    #success is True if the racer was unready and now is ready
                     if success:
-                        num_not_ready = self._race.num_not_ready
                         if len(self._race.racers) == 1 and config.REQUIRE_AT_LEAST_TWO_FOR_RACE:
                             yield from self.write('Waiting on at least one other person to join the race.')
                         else:
-                            yield from self.write('{0} is ready! {1} remaining.'.format(message.author.mention, num_not_ready))
+                            yield from self.write('{0} is ready! {1} remaining.'.format(message.author.mention, self._race.num_not_ready))
     
-                        if num_not_ready == 0 and (not config.REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self._race.racers) > 1):
-                            yield from self._race.begin_race_countdown()
+                        all_ready = yield from self._all_racers_ready()
+                        if all_ready:
+                            if self._admin_ready:
+                                yield from self._race.begin_race_countdown()
+                            else:
+                                yield from self.write('Waiting on an admin to type `.ready`.')
                     elif racer.is_ready:
                         yield from self.write('{0} is already ready!'.format(message.author.mention))
                 else:
@@ -250,10 +256,20 @@ class RaceRoom(object):
                     self._rematch_made = True
                     yield from self.write('Rematch created in {}!'.format(new_race_channel.mention))
 
+    # Returns true if all racers are ready
+    @asyncio.coroutine
+    def _all_racers_ready(self):
+        return self._race.num_not_ready == 0 and (not config.REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self._race.racers) > 1)
+
     # Skeleton method, does nothing. Override to add message-parsing functionality in derived classes.
     @asyncio.coroutine
     def _derived_parse_message(self, message):
         return False
+
+    # Returns whether the admins are ready. Made for overriding.
+    @asyncio.coroutine
+    def _admin_ready(self):
+        return True
 
     #True if the user has admin permissions for this race
     def _is_race_admin(self, member):

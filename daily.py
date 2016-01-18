@@ -77,7 +77,7 @@ class DailyManager(object):
         if display_seed:
             db_cursor.execute("SELECT seed FROM daily_seeds WHERE date=?", params)
             for row in db_cursor:
-                text += "Seed: {}".format(row[0])
+                text += "Seed: {}\n".format(row[0])
                 break
         
         db_cursor.execute("SELECT * FROM daily_races WHERE date=? ORDER BY level DESC, time ASC", params)
@@ -202,11 +202,12 @@ class DailyManager(object):
             db_cursor.execute("INSERT INTO daily_seeds VALUES (?,?,?)", values)
             self._db_conn.commit()
 
-        #update the most recent leaderboard with the seed
-        db_cursor.execute("SELECT date FROM daily_seeds ORDER BY date DESC")
-        for row in db_cursor:
-            asyncio.ensure_future(self.update_leaderboard(row[0], True))
-            break #only do the most recent one
+            #update the most recent leaderboard with the seed
+            db_cursor.execute("SELECT date FROM daily_seeds ORDER BY date DESC")
+            for row in db_cursor:
+                if row[0] != self.today_number():
+                    asyncio.ensure_future(self.update_leaderboard(row[0], True))
+                    break #only do the most recent one that isn't today
 
         return today_seed
         

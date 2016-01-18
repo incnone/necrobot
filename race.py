@@ -14,8 +14,8 @@ import time
 from raceinfo import RaceInfo
 from racer import Racer
 
-RaceStatus = {'uninitialized':0, 'entry_open':1, 'counting_down':2, 'racing':3, 'completed':4, 'finalized':5, 'cancelled':6}
-StatusStrs = {'0':'Not initialized.', '1':'Entry open!', '2':'Starting!', '3':'In progress!', '4':'Complete.', '5':'Results Finalized.', '6':'Race Cancelled.'}
+RaceStatus = {'uninitialized':0, 'entry_open':1, 'counting_down':2, 'racing':3, 'paused':4, 'completed':5, 'finalized':6, 'cancelled':7}
+StatusStrs = {'0':'Not initialized.', '1':'Entry open!', '2':'Starting!', '3':'In progress!', '4':'Paused!', '5':'Complete.', '6':'Results Finalized.', '7':'Race Cancelled.'}
 ##    uninitialized   --  initialize() should be called on this object (not called in __init__ because coroutine)
 ##    entry_open      --  the race is open to new entrants
 ##    counting_down   --  the racebot is counting down to race start. if people .unready during this time, race reverts to the entry_open state
@@ -32,14 +32,15 @@ class Race(object):
     def __init__(self, race_room, race_info):
         self.room = race_room
         self.race_info = race_info                  #Information on the type of race (e.g. seeded, seed, character) -- see RaceInfo for details
-        self.racers = dict()                       #a dictionary of racers indexed by user id
+        self.racers = dict()                        #a dictionary of racers indexed by user id
         self._status = RaceStatus['uninitialized']  #see RaceStatus
         self._leaderboard = None                    #Message object for the leaderboard
 
         self.no_entrants_time = None                #whenever there becomes zero entrance for the race, the time is stored here; used for cleanup code
         self._countdown = int(0)                    #the current countdown (TODO: is this the right implementation? unclear what is best)
-        self._start_time = float(0)                 #system clock time for the beginning of the race
+        self._start_time = float(0)                 #system clock time for the beginning of the race (but is modified by pause())
         self._start_datetime = None                 #UTC time for the beginning of the race
+        self._pause_time = float(0)                 #system clock time for last time we called pause()
 
         self._countdown_future = None               #The Future object for the race countdown
         self._finalize_future = None                #The Future object for the finalization countdown
@@ -82,7 +83,7 @@ class Race(object):
         for racer in racer_list:
             rank += 1
             rank_str = '{0: >4} '.format(str(rank) + '.' if racer.is_finished else ' ')
-            text += (rank_str + (' ' * (max_name_len - len(racer.name))) + racer.name + ' --- ' + racer.status_str + '\n')
+            text += (rank_str + racer.name + (' ' * (max_name_len - len(racer.name))) + ' ' + racer.status_str + '\n')
         return text
 
     # True if the given racer is entered in the race
@@ -114,15 +115,19 @@ class Race(object):
                 num += 1
         return num        
 
+    @property
+    def entry_open(self):
+        return self._status == RaceStatus['entry_open']
+
     #True if the race has started
     @property
     def is_before_race(self):
-        return self._status < 3
+        return self._status < RaceStatus['racing']
 
     #True if the race is finalized or cancelled
     @property
     def complete(self):
-        return self._status >= 4
+        return self._status >= RaceStatus['completed']
 
     #Updates the leaderboard
     @asyncio.coroutine
@@ -141,7 +146,27 @@ class Race(object):
             self._status = RaceStatus['counting_down']
             self._countdown_future = asyncio.ensure_future(self._race_countdown())
             asyncio.ensure_future(self.update_leaderboard())
-              
+
+    @asyncio.coroutine
+    # Pause the race timer. 
+    def pause(self):
+        if self._status == RaceStatus['racing']:
+            self._status = RaceStatus['paused']
+            self._pause_time = time.clock()
+            asyncio.ensure_future(self.update_leaderboard())
+            return True
+        return False
+    
+    @asyncio.coroutine
+    # Unpause the race timer.
+    def unpause(self):
+        if self._status == RaceStatus['paused']:
+            self._status = RaceStatus['racing']
+            self._start_time += time.clock() - self._pause_time
+            asyncio.ensure_future(self.update_leaderboard())
+            return True
+        return False
+    
     # Begins the race. Called by the countdown.
     @asyncio.coroutine
     def _begin_race(self):
@@ -405,5 +430,16 @@ class Race(object):
         self._status = RaceStatus['cancelled']
         yield from self.room.write('The race has been cancelled.')
         asyncio.ensure_future(self.update_leaderboard())
+
+    # Reset the race.
+    @asyncio.coroutine
+    def reset(self):
+        asyncio.ensure_future(self.cancel_countdown())
+        success = yield from self.cancel_finalization()
+        self._status = RaceStatus['entry_open']
+        self.racers = []
+        self.no_entrants_time = time.clock()
+        yield from self.room.write('The race has been reset.')
+        asyncio.ensure_future(self.update_leaderboard())        
             
 

@@ -86,7 +86,9 @@ def _parse_desc(args, race_info):
 # Warning: destroys information in the list args
 def parse_args(args):
     race_info = RaceInfo()
+    return parse_args_modify(args, race_info)
 
+def parse_args_modify(args, race_info):
     set_seed = False    #keep track of whether we've found args for each field
     set_seeded = False  
     set_char = False
@@ -142,7 +144,7 @@ def parse_args(args):
     elif set_seed:
         race_info.seeded = True
 
-    return race_info
+    return race_info    
 
 class RaceInfo(object):
     seed = int(0)                   #the seed for the race

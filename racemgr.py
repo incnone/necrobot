@@ -4,7 +4,7 @@ import sqlite3
 
 import config
 import raceroom
-import raceprivate
+import raceprivateroom
 import raceinfo
 import raceprivateinfo
 import racetime
@@ -21,6 +21,14 @@ class RaceManager(object):
         for channel in self._client.get_all_channels():
             if channel.name == config.RACE_RESULTS_CHANNEL_NAME:
                 self._results_channel = channel
+
+    ## Returns a list of all members with a given username (capitalization ignored)
+    def find_members_with_name(self, username):
+        to_return = []
+        for member in self._server.members:
+            if member.name == username:
+                to_return.append(member)
+        return to_return
 
     ## Gets the user as a member of the server
     def get_as_member(self, user):
@@ -53,31 +61,42 @@ class RaceManager(object):
             if name_is_ok:
                 return trial_name
 
+##    ## Get the number of not closed races made by the given id
+##    @asyncio.coroutine
+##    def num_open_public_races_made_by(self, user_id):
+##        num = 0
+##        for race in self._races:
+##            if not race.is_closed and race.creator_id == user_id and race.__name__ == 'RaceRoom':
+##                num += 1
+##        return num
+
     ## Make a race with the given RaceInfo
     @asyncio.coroutine
-    def make_race(self, race_info):
+    def make_race(self, race_info, creator_id=None):
         #Get rid of closed races (Now seems like a good time to garbage collect)
         self._races = [r for r in self._races if not r.is_closed]
         
         #Make the new race
         race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_info), type='text')
         new_race = raceroom.RaceRoom(self._client, self, race_channel, race_info)
+        new_race.creator_id = creator_id
         self._races.append(new_race)
         asyncio.ensure_future(new_race.initialize())
         return race_channel
 
-##    ## Make a private race with the given RaceInfo
-##    @asyncio.coroutine
-##    def make_private_race(self, race_private_info):
-##        #Get rid of closed races (Now seems like a good time to garbage collect)
-##        self._races = [r for r in self._races if not r.is_closed]
-##        
-##        #Make the new race
-##        race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_private_info.race_info), type='text')
-##        new_race = raceprivate.RacePrivate(self._client, self, race_channel, race_private_info)
-##        self._races.append(new_race)
-##        asyncio.ensure_future(new_race.initialize())
-##        return race_channel
+    ## Make a private race with the given RaceInfo
+    @asyncio.coroutine
+    def make_private_race(self, race_private_info, creator_id=None):
+        #Get rid of closed races (Now seems like a good time to garbage collect)
+        self._races = [r for r in self._races if not r.is_closed]
+        
+        #Make the new race
+        race_channel = yield from self._client.create_channel(self._server, self.get_raceroom_name(race_private_info.race_info), type='text')
+        new_race = raceprivateroom.RacePrivateRoom(self._client, self, race_channel, race_private_info)
+        new_race.creator_id = creator_id
+        self._races.append(new_race)
+        asyncio.ensure_future(new_race.initialize())
+        return race_channel
 
     ## Parse a command entered somewhere on the server
     @asyncio.coroutine

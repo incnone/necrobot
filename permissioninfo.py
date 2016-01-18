@@ -1,8 +1,5 @@
 ## Holds permission data for a private race room
 
-import discord
-from raceprivateinfo import RacePrivateInfo
-
 def get_permission_info(server, race_private_info):
     permission_info = PermissionInfo()
     for admin_name in race_private_info.admin_names:
@@ -29,7 +26,7 @@ class PermissionInfo(object):
         for role in member.roles:
             if role in self.admin_roles:
                 return True
-        if member in admins:
+        if member in self.admins:
             return True
 
         return False

@@ -1,6 +1,8 @@
 ## Class holding info data for a private race.
 
 from matchinfo import MatchInfo
+from permissioninfo import PermissionInfo
+
 import clparse
 import raceinfo
 
@@ -51,7 +53,7 @@ def _parse_repeat(cmd, race_private_info):
     return False    
 
 # Attempts to parse the given command-line args into a race-info
-# Returns True on success, False on failure
+# Returns the RacePrivateInfo on success, None on failure
 # Warning: destroys information in the list args
 def parse_args(args):    
     race_private_info = RacePrivateInfo()
@@ -92,7 +94,19 @@ def parse_args(args):
         return None
     
     return race_private_info
-                
+
+### Makes a RacePrivateInfo from the given data
+##def make_from(match_info, permission_info, race_info):
+##    rpinfo = RacePrivateInfo()
+##    rpinfo.match_info = match_info
+##    rpinfo.race_info = race_info.copy()
+##    for admin in permission_info.admins:
+##        rpinfo.admin_names.append(admin.name)
+##    for role in permission_info.admin_roles():
+##        rpinfo.admin_names.append(admin.name)
+##    for racer in permission_info.racers:
+##        rpinfo.racer_names.append(racer.name)
+
 class RacePrivateInfo():
     admin_names = []
     racer_names = []
