@@ -1,4 +1,4 @@
-# Necrobot v 0.2
+# Necrobot v 0.3
 
 A Discord bot intended for managing a server dedicated to various Necrodancer racing activities. **This project is very
 much in alpha.**
