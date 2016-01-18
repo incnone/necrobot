@@ -120,6 +120,7 @@ login_data.email = login_info.readline().rstrip('\n')
 login_data.password = login_info.readline().rstrip('\n')
 login_data.admin_id = login_info.readline().rstrip('\n')
 login_data.server_id = login_info.readline().rstrip('\n')
+login_info.close()
 
 seedgen.init_seed()
      

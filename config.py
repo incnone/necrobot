@@ -4,8 +4,12 @@ def init():
     global BOT_COMMAND_PREFIX
     global BOT_VERSION
 
+    #admin
+    global ADMIN_ROLE_NAMES                     #list of names of roles to give admin access
+
     #channels
     global MAIN_CHANNEL_NAME
+    global REFERENCE_CHANNEL_NAME
     global DAILY_LEADERBOARDS_CHANNEL_NAME
     global RACE_RESULTS_CHANNEL_NAME
 
@@ -27,34 +31,11 @@ def init():
 ##    global DAILY_DB_DO_RESET                       #Warning! if true, completely resets daily database.
 ##    global RACE_DB_DO_RESET                        #Warning! if true, completely resets race database.
 
-    fileformat = [
-        'bot_command_prefix',
-        'bot_version',
-        '\n',
-        'channel_main',
-        'channel_daily_leaderboards',
-        'channel_race_results',
-        '\n',
-        'daily_grace_period_length_minutes',
-        '\n',
-        'race_countdown_time_seconds',
-        'race_begin_counting_down_at',
-        'race_record_after_seconds',
-        'race_cleanup_after_room_is_silent_for_seconds',
-        'race_cleanup_after_no_entrants_for_seconds',
-        'race_give_cleanup_warning_after_no_entrants_for_seconds', 
-        'race_require_at_least_two',
-        '\n',
-        'db_daily_filename',
-        'db_races_filename',
-##        'db_daily_reset_all_data',
-##        'db_races_reset_all_data'        
-        ]
-
     defaults = {
         'bot_command_prefix':'.',
         'bot_version':'0.2.3',
         'channel_main':'necrobot_main',
+        'channel_reference':'command_list',
         'channel_daily_leaderboards':'daily_leaderboards',
         'channel_race_results':'race_results',
         'daily_grace_period_length_minutes':'60',
@@ -70,6 +51,8 @@ def init():
 ##        'db_daily_reset_all_data':'0',
 ##        'db_races_reset_all_data':'0'
         }
+
+    admin_roles = []
             
     file = open(CONFIG_FILE, 'r')
     if file:
@@ -78,12 +61,18 @@ def init():
             if len(args) == 2:
                 if args[0] in defaults:
                     defaults[args[0]] = args[1].rstrip('\n')
+                elif args[0] == 'admin_roles':
+                    arglist = args[1].rstrip('\n').split(',')
+                    for arg in arglist:
+                        admin_roles.append(arg)
                 else:
-                    print("Error in {0}: variable {1} isn't recognized.".format(filename, args[0]))
+                    print("Error in {0}: variable {1} isn't recognized.".format(CONFIG_FILE, args[0]))
 
     BOT_COMMAND_PREFIX = defaults['bot_command_prefix']
     BOT_VERSION = defaults['bot_version']
     MAIN_CHANNEL_NAME = defaults['channel_main']
+    REFERENCE_CHANNEL_NAME = defaults['channel_reference']
+    ADMIN_ROLE_NAMES = admin_roles
     DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
     RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
     DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
@@ -96,16 +85,4 @@ def init():
     REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
     DAILY_DB_FILENAME = defaults['db_daily_filename']
     RACE_DB_FILENAME = defaults['db_races_filename']
-##    DAILY_DB_DO_RESET = bool(int(defaults['db_daily_reset_all_data']))
-##    RACE_DB_DO_RESET = bool(int(defaults['db_races_reset_all_data']))
-
-##    defaults['db_daily_reset_all_data'] = '0'
-##    defaults['db_races_reset_all_data'] = '0'
-##    file = open(CONFIG_FILE, 'w') #TODO keep file clean
-##    if file:
-##        for key in fileformat:
-##            if key in defaults:
-##                file.write(key + '=' + defaults[key] + '\n')
-##            else:
-##                file.write(key)
         

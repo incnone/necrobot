@@ -8,6 +8,7 @@ import sqlite3
 import daily
 import racemgr
 import raceinfo
+import raceprivateinfo
 
 import config
 
@@ -21,15 +22,30 @@ HELP_INFO = {
                     "or provide the level of death, e.g. `.dailysubmit death 4-4` for a death on dead ringer.",
     "dailywhen":"`.dailywhen`: Get the date for the current daily, and the time until the next daily opens.",
     "make":"`.make`: Create a new race room. By default this creates a seeded Cadence race (the bot will generate a seed), " \
-                    "but you can add the following parameters:\n" \
-                    "```\n" \
-                    "-u                : Makes an unseeded race.\n" \
-                    "-s                : Makes an seeded race (default).\n" \
-                    "-char [character] : Makes a race with the given character.\n" \
-                    "-seed 1234567     : Use the given seed for the race.\n" \
-                    "-custom [text]    : Adds the given text as a descriptor to the race (e.g. '4-shrine').\n```" \
-                    "For seeded/unseeded and character options, one can also simply type the character name and 'u' or 'unseeded', etc, " \
-                    "so for example `.make dove u` or `.make unseeded dove` both make an unseeded Dove race.",
+                    "but there are optional parameters. First, the short form:\n" \
+                    "```" \
+                    ".make [char] [u|s]" \
+                    "```" \
+                    "makes a race with the given character and seeding options; `char` should be a Necrodancer character, and " \
+                    "the other field is either the letter `u` or the letter `s`, according to whether the race should be seeded " \
+                    "or unseeded. Examples: `.make dorian u` or `.make s dove` are both fine.\n" \
+                    "\n" \
+                    "More options are available using usual command-line syntax:" \
+                    "```" \
+                    ".make [-c char] [-u|-s|-seed number] [-custom desc]" \
+                    "```" \
+                    "makes a race with character char, and seeded/unseeded determined by the `-u` or `-s` flag. If instead number is specified, " \
+                    "the race will be seeded and forced to use the seed given. Number must be an integer (text seeds are not currently supported). " \
+                    "Finally, desc allows you to give any custom one-word description of the race (e.g., '4-shrine').",
+    "makeprivate":"`.makeprivate`: Create a new private race room. This takes the same command-line options as `.make`, as well as " \
+                    "a few more:\n" \
+                    "```" \
+                    ".makeprivate [-a admin...] [-r racer...] [-bestof x | -repeat y]" \
+                    "```" \
+                    "Here `admin...` is a list of names of 'admins' for the race, which are users that can both see the race channel and " \
+                    "use special admin commands for managing the race, and `racer...` is a list of users that can see the race channel. " \
+                    "(Both admins and racers can enter the race.) `x` causes the race to become a best-of-x match, and `y` causes it to " \
+                    "simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
     "randomseed":"`.randomseed`: Get a randomly generated seed.",
     "info":"`.info`: Necrobot version information.",
     }
@@ -38,7 +54,7 @@ class Necrobot(object):
 
     ## Info string
     def infostr():
-        return 'Necrobot v-{}. See #command_list for a list of commands.'.format(config.BOT_VERSION)
+        return 'Necrobot v-{} (alpha). See #command_list for a list of commands.'.format(config.BOT_VERSION)
 
     ## Barebones constructor
     def __init__(self, client,):
@@ -124,9 +140,14 @@ class Necrobot(object):
                 cmd = args[0].lstrip(config.BOT_COMMAND_PREFIX)
                 if cmd in HELP_INFO:
                     asyncio.ensure_future(self._client.send_message(message.channel, HELP_INFO[cmd]))
-            else:   
-                asyncio.ensure_future(self._client.send_message(message.channel,
-                    "See #necrobot_reference for a command list. Type `.help command` for more info on a particular command."))      
+            else:
+                ref_channel = None
+                for channel in self._server.channels:
+                    if channel.name == config.REFERENCE_CHANNEL_NAME:
+                        ref_channel = channel
+                if channel:
+                    asyncio.ensure_future(self._client.send_message(message.channel,
+                        "See {} for a command list. Type `.help command` for more info on a particular command.".format(ref_channel.mention)))      
 
         #.dailyseed : Receive (via PM) today's daily seed
         elif command == 'dailyseed':
@@ -200,7 +221,16 @@ class Necrobot(object):
                 if race_channel:
                     asyncio.ensure_future(self._client.send_message(message.channel,
                         'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_info.format_str())))
-            
+
+        #.makeprivate : create a new race room
+        elif command == 'makeprivate':
+            race_private_info = raceprivateinfo.parse_args(args)
+            if race_private_info:
+                race_channel = yield from self._race_manager.make_private_race(race_private_info)
+                if race_channel:
+                    asyncio.ensure_future(self._client.send_message(message.channel,
+                        'A private race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_private_info.race_info.format_str()))) 
+        
         #.randomseed : Generate a new random seed
         elif command == 'randomseed':
             seed = seedgen.get_new_seed()
