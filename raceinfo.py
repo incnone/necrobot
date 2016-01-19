@@ -147,13 +147,15 @@ def parse_args_modify(args, race_info):
     return race_info    
 
 class RaceInfo(object):
-    seed = int(0)                   #the seed for the race
-    seed_fixed = False              #True means the specific seed is part of the race rules (seed doesn't change on rematch)
-    seeded = False                  #whether the race is run in seeded mode
-    character = 'Cadence'           #the character for the race
-    descriptor = 'All-zones'        #a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
-    sudden_death = False            #whether the race is sudden-death (cannot restart race after death)
-    flagplant = False               #whether flagplanting is considered as a victory condition
+
+    def __init__(self):
+        self.seed = int(0)                   #the seed for the race
+        self.seed_fixed = False              #True means the specific seed is part of the race rules (seed doesn't change on rematch)
+        self.seeded = False                  #whether the race is run in seeded mode
+        self.character = 'Cadence'           #the character for the race
+        self.descriptor = 'All-zones'        #a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
+        self.sudden_death = False            #whether the race is sudden-death (cannot restart race after death)
+        self.flagplant = False               #whether flagplanting is considered as a victory condition
 
     def copy(self):
         the_copy = RaceInfo()

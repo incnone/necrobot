@@ -59,6 +59,7 @@ class RaceRoom(object):
         self.creator_id = None                      #Can store a user that created this room. Not used internally.
         self._manager = race_manager                #Used for server-specific calls (e.g. getting all admin roles)
         self._race = Race(self, race_info)  
+        self._leaderboard = None                    #Message object for the leaderboard
 
         self.is_closed = False                      #True if room has been closed
         self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
@@ -67,13 +68,21 @@ class RaceRoom(object):
     @asyncio.coroutine
     def initialize(self):
         asyncio.ensure_future(self._race.initialize())
-        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=raceroom_topic))
+        #self._leaderboard = yield from self.room.write('```' + self.leaderboard_header + status_str(self._status) + '```') 
+        #asyncio.ensure_future(self.client.edit_channel(self.channel, topic=raceroom_topic))
+        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self._race.leaderboard))        
         asyncio.ensure_future(self._monitor_for_cleanup())
 
     # Write text to the raceroom. Return a Message for the text written
     @asyncio.coroutine
     def write(self, text):
         return self.client.send_message(self.channel, text)
+
+    #Updates the leaderboard
+    @asyncio.coroutine
+    def update_leaderboard(self):
+        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self._race.leaderboard))        
+        #asyncio.ensure_future(self.room.client.edit_message(self._leaderboard, new_leaderboard))
 
     # Close the channel.
     @asyncio.coroutine
@@ -163,7 +172,7 @@ class RaceRoom(object):
                 elif command == 'unenter' or command == 'unjoin':
                     success = yield from self._race.unenter_racer(message.author)
                     if success:
-                        self.write('{0} is no longer entered.'.format(message.author.mention))
+                        yield from self.write('{0} is no longer entered.'.format(message.author.mention))
 
             #.ready : Tell bot you are ready to begin
             if command == 'ready':
@@ -237,7 +246,7 @@ class RaceRoom(object):
                     racer = self._race.get_racer(message.author)
                     if igt != -1 and racer and racer.is_finished:
                         racer.igt = igt
-                        asyncio.ensure_future(self._race.update_leaderboard())
+                        asyncio.ensure_future(self.update_leaderboard())
 
             #.comment : Add a comment
             elif command == 'comment':
@@ -246,7 +255,7 @@ class RaceRoom(object):
                     cut_length = len(command) + len(config.BOT_COMMAND_PREFIX) + 1
                     end_length = 255 + cut_length
                     racer.add_comment(message.content[cut_length:end_length])
-                    asyncio.ensure_future(self._race.update_leaderboard())
+                    asyncio.ensure_future(self.update_leaderboard())
 
             #.rematch : Create a new race with the same race info
             elif command == 'rematch' and self._race.complete and not self._rematch_made:

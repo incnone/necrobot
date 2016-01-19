@@ -18,9 +18,11 @@ def get_permission_info(server, race_private_info):
     return permission_info
         
 class PermissionInfo(object):
-    admins = []
-    admin_roles = []
-    racers = []
+
+    def __init__(self):
+        self.admins = []
+        self.admin_roles = []
+        self.racers = []
 
     def is_admin(self, member):
         for role in member.roles:

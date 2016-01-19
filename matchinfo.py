@@ -5,6 +5,8 @@ from enum import Enum
 MatchType = {'single':0,'bestof':1,'repeat':2}
   
 class MatchInfo(object):
-    match_type = MatchType['single']
-    bestof = 0
-    repeat = 0
+
+    def __init__(self):
+        self.match_type = MatchType['single']
+        self.bestof = 0
+        self.repeat = 0

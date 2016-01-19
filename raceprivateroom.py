@@ -87,97 +87,111 @@ class RacePrivateRoom(RaceRoom):
     def _derived_parse_message(self, message):
         args = message.content.split()
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
-        
-        #.remove : Disallow users from seeing the channel (doesn't work on admins)
-        if command == 'remove':
-            for username in args:
-                for member in self._manager.find_members_with_name(username):
-                    if not self._is_race_admin(member):
-                        yield from self.deny(member)
-            return True
 
-        # Before the race
-        if self._race.is_before_race:
-            
-            #.add : Allow users to see the channel
-            if command == 'add':
+        #.admins : List race admins
+        if command == 'admins':
+            admin_names = ''
+            for member in self._permission_info.admins:
+                admin_names += member.name + ', '
+            for role in self._permission_info.admin_roles:
+                admin_names += role.name + ' (role), '
+
+            if admin_names:
+                yield from self.write('The admins for this race are: {}'.format(admin_names[:-2]))
+
+        # Admin-only commands
+        if self._is_race_admin(message.author):
+            #.remove : Disallow users from seeing the channel (doesn't work on admins)
+            if command == 'remove':
                 for username in args:
                     for member in self._manager.find_members_with_name(username):
-                        yield from self.allow(member)
+                        if not self._is_race_admin(member):
+                            yield from self.deny(member)
                 return True
-            
-            #.admin : Make a user admin for the race (cannot be undone)
-            elif command == 'admin':
-                for username in args:
-                    for member in self._manager.find_members_with_name(username):
-                        yield from self.allow(member)
-                        if not member in self._permission_info.admins:
-                            self._permission_info.admins.append(member)
-                return True
-            
-            #.changerules : Change the rules for the race
-            elif command == 'changerules':
-                new_race_info = raceinfo.parse_args_modify(args, self._race.race_info.copy())
-                if new_race_info:
-                    self._race.race_info = new_race_info
-                    yield from self.write('Changed rules for the next race.')
-                    yield from self._race.update_leaderboard()
-                return True
-                    
-            #.ready : Declare admins ready for race (must be called once by any admin before race can begin, unless no admins)
-            elif command == 'ready':
-                self._admin_ready = True
-                if message.author.id in self._race.racers:
-                    return False
-                else:
-                    yield from self.write('Race admins are ready!')
-                    if self._all_racers_ready():
-                        yield from self._race.begin_race_countdown() 
-                    return True
-            
-            #.reseed : Get a new random seed for the race (only works on seeded races)
-            elif command == 'reseed':
-                if self._race.race_info.seeded and not self._race.race_info.seed_fixed:
-                    self._race.race_info.seed = seedgen.get_new_seed()
-                    yield from self.write('Changed seed to {}.'.format(self._race.race_info.seed))
-                    yield from self._race.update_leaderboard()
-                else:
-                    yield from self.write('Cannot reseed this race; it is not a randomly seeded race. Use `.changerules -s` to change this.')
-                return True
-            
-        # During/After the race:
-        else:
-            
-            #.forcereset : Cancel the race, and return all racers to the entered but not ready state
-            if command == 'forcereset':
-                yield from self._race.reset()
-                return True
-            
-            # During the race
-            if not self._race.complete:
-                #.pause : Pause Necrobot's race timer
-                if command == 'pause':
-                    success = yield from self._race.pause()
-                    if success:
-                        yield from self.write('Race paused by {}!'.format(message.author.mention))
-                    return True
 
-                #.unpause : Unpause Necrobot's race timer
-                elif command == 'unpause':
-                    success = yield from self._race.unpause()
-                    if success:
-                        yield from self.write('Race unpaused! GO!')
+            # Before the race
+            if self._race.is_before_race:
+                
+                #.add : Allow users to see the channel
+                if command == 'add':
+                    for username in args:
+                        for member in self._manager.find_members_with_name(username):
+                            yield from self.allow(member)
                     return True
                 
-            # After the race
+                #.changerules : Change the rules for the race
+                elif command == 'changerules':
+                    new_race_info = raceinfo.parse_args_modify(args, self._race.race_info.copy())
+                    if new_race_info:
+                        self._race.race_info = new_race_info
+                        yield from self.write('Changed rules for the next race.')
+                        yield from self._race.update_leaderboard()
+                    return True
+                
+                #.makeadmin : Make a user admin for the race (cannot be undone)
+                elif command == 'makeadmin':
+                    for username in args:
+                        for member in self._manager.find_members_with_name(username):
+                            yield from self.allow(member)
+                            if not member in self._permission_info.admins:
+                                self._permission_info.admins.append(member)
+                    return True
+                
+                #.ready : Declare admins ready for race (must be called once by any admin before race can begin, unless no admins)
+                elif command == 'ready':
+                    self._admin_ready = True
+                    if message.author.id in self._race.racers:
+                        return False
+                    else:
+                        yield from self.write('Race admins are ready!')
+                        if self._all_racers_ready():
+                            yield from self._race.begin_race_countdown() 
+                        return True
+                
+                #.reseed : Get a new random seed for the race (only works on seeded races)
+                elif command == 'reseed':
+                    if self._race.race_info.seeded and not self._race.race_info.seed_fixed:
+                        self._race.race_info.seed = seedgen.get_new_seed()
+                        yield from self.write('Changed seed to {}.'.format(self._race.race_info.seed))
+                        yield from self._race.update_leaderboard()
+                    else:
+                        yield from self.write('Cannot reseed this race; it is not a randomly seeded race. Use `.changerules -s` to change this.')
+                    return True
+                
+            # During/After the race:
             else:
                 
-                #.rematch : Overrides. Create a new match in this same room.
-                if command == 'rematch':
-                    new_race_info = self._race.race_info.copy()
-                    self._race = Race(self, new_race_info)
-                    asyncio.ensure_future(self._race.initialize())
+                #.forcereset : Cancel the race, and return all racers to the entered but not ready state
+                if command == 'forcereset':
+                    yield from self._race.reset()
                     return True
+                
+                # During the race
+                if not self._race.complete:
+                    #.pause : Pause Necrobot's race timer
+                    if command == 'pause':
+                        success = yield from self._race.pause()
+                        if success:
+                            yield from self.write('Race paused by {}!'.format(message.author.mention))
+                        return True
+
+                    #.unpause : Unpause Necrobot's race timer
+                    elif command == 'unpause':
+                        success = yield from self._race.unpause()
+                        if success:
+                            yield from self.write('Race unpaused! GO!')
+                        return True
+                    
+                # After the race
+                else:
+                    
+                    #.rematch : Overrides. Create a new match in this same room.
+                    if command == 'rematch':
+                        new_race_info = self._race.race_info.copy()
+                        self._race = Race(self, new_race_info)
+                        asyncio.ensure_future(self._race.initialize())
+                        return True
+
 
         return False
 

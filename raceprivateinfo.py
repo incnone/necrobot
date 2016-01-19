@@ -108,10 +108,12 @@ def parse_args(args):
 ##        rpinfo.racer_names.append(racer.name)
 
 class RacePrivateInfo():
-    admin_names = []
-    racer_names = []
-    match_info = MatchInfo()
-    race_info = None
+
+    def __init__(self):
+        self.admin_names = []
+        self.racer_names = []
+        self.match_info = MatchInfo()
+        self.race_info = None
     
     def copy(self):
         the_copy = RacePrivateInfo()

@@ -40,12 +40,12 @@ HELP_INFO = {
     "makeprivate":"`.makeprivate`: Create a new private race room. This takes the same command-line options as `.make`, as well as " \
                     "a few more:\n" \
                     "```" \
-                    ".makeprivate [-a admin...] [-r racer...] [-bestof x | -repeat y]" \
+                    ".makeprivate [-a admin...] [-r racer...]" ##[-bestof x | -repeat y]" \
                     "```" \
                     "Here `admin...` is a list of names of 'admins' for the race, which are users that can both see the race channel and " \
                     "use special admin commands for managing the race, and `racer...` is a list of users that can see the race channel. " \
-                    "(Both admins and racers can enter the race.) `x` causes the race to become a best-of-x match, and `y` causes it to " \
-                    "simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
+                    "(Both admins and racers can enter the race.)", ##`x` causes the race to become a best-of-x match, and `y` causes it to " \
+                    ##"simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
     "randomseed":"`.randomseed`: Get a randomly generated seed.",
     "info":"`.info`: Necrobot version information.",
     }
@@ -225,6 +225,8 @@ class Necrobot(object):
         #.makeprivate : create a new race room
         elif command == 'makeprivate':
             race_private_info = raceprivateinfo.parse_args(args)
+            if not message.author.name in race_private_info.admin_names:
+                race_private_info.admin_names.append(message.author.name)
             if race_private_info:
                 race_channel = yield from self._race_manager.make_private_race(race_private_info)
                 if race_channel:
