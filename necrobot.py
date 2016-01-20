@@ -21,7 +21,7 @@ HELP_INFO = {
                     "`.dailysubmit 12:34.56`. If you die during the daily, you may submit your run as `.dailysubmit death` " \
                     "or provide the level of death, e.g. `.dailysubmit death 4-4` for a death on dead ringer.",
     "dailywhen":"`.dailywhen`: Get the date for the current daily, and the time until the next daily opens.",
-    "make":"`.make`: Create a new race room. By default this creates a seeded Cadence race (the bot will generate a seed), " \
+    "make":"`.make`: Create a new race room. By default this creates an unseeded Cadence race, " \
                     "but there are optional parameters. First, the short form:\n" \
                     "```" \
                     ".make [char] [u|s]" \
