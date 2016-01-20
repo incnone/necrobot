@@ -14,7 +14,7 @@ import config
 
 HELP_INFO = {
     "help":"`.help`: Help.",
-    "dailyseed":"`.dailyseed`: Register for today's speedrun daily. You will receive today's seed via PM.",
+    "dailyresubmit":"`.dailyresubmit`: Submit for the daily, overriding a previous submission. Use this to correct a mistake in a daily submission.",
     "dailystatus":"`.dailystatus`: Find out whether you've submitted to today's daily.",
     "dailysubmit":"`.dailysubmit`: Submit a result for your most recent daily. Daily submissions close an hour after the next " \
                     "daily opens. If you complete the game during the daily, submit your time in the form [m]:ss.hh, e.g.: " \
@@ -147,6 +147,17 @@ class Necrobot(object):
                     asyncio.ensure_future(self._client.send_message(message.channel,
                         "See {} for a command list. Type `.help command` for more info on a particular command.".format(ref_channel.mention)))      
 
+        #.dailyresubmit : Submit a result for your most recently registered daily (if possible)
+        elif command == 'dailyresubmit':
+            spoilerchat_channel = None
+            for channel in self._server.channels:
+                if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
+                    spoilerchat_channel = channel
+            if spoilerchat_channel:
+                asyncio.ensure_future(self._client.send_message(message.channel,
+                    "{0}: Please call `.dailyresubmit` from {1} (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
+                asyncio.ensure_future(self._client.delete_message(message))
+
         #.dailyseed : Receive (via PM) today's daily seed
         elif command == 'dailyseed':
             dm = self._daily_manager
@@ -239,6 +250,28 @@ class Necrobot(object):
         args = message.content.split()
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
 
+        #.dailyresubmit : Correct your most recent daily submission
+        if command == 'dailyresubmit':
+            dm = self._daily_manager
+            user_id = message.author.id
+            daily_number = dm.submitted_daily(user_id)
+
+            if daily_number == 0:
+                asyncio.ensure_future(self._client.send_message(message.channel,
+                    "{0}: You've never submitted for a daily.".format(message.author.mention)))
+            elif not dm.is_open(daily_number):
+                asyncio.ensure_future(self._client.send_message(message.channel,
+                    "{0}: The {1} daily has closed.".format(message.author.mention, daily.daily_to_shortstr(daily_number))))
+            else:
+                submission_string = dm.parse_submission(daily_number, message.author, args, overwrite=True)
+                if submission_string: # parse succeeded
+                    asyncio.ensure_future(self._client.send_message(message.channel,
+                        "Resubmitted for {0}: {1} {2}.".format(daily.daily_to_shortstr(daily_number), message.author.mention, submission_string)))
+                    asyncio.ensure_future(dm.update_leaderboard(daily_number))
+                else: # parse failed
+                    asyncio.ensure_future(self._client.send_message(message.channel,
+                        "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(message.author.mention)))
+               
         #.dailysubmit : Submit a time for today's daily
         if command == 'dailysubmit':
             dm = self._daily_manager

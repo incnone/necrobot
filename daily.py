@@ -166,9 +166,18 @@ class DailyManager(object):
             return row[0]
         return 0    
 
+    # Returns the most recent daily for which the user has submitted (or 0 if no such) #DB_acc
+    def submitted_daily(self, user_id):
+        db_cursor = self._db_conn.cursor()
+        params = (user_id,)
+        db_cursor.execute("SELECT date FROM daily_races WHERE playerid=? ORDER BY date DESC", params)
+        for row in db_cursor:
+            return row[0]
+        return 0
+
     # Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.  #DB_acc
     # Returns a string whose content confirms parse, or the empty string if parse fails.
-    def parse_submission(self, daily_number, user, args):
+    def parse_submission(self, daily_number, user, args, overwrite=False):
         lv = -1
         time = -1
         ret_str = ''
@@ -188,6 +197,9 @@ class DailyManager(object):
                     ret_str = 'finished in {}'.format(racetime.to_str(time))
 
         if not lv == -1: # parse succeeded
+            if overwrite:
+                self.delete_from_daily(daily_number, user)
+                
             self.submit_to_daily(daily_number, user, lv, time)
             return ret_str
         else:
@@ -196,9 +208,15 @@ class DailyManager(object):
     # Submit a run to the given daily number    #DB_acc
     def submit_to_daily(self, daily_number, user, lv, time):
         db_cursor = self._db_conn.cursor()
-
         race_params = (daily_number, user.name, user.id, lv, time,)
         db_cursor.execute("INSERT INTO daily_races VALUES (?,?,?,?,?)", race_params)
+        self._db_conn.commit()
+
+    # Delete a run from the daily #DB_acc
+    def delete_from_daily(self, daily_number, user):
+        db_cursor = self._db_conn.cursor()
+        delete_params = (daily_number, user.id,)
+        db_cursor.execute("DELETE FROM daily_races WHERE date=? AND playerid=?", delete_params)
         self._db_conn.commit()
     
     # Return the seed for the given daily number. Create seed if it doesn't already exist. #DB_acc

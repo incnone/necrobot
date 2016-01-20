@@ -8,6 +8,8 @@ Current version: 0.3.0
 submission. (This should work like `-date Jan20`.)
 - In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs
 a date that isn't their most recent seed.
+- Old daily leaderboards should show the seed for that daily. (This seemed to be working, and then
+it appears that it isn't again. This is mostly a bugfix.)
 
 ### Possiblilites to consider (not sure I want these yet)
 
@@ -20,6 +22,12 @@ I don't know how this could be done in Discord at the moment. Actually displayin
 takes up too much screen real-estate.)
 
 ## Major improvements
+
+### Support for an optimized speedrun daily
+
+Add a daily that's intended for optimizing a seed. May also want to consider adding dailies for other
+categories as well. Among the difficulties here is just figuring out how to organize things from a UI
+perspective.
 
 ### Support for best-of-x or repeat-y-times races
 
