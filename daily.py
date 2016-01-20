@@ -21,6 +21,19 @@ def daily_to_datestr(daily_number):
 def daily_to_shortstr(daily_number):
     return daily_to_date(daily_number).strftime("%d %b")
 
+# Formats the given hours, minutes into a string
+def _format_as_timestr(hours, minutes):
+    while minutes >= 60:
+        minutes -= 60
+        hours += 1
+        
+    if minutes == 0 and hours == 0:
+        return 'under a minute'
+    else:
+        min_str = 'minute' if minutes == 1 else 'minutes'
+        hr_str = 'hour' if hours == 1 else 'hours'
+        return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)  
+
 class DailyManager(object):
 
     def __init__(self, client, db_connection):
@@ -34,22 +47,11 @@ class DailyManager(object):
 
     # Returns a string with the current daily's date and time until the next daily.
     def daily_time_info_str(self):
-        now = datetime.datetime.utcnow()
-        date_str = now.strftime("%B %d")
-        
-        hours = 23 - now.hour
-        minutes = 60 - now.minute
-        if minutes == 60:
-            minutes = 0
-            hours += 1
-
-        if hours == 0 and minutes == 0:
-            return 'The {0} daily is currently active. The next daily will become active in under a minute.'.format(date_str)
+        date_str = datetime.datetime.utcnow().strftime("%B %d")
+        if self.within_grace_period():
+            return 'The {0} daily is currently active. Yesterday\'s daily is still open for submissions, but will close in {1}.'.format(date_str, self.daily_grace_timestr())
         else:
-            min_str = 'minute' if minutes == 1 else 'minutes'
-            hr_str = 'hour' if hours == 1 else 'hours'
-
-            return 'The {0} daily is currently active. The next daily will become active in {1} {2}, {3} {4}.'.format(date_str, hours, hr_str, minutes, min_str)
+            return 'The {0} daily is currently active. The next daily will become available in {1}. Today\'s daily will close in {2}.'.format(date_str, self.next_daily_timestr(), self.daily_close_timestr())
 
     # Return today's daily number
     def today_number(self):
@@ -61,6 +63,23 @@ class DailyManager(object):
         utc_now = datetime.datetime.utcnow()
         return (utc_now.time().hour * 60) + utc_now.time().minute <= config.DAILY_GRACE_PERIOD
 
+    # Returns a string giving the remaining time in the grace period
+    def daily_grace_timestr(self):
+        utc_now = datetime.datetime.utcnow()
+        return _format_as_timestr(0, config.DAILY_GRACE_PERIOD - utc_now.hour*60 - utc_now.minute)
+
+    # Returns a string giving the time until the next daily
+    def next_daily_timestr(self):
+        utc_now = datetime.datetime.utcnow()
+        date_str = utc_now.strftime("%B %d")
+        return _format_as_timestr(23 - utc_now.hour, 60 - utc_now.minute)  
+
+    # Returns a string giving the time until the current daily closes
+    def daily_close_timestr(self):
+        utc_now = datetime.datetime.utcnow()
+        date_str = utc_now.strftime("%B %d")
+        return _format_as_timestr(24 - utc_now.hour, 60 - utc_now.minute)  
+        
     # Returns true if the given daily is still open for submissions.
     def is_open(self, daily_number):
         today = self.today_number();
@@ -101,7 +120,7 @@ class DailyManager(object):
                 else:
                     result_string = "death ({0})".format(result_string)
                     
-            text += '{0: >3}. {1: <40} {2}\n'.format(rank, name, result_string)
+            text += '{0: >3}. {1: <24} {2}\n'.format(rank, name, result_string)
 
         if no_entries:
             text += 'No entries yet.\n'

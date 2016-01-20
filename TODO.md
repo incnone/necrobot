@@ -4,18 +4,6 @@ Current version: 0.3.0
 
 ## Small improvements
 
-### Very small
-
-- The `.help` command should make a Discord-mention of the command list channel.
-- Only allow the `.dailysubmit` command in #dailyspoilerchat
-- Add text to `.dailywhen` giving the time when the current daily expires.
-- Tighten width on daily leaderboards; cut off names and replace with elipsis at appropriate
-number of characters
-
-### Medium-sized
-
-- Give a warning to any user that calls `.dailyseed` while not having submitted for the previous
-day's seed. (Force using a syntax like `.dailyseed -override`.)
 - If a user has two seeds active and both are submittable, force them to use a `-date` flag for their
 submission. (This should work like `-date Jan20`.)
 - In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs
@@ -32,6 +20,12 @@ I don't know how this could be done in Discord at the moment. Actually displayin
 takes up too much screen real-estate.)
 
 ## Major improvements
+
+### Support for best-of-x or repeat-y-times races
+
+Add support to private race rooms for matches to be played best-of-x (when two racers only, presumably)
+or repeat-y-times. The race room should remain the same for all matches and should keep track of the
+current match score, and results should be reported as one match.
 
 ### Support for voice rooms attached to race rooms
 
@@ -53,8 +47,9 @@ for two coroutines to be accessing the database at the same time, which may caus
 problems with sqlite (I am not sure). What is the right way to deal with this? (It's possible
 that a simple mutex will do the job fine.)
 
-### Stream support
+### Stream support / Twitch integration
 
 Allow for users to register their streams and to tag certain races as "streamed". For such races,
 generate a multitwitch or kadgar link upon asking. As an even bigger project, make the bot able to
-check whether said users are actually streaming.
+check whether said users are actually streaming. Also, make the bot able to report in your twitch chat
+when people in your race have finished or forfeit (and who won, etc.)

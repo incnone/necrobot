@@ -3,6 +3,7 @@ bot_version=0.3.0
 
 channel_main=necrobot_main
 channel_reference=command_list
+channel_daily_spoilerchat=dailyspoilerchat
 channel_daily_leaderboards=daily_leaderboards
 channel_race_results=race_results
 

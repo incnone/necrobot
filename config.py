@@ -10,6 +10,7 @@ def init():
     #channels
     global MAIN_CHANNEL_NAME
     global REFERENCE_CHANNEL_NAME
+    global DAILY_SPOILERCHAT_CHANNEL_NAME
     global DAILY_LEADERBOARDS_CHANNEL_NAME
     global RACE_RESULTS_CHANNEL_NAME
 
@@ -36,6 +37,7 @@ def init():
         'bot_version':'0.2.3',
         'channel_main':'necrobot_main',
         'channel_reference':'command_list',
+        'channel_daily_spoilerchat':'dailyspoilerchat',
         'channel_daily_leaderboards':'daily_leaderboards',
         'channel_race_results':'race_results',
         'daily_grace_period_length_minutes':'60',
@@ -73,6 +75,7 @@ def init():
     MAIN_CHANNEL_NAME = defaults['channel_main']
     REFERENCE_CHANNEL_NAME = defaults['channel_reference']
     ADMIN_ROLE_NAMES = admin_roles
+    DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_daily_spoilerchat']
     DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
     RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
     DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
