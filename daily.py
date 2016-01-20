@@ -88,7 +88,7 @@ class DailyManager(object):
     # Return the text for the daily with the given daily number #DB_acc
     def leaderboard_text(self, daily_number, display_seed=False):
         date_str = daily_to_datestr(daily_number)
-        text = "```Cadence Speedrun Daily -- {0}\n".format(date_str)
+        text = "```\nCadence Speedrun Daily -- {0}\n".format(date_str)
 
         db_cursor = self._db_conn.cursor()
         params = (daily_number,)

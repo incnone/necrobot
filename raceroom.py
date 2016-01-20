@@ -104,8 +104,9 @@ class RaceRoom(object):
         #.help command
         if command == 'help':
             if len(args) == 1:
-                if args[0] in cmd_help_info:
-                    yield from (cmd_help_info[args[0].lstrip(config.BOT_COMMAND_PREFIX)])
+                arg = args[0].lstrip(config.BOT_COMMAND_PREFIX)
+                if arg in cmd_help_info:
+                    yield from self.write(cmd_help_info[arg])
             else:   
                 yield from self.write(textwrap.dedent("""\
                     Command list:

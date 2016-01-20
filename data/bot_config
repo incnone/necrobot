@@ -13,10 +13,10 @@ daily_grace_period_length_minutes=60
 
 race_countdown_time_seconds=10
 race_begin_counting_down_at=5
-race_record_after_seconds=60
+race_record_after_seconds=120
 race_cleanup_after_room_is_silent_for_seconds=150
-race_cleanup_after_no_entrants_for_seconds=90
-race_give_cleanup_warning_after_no_entrants_for_seconds=30
+race_cleanup_after_no_entrants_for_seconds=120
+race_give_cleanup_warning_after_no_entrants_for_seconds=60
 race_require_at_least_two=1
 
 db_daily_filename=data/daily.db

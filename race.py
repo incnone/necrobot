@@ -57,7 +57,7 @@ class Race(object):
     # Returns the string to go in the topic for the leaderboard
     @property
     def leaderboard(self):
-        new_leaderboard = '```' + self.leaderboard_header + status_str(self._status) + '\n'
+        new_leaderboard = '```\n' + self.leaderboard_header + status_str(self._status) + '\n'
         new_leaderboard += 'Entrants:\n'
         new_leaderboard += self.leaderboard_text
         new_leaderboard += '```'
@@ -383,7 +383,7 @@ class Race(object):
             time_str = self._start_datetime.strftime("%d %B %Y, UTC %H:%M")
 
         #TODO: be better (since results posted should adapt for best-of-3, repeat-3, etc; this shouldn't be called here
-        yield from self.room.post_result('Race begun at {0}:\n```{1}{2}```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
+        yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
 
         db_conn = sqlite3.connect('data/races.db')
         db_cur = db_conn.cursor()

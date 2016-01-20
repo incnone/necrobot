@@ -15,6 +15,7 @@ import config
 HELP_INFO = {
     "help":"`.help`: Help.",
     "dailyresubmit":"`.dailyresubmit`: Submit for the daily, overriding a previous submission. Use this to correct a mistake in a daily submission.",
+    "dailyseed":"`.dailyseed`: Get the seed for today's daily. (Will be sent via PM.)",
     "dailystatus":"`.dailystatus`: Find out whether you've submitted to today's daily.",
     "dailysubmit":"`.dailysubmit`: Submit a result for your most recent daily. Daily submissions close an hour after the next " \
                     "daily opens. If you complete the game during the daily, submit your time in the form [m]:ss.hh, e.g.: " \
