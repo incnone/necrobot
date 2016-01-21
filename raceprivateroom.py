@@ -43,6 +43,11 @@ class RacePrivateRoom(RaceRoom):
         yield from self._set_permissions()
         yield from RaceRoom.initialize(self)
 
+    # A string to add to the race details ("Private")
+    # Overrides
+    def format_rider(self):
+        return '(private)'
+
     # Allow the member to see the channel
     @asyncio.coroutine
     def allow(self, member):

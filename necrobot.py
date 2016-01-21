@@ -135,10 +135,9 @@ class Necrobot(object):
 
         #.help : Quick help reference
         elif command == 'help':
-            if len(args) == 1:
-                cmd = args[0].lstrip(config.BOT_COMMAND_PREFIX)
-                if cmd in HELP_INFO:
-                    asyncio.ensure_future(self._client.send_message(message.channel, HELP_INFO[cmd]))
+            cmd = args[0].lstrip(config.BOT_COMMAND_PREFIX) if len(args) == 1 else ''
+            if cmd in HELP_INFO:
+                asyncio.ensure_future(self._client.send_message(message.channel, HELP_INFO[cmd]))
             else:
                 ref_channel = None
                 for channel in self._server.channels:
@@ -207,6 +206,10 @@ class Necrobot(object):
                 asyncio.ensure_future(self._client.send_message(message.channel,
                     "{0}: Please call `.dailysubmit` from {1} (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
                 asyncio.ensure_future(self._client.delete_message(message))
+
+        #.dailyunsubmit : Remove your most recent daily submission (if possible)
+        elif command == 'dailyunsubmit':
+            yield from self.try_daily_unsubmit(message)     
         
         #.dailywhen : Gives time info re the daily
         elif command == 'dailywhen':
@@ -274,7 +277,7 @@ class Necrobot(object):
                         "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(message.author.mention)))
                
         #.dailysubmit : Submit a time for today's daily
-        if command == 'dailysubmit':
+        elif command == 'dailysubmit':
             dm = self._daily_manager
             user_id = message.author.id
             daily_number = dm.registered_daily(user_id)
@@ -297,4 +300,26 @@ class Necrobot(object):
                 else: # parse failed
                     asyncio.ensure_future(self._client.send_message(message.channel,
                         "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(message.author.mention)))
+
+        elif command == 'dailyunsubmit':
+            yield from self.try_daily_unsubmit(message)
+
+    # Tries to un-submit the daily of the message author, if possible, and output reasonable messages
+    @asyncio.coroutine
+    def try_daily_unsubmit(self, message):
+        dm = self._daily_manager
+        user_id = message.author.id
+        daily_number = dm.submitted_daily(user_id)
+
+        if daily_number == 0:
+            asyncio.ensure_future(self._client.send_message(message.channel,
+                "{0}: You've never submitted for a daily.".format(message.author.mention)))
+        elif not dm.is_open(daily_number):
+            asyncio.ensure_future(self._client.send_message(message.channel,
+                "{0}: The {1} daily has closed.".format(message.author.mention, daily.daily_to_shortstr(daily_number))))
+        else:
+            dm.delete_from_daily(daily_number, message.author)
+            asyncio.ensure_future(self._client.send_message(message.channel,
+                "Deleted {1}'s daily submission for {0}.".format(daily.daily_to_shortstr(daily_number), message.author.mention)))
+            asyncio.ensure_future(dm.update_leaderboard(daily_number))
 

@@ -18,7 +18,7 @@ class RaceManager(object):
         self._db_conn = db_connection
         self._results_channel = None
         self._races = []
-        for channel in self._client.get_all_channels():
+        for channel in self._server.channels:
             if channel.name == config.RACE_RESULTS_CHANNEL_NAME:
                 self._results_channel = channel
 
@@ -111,3 +111,17 @@ class RaceManager(object):
         if self._results_channel:
             asyncio.ensure_future(self._client.send_message(self._results_channel, text))
 
+    ## Write something to the main channel
+    ## TODO: currently this is called by raceroom, when doing the .rematch command, to announce a rematch
+    ## in the bot's main channel. I think its existence suggests some code refactoring should be done around here;
+    ## in particular, perhaps this class should be more responsible for messages in the main channel regarding races
+    ## at all, and Necrobot should not. One could think of Necrobot as a general structure that takes 'modules', of
+    ## which I've coded a race module and a daily module. This seems like a good refactoring.
+    @asyncio.coroutine
+    def write_in_main(self, text):
+        main_channel = None
+        for channel in self._server.channels:
+            if channel.name == config.MAIN_CHANNEL_NAME:
+                main_channel = channel
+        if main_channel:
+            asyncio.ensure_future(self._client.send_message(main_channel, text))

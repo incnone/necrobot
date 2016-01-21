@@ -1,25 +1,11 @@
 # Necrobot TODO
 
-Current version: 0.3.1
-
-## Small improvements
-
-- The `.help command` command is broken in the race channel (it currently does nothing).
-- Race rematches should be announced in the main channel (to give people hanging out there a chance to see them and join).
-- Old daily leaderboards should show the seed for that daily. (This seemed to be working, and then
-it appears that it isn't again. This is mostly a bugfix.)
-- Make whether the race is public or private appear in the headbar.
-- Using `-s (int)` as a flag on `.make` should generate a seeded race with the given int as seed, exactly
-as the `-seed` flag would.
-- The `.help` command behaves inconsistently when called with bad arguments; when followed by a single word the code doesn't recognize, it does nothing, but mutliple words output a message.
-- Add a `.dailyunsubmit` command for removing your submission from the daily.
-- Implement a `.delayrecord` command in race rooms for delaying of race recording (this may be useful in cases where racers want to check e.g. using replays whether they've met race goals).
-- Add a `.time` command to race rooms that outputs the current race time.
-- `.rematch` should write a message when failing (e.g.: someone called `.rematch` yesterday while a racer was still racing, so it refused to make the rematch; refusing seems reasonable to encourage inclusivity, but the user should be told why).
+Current version: 0.3.2
 
 ### Possiblilites to consider (not sure I want these yet)
 
 - Make #dailyspoilerchat unreadable until the user submits for the daily, and accept submissions via PM. At the moment I'd like this to be an opt-in option. My main worry about doing this is that in the current system, people are forced into #dailyspoilerchat and forced to type in that channel when they submit, which encourages talking.
+- Old daily leaderboards should show the seed for that daily. (I can't tell if this is working or not.)
 - If a user has two seeds active and both are submittable, force them to use a `-date` flag for their
 submission. (This should work like `-date Jan20`.)
 - In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs
@@ -62,6 +48,10 @@ for that matter, sqlite3 -- work.
 ### Database search & statistics; ratings based on daily/race rankings
 
 Implement some algorithms for ranking people based on daily performance (and participation) and race performance (and participation), much like the NecroLab power rank and SRL ranks. (These are two separate ranks.) 
+
+### Code refactoring: A skeleton bot with attachable "modules"
+
+Something that seems like a nice way to refactor the code would be to make necrobot.py into a skeleton to which we can attach "modules", of which we would currently have two: the "racing" module and the "daily" module. Each module would be independently responsible for handling commands, writing to the main channel, etc; we could put a lot of the stuff in main.py into necrobot.py (maybe, though I hate combining modules), and move the specific handling of commands to the modules. This would help for the future, when we want to make a necrobot for season 4, which should have something like (but not identical to) the current race functionality, but nothing like the daily functionality.
 
 ### Stream support / Twitch integration
 

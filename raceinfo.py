@@ -24,7 +24,9 @@ import seedgen
 NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']       
 
 def _parse_seed(args, race_info):
-    command_list = ['seed']
+    #note: this allows `-s (int)` to set a specific seed, while `-s` just sets seeded.
+    #important that _parse_seed be called before _parse_seeded for this to work.
+    command_list = ['seed', 's'] 
     if args and len(args) >= 2 and args[0] in command_list:
         try:
             race_info.seed = int(args[1])
@@ -32,6 +34,7 @@ def _parse_seed(args, race_info):
             return True
         except ValueError:
             return False
+    return False
         
 def _parse_seeded(args, race_info):
     seeded_commands = ['s', 'seeded']
@@ -169,12 +172,20 @@ class RaceInfo(object):
         return the_copy
     
     #returns a (possibly multi-line) string that can be used to header results for the race
+    #depricated. do not use. use format_str and seed_str instead.
     def info_str(self):             
         seeded_rider = '\n'
         if self.seeded:
             seeded_rider += 'Seed: {0}\n'.format(self.seed)
         
         return self.format_str() + seeded_rider
+
+    #returns a string "Seed: (int)" if the race is seeded, or the empty string otherwise
+    def seed_str(self):
+        if self.seeded:
+            return 'Seed: {0}'.format(self.seed)
+        else:
+            return ''
 
     #returns a one-line string for identifying race format
     def format_str(self):

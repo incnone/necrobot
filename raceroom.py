@@ -78,6 +78,10 @@ class RaceRoom(object):
     def write(self, text):
         return self.client.send_message(self.channel, text)
 
+    # A string to add to the race details (used for private races; empty in base class)
+    def format_rider(self):
+        return ''
+
     #Updates the leaderboard
     @asyncio.coroutine
     def update_leaderboard(self):
@@ -258,14 +262,34 @@ class RaceRoom(object):
                     racer.add_comment(message.content[cut_length:end_length])
                     asyncio.ensure_future(self.update_leaderboard())
 
-            #.rematch : Create a new race with the same race info
-            elif command == 'rematch' and self._race.complete and not self._rematch_made:
-                new_race_info = self._race.race_info.copy()
-                new_race_channel = yield from self._manager.make_race(new_race_info)
-                if new_race_channel:
-                    self._rematch_made = True
-                    yield from self.write('Rematch created in {}!'.format(new_race_channel.mention))
+            #.time : Display the current race time
+            elif command == 'time':
+                if self._race.complete:
+                    yield from self.write('The race is over.')
+                else:
+                    yield from self.write('The current race time is {}.'.format(self._race.current_time_str))
 
+            #.delayrecord : Delays recording of the race for (an extra) config.FINALIZE_TIME_SEC seconds
+            # TODO make this feel a little less weird UI-wise (but should not be possible to delay for extremely long times either)
+            if command == 'delayrecord' and self._race.complete:
+                if not self._race.delay_record:
+                    self._race.delay_record = True
+                    yield from self.write('Delaying recording for an extra {} seconds.'.format(config.FINALIZE_TIME_SEC))
+                else:
+                    yield from self.write('Recording is already delayed.')
+                
+            #.rematch : Create a new race with the same race info
+            elif command == 'rematch' and not self._rematch_made:
+                if self._race.complete:
+                    new_race_info = self._race.race_info.copy()
+                    new_race_channel = yield from self._manager.make_race(new_race_info)
+                    if new_race_channel:
+                        self._rematch_made = True
+                        yield from self.write('Rematch created in {}!'.format(new_race_channel.mention))
+                        yield from self._manager.write_in_main('A new race has been started:\nFormat: {1}\nChannel: {0}'.format(new_race_channel.mention, new_race_info.format_str()))
+                else:
+                    yield from self.write('{}: The current race has not yet ended!'.format(message.author.mention))
+                    
     # Returns true if all racers are ready
     @asyncio.coroutine
     def _all_racers_ready(self):

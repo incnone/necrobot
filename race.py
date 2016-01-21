@@ -41,6 +41,7 @@ class Race(object):
         self._start_datetime = None                 #UTC time for the beginning of the race
         self._pause_time = float(0)                 #system clock time for last time we called pause()
 
+        self.delay_record = False                   #When true, delays an extra config.FINALIZE_TIME_SEC before recording
         self._countdown_future = None               #The Future object for the race countdown
         self._finalize_future = None                #The Future object for the finalization countdown
 
@@ -66,8 +67,16 @@ class Race(object):
     # Returns 'header' text for the race, giving info about the rules etc.
     @property
     def leaderboard_header(self):
-        return self.race_info.info_str()
-            
+        room_rider = self.room.format_rider()
+        if room_rider:
+            room_rider = ' ' + room_rider
+
+        seed_str = self.race_info.seed_str()
+        if seed_str:
+            seed_str = '\n' + seed_str
+
+        return self.race_info.format_str() + room_rider + seed_str + '\n'
+                    
     # Returns a list of racers and their statuses.
     @property
     def leaderboard_text(self):
@@ -103,6 +112,16 @@ class Race(object):
             return self.racers[racer_usr.id]
         else:
             return None
+
+    # Returns the current time elapsed as a string "[m]m:ss.hh"
+    @property
+    def current_time_str(self):
+        if self._status == RaceStatus['paused']:
+            return racetime.to_str( int(100*(self._pause_time - self._start_time)) )
+        elif self._status == RaceStatus['racing']:
+            return racetime.to_str( int(100*(time.clock() - self._start_time)) )
+        else:
+            return ''
 
     # Returns the number of racers not in the 'ready' state
     @property
@@ -229,7 +248,11 @@ class Race(object):
         else:
             yield from self.room.write('All racers have forfeit. This race will be cancelled in {} seconds.'.format(config.FINALIZE_TIME_SEC))
 
-        yield from asyncio.sleep(config.FINALIZE_TIME_SEC)
+        self.delay_record = True
+        while self.delay_record:
+            self.delay_record = False
+            yield from asyncio.sleep(config.FINALIZE_TIME_SEC)
+            
         yield from self._finalize_race()
             
     # Finalizes the race
