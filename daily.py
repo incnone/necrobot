@@ -103,6 +103,9 @@ class DailyManager(object):
 
         no_entries = True
         rank = int(0)
+        
+        prior_result = ''   #detect and handle ties
+        rank_to_display = int(1)
 
         for row in db_cursor:
             rank += 1
@@ -119,8 +122,14 @@ class DailyManager(object):
                     result_string = "death"
                 else:
                     result_string = "death ({0})".format(result_string)
-                    
-            text += '{0: >3}. {1: <24} {2}\n'.format(rank, name, result_string)
+
+            # update the rank only if we've gotten a different result than the last entrant
+            if not result_string == prior_result: #kinda hacky to use a string comparison here, but works for the moment
+                rank_to_display = rank
+
+            prior_result = result_string
+            
+            text += '{0: >3}. {1: <24} {2}\n'.format(rank_to_display, name, result_string)
 
         if no_entries:
             text += 'No entries yet.\n'

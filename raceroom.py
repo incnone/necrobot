@@ -29,6 +29,9 @@ raceroom_topic = textwrap.dedent("""\
     `.forfeit` : Forfeit the race (undo with `.unforfeit`)
     `.comment` : Add a comment
     `.igt` : Add an in-game time
+    `.time` : Get the current race time.
+    `.rematch` : Make a rematch.
+    `.delayrecord` : Delay recording of this race.
     """)
 
 cmd_help_info = {
@@ -48,7 +51,8 @@ cmd_help_info = {
     'unquit':"`.unquit` : Undoes an earlier `.quit`.",
     'comment':"`.comment text` : Adds  text as a comment to your race.",
     'igt':"`.igt time` : Adds an in-game-time to your race. time takes the form 12:34.56.",
-    'rematch':"`.rematch` : If the race is complete, creates a new race with the same rules in a separate room."
+    'rematch':"`.rematch` : If the race is complete, creates a new race with the same rules in a separate room.",
+    'delayrecord':"`.delayrecord` : If the race is complete, delays recording of the race for some extra time."
     }
 
 class RaceRoom(object):
