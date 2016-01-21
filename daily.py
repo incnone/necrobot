@@ -255,6 +255,8 @@ class DailyManager(object):
                     asyncio.ensure_future(self.update_leaderboard(row[0], True))
                     break #only do the most recent one that isn't today
 
+            #TODO hide dailyspoilerchat for those users with that preference
+
         return today_seed
         
     # Update an existing leaderboard message for the given daily number #DB_acc

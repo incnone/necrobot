@@ -21,3 +21,4 @@ race_require_at_least_two=1
 
 db_daily_filename=data/daily.db
 db_races_filename=data/races.db
+db_users_filename=data/users.db
