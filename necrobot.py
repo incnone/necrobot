@@ -88,17 +88,17 @@ class Necrobot(object):
             print('Error: Could not find the server.')
             exit(1)
 
+        #set up prefs manager
+        pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
+        self._pref_manager = userprefs.UserPrefManager(pref_db_connection, self._server)
+
         #set up daily manager
         daily_db_connection = sqlite3.connect(config.DAILY_DB_FILENAME)
-        self._daily_manager = daily.DailyManager(self._client, daily_db_connection)
+        self._daily_manager = daily.DailyManager(self._client, daily_db_connection, self._pref_manager)
 
         #set up race manager
         race_db_connection = sqlite3.connect(config.RACE_DB_FILENAME)
         self._race_manager = racemgr.RaceManager(self._client, self._server, race_db_connection)
-
-        #set up prefs manager
-        pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
-        self._pref_manager = userprefs.UserPrefManager(pref_db_connection)
 
     ## Log out of discord
     @asyncio.coroutine
@@ -136,7 +136,12 @@ class Necrobot(object):
         args = message.content.split()
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
         if command == 'dailysubmit':
-            yield from self.try_daily_submit(message.channel, message.author, args) 
+            author_as_member = None
+            for member in self._server.members:
+                if member.id == message.author.id:
+                    author_as_member = member
+            if author_as_member:
+                yield from self.try_daily_submit(message.channel, author_as_member, args) 
 
     @asyncio.coroutine
     def main_channel_command(self, message):

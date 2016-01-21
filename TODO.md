@@ -49,9 +49,13 @@ for that matter, sqlite3 -- work.
 
 Implement some algorithms for ranking people based on daily performance (and participation) and race performance (and participation), much like the NecroLab power rank and SRL ranks. (These are two separate ranks.) 
 
-### Code refactoring: A skeleton bot with attachable "modules"
+### Refactoring: A skeleton bot with attachable "modules"
 
 Something that seems like a nice way to refactor the code would be to make necrobot.py into a skeleton to which we can attach "modules", of which we would currently have two: the "racing" module and the "daily" module. Each module would be independently responsible for handling commands, writing to the main channel, etc; we could put a lot of the stuff in main.py into necrobot.py (maybe, though I hate combining modules), and move the specific handling of commands to the modules. This would help for the future, when we want to make a necrobot for season 4, which should have something like (but not identical to) the current race functionality, but nothing like the daily functionality.
+
+### Refactoring: Easier ways to get at channels, server
+
+Right now we're passing around a lot of random discord objects (client, server, etc) when we have a specific design pattern in mind: a bot functioning on a single server, with particular dedicated channels. It'd be nice to do this in a somewhat cleaner way, so that we're not forced to do things like call `client.get_all_channels()` and then search the returned list for a channel matching a particular string.
 
 ### Stream support / Twitch integration
 
