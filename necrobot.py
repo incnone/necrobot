@@ -5,6 +5,7 @@ import discord
 import seedgen
 import sqlite3
 
+import colorer
 import daily
 import racemgr
 import raceinfo
@@ -156,6 +157,10 @@ class Necrobot(object):
         elif command == 'updatedaily' and message.author.id == self._admin_id:
             asyncio.ensure_future(self._daily_manager.update_leaderboard(self._daily_manager.today_number()))
 
+        #.dankify command : dankify
+        elif command == 'dankify':
+            asyncio.ensure_future(self._dankify_user(message))
+
         #.help : Quick help reference
         elif command == 'help':
             cmd = args[0].lstrip(config.BOT_COMMAND_PREFIX) if len(args) == 1 else ''
@@ -269,6 +274,7 @@ class Necrobot(object):
             prefs = userprefs.parse_args(args)
             if prefs.contains_info:
                 self._pref_manager.set_prefs(prefs, message.author)
+                yield from self._when_updated_prefs(prefs, message.author)
                 confirm_msg = 'Set the following preferences for {}:'.format(message.author.mention)
                 for pref_str in prefs.pref_strings:
                     confirm_msg += ' ' + pref_str
@@ -361,3 +367,23 @@ class Necrobot(object):
             else: # parse failed
                 asyncio.ensure_future(self._client.send_message(channel,
                     "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(user.mention)))
+
+    @asyncio.coroutine
+    def _dankify_user(self, message):
+        asyncio.ensure_future(colorer.color_user(message.author, self._client, self._server))
+        #yield from asyncio.sleep(1)
+        asyncio.ensure_future(self._client.delete_message(message))
+
+    @asyncio.coroutine
+    def _when_updated_prefs(self, prefs, member):
+        dm = self._daily_manager
+        today_daily = dm.today_number()
+        if dm._spoilerchat_channel:
+            if prefs.hide_spoilerchat == True and not dm.has_submitted(today_daily, member.id):
+                read_permit = discord.Permissions.none()
+                read_permit.read_messages = True
+                yield from self._client.edit_channel_permissions(dm._spoilerchat_channel, member, deny=read_permit)  
+            elif prefs.hide_spoilerchat == False:
+                read_permit = discord.Permissions.none()
+                read_permit.read_messages = True
+                yield from self._client.edit_channel_permissions(dm._spoilerchat_channel, member, allow=read_permit)  
