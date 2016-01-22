@@ -5,13 +5,9 @@ Current version: 0.3.2
 ### Possiblilites to consider (not sure I want these yet)
 
 - Make #dailyspoilerchat unreadable until the user submits for the daily, and accept submissions via PM. At the moment I'd like this to be an opt-in option. My main worry about doing this is that in the current system, people are forced into #dailyspoilerchat and forced to type in that channel when they submit, which encourages talking.
-- Old daily leaderboards should show the seed for that daily. (I can't tell if this is working or not.)
 - If a user has two seeds active and both are submittable, force them to use a `-date` flag for their
-submission. (This should work like `-date Jan20`.)
-- In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs
-a date that isn't their most recent seed.
+submission. (This should work like `-date Jan20`.) In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs a date that isn't their most recent seed.
 - Add options for setting personal defaults on `.make` (or `.makeprivate`)
-- Make race channels vanish for non-admin, non-racer once the race has begun
 - Add hyperlinks to daily leaderboard times, so people can link vods/screenshots (I don't know
 how to do this and keep the nice formatting at the moment.)
 - Add comments to daily leaderboards, visible by hovering over them or something like that. (Again,
