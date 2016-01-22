@@ -28,10 +28,9 @@ def init():
 
     #database
     global DAILY_DB_FILENAME
-    global RACE_DB_FILENAME 
-##    global DAILY_DB_DO_RESET                       #Warning! if true, completely resets daily database.
-##    global RACE_DB_DO_RESET                        #Warning! if true, completely resets race database.
-
+    global RACE_DB_FILENAME
+    global USER_DB_FILENAME
+    
     defaults = {
         'bot_command_prefix':'.',
         'bot_version':'0.2.3',
@@ -50,8 +49,7 @@ def init():
         'race_require_at_least_two':'0',
         'db_daily_filename':'data/daily.db',
         'db_races_filename':'data/races.db',
-##        'db_daily_reset_all_data':'0',
-##        'db_races_reset_all_data':'0'
+        'db_users_filename':'data/users.db'
         }
 
     admin_roles = []
@@ -88,4 +86,5 @@ def init():
     REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
     DAILY_DB_FILENAME = defaults['db_daily_filename']
     RACE_DB_FILENAME = defaults['db_races_filename']
+    USER_DB_FILENAME = defaults['db_users_filename']
         

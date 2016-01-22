@@ -1,5 +1,5 @@
 bot_command_prefix=.
-bot_version=0.3.2
+bot_version=0.3.3
 
 channel_main=necrobot_main
 channel_reference=command_list
@@ -21,3 +21,4 @@ race_require_at_least_two=1
 
 db_daily_filename=data/daily.db
 db_races_filename=data/races.db
+db_users_filename=data/users.db

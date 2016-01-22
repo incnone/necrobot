@@ -72,16 +72,14 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 ##    TABLE last_daily : tracks dailies for which the player has registered (by calling .dailyseed)
 ##        playerid     : a unique identifier for the player
 ##        date         : a number for a daily for which the player has registered
+## In users.db:--------------------------------------------------------------------------------
+##    TABLE user_prefs    : stores user-specific preferences for bot-use
+##        playerid        : the user's unique discord identifier
+##        hidespoilerchat : if true, hides #dailyspoilerchat until the user has submitted for the daily
+
 
 ## Set up the databases for the first time.    
 def set_up_databases():
-
-##    if config.RACE_DB_DO_RESET:
-##        if os.path.isfile(config.RACE_DB_FILENAME):
-##            backup_daily_db_filename = config.RACE_DB_FILENAME[:-3] + '_backup.db'
-##            if os.path.isfile(backup_daily_db_filename):
-##                os.remove(backup_daily_db_filename)
-##            os.rename(config.RACE_DB_FILENAME, backup_daily_db_filename)
 
     if not os.path.isfile(config.RACE_DB_FILENAME):
         races_db_conn = sqlite3.connect(config.RACE_DB_FILENAME)
@@ -93,13 +91,6 @@ def set_up_databases():
         races_db_conn.commit()
         races_db_conn.close()
 
-##    if config.DAILY_DB_DO_RESET:
-##        if os.path.isfile(config.DAILY_DB_FILENAME):
-##            backup_daily_db_filename = config.DAILY_DB_FILENAME[:-3] + '_backup.db'
-##            if os.path.isfile(backup_daily_db_filename):
-##                os.remove(backup_daily_db_filename)
-##            os.rename(config.DAILY_DB_FILENAME, backup_daily_db_filename)
-
     if not os.path.isfile(config.DAILY_DB_FILENAME):
         daily_db_conn = sqlite3.connect(config.DAILY_DB_FILENAME)
         daily_db_cur = daily_db_conn.cursor()
@@ -109,6 +100,13 @@ def set_up_databases():
         daily_db_cur.execute("""CREATE TABLE last_daily (playerid bigint, date smallint)""")
         daily_db_conn.commit()
         daily_db_conn.close()  
+
+    if not os.path.isfile(config.USER_DB_FILENAME):
+        user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
+        user_db_cur = user_db_conn.cursor()
+        user_db_cur.execute("""CREATE TABLE user_prefs (playerid bigint, hidespoilerchat boolean)""")
+        user_db_conn.commit()
+        user_db_conn.close()          
 
 #----Main------------------------------------------------------
 config.init()

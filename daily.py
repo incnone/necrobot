@@ -9,6 +9,7 @@ import config
 import level
 import racetime
 import seedgen
+import userprefs
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 
@@ -36,14 +37,20 @@ def _format_as_timestr(hours, minutes):
 
 class DailyManager(object):
 
-    def __init__(self, client, db_connection):
+    def __init__(self, client, db_connection, prefs_manager=None):
         self._client = client
         self._db_conn = db_connection
-
+        self._prefs_manager = prefs_manager
         self._leaderboard_channel = None
+        self._spoilerchat_channel = None
+
         for channel in self._client.get_all_channels():
             if channel.name == config.DAILY_LEADERBOARDS_CHANNEL_NAME:
                 self._leaderboard_channel = channel
+
+        for channel in self._client.get_all_channels():
+            if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
+                self._spoilerchat_channel = channel        
 
     # Returns a string with the current daily's date and time until the next daily.
     def daily_time_info_str(self):
@@ -208,19 +215,26 @@ class DailyManager(object):
         if not lv == -1: # parse succeeded
             if overwrite:
                 self.delete_from_daily(daily_number, user)
-                
-            self.submit_to_daily(daily_number, user, lv, time)
+
+            asyncio.ensure_future(self.submit_to_daily(daily_number, user, lv, time))
             return ret_str
         else:
             return ''
                         
     # Submit a run to the given daily number    #DB_acc
+    @asyncio.coroutine
     def submit_to_daily(self, daily_number, user, lv, time):
         db_cursor = self._db_conn.cursor()
         race_params = (daily_number, user.name, user.id, lv, time,)
         db_cursor.execute("INSERT INTO daily_races VALUES (?,?,?,?,?)", race_params)
         self._db_conn.commit()
 
+        #if submitting for today, make spoilerchat visible
+        if daily_number == self.today_number():
+            read_permit = discord.Permissions.none()
+            read_permit.read_messages = True
+            yield from self._client.edit_channel_permissions(self._spoilerchat_channel, user, allow=read_permit)
+                    
     # Delete a run from the daily #DB_acc
     def delete_from_daily(self, daily_number, user):
         db_cursor = self._db_conn.cursor()
@@ -254,6 +268,17 @@ class DailyManager(object):
                 if row[0] != self.today_number():
                     asyncio.ensure_future(self.update_leaderboard(row[0], True))
                     break #only do the most recent one that isn't today
+
+            #hide dailyspoilerchat for those users with that preference
+            if self._prefs_manager and self._spoilerchat_channel:
+                hide_pref = userprefs.UserPrefs()
+                hide_pref.hide_spoilerchat = True
+                
+                members_to_hide_for = self._prefs_manager.get_all_matching(hide_pref)
+                for member in members_to_hide_for:
+                    read_permit = discord.Permissions.none()
+                    read_permit.read_messages = True
+                    yield from self._client.edit_channel_permissions(self._spoilerchat_channel, member, deny=read_permit)                
 
         return today_seed
         
