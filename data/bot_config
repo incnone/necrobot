@@ -1,5 +1,5 @@
 bot_command_prefix=.
-bot_version=0.3.2
+bot_version=0.3.3
 
 channel_main=necrobot_main
 channel_reference=command_list

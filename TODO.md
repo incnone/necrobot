@@ -1,10 +1,9 @@
 # Necrobot TODO
 
-Current version: 0.3.2
+Current version: 0.3.3
 
 ### Possiblilites to consider (not sure I want these yet)
 
-- Make #dailyspoilerchat unreadable until the user submits for the daily, and accept submissions via PM. At the moment I'd like this to be an opt-in option. My main worry about doing this is that in the current system, people are forced into #dailyspoilerchat and forced to type in that channel when they submit, which encourages talking.
 - If a user has two seeds active and both are submittable, force them to use a `-date` flag for their
 submission. (This should work like `-date Jan20`.) In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs a date that isn't their most recent seed.
 - Add options for setting personal defaults on `.make` (or `.makeprivate`)
