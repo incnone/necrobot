@@ -58,7 +58,7 @@ class Race(object):
     # Returns the string to go in the topic for the leaderboard
     @property
     def leaderboard(self):
-        new_leaderboard = '```\n' + self.leaderboard_header + status_str(self._status) + '\n'
+        new_leaderboard = '``` \n' + self.leaderboard_header + status_str(self._status) + '\n'
         new_leaderboard += 'Entrants:\n'
         new_leaderboard += self.leaderboard_text
         new_leaderboard += '```'

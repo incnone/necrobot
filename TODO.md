@@ -2,8 +2,14 @@
 
 Current version: 0.3.3
 
+## Small changes
+
+- Ensure that the daily seed is different from the previous seed
+- Allow the race creator to change the race rules after creating the room. 
+
 ### Possiblilites to consider (not sure I want these yet)
 
+- Add a preference for being alerted via PM when races start
 - If a user has two seeds active and both are submittable, force them to use a `-date` flag for their
 submission. (This should work like `-date Jan20`.) In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs a date that isn't their most recent seed.
 - Add options for setting personal defaults on `.make` (or `.makeprivate`)
