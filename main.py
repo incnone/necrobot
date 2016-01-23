@@ -108,18 +108,19 @@ def set_up_databases():
         user_db_cur.execute("""CREATE TABLE user_prefs (playerid bigint, hidespoilerchat boolean, deliverseed boolean)""")
         user_db_conn.commit()
         user_db_conn.close()
-    else: #handle later changes
-        user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
-        user_db_cur = user_db_conn.cursor()
-        user_db_cur.execute(textwrap.dedent("""
-            IF COL_LENGTH('user_prefs', 'deliverseed') IS NULL
-            BEGIN
-            ALTER TABLE user_prefs
-            ADD deliverseed boolean NOT NULL DEFAULT FALSE
-            END            
-            """))
-        user_db_conn.commit() 
-        user_db_conn.close()
+##    else: #handle later changes
+##        user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
+##        user_db_cur = user_db_conn.cursor()
+##        user_db_cur.execute("""PRAGMA table_info(user_prefs)""")
+##        col_found = False
+##        for row in user_db_cur:
+##            if row[1] == 'deliverseed':
+##                col_found = True
+##        if not col_found:
+##            user_db_cur.execute("""ALTER TABLE user_prefs
+##                                   ADD deliverseed boolean NOT NULL DEFAULT FALSE""")
+##        user_db_conn.commit() 
+##        user_db_conn.close()
 
 #----Main------------------------------------------------------
 config.init()
@@ -154,4 +155,5 @@ def on_message(message):
     yield from necrobot.parse_message(message)
 
 # Run client (TODO: use login(), start(), whatever to not get a blocking method)
-client.run(login_data.email, login_data.password)
+while True:
+    client.run(login_data.email, login_data.password)

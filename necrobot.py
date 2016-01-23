@@ -85,6 +85,7 @@ class Necrobot(object):
         if self._client.servers:
             for s in self._client.servers:
                 if id_is_int and s.id == server_id:
+                    print("Server id: {}".format(s.id))
                     self._server = s
                 elif s.name == server_id:
                     print("Server id: {}".format(s.id))

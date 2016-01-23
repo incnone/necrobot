@@ -58,10 +58,10 @@ class DailyManager(object):
     # Coroutine running in the background; after it becomes a new daily, will automatically PM out the seeds to
     # users that have that preference.
     @asyncio.coroutine
-    def _auto_pm_seeds():
+    def _auto_pm_seeds(self):
         self._last_daily_number = self.today_number()
         while True:
-            asyncio.sleep(120) #check every two minutes
+            yield from asyncio.sleep(120) #check every two minutes
             today = self.today_number()
             if today != self._last_daily_number:
                 # Send the PM's
