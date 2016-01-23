@@ -6,7 +6,6 @@ Current version: 0.3.3
 
 - Ensure that the daily seed is different from the previous seed
 - Allow the race creator to change the race rules after creating the room. 
-- Add a preference for being PM'd the daily seed when it opens
 
 ### Possiblilites to consider (not sure I want these yet)
 

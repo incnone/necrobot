@@ -66,7 +66,7 @@ class DailyManager(object):
             if today != self._last_daily_number:
                 # Send the PM's
                 auto_pref = userprefs.UserPrefs()
-                auto_pref.deliver_seed = True
+                auto_pref.daily_alert = True
                 today_seed = self.get_seed(today)
                 for member in self._prefs_manager.get_all_matching(auto_pref):
                     if self.has_submitted(self._last_daily_number, member.id):

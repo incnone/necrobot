@@ -4,22 +4,22 @@ class UserPrefs(object):
     def get_default():
         prefs = UserPrefs()
         prefs.hide_spoilerchat = False
-        prefs.deliver_seed = False
+        prefs.daily_alert = False
         return prefs
 
     def __init__(self):
         self.hide_spoilerchat = None
-        self.deliver_seed = None
+        self.daily_alert = None
 
     def modify_with(self, user_prefs):
         if user_prefs.hide_spoilerchat != None:
             self.hide_spoilerchat = user_prefs.hide_spoilerchat
-        if user_prefs.deliver_seed != None:
-            self.deliver_seed = user_prefs.deliver_seed
+        if user_prefs.daily_alert != None:
+            self.daily_alert = user_prefs.daily_alert
 
     @property
     def contains_info(self):
-        return self.hide_spoilerchat != None or self.deliver_seed != None
+        return self.hide_spoilerchat != None or self.daily_alert != None
 
     # A list of strings describing preferences set by this object
     @property
@@ -30,10 +30,10 @@ class UserPrefs(object):
         elif self.hide_spoilerchat == True:
             pref_str.append('Hide daily spoiler chat until after submission.')
 
-        if self.deliver_seed == False:
-            pref_str.append('Do not deliver the daily seed via PM.')
-        elif self.deliver_seed == True:
-            pref_str.append('Deliver the daily seed via PM.')
+        if self.daily_alert == False:
+            pref_str.append('No daily alerts.')
+        elif self.daily_alert == True:
+            pref_str.append('Alert (via PM) when the new daily opens.')
         return pref_str
 
 def _parse_show_spoilerchat(args, user_prefs):
@@ -44,13 +44,13 @@ def _parse_show_spoilerchat(args, user_prefs):
         elif args[1] == 'show':
             user_prefs.hide_spoilerchat = False         
 
-def _parse_deliver_seed(args, user_prefs):
-    command_list = ['deliverseed']
+def _parse_daily_alert(args, user_prefs):
+    command_list = ['dailyalert']
     if len(args) >= 2 and args[0] in command_list:
         if args[1] == 'true':
-            user_prefs.deliver_seed = True
+            user_prefs.daily_alert = True
         elif args[1] == 'false':
-            user_prefs.deliver_seed = False   
+            user_prefs.daily_alert = False   
 
 def parse_args(args):
     #user_prefs is a list of preferences we should change
@@ -64,7 +64,7 @@ def parse_args(args):
 
         #Parse each possible command
         _parse_show_spoilerchat(next_cmd_args, user_prefs)
-        _parse_deliver_seed(next_cmd_args, user_prefs)
+        _parse_daily_alert(next_cmd_args, user_prefs)
     #end while
 
     return user_prefs
@@ -79,7 +79,7 @@ class UserPrefManager(object):
         prefs.modify_with(user_prefs)
 
         db_cursor = self._db_conn.cursor()
-        params = (user.id, prefs.hide_spoilerchat, prefs.deliver_seed,)
+        params = (user.id, prefs.hide_spoilerchat, prefs.daily_alert,)
         db_cursor.execute("""INSERT INTO user_prefs VALUES (?,?,?)""", params)         
         self._db_conn.commit()
 
@@ -90,13 +90,13 @@ class UserPrefManager(object):
         db_cursor.execute("""SELECT * FROM user_prefs WHERE playerid=?""", params)
         for row in db_cursor:
             user_prefs.hide_spoilerchat = row[1]
-            user_prefs.deliver_seed = row[2]
+            user_prefs.daily_alert = row[2]
         return user_prefs
 
     #get all user id's matching the given user prefs
     def get_all_matching(self, user_prefs):
         users_matching_spoilerchat = []
-        users_matching_deliverseed = []
+        users_matching_dailyalert = []
         lists_to_use = []
         db_cursor = self._db_conn.cursor()
 
@@ -110,15 +110,15 @@ class UserPrefManager(object):
                     if int(member.id) == int(userid):
                         users_matching_spoilerchat.append(member)
 
-        if user_prefs.deliver_seed != None:
-            lists_to_use.append(users_matching_deliverseed)
-            params = (user_prefs.deliver_seed,)
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE deliverseed=?""", params)
+        if user_prefs.daily_alert != None:
+            lists_to_use.append(users_matching_dailyalert)
+            params = (user_prefs.daily_alert,)
+            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE dailyalert=?""", params)
             for row in db_cursor:
                 userid = row[0]
                 for member in self._server.members:
                     if int(member.id) == int(userid):
-                        users_matching_deliverseed.append(member)
+                        users_matching_dailyalert.append(member)
 
         users_matching = []
         if lists_to_use:
