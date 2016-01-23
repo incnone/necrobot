@@ -43,6 +43,7 @@ class DailyManager(object):
         self._prefs_manager = prefs_manager
         self._leaderboard_channel = None
         self._spoilerchat_channel = None
+        self._last_daily_number = None # The result of self.today_number on the most recent call of auto_pm_seeds()
 
         for channel in self._client.get_all_channels():
             if channel.name == config.DAILY_LEADERBOARDS_CHANNEL_NAME:
@@ -51,6 +52,33 @@ class DailyManager(object):
         for channel in self._client.get_all_channels():
             if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
                 self._spoilerchat_channel = channel        
+
+        asyncio.ensure_future(self._auto_pm_seeds())
+
+    # Coroutine running in the background; after it becomes a new daily, will automatically PM out the seeds to
+    # users that have that preference.
+    @asyncio.coroutine
+    def _auto_pm_seeds():
+        self._last_daily_number = self.today_number()
+        while True:
+            asyncio.sleep(120) #check every two minutes
+            today = self.today_number()
+            if today != self._last_daily_number:
+                # Send the PM's
+                auto_pref = userprefs.UserPrefs()
+                auto_pref.deliver_seed = True
+                today_seed = self.get_seed(today)
+                for member in self._prefs_manager.get_all_matching(auto_pref):
+                    if self.has_submitted(self._last_daily_number, member.id):
+                        self.register(today, member.id)
+                        asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed)))
+                    else:
+                        asyncio.ensure_future(self._client.send_message(member, "You have not yet submitted for yesterday's daily, so I am not yet sending you today's seed. " \
+                                                                                "When you want today's seed, please call `.dailyseed` in the main channel or via PM."))                        
+
+                # Update the last daily number
+                self._last_daily_number = self.today_number()
+
 
     # Returns a string with the current daily's date and time until the next daily.
     def daily_time_info_str(self):
@@ -95,7 +123,7 @@ class DailyManager(object):
     # Return the text for the daily with the given daily number #DB_acc
     def leaderboard_text(self, daily_number, display_seed=False):
         date_str = daily_to_datestr(daily_number)
-        text = "```\nCadence Speedrun Daily -- {0}\n".format(date_str)
+        text = "``` \nCadence Speedrun Daily -- {0}\n".format(date_str)
 
         db_cursor = self._db_conn.cursor()
         params = (daily_number,)

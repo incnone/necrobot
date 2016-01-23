@@ -22,7 +22,8 @@ HELP_INFO = {
     "dailysubmit":"`.dailysubmit`: Submit a result for your most recent daily. Daily submissions close an hour after the next " \
                     "daily opens. If you complete the game during the daily, submit your time in the form [m]:ss.hh, e.g.: " \
                     "`.dailysubmit 12:34.56`. If you die during the daily, you may submit your run as `.dailysubmit death` " \
-                    "or provide the level of death, e.g. `.dailysubmit death 4-4` for a death on dead ringer.",
+                    "or provide the level of death, e.g. `.dailysubmit death 4-4` for a death on dead ringer. This command can " \
+                    "be called in #dailyspoilerchat or via PM.",
     "dailyunsubmit":"`.dailyunsubmit`: Retract your most recent daily submission (only works while the daily is still open).",
     "dailywhen":"`.dailywhen`: Get the date for the current daily, and the time until the next daily opens.",
     "make":"`.make`: Create a new race room. By default this creates an unseeded Cadence race, " \
@@ -51,6 +52,9 @@ HELP_INFO = {
                     "(Both admins and racers can enter the race.)", ##`x` causes the race to become a best-of-x match, and `y` causes it to " \
                     ##"simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
     "randomseed":"`.randomseed`: Get a randomly generated seed.",
+    "setprefs":"`.setprefs`: Set user preferences. Currenly can be called only with the flag `-spoilerchat`, which can be set to either " \
+                    "`show` or `hide`. Thus, `.setprefs -spoilerchat hide` makes the daily spoiler chat invisible until after you've submitted " \
+                    "for the daily; this can be undone with `.setprefs -spoilerchat show`.",
     "info":"`.info`: Necrobot version information.",
     }
 
@@ -143,6 +147,13 @@ class Necrobot(object):
                     author_as_member = member
             if author_as_member:
                 yield from self.try_daily_submit(message.channel, author_as_member, args) 
+        elif command == 'dailyseed':
+            author_as_member = None
+            for member in self._server.members:
+                if member.id == message.author.id:
+                    author_as_member = member
+            if author_as_member:
+                yield from self.try_daily_getseed(message.channel, author_as_member, args)             
 
     @asyncio.coroutine
     def main_channel_command(self, message):
@@ -188,21 +199,7 @@ class Necrobot(object):
 
         #.dailyseed : Receive (via PM) today's daily seed
         elif command == 'dailyseed':
-            dm = self._daily_manager
-            user_id = message.author.id
-            
-            today = dm.today_number()
-            today_date = daily.daily_to_date(today)
-            if dm.has_submitted(today, user_id):
-                asyncio.ensure_future(self._client.send_message(message.channel, "{0}: You have already submitted for today's daily.".format(message.author.mention)))
-            elif dm.within_grace_period() and dm.has_registered(today - 1, user_id) and not dm.has_submitted(today - 1, user_id) and not (len(args) == 1 and args[0].lstrip('-') == 'override'):
-                    asyncio.ensure_future(self._client.send_message(message.author, "{0}: Warning: You have not yet " \
-                        "submitted for yesterday's daily, which is open for another {1}. If you want to forfeit the " \
-                        "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(message.author.mention, dm.daily_grace_timestr())))                
-            else:
-                dm.register(today, user_id)
-                seed = yield from dm.get_seed(today)
-                asyncio.ensure_future(self._client.send_message(message.author, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), seed)))
+            yield from self.try_daily_getseed(message.channel, message.author, args)
 
         #.dailystatus : Get your current status for the current daily (unregistered, registered, can still submit for yesterday, submitted)
         elif command == 'dailystatus':
@@ -232,7 +229,7 @@ class Necrobot(object):
                     spoilerchat_channel = channel
             if spoilerchat_channel:
                 asyncio.ensure_future(self._client.send_message(message.channel,
-                    "{0}: Please call `.dailysubmit` from {1} (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
+                    "{0}: Please call `.dailysubmit` from {1}, or via PM (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
                 asyncio.ensure_future(self._client.delete_message(message))
 
         #.dailyunsubmit : Remove your most recent daily submission (if possible)
@@ -343,6 +340,25 @@ class Necrobot(object):
                 "Deleted {1}'s daily submission for {0}.".format(daily.daily_to_shortstr(daily_number), user.mention)))
             asyncio.ensure_future(dm.update_leaderboard(daily_number))
 
+    #Try to get today's daily seed if possible
+    @asyncio.coroutine
+    def try_daily_getseed(self, channel, member, args):
+        dm = self._daily_manager
+        user_id = member.id
+        
+        today = dm.today_number()
+        today_date = daily.daily_to_date(today)
+        if dm.has_submitted(today, user_id):
+            asyncio.ensure_future(self._client.send_message(channel, "{0}: You have already submitted for today's daily.".format(member.mention)))
+        elif dm.within_grace_period() and dm.has_registered(today - 1, user_id) and not dm.has_submitted(today - 1, user_id) and not (len(args) == 1 and args[0].lstrip('-') == 'override'):
+                asyncio.ensure_future(self._client.send_message(member, "{0}: Warning: You have not yet " \
+                    "submitted for yesterday's daily, which is open for another {1}. If you want to forfeit the " \
+                    "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(member.mention, dm.daily_grace_timestr())))                
+        else:
+            dm.register(today, user_id)
+            seed = yield from dm.get_seed(today)
+            asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), seed)))        
+
     #Try to submit a daily by the message author, if possible, and output reasonable messages
     @asyncio.coroutine
     def try_daily_submit(self, channel, user, args):
@@ -361,8 +377,12 @@ class Necrobot(object):
         else:
             submission_string = dm.parse_submission(daily_number, user, args)
             if submission_string: # parse succeeded
-                asyncio.ensure_future(self._client.send_message(channel,
-                    "Submitted for {0}: {1} {2}.".format(daily.daily_to_shortstr(daily_number), user.mention, submission_string)))
+                if channel.is_private: # submitted through pm
+                    asyncio.ensure_future(self._client.send_message(channel,
+                        "Submitted for {0}: You {1}.".format(daily.daily_to_shortstr(daily_number), submission_string)))
+                if dm._spoilerchat_channel:
+                    asyncio.ensure_future(self._client.send_message(dm._spoilerchat_channel,
+                        "Submitted for {0}: {1} {2}.".format(daily.daily_to_shortstr(daily_number), user.mention, submission_string)))
                 asyncio.ensure_future(dm.update_leaderboard(daily_number))
             else: # parse failed
                 asyncio.ensure_future(self._client.send_message(channel,

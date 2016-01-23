@@ -76,6 +76,7 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 ##    TABLE user_prefs    : stores user-specific preferences for bot-use
 ##        playerid        : the user's unique discord identifier
 ##        hidespoilerchat : if true, hides #dailyspoilerchat until the user has submitted for the daily
+##        deliverseed     : if true, sends a PM to the user with the new daily seed when the daily rolls over
 
 
 ## Set up the databases for the first time.    
@@ -104,9 +105,21 @@ def set_up_databases():
     if not os.path.isfile(config.USER_DB_FILENAME):
         user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
         user_db_cur = user_db_conn.cursor()
-        user_db_cur.execute("""CREATE TABLE user_prefs (playerid bigint, hidespoilerchat boolean)""")
+        user_db_cur.execute("""CREATE TABLE user_prefs (playerid bigint, hidespoilerchat boolean, deliverseed boolean)""")
         user_db_conn.commit()
-        user_db_conn.close()          
+        user_db_conn.close()
+    else: #handle later changes
+        user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
+        user_db_cur = user_db_conn.cursor()
+        user_db_cur.execute(textwrap.dedent("""
+            IF COL_LENGTH('user_prefs', 'deliverseed') IS NULL
+            BEGIN
+            ALTER TABLE user_prefs
+            ADD deliverseed boolean NOT NULL DEFAULT FALSE
+            END            
+            """))
+        user_db_conn.commit() 
+        user_db_conn.close()
 
 #----Main------------------------------------------------------
 config.init()
