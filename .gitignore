@@ -1,9 +1,5 @@
-data/init_info
-*.db
 data/login_info
 *.pyc
 *.log
 discord.log
 *.log
-data/login_info_main
-data/login_info_test
