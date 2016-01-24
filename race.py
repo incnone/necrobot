@@ -441,7 +441,9 @@ class Race(object):
         for racer in racer_list:
             rank += 1
             racer_params = (new_raceid, racer.id, racer.name, racer.is_finished, racer.time, rank, racer.igt, racer.comment[:255])
-            db_cur.execute("INSERT INTO racer_data VALUES (?,?,?,?,?,?,?,?)", racer_params)      
+            db_cur.execute("INSERT INTO racer_data VALUES (?,?,?,?,?,?,?,?)", racer_params)
+
+        db_conn.commit()
 
     # Cancel the race.
     @asyncio.coroutine
