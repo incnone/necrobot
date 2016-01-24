@@ -15,6 +15,7 @@ import config
 HELP_INFO = {
     "help":"`.help`: Help.",
     "dailyresubmit":"`.dailyresubmit`: Submit for the daily, overriding a previous submission. Use this to correct a mistake in a daily submission.",
+    "dailyrules":"`.dailyrules`: Get the rules for the speedrun daily.",
     "dailyseed":"`.dailyseed`: Get the seed for today's daily. (Will be sent via PM.)",
     "dailystatus":"`.dailystatus`: Find out whether you've submitted to today's daily.",
     "dailysubmit":"`.dailysubmit`: Submit a result for your most recent daily. Daily submissions close an hour after the next " \
@@ -142,7 +143,7 @@ class Necrobot(object):
         args = message.content.split()
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
         if command == 'dailyrules':
-            yield from self.get_dailyrules(message.channel, message.author, args)  
+            yield from self.get_dailyrules(message.channel)  
         elif command == 'dailysubmit':
             author_as_member = None
             for member in self._server.members:
@@ -202,7 +203,7 @@ class Necrobot(object):
 
         #.dailyrules: Output the rules for the daily
         elif command == 'dailyrules':
-            yield from self.get_dailyrules(message.channel, message.author, args)
+            yield from self.get_dailyrules(message.channel)
 
         #.dailyseed : Receive (via PM) today's daily seed
         elif command == 'dailyseed':
