@@ -32,6 +32,7 @@ raceroom_topic = textwrap.dedent("""\
     `.time` : Get the current race time.
     `.rematch` : Make a rematch.
     `.delayrecord` : Delay recording of this race.
+    `.alertnext` : Give an @mention to you when a rematch starts.
     """)
 
 cmd_help_info = {
@@ -52,7 +53,8 @@ cmd_help_info = {
     'comment':"`.comment text` : Adds  text as a comment to your race.",
     'igt':"`.igt time` : Adds an in-game-time to your race. time takes the form 12:34.56.",
     'rematch':"`.rematch` : If the race is complete, creates a new race with the same rules in a separate room.",
-    'delayrecord':"`.delayrecord` : If the race is complete, delays recording of the race for some extra time."
+    'delayrecord':"`.delayrecord` : If the race is complete, delays recording of the race for some extra time.",
+    'alertnext':"`.alertnext` : If a rematch of this race is made, you will be @mentioned at the start of its channel." 
     }
 
 class RaceRoom(object):
@@ -67,15 +69,23 @@ class RaceRoom(object):
 
         self.is_closed = False                      #True if room has been closed
         self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
+        self._mention_on_rematch = []               #A list of users that should be @mentioned when a rematch is created
 
     # Set up the leaderboard etc. Should be called after creation; code not put into __init__ b/c coroutine
     @asyncio.coroutine
-    def initialize(self):
+    def initialize(self, users_to_mention=[]):
         asyncio.ensure_future(self._race.initialize())
         #self._leaderboard = yield from self.room.write('```' + self.leaderboard_header + status_str(self._status) + '```') 
         #asyncio.ensure_future(self.client.edit_channel(self.channel, topic=raceroom_topic))
-        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self._race.leaderboard))        
+        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self._race.leaderboard))
         asyncio.ensure_future(self._monitor_for_cleanup())
+
+        #send @mention message
+        mention_text = ''
+        for user in users_to_mention:
+            mention_text += user.mention + ' '
+        if mention_text:
+            asyncio.ensure_future(self.client.send_message(self.channel, 'Alerting users for rematch: ' + mention_text))
 
     # Write text to the raceroom. Return a Message for the text written
     @asyncio.coroutine
@@ -118,12 +128,18 @@ class RaceRoom(object):
             else:   
                 yield from self.write(textwrap.dedent("""\
                     Command list:
-                    Always: `.help` or `.help [command]` for information on a specific command
+                    Always: `.help` or `.help [command]` for information on a specific command; `.alertnext`
                     Before the race: `.enter`, `.unenter`, `.ready`, `.unready`
                     During the race: `.done`, `.undone`, `.forfeit`, `.unforfeit`
-                    After the race: `.comment [short comment]`, `.igt 12:34.56` 
+                    After the race: `.comment [short comment]`, `.igt 12:34.56`
                     """))
 
+        #.alertnext : Mention this user when a rematch happens
+        elif command == 'alertnext':
+            if not message.author in self._mention_on_rematch:
+                self._mention_on_rematch.append(message.author)
+                yield from self.write('{0}: You will be alerted when a rematch begins.'.format(message.author.mention))
+                    
         # Admin commands
         if self._is_race_admin(message.author): 
 
@@ -173,6 +189,8 @@ class RaceRoom(object):
                 if command == 'enter' or command == 'join':
                     new_entry = yield from self._race.enter_racer(message.author)
                     if new_entry:
+                        if not message.author in self._mention_on_rematch:
+                            self._mention_on_rematch.append(message.author)
                         yield from self.write('{0} has entered the race. {1} entrants.'.format(message.author.mention, len(self._race.racers)))
                     else:
                         yield from self.write('{0} is already entered.'.format(message.author.mention))
@@ -180,6 +198,7 @@ class RaceRoom(object):
                 #.unenter and .unjoin : Leave the race
                 elif command == 'unenter' or command == 'unjoin':
                     success = yield from self._race.unenter_racer(message.author)
+                    self._mention_on_rematch.remove(message.author)
                     if success:
                         yield from self.write('{0} is no longer entered.'.format(message.author.mention))
 
@@ -217,8 +236,7 @@ class RaceRoom(object):
                     yield from self.write('{}: Warning: You have not yet entered the race.'.format(message.author.mention))
 
         # Commands during the race
-        else: 
-
+        else:
             #.done and .finish : Finish the race
             if command == 'done' or command == 'finish':
                 racer = self._race.get_racer(message.author)
@@ -286,7 +304,7 @@ class RaceRoom(object):
             elif command == 'rematch' and not self._rematch_made:
                 if self._race.complete:
                     new_race_info = self._race.race_info.copy()
-                    new_race_channel = yield from self._manager.make_race(new_race_info)
+                    new_race_channel = yield from self._manager.make_race(new_race_info, mention=self._mention_on_rematch)
                     if new_race_channel:
                         self._rematch_made = True
                         yield from self.write('Rematch created in {}!'.format(new_race_channel.mention))

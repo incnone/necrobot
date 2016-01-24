@@ -9,13 +9,15 @@ import raceinfo
 import raceprivateinfo
 import racetime
 import seedgen
+import userprefs
 
 class RaceManager(object):
 
-    def __init__(self, client, server, db_connection):
+    def __init__(self, client, server, db_connection, pref_manager=None):
         self._client = client
         self._server = server
         self._db_conn = db_connection
+        self._pref_manager = pref_manager
         self._results_channel = None
         self._races = []
         for channel in self._server.channels:
@@ -61,18 +63,9 @@ class RaceManager(object):
             if name_is_ok:
                 return trial_name
 
-##    ## Get the number of not closed races made by the given id
-##    @asyncio.coroutine
-##    def num_open_public_races_made_by(self, user_id):
-##        num = 0
-##        for race in self._races:
-##            if not race.is_closed and race.creator_id == user_id and race.__name__ == 'RaceRoom':
-##                num += 1
-##        return num
-
     ## Make a race with the given RaceInfo
     @asyncio.coroutine
-    def make_race(self, race_info, creator_id=None):
+    def make_race(self, race_info, creator_id=None, mention=[]):
         #Get rid of closed races (Now seems like a good time to garbage collect)
         self._races = [r for r in self._races if not r.is_closed]
         
@@ -81,7 +74,16 @@ class RaceManager(object):
         new_race = raceroom.RaceRoom(self._client, self, race_channel, race_info)
         new_race.creator_id = creator_id
         self._races.append(new_race)
-        asyncio.ensure_future(new_race.initialize())
+        asyncio.ensure_future(new_race.initialize(mention))
+
+        # send PM alerts
+        if race_channel:
+            all_alert_pref = userprefs.UserPrefs()
+            all_alert_pref.race_alert = userprefs.RaceAlerts['all']
+            alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
+            for user in self._pref_manager.get_all_matching(all_alert_pref):
+                asyncio.ensure_future(self._client.send_message(user, alert_string))
+        
         return race_channel
 
     ## Make a private race with the given RaceInfo

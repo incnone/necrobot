@@ -1,6 +1,3 @@
-#TODO: more robust message reading (e.g. should be able to read history in case of temporary crash etc)
-#TODO: thread safety for database access
-
 import asyncio
 import datetime
 import discord
@@ -76,7 +73,7 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 ##    TABLE user_prefs    : stores user-specific preferences for bot-use
 ##        playerid        : the user's unique discord identifier
 ##        hidespoilerchat : if true, hides #dailyspoilerchat until the user has submitted for the daily
-##        dailyalert      : if true, sends a PM to the user with the new daily seed when the daily rolls over
+##        dailyalert      : if true, sends a PM alerting user when daily rolls over
 
 
 ## Set up the databases for the first time.    
@@ -105,20 +102,28 @@ def set_up_databases():
     if not os.path.isfile(config.USER_DB_FILENAME):
         user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
         user_db_cur = user_db_conn.cursor()
-        user_db_cur.execute("""CREATE TABLE user_prefs (playerid bigint, hidespoilerchat boolean, dailyalert boolean)""")
+        user_db_cur.execute("""CREATE TABLE user_prefs (playerid bigint, hidespoilerchat boolean, dailyalert boolean, racealert tinyint)""")
         user_db_conn.commit()
         user_db_conn.close()
     else: #handle later changes
         user_db_conn = sqlite3.connect(config.USER_DB_FILENAME)
         user_db_cur = user_db_conn.cursor()
         user_db_cur.execute("""PRAGMA table_info(user_prefs)""")
-        col_found = False
+        dailyalert_found = False
+        racealert_found = False
         for row in user_db_cur:
             if row[1] == 'dailyalert':
-                col_found = True
-        if not col_found:
+                dailyalert_found = True
+            elif row[1] == 'racealert':
+                racealert_found = True
+
+        if not dailyalert_found:
             user_db_cur.execute("""ALTER TABLE user_prefs
                                    ADD dailyalert boolean NOT NULL DEFAULT FALSE""")
+        if not racealert_found:
+            user_db_cur.execute("""ALTER TABLE user_prefs
+                                   ADD racealert tinyint NOT NULL DEFAULT 0""")
+
         user_db_conn.commit() 
         user_db_conn.close()
 

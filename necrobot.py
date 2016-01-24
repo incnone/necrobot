@@ -1,5 +1,3 @@
-#TODO: maybe a command to .dailyseed should not register for the new daily if you've yet to complete old one?
-
 import asyncio
 import discord
 import seedgen
@@ -52,9 +50,11 @@ HELP_INFO = {
                     "(Both admins and racers can enter the race.)", ##`x` causes the race to become a best-of-x match, and `y` causes it to " \
                     ##"simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
     "randomseed":"`.randomseed`: Get a randomly generated seed.",
-    "setprefs":"`.setprefs`: Set user preferences. Currenly can be called only with the flag `-spoilerchat`, which can be set to either " \
-                    "`show` or `hide`. Thus, `.setprefs -spoilerchat hide` makes the daily spoiler chat invisible until after you've submitted " \
-                    "for the daily; this can be undone with `.setprefs -spoilerchat show`.",
+    "setprefs":"`.setprefs`: Set user preferences. Allowable flags:\n" \
+                    "`-spoilerchat [show|hide]` : `show` makes spoilerchat visible at all times; `hide` hides it until you've submitted for the daily.\n" \
+                    "`-dailyalert [true|false]` : if `true`, the bot will send a PM to alert you when the new daily is available.\n" \
+                    "`-racealert [none|some|all]` : `none` gives no race alerts; `some` sends a PM when a new race is created (but not a rematch); `all` sends a " \
+                    "PM for every race created (including rematches).",
     "info":"`.info`: Necrobot version information.",
     }
 
@@ -104,7 +104,7 @@ class Necrobot(object):
 
         #set up race manager
         race_db_connection = sqlite3.connect(config.RACE_DB_FILENAME)
-        self._race_manager = racemgr.RaceManager(self._client, self._server, race_db_connection)
+        self._race_manager = racemgr.RaceManager(self._client, self._server, race_db_connection, self._pref_manager)
 
     ## Log out of discord
     @asyncio.coroutine
@@ -141,7 +141,9 @@ class Necrobot(object):
     def private_message_command(self, message):
         args = message.content.split()
         command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
-        if command == 'dailysubmit':
+        if command == 'dailyrules':
+            yield from self.get_dailyrules(message.channel, message.author, args)  
+        elif command == 'dailysubmit':
             author_as_member = None
             for member in self._server.members:
                 if member.id == message.author.id:
@@ -198,6 +200,10 @@ class Necrobot(object):
                     "{0}: Please call `.dailyresubmit` from {1} (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
                 asyncio.ensure_future(self._client.delete_message(message))
 
+        #.dailyrules: Output the rules for the daily
+        elif command == 'dailyrules':
+            yield from self.get_dailyrules(message.channel, message.author, args)
+
         #.dailyseed : Receive (via PM) today's daily seed
         elif command == 'dailyseed':
             yield from self.try_daily_getseed(message.channel, message.author, args)
@@ -248,8 +254,17 @@ class Necrobot(object):
             if race_info:
                 race_channel = yield from self._race_manager.make_race(race_info)
                 if race_channel:
-                    asyncio.ensure_future(self._client.send_message(message.channel,
-                        'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_info.format_str())))
+                    alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
+                    main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_info.format_str())
+
+                    # send PM alerts
+                    some_alert_pref = userprefs.UserPrefs()
+                    some_alert_pref.race_alert = userprefs.RaceAlerts['some']
+                    for user in self._pref_manager.get_all_matching(some_alert_pref):
+                        asyncio.ensure_future(self._client.send_message(user, alert_string))
+
+                    # alert in main channel
+                    asyncio.ensure_future(self._client.send_message(message.channel, main_channel_string))
 
         #.makeprivate : create a new race room
         elif command == 'makeprivate':
@@ -358,7 +373,17 @@ class Necrobot(object):
         else:
             dm.register(today, user_id)
             seed = yield from dm.get_seed(today)
-            asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), seed)))        
+            asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}. " \
+                "This is a single-attempt Cadence seeded all zones run. (See `.dailyrules` for complete rules.)".format(today_date.strftime("%d %b"), seed)))     
+
+    #Output the rules for the daily
+    @asyncio.coroutine
+    def get_dailyrules(self, channel):
+        asyncio.ensure_future(self._client.send_message(channel, "Rules for the speedrun daily:\n" \
+            "\N{BULLET} Cadence seeded all zones; get the seed for the daily using `.dailyseed`.\n" \
+            "\N{BULLET} Run the seed blind. Make one attempt and submit the result (even if you die).\n" \
+            "\N{BULLET} No restriction on resolution, display settings, zoom, etc.\n" \
+            "\N{BULLET} Mods that disable leaderboard submission are not allowed (e.g. xml / music mods)."))                                             
 
     #Try to submit a daily by the message author, if possible, and output reasonable messages
     @asyncio.coroutine
