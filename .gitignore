@@ -1,4 +1,5 @@
 data/login_info
+*.db
 *.pyc
 *.log
 discord.log

@@ -32,7 +32,7 @@ raceroom_topic = textwrap.dedent("""\
     `.time` : Get the current race time.
     `.rematch` : Make a rematch.
     `.delayrecord` : Delay recording of this race.
-    `.alertnext` : Give an @mention to you when a rematch starts.
+    `.notify` : Give an @mention to you when a rematch starts.
     """)
 
 cmd_help_info = {
@@ -54,7 +54,7 @@ cmd_help_info = {
     'igt':"`.igt time` : Adds an in-game-time to your race. time takes the form 12:34.56.",
     'rematch':"`.rematch` : If the race is complete, creates a new race with the same rules in a separate room.",
     'delayrecord':"`.delayrecord` : If the race is complete, delays recording of the race for some extra time.",
-    'alertnext':"`.alertnext` : If a rematch of this race is made, you will be @mentioned at the start of its channel." 
+    'notify':"`.notify` : If a rematch of this race is made, you will be @mentioned at the start of its channel. Use `.notify off` to cancel this." 
     }
 
 class RaceRoom(object):
@@ -128,16 +128,20 @@ class RaceRoom(object):
             else:   
                 yield from self.write(textwrap.dedent("""\
                     Command list:
-                    Always: `.help` or `.help [command]` for information on a specific command; `.alertnext`
+                    Always: `.help` or `.help [command]` for information on a specific command; `.notify`
                     Before the race: `.enter`, `.unenter`, `.ready`, `.unready`
                     During the race: `.done`, `.undone`, `.forfeit`, `.unforfeit`
                     After the race: `.comment [short comment]`, `.igt 12:34.56`
                     """))
 
-        #.alertnext : Mention this user when a rematch happens
-        elif command == 'alertnext':
-            if not message.author in self._mention_on_rematch:
-                self._mention_on_rematch.append(message.author)
+        #.notify : Mention this user when a rematch happens
+        elif command == 'notify':
+            if len(args) == 1 and args[1] == 'off':
+                self._mention_on_rematch = [r for r in self._mention_on_rematch if r != message.author]
+                yield from self.write('{0}: You will not be alerted when a rematch begins.'.format(message.author.mention))
+            elif len(args) == 0 or len(args) == 1 and args[1] == 'on':
+                if not message.author in self._mention_on_rematch:
+                    self._mention_on_rematch.append(message.author)
                 yield from self.write('{0}: You will be alerted when a rematch begins.'.format(message.author.mention))
                     
         # Admin commands
@@ -197,8 +201,8 @@ class RaceRoom(object):
 
                 #.unenter and .unjoin : Leave the race
                 elif command == 'unenter' or command == 'unjoin':
+                    self._mention_on_rematch = [r for r in self._mention_on_rematch if r != message.author]
                     success = yield from self._race.unenter_racer(message.author)
-                    self._mention_on_rematch.remove(message.author)
                     if success:
                         yield from self.write('{0} is no longer entered.'.format(message.author.mention))
 

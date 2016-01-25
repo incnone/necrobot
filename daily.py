@@ -59,6 +59,7 @@ class DailyManager(object):
     # users that have that preference.
     @asyncio.coroutine
     def _auto_pm_seeds(self):
+        today_date = datetime.datetime.utcnow().date()
         self._last_daily_number = self.today_number()
         while True:
             yield from asyncio.sleep(120) #check every two minutes
@@ -71,11 +72,14 @@ class DailyManager(object):
                 for member in self._prefs_manager.get_all_matching(auto_pref):
                     if self.has_submitted(self._last_daily_number, member.id):
                         self.register(today, member.id)
-                        asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed)))
+                        asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), today)))
                     else:
                         asyncio.ensure_future(self._client.send_message(member, "You have not yet submitted for yesterday's daily, so I am not yet sending you today's seed. " \
                                                                                 "When you want today's seed, please call `.dailyseed` in the main channel or via PM."))                        
 
+                # Announce the new daily in spoilerchat
+                asyncio.ensure_future(self._client.send_message(self._spoilerchat_channel, "The {} daily has begun!".format(today_date.strftime("%B %d"))))
+                
                 # Update the last daily number
                 self._last_daily_number = self.today_number()
 

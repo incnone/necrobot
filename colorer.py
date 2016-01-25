@@ -2,7 +2,7 @@ import asyncio
 import discord
 import random
 
-PROTECTED_ROLENAMES = ['Admin', 'Necrobot']
+PROTECTED_ROLENAMES = ['Necrobot']
 ROLES_COLORS = {\
 'teal':discord.Color.teal(),
 'dank_teal':discord.Color.dark_teal(),
