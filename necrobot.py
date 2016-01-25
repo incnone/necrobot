@@ -63,12 +63,13 @@ class Necrobot(object):
 
     ## Barebones constructor
     def __init__(self, client,):
-        self._client = client
-        self._server = None
+        self.client = client
+        self.server = None
+        self.prefs = None
+        self._main_channel = None
         self._admin_id = None
-        self._daily_manager = None
-        self._race_manager = None
-        self._pref_manager = None
+        self._wants_to_quit = False
+        self._modules = []
 
     ## Initializes object; call after client has been logged in to discord
     def post_login_init(self, server_id, admin_id=None):
@@ -95,48 +96,63 @@ class Necrobot(object):
             print('Error: Could not find the server.')
             exit(1)
 
+        self._main_channel = self.get_channel(config.MAIN_CHANNEL_NAME)
+
         #set up prefs manager
         pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
         self._pref_manager = userprefs.UserPrefManager(pref_db_connection, self._server)
 
-        #set up daily manager
-        daily_db_connection = sqlite3.connect(config.DAILY_DB_FILENAME)
-        self._daily_manager = daily.DailyManager(self._client, daily_db_connection, self._pref_manager)
+    # Causes the Necrobot to use the given module
+    # Doesn't check for duplicates
+    def load_module(self, module):
+        self._modules.append(module)
 
-        #set up race manager
-        race_db_connection = sqlite3.connect(config.RACE_DB_FILENAME)
-        self._race_manager = racemgr.RaceManager(self._client, self._server, race_db_connection, self._pref_manager)
+    # True if the bot wants to quit (and not re-login)
+    @property
+    def quitting(self):
+        return self._wants_to_quit
+
+    # Return the #necrobot_main channel
+    @property
+    def main_channel(self):
+        return self._main_channel
+
+    # Returns the channel with the given name on the server, if any
+    def find_channel(self, channel_name):
+        for channel in self.server.channels:
+            if channel.name = channel_name:
+                return channel
+        return None
 
     ## Log out of discord
     @asyncio.coroutine
     def logout(self):
-        yield from self._client.logout()       
+        self._wants_to_quit = True
+        yield from self._client.logout()
+
+    ## Reboot our login to discord (log out, but do not set quitting = true)
+    @asyncio.coroutine
+    def reboot(self):
+        self._wants_to_quit = False
+        yield from self._client.logout()
 
     @asyncio.coroutine
-    def parse_message(self, message):
+    def execute(self, cmd):
+        # don't care about bad commands
+        if cmd.command == None:
+            return
+        
         # don't reply to self
-        if message.author == self._client.user:
+        if cmd.author == self._client.user:
             return
 
-        # handle PM's
-        if message.channel.is_private:
-            yield from self.private_message_command(message)
-
-        # otherwise, don't reply off server
-        if not message.server == self._server:
+        # only reply on-server and to PM
+        if not cmd.is_private and cmd.server != self._server:
             return
 
-        # check for command prefix
-        if not message.content.startswith(config.BOT_COMMAND_PREFIX):
-            return
-
-        # parse the command, depending on the channel it was typed in (this just restricts which commands are available from where)
-        if message.channel.name == config.MAIN_CHANNEL_NAME:
-            yield from self.main_channel_command(message)
-        elif message.channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
-            yield from self.daily_spoilerchat_channel_command(message)
-        else:
-            yield from self._race_manager.parse_message(message)
+        # let each module attempt to handle the command in turn
+        for module in self._modules:
+            asyncio.ensure_future(module.execute(cmd))
 
     @asyncio.coroutine
     def private_message_command(self, message):

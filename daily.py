@@ -41,18 +41,7 @@ class DailyManager(object):
         self._client = client
         self._db_conn = db_connection
         self._prefs_manager = prefs_manager
-        self._leaderboard_channel = None
-        self._spoilerchat_channel = None
         self._last_daily_number = None # The result of self.today_number on the most recent call of auto_pm_seeds()
-
-        for channel in self._client.get_all_channels():
-            if channel.name == config.DAILY_LEADERBOARDS_CHANNEL_NAME:
-                self._leaderboard_channel = channel
-
-        for channel in self._client.get_all_channels():
-            if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
-                self._spoilerchat_channel = channel        
-
         asyncio.ensure_future(self._auto_pm_seeds())
 
     # Coroutine running in the background; after it becomes a new daily, will automatically PM out the seeds to

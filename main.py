@@ -7,13 +7,12 @@ import sqlite3
 import textwrap
 import time
 
+import command
 import config
 import seedgen
 
+from dailymodule import DailyModule
 from necrobot import Necrobot
-from raceinfo import RaceInfo
-from race import Race
-
 
 ##-Logging-------------------------------
 logger = logging.getLogger('discord')
@@ -152,13 +151,20 @@ def on_ready():
     print(' ')
     print('Initializing necrobot...')
     necrobot.post_login_init(login_data.server_id, login_data.admin_id)
+
+    necrobot.load_module(DailyModule(necrobot, sqlite3.connect(config.DAILY_DB_FILENAME)))
+    #necrobot.load_module(public_race)
+    #necrobot.load_module(dankifier)
     print('...done.')
 
 @client.event
 @asyncio.coroutine
 def on_message(message):
-    yield from necrobot.parse_message(message)
+    cmd = command.Command(message)
+    yield from necrobot.execute(cmd)
 
-# Run client (TODO: use login(), start(), whatever to not get a blocking method)
-while True:
+# Run client
+while not necrobot.quitting:
     client.run(login_data.email, login_data.password)
+    #the above blocks, so if we're here, we've been logged out. wait one minute and try again.
+    yield from asyncio.sleep(60)
