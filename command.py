@@ -12,9 +12,9 @@ class Command(object):
         self.message = None
 
         if message.content.startswith(config.BOT_COMMAND_PREFIX):
-            args = message.content.split()
+            self.args = message.content.split()
             prefix_len = len(config.BOT_COMMAND_PREFIX)
-            self.command = args.pop(0)[prefix_len:]
+            self.command = self.args.pop(0)[prefix_len:]
             self.message = message
 
     @property

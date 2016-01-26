@@ -100,7 +100,7 @@ class Necrobot(object):
 
         #set up prefs manager
         pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
-        self._pref_manager = userprefs.UserPrefManager(pref_db_connection, self.server)
+        self.user_prefs = userprefs.UserPrefManager(pref_db_connection, self.server)
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
@@ -153,6 +153,14 @@ class Necrobot(object):
         # let each module attempt to handle the command in turn
         for module in self._modules:
             asyncio.ensure_future(module.execute(cmd))
+
+    # Returns the given Discord User as a Member of the server
+    def get_as_member(self, user):
+        for member in self.server.members:
+            if member.id == user.id:
+                return member
+
+###----------------------------OLD------------------------------------------
 
     @asyncio.coroutine
     def private_message_command(self, message):
@@ -277,7 +285,7 @@ class Necrobot(object):
                     # send PM alerts
                     some_alert_pref = userprefs.UserPrefs()
                     some_alert_pref.race_alert = userprefs.RaceAlerts['some']
-                    for user in self._pref_manager.get_all_matching(some_alert_pref):
+                    for user in self.user_prefs.get_all_matching(some_alert_pref):
                         asyncio.ensure_future(self.client.send_message(user, alert_string))
 
                     # alert in main channel
@@ -303,7 +311,7 @@ class Necrobot(object):
         elif command == 'setprefs':
             prefs = userprefs.parse_args(args)
             if prefs.contains_info:
-                self._pref_manager.set_prefs(prefs, message.author)
+                self.user_prefs.set_prefs(prefs, message.author)
                 yield from self._when_updated_prefs(prefs, message.author)
                 confirm_msg = 'Set the following preferences for {}:'.format(message.author.mention)
                 for pref_str in prefs.pref_strings:
