@@ -64,6 +64,7 @@ class DailyManager(object):
         while True:
             yield from asyncio.sleep(120) #check every two minutes
             today = self.today_number()
+            today_date = datetime.datetime.utcnow().date()
             if today != self._last_daily_number:
                 # Send the PM's
                 auto_pref = userprefs.UserPrefs()
