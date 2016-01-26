@@ -3,18 +3,13 @@
 import clparse
 import config
 
-class Flag(object):
-    def __init__(self, arglist):
-        self.name = None
-        self.args = clparse.pop_command(arglist)
-        if self.args:
-            name = self.args.pop(0)
-        elif arglist:
-            self.name = arglist.pop(0)
-
+# Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)
 class Command(object):
     def __init__(self, message):
+        #args and flags: a flag is a part of the command of the form -flag [value]
+    
         self.command = None
+        self.args = []      
         self.flags = []
         self.message = None
 
@@ -42,7 +37,30 @@ class Command(object):
     def private(self):
         return self.message.channel.is_private if self.message else None
 
-# Abstract base class; represents a module that can be attached to the Necrobot
+# Abstract base class; a particular command that the bot can interpret, and how to interpret it
+# (For instance, racemodule has a CommandType object called make, for the `.make` command.)
+class CommandType(object):
+    def __init__(self, cmd_str):
+        self.command = cmd_str             # the string that calls this command (e.g. 'make')
+        help_text = 'Error: this command has no help text.'
+
+    @property
+    def mention(self):
+        return config.BOT_COMMAND_PREFIX + self.command
+
+    # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
+    @asyncio.coroutine
+    def execute(command):
+        if command.command == self.command:
+            yield from self._do_execute(command)
+            
+    # Overwrite this to determine what this CommandType should do with a given Command
+    @asyncio.coroutine
+    def _do_execute(command):
+        print('Error: called CommandType._do_call in the abstract base class.')
+        pass
+
+# Abstract base class; a module that can be attached to the Necrobot
 class Module(object):
     def __init__(self):
         pass
