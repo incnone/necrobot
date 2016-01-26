@@ -72,7 +72,7 @@ class DailyManager(object):
                 for member in self._prefs_manager.get_all_matching(auto_pref):
                     if self.has_submitted(self._last_daily_number, member.id):
                         self.register(today, member.id)
-                        asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), today)))
+                        asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed)))
                     else:
                         asyncio.ensure_future(self._client.send_message(member, "You have not yet submitted for yesterday's daily, so I am not yet sending you today's seed. " \
                                                                                 "When you want today's seed, please call `.dailyseed` in the main channel or via PM."))                        
