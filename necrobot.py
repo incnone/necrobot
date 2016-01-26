@@ -84,23 +84,23 @@ class Necrobot(object):
         except ValueError:
             id_is_int = False
             
-        if self._client.servers:
-            for s in self._client.servers:
+        if self.client.servers:
+            for s in self.client.servers:
                 if id_is_int and s.id == server_id:
                     print("Server id: {}".format(s.id))
-                    self._server = s
+                    self.server = s
                 elif s.name == server_id:
                     print("Server id: {}".format(s.id))
-                    self._server = s
+                    self.server = s
         else:
             print('Error: Could not find the server.')
             exit(1)
 
-        self._main_channel = self.get_channel(config.MAIN_CHANNEL_NAME)
+        self._main_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
 
         #set up prefs manager
         pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
-        self._pref_manager = userprefs.UserPrefManager(pref_db_connection, self._server)
+        self._pref_manager = userprefs.UserPrefManager(pref_db_connection, self.server)
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
@@ -120,7 +120,7 @@ class Necrobot(object):
     # Returns the channel with the given name on the server, if any
     def find_channel(self, channel_name):
         for channel in self.server.channels:
-            if channel.name = channel_name:
+            if channel.name == channel_name:
                 return channel
         return None
 
@@ -128,13 +128,13 @@ class Necrobot(object):
     @asyncio.coroutine
     def logout(self):
         self._wants_to_quit = True
-        yield from self._client.logout()
+        yield from self.client.logout()
 
     ## Reboot our login to discord (log out, but do not set quitting = true)
     @asyncio.coroutine
     def reboot(self):
         self._wants_to_quit = False
-        yield from self._client.logout()
+        yield from self.client.logout()
 
     @asyncio.coroutine
     def execute(self, cmd):
@@ -143,11 +143,11 @@ class Necrobot(object):
             return
         
         # don't reply to self
-        if cmd.author == self._client.user:
+        if cmd.author == self.client.user:
             return
 
-        # only reply on-server and to PM
-        if not cmd.is_private and cmd.server != self._server:
+        # only reply on-server or to PM
+        if not cmd.is_private and cmd.server != self.server:
             return
 
         # let each module attempt to handle the command in turn
@@ -162,14 +162,14 @@ class Necrobot(object):
             yield from self.get_dailyrules(message.channel)  
         elif command == 'dailysubmit':
             author_as_member = None
-            for member in self._server.members:
+            for member in self.server.members:
                 if member.id == message.author.id:
                     author_as_member = member
             if author_as_member:
                 yield from self.try_daily_submit(message.channel, author_as_member, args) 
         elif command == 'dailyseed':
             author_as_member = None
-            for member in self._server.members:
+            for member in self.server.members:
                 if member.id == message.author.id:
                     author_as_member = member
             if author_as_member:
@@ -196,26 +196,26 @@ class Necrobot(object):
         elif command == 'help':
             cmd = args[0].lstrip(config.BOT_COMMAND_PREFIX) if len(args) == 1 else ''
             if cmd in HELP_INFO:
-                asyncio.ensure_future(self._client.send_message(message.channel, HELP_INFO[cmd]))
+                asyncio.ensure_future(self.client.send_message(message.channel, HELP_INFO[cmd]))
             else:
                 ref_channel = None
-                for channel in self._server.channels:
+                for channel in self.server.channels:
                     if channel.name == config.REFERENCE_CHANNEL_NAME:
                         ref_channel = channel
                 if ref_channel:
-                    asyncio.ensure_future(self._client.send_message(message.channel,
+                    asyncio.ensure_future(self.client.send_message(message.channel,
                         "See {} for a command list. Type `.help command` for more info on a particular command.".format(ref_channel.mention)))      
 
         #.dailyresubmit : Submit a result for your most recently registered daily (if possible)
         elif command == 'dailyresubmit':
             spoilerchat_channel = None
-            for channel in self._server.channels:
+            for channel in self.server.channels:
                 if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
                     spoilerchat_channel = channel
             if spoilerchat_channel:
-                asyncio.ensure_future(self._client.send_message(message.channel,
+                asyncio.ensure_future(self.client.send_message(message.channel,
                     "{0}: Please call `.dailyresubmit` from {1} (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
-                asyncio.ensure_future(self._client.delete_message(message))
+                asyncio.ensure_future(self.client.delete_message(message))
 
         #.dailyrules: Output the rules for the daily
         elif command == 'dailyrules':
@@ -243,18 +243,18 @@ class Necrobot(object):
             else:
                 status = "You have not yet submitted to the daily: Use `.dailysubmit` to submit a result. Today's daily is open for another {0}.".format(dm.daily_close_timestr())
 
-            asyncio.ensure_future(self._client.send_message(message.channel, '{0}: {1}'.format(message.author.mention, status)))        
+            asyncio.ensure_future(self.client.send_message(message.channel, '{0}: {1}'.format(message.author.mention, status)))        
     
         #.dailysubmit : Submit a result for your most recently registered daily (if possible)
         elif command == 'dailysubmit':
             spoilerchat_channel = None
-            for channel in self._server.channels:
+            for channel in self.server.channels:
                 if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
                     spoilerchat_channel = channel
             if spoilerchat_channel:
-                asyncio.ensure_future(self._client.send_message(message.channel,
+                asyncio.ensure_future(self.client.send_message(message.channel,
                     "{0}: Please call `.dailysubmit` from {1}, or via PM (this helps avoid spoilers in the main channel).".format(message.author.mention, spoilerchat_channel.mention)))      
-                asyncio.ensure_future(self._client.delete_message(message))
+                asyncio.ensure_future(self.client.delete_message(message))
 
         #.dailyunsubmit : Remove your most recent daily submission (if possible)
         elif command == 'dailyunsubmit':
@@ -263,7 +263,7 @@ class Necrobot(object):
         #.dailywhen : Gives time info re the daily
         elif command == 'dailywhen':
             info_str = self._daily_manager.daily_time_info_str()
-            asyncio.ensure_future(self._client.send_message(message.channel, info_str))
+            asyncio.ensure_future(self.client.send_message(message.channel, info_str))
 
         #.make : create a new race room
         elif command == 'make':
@@ -278,10 +278,10 @@ class Necrobot(object):
                     some_alert_pref = userprefs.UserPrefs()
                     some_alert_pref.race_alert = userprefs.RaceAlerts['some']
                     for user in self._pref_manager.get_all_matching(some_alert_pref):
-                        asyncio.ensure_future(self._client.send_message(user, alert_string))
+                        asyncio.ensure_future(self.client.send_message(user, alert_string))
 
                     # alert in main channel
-                    asyncio.ensure_future(self._client.send_message(message.channel, main_channel_string))
+                    asyncio.ensure_future(self.client.send_message(message.channel, main_channel_string))
 
         #.makeprivate : create a new race room
         elif command == 'makeprivate':
@@ -291,13 +291,13 @@ class Necrobot(object):
             if race_private_info:
                 race_channel = yield from self._race_manager.make_private_race(race_private_info)
                 if race_channel:
-                    asyncio.ensure_future(self._client.send_message(message.channel,
+                    asyncio.ensure_future(self.client.send_message(message.channel,
                         'A private race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(message.author.mention, race_channel.mention, race_private_info.race_info.format_str()))) 
         
         #.randomseed : Generate a new random seed
         elif command == 'randomseed':
             seed = seedgen.get_new_seed()
-            asyncio.ensure_future(self._client.send_message(message.channel, 'Seed generated for {0}: {1}'.format(message.author.mention, seed)))       
+            asyncio.ensure_future(self.client.send_message(message.channel, 'Seed generated for {0}: {1}'.format(message.author.mention, seed)))       
 
         #.setprefs : Set user preferences
         elif command == 'setprefs':
@@ -308,18 +308,18 @@ class Necrobot(object):
                 confirm_msg = 'Set the following preferences for {}:'.format(message.author.mention)
                 for pref_str in prefs.pref_strings:
                     confirm_msg += ' ' + pref_str
-                asyncio.ensure_future(self._client.send_message(message.channel, confirm_msg))                 
+                asyncio.ensure_future(self.client.send_message(message.channel, confirm_msg))                 
             else:
-                asyncio.ensure_future(self._client.send_message(message.channel, '{0}: Failure parsing arguments; did not set any user preferences.'.format(message.author.mention)))                 
+                asyncio.ensure_future(self.client.send_message(message.channel, '{0}: Failure parsing arguments; did not set any user preferences.'.format(message.author.mention)))                 
 
         #.info : Bot version information
         elif command == 'info':
             ref_channel = None
-            for channel in self._server.channels:
+            for channel in self.server.channels:
                 if channel.name == config.REFERENCE_CHANNEL_NAME:
                     ref_channel = channel
             if ref_channel:
-                asyncio.ensure_future(self._client.send_message(message.channel, 'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(config.BOT_VERSION, ref_channel.mention)))
+                asyncio.ensure_future(self.client.send_message(message.channel, 'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(config.BOT_VERSION, ref_channel.mention)))
 
     @asyncio.coroutine
     def daily_spoilerchat_channel_command(self, message):
@@ -333,19 +333,19 @@ class Necrobot(object):
             daily_number = dm.submitted_daily(user_id)
 
             if daily_number == 0:
-                asyncio.ensure_future(self._client.send_message(message.channel,
+                asyncio.ensure_future(self.client.send_message(message.channel,
                     "{0}: You've never submitted for a daily.".format(message.author.mention)))
             elif not dm.is_open(daily_number):
-                asyncio.ensure_future(self._client.send_message(message.channel,
+                asyncio.ensure_future(self.client.send_message(message.channel,
                     "{0}: The {1} daily has closed.".format(message.author.mention, daily.daily_to_shortstr(daily_number))))
             else:
                 submission_string = dm.parse_submission(daily_number, message.author, args, overwrite=True)
                 if submission_string: # parse succeeded
-                    asyncio.ensure_future(self._client.send_message(message.channel,
+                    asyncio.ensure_future(self.client.send_message(message.channel,
                         "Resubmitted for {0}: {1} {2}.".format(daily.daily_to_shortstr(daily_number), message.author.mention, submission_string)))
                     asyncio.ensure_future(dm.update_leaderboard(daily_number))
                 else: # parse failed
-                    asyncio.ensure_future(self._client.send_message(message.channel,
+                    asyncio.ensure_future(self.client.send_message(message.channel,
                         "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(message.author.mention)))
                
         #.dailysubmit : Submit a time for today's daily
@@ -362,14 +362,14 @@ class Necrobot(object):
         daily_number = dm.submitted_daily(user.id)
 
         if daily_number == 0:
-            asyncio.ensure_future(self._client.send_message(channel,
+            asyncio.ensure_future(self.client.send_message(channel,
                 "{0}: You've never submitted for a daily.".format(user.mention)))
         elif not dm.is_open(daily_number):
-            asyncio.ensure_future(self._client.send_message(channel,
+            asyncio.ensure_future(self.client.send_message(channel,
                 "{0}: The {1} daily has closed.".format(user.mention, daily.daily_to_shortstr(daily_number))))
         else:
             dm.delete_from_daily(daily_number, user)
-            asyncio.ensure_future(self._client.send_message(channel,
+            asyncio.ensure_future(self.client.send_message(channel,
                 "Deleted {1}'s daily submission for {0}.".format(daily.daily_to_shortstr(daily_number), user.mention)))
             asyncio.ensure_future(dm.update_leaderboard(daily_number))
 
@@ -382,21 +382,21 @@ class Necrobot(object):
         today = dm.today_number()
         today_date = daily.daily_to_date(today)
         if dm.has_submitted(today, user_id):
-            asyncio.ensure_future(self._client.send_message(channel, "{0}: You have already submitted for today's daily.".format(member.mention)))
+            asyncio.ensure_future(self.client.send_message(channel, "{0}: You have already submitted for today's daily.".format(member.mention)))
         elif dm.within_grace_period() and dm.has_registered(today - 1, user_id) and not dm.has_submitted(today - 1, user_id) and not (len(args) == 1 and args[0].lstrip('-') == 'override'):
-                asyncio.ensure_future(self._client.send_message(member, "{0}: Warning: You have not yet " \
+                asyncio.ensure_future(self.client.send_message(member, "{0}: Warning: You have not yet " \
                     "submitted for yesterday's daily, which is open for another {1}. If you want to forfeit the " \
                     "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(member.mention, dm.daily_grace_timestr())))                
         else:
             dm.register(today, user_id)
             seed = yield from dm.get_seed(today)
-            asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}. " \
+            asyncio.ensure_future(self.client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}. " \
                 "This is a single-attempt Cadence seeded all zones run. (See `.dailyrules` for complete rules.)".format(today_date.strftime("%d %b"), seed)))     
 
     #Output the rules for the daily
     @asyncio.coroutine
     def get_dailyrules(self, channel):
-        asyncio.ensure_future(self._client.send_message(channel, "Rules for the speedrun daily:\n" \
+        asyncio.ensure_future(self.client.send_message(channel, "Rules for the speedrun daily:\n" \
             "\N{BULLET} Cadence seeded all zones; get the seed for the daily using `.dailyseed`.\n" \
             "\N{BULLET} Run the seed blind. Make one attempt and submit the result (even if you die).\n" \
             "\N{BULLET} No restriction on resolution, display settings, zoom, etc.\n" \
@@ -409,33 +409,33 @@ class Necrobot(object):
         daily_number = dm.registered_daily(user.id)
 
         if daily_number == 0:
-            asyncio.ensure_future(self._client.send_message(channel,
+            asyncio.ensure_future(self.client.send_message(channel,
                 "{0}: Please get today's daily seed before submitting (use `.dailyseed`).".format(user.mention, daily.daily_to_shortstr(daily_number))))
         elif not dm.is_open(daily_number):
-            asyncio.ensure_future(self._client.send_message(channel,
+            asyncio.ensure_future(self.client.send_message(channel,
                 "{0}: Too late to submit for the {1} daily. Get today's seed with `.dailyseed`.".format(user.mention, daily.daily_to_shortstr(daily_number))))
         elif dm.has_submitted(daily_number, user.id):
-            asyncio.ensure_future(self._client.send_message(channel,
+            asyncio.ensure_future(self.client.send_message(channel,
                 "{0}: You have already submitted for the {1} daily.".format(user.mention, daily.daily_to_shortstr(daily_number))))
         else:
             submission_string = dm.parse_submission(daily_number, user, args)
             if submission_string: # parse succeeded
                 if channel.is_private: # submitted through pm
-                    asyncio.ensure_future(self._client.send_message(channel,
+                    asyncio.ensure_future(self.client.send_message(channel,
                         "Submitted for {0}: You {1}.".format(daily.daily_to_shortstr(daily_number), submission_string)))
                 if dm._spoilerchat_channel:
-                    asyncio.ensure_future(self._client.send_message(dm._spoilerchat_channel,
+                    asyncio.ensure_future(self.client.send_message(dm._spoilerchat_channel,
                         "Submitted for {0}: {1} {2}.".format(daily.daily_to_shortstr(daily_number), user.mention, submission_string)))
                 asyncio.ensure_future(dm.update_leaderboard(daily_number))
             else: # parse failed
-                asyncio.ensure_future(self._client.send_message(channel,
+                asyncio.ensure_future(self.client.send_message(channel,
                     "{0}: I had trouble parsing your submission. Please use one of the forms: `.dailysubmit 12:34.56` or `.dailysubmit death 4-4`.".format(user.mention)))
 
     @asyncio.coroutine
     def _dankify_user(self, message):
-        asyncio.ensure_future(colorer.color_user(message.author, self._client, self._server))
+        asyncio.ensure_future(colorer.color_user(message.author, self.client, self.server))
         #yield from asyncio.sleep(1)
-        asyncio.ensure_future(self._client.delete_message(message))
+        asyncio.ensure_future(self.client.delete_message(message))
 
     @asyncio.coroutine
     def _when_updated_prefs(self, prefs, member):
@@ -445,8 +445,8 @@ class Necrobot(object):
             if prefs.hide_spoilerchat == True and not dm.has_submitted(today_daily, member.id):
                 read_permit = discord.Permissions.none()
                 read_permit.read_messages = True
-                yield from self._client.edit_channel_permissions(dm._spoilerchat_channel, member, deny=read_permit)  
+                yield from self.client.edit_channel_permissions(dm._spoilerchat_channel, member, deny=read_permit)  
             elif prefs.hide_spoilerchat == False:
                 read_permit = discord.Permissions.none()
                 read_permit.read_messages = True
-                yield from self._client.edit_channel_permissions(dm._spoilerchat_channel, member, allow=read_permit)  
+                yield from self.client.edit_channel_permissions(dm._spoilerchat_channel, member, allow=read_permit)  

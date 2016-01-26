@@ -167,4 +167,4 @@ def on_message(message):
 while not necrobot.quitting:
     client.run(login_data.email, login_data.password)
     #the above blocks, so if we're here, we've been logged out. wait one minute and try again.
-    yield from asyncio.sleep(60)
+    time.sleep(60)

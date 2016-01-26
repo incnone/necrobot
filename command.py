@@ -1,24 +1,20 @@
 ## Represents a user-entered command
 
+import asyncio
 import clparse
 import config
-
+   
 # Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)
 class Command(object):
-    def __init__(self, message):
-        #args and flags: a flag is a part of the command of the form -flag [value]
-    
+    def __init__(self, message):   
         self.command = None
         self.args = []      
-        self.flags = []
         self.message = None
 
         if message.content.startswith(config.BOT_COMMAND_PREFIX):
             args = message.content.split()
             prefix_len = len(config.BOT_COMMAND_PREFIX)
             self.command = args.pop(0)[prefix_len:]
-            while args:
-                self.flags.append(Flag(args))
             self.message = message
 
     @property
@@ -34,14 +30,14 @@ class Command(object):
         return self.message.channel if self.message else None
 
     @property
-    def private(self):
+    def is_private(self):
         return self.message.channel.is_private if self.message else None
 
 # Abstract base class; a particular command that the bot can interpret, and how to interpret it
 # (For instance, racemodule has a CommandType object called make, for the `.make` command.)
 class CommandType(object):
     def __init__(self, cmd_str):
-        self.command = cmd_str             # the string that calls this command (e.g. 'make')
+        self.command = cmd_str              # the string that calls this command (e.g. 'make')
         help_text = 'Error: this command has no help text.'
 
     @property
@@ -50,14 +46,14 @@ class CommandType(object):
 
     # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
     @asyncio.coroutine
-    def execute(command):
+    def execute(self, command):
         if command.command == self.command:
             yield from self._do_execute(command)
             
     # Overwrite this to determine what this CommandType should do with a given Command
     @asyncio.coroutine
-    def _do_execute(command):
-        print('Error: called CommandType._do_call in the abstract base class.')
+    def _do_execute(self, command):
+        print('Error: called CommandType._do_execute in the abstract base class.')
         pass
 
 # Abstract base class; a module that can be attached to the Necrobot
