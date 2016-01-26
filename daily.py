@@ -276,7 +276,7 @@ class DailyManager(object):
 
     # Registers the given Message ID in the database for the given daily number
     def register_message(self, daily_number, message_id):
-        db_cursor = self._db_comm.cursor()
+        db_cursor = self._db_conn.cursor()
         param = (daily_number,)
         db_cursor.execute("SELECT seed FROM daily_seeds WHERE date=?", param)
 

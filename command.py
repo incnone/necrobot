@@ -59,14 +59,24 @@ class CommandType(object):
 # Abstract base class; a module that can be attached to the Necrobot
 class Module(object):
     def __init__(self):
-        pass
+        self.command_types = []
 
-    #Overwrite this
+    # Brief information string on what kind of module this is.
+    # Overwrite this
     @property
     def infostr(self):
         return 'Unknown module.'
 
-    #Overwrite this
+    # Attempts to execute the given command (if a command of its type is in command_types)
+    @asyncio.coroutine
     def execute(self, command):
-        print('Error: Module.execute not overwritten.')
-        pass
+        for cmd_type in self.command_types:
+            yield from cmd_type.execute(command)
+
+    # Get the help text for the given command, if a command of its type is in command_list
+    # Otherwise, returns None
+    def help_text(self, command):
+        for cmd_type in self.command_types:
+            if cmd_type.command == command.command:
+                return cmd_type.help_text
+        return None

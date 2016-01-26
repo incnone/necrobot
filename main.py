@@ -11,8 +11,11 @@ import command
 import config
 import seedgen
 
-from dailymodule import DailyModule
 from necrobot import Necrobot
+
+from colorer import ColorerModule
+from dailymodule import DailyModule
+from seedgenmodule import SeedgenModule
 
 ##-Logging-------------------------------
 logger = logging.getLogger('discord')
@@ -21,7 +24,6 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 ##--------------------------------------
-
 
 class LoginData(object):
     email = ''
@@ -75,7 +77,8 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 ##        dailyalert      : if true, sends a PM alerting user when daily rolls over
 
 
-## Set up the databases for the first time.    
+## Set up the databases for the first time.
+## TODO: encapsulate this & make more flexible; probably wrap this init code into the corresponding modules
 def set_up_databases():
 
     if not os.path.isfile(config.RACE_DB_FILENAME):
@@ -152,9 +155,10 @@ def on_ready():
     print('Initializing necrobot...')
     necrobot.post_login_init(login_data.server_id, login_data.admin_id)
 
+    necrobot.load_module(ColorerModule(necrobot))
+    necrobot.load_module(SeedgenModule(necrobot))
     necrobot.load_module(DailyModule(necrobot, sqlite3.connect(config.DAILY_DB_FILENAME)))
     #necrobot.load_module(public_race)
-    #necrobot.load_module(dankifier)
     print('...done.')
 
 @client.event

@@ -3,6 +3,7 @@ import discord
 import seedgen
 import sqlite3
 
+import command
 import colorer
 import daily
 import racemgr
@@ -59,6 +60,29 @@ HELP_INFO = {
     "info":"`.info`: Necrobot version information.",
     }
 
+class InfoCommand(command.CommandType):
+    def __init__(self, info_module):
+        command.CommandType.__init__(self, 'info')
+        self.help_text = "Necrobot version information."
+        self._im = info_module
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        yield from self._im.client.send_message(command.channel, 'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(config.BOT_VERSION, self._im.ref_channel.mention))
+    
+class InfoModule(command.Module):
+    def __init__(self, necrobot):
+        self._necrobot = necrobot
+        self.command_types = [InfoCommand(self)]
+    
+    @property
+    def ref_channel(self):
+        return self._necrobot.ref_channel
+
+    @property
+    def client(self):
+        return self._necrobot.client
+    
 class Necrobot(object):
 
     ## Barebones constructor
@@ -66,10 +90,10 @@ class Necrobot(object):
         self.client = client
         self.server = None
         self.prefs = None
+        self.modules = [InfoModule(self)]
         self._main_channel = None
         self._admin_id = None
         self._wants_to_quit = False
-        self._modules = []
 
     ## Initializes object; call after client has been logged in to discord
     def post_login_init(self, server_id, admin_id=None):
@@ -105,7 +129,7 @@ class Necrobot(object):
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
     def load_module(self, module):
-        self._modules.append(module)
+        self.modules.append(module)
 
     # True if the bot wants to quit (and not re-login)
     @property
@@ -116,6 +140,14 @@ class Necrobot(object):
     @property
     def main_channel(self):
         return self._main_channel
+
+    # Return the #command_list channel
+    @property
+    def ref_channel(self):
+        for channel in self.server.channels:
+            if channel.name == config.REFERENCE_CHANNEL_NAME:
+                return channel
+        return None
 
     # Returns the channel with the given name on the server, if any
     def find_channel(self, channel_name):
@@ -151,7 +183,7 @@ class Necrobot(object):
             return
 
         # let each module attempt to handle the command in turn
-        for module in self._modules:
+        for module in self.modules:
             asyncio.ensure_future(module.execute(cmd))
 
     # Returns the given Discord User as a Member of the server

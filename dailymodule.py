@@ -6,6 +6,27 @@ import config
 import daily
 import userprefs
 
+class Help(command.CommandType):
+    def __init__(self, daily_module):
+        command.CommandType.__init__(self, 'help')
+        self.help_text = 'Help.'
+        self._dm = daily_module
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        #TODO: more specific channel-appropriate help
+        if command.is_private or command.channel == self._dm._spoilerchat_channel or command.channel == self._dm.main_channel:
+            if not command.args:
+                command_list_text = 'Speedrun daily commands: '
+                for cmd in self._dm.command_types:
+                    command_list_text += '`' + cmd.mention + '`, '
+                command_list_text = command_list_text[:-2]
+                yield from self._dm.client.send_message(command.channel, command_list_text)
+            elif len(command.args) == 1:
+                for cmd in self._dm.command_types:
+                    if command.args[0] == cmd.command:
+                        yield from self._dm.client.send_message(command.channel, '`{0}`: {1}'.format(cmd.mention, cmd.help_text))
+
 class DailyResubmit(command.CommandType):
     def __init__(self, daily_module):
         command.CommandType.__init__(self, 'dailyresubmit')
@@ -208,14 +229,33 @@ class DailyWhen(command.CommandType):
     def _do_execute(self, command):
         if command.is_private or command.channel == self._dm._spoilerchat_channel or command.channel == self._dm.main_channel:
             asyncio.ensure_future(self._dm.client.send_message(command.channel, self._dm.manager.daily_time_info_str()))
-            
+
+#For debugging/testing
+class ForceRunNewDaily(command.CommandType): 
+    def __init__(self, daily_module):
+        command.CommandType.__init__(self, 'forcerunnewdaily')
+        self._dm = daily_module
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        if command.author.id == self._dm.necrobot._admin_id:
+            yield from self._dm.on_new_daily()
+
 class DailyModule(command.Module):
     def __init__(self, necrobot, db_connection):
         self._necrobot = necrobot
         self._manager = daily.DailyManager(self, db_connection)
         self._spoilerchat_channel = necrobot.find_channel(config.DAILY_SPOILERCHAT_CHANNEL_NAME)
         self._leaderboard_channel = necrobot.find_channel(config.DAILY_LEADERBOARDS_CHANNEL_NAME)
-        self._command_types = [DailyResubmit(self), DailyRules(self), DailySeed(self), DailyStatus(self), DailySubmit(self), DailyUnsubmit(self), DailyWhen(self)]
+        self.command_types = [Help(self),
+                              DailyResubmit(self),
+                              DailyRules(self),
+                              DailySeed(self),
+                              DailyStatus(self),
+                              DailySubmit(self),
+                              DailyUnsubmit(self),
+                              DailyWhen(self),
+                              ForceRunNewDaily(self)]
 
     @property
     def infostr(self):
@@ -237,11 +277,6 @@ class DailyModule(command.Module):
     def necrobot(self):
         return self._necrobot
 
-    @asyncio.coroutine
-    def execute(self, command):
-        for cmd_type in self._command_types:
-            yield from cmd_type.execute(command)
-
     # Do whatever UI things need to be done when a new daily happens
     @asyncio.coroutine
     def on_new_daily(self):
@@ -250,15 +285,15 @@ class DailyModule(command.Module):
         today_seed = self.manager.get_seed(today_number)
         
         # Make the leaderboard message
-        text = self.manager.leaderboard_text(daily_number)
+        text = self.manager.leaderboard_text(today_number)
         msg = yield from self.client.send_message(self._leaderboard_channel, text)
-        self.manager.register_message(daily_number, msg.id)
+        self.manager.register_message(today_number, msg.id)
 
         # Update yesterday's leaderboard with the seed
         asyncio.ensure_future(self.update_leaderboard(today_number - 1, True))
 
         # Announce the new daily in spoilerchat
-        asyncio.ensure_future(self._client.send_message(self._spoilerchat_channel, "The {} daily has begun!".format(today_date.strftime("%B %d"))))
+        asyncio.ensure_future(self.client.send_message(self._spoilerchat_channel, "The {} daily has begun!".format(today_date.strftime("%B %d"))))
                 
         # PM users with the daily_alert preference
         auto_pref = userprefs.UserPrefs()
