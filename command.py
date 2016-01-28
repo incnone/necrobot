@@ -3,6 +3,7 @@
 import asyncio
 import clparse
 import config
+import shlex
    
 # Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)
 class Command(object):
@@ -12,9 +13,9 @@ class Command(object):
         self.message = None
 
         if message.content.startswith(config.BOT_COMMAND_PREFIX):
-            self.args = message.content.split()
+            self.args = shlex.split(message.content)
             prefix_len = len(config.BOT_COMMAND_PREFIX)
-            self.command = self.args.pop(0)[prefix_len:]
+            self.command = (self.args.pop(0)[prefix_len:]).lower()
             self.message = message
 
     @property

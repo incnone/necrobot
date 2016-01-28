@@ -24,6 +24,7 @@ class RaceManager(object):
             if channel.name == config.RACE_RESULTS_CHANNEL_NAME:
                 self._results_channel = channel
 
+    ## Move to necrobot
     ## Returns a list of all members with a given username (capitalization ignored)
     def find_members_with_name(self, username):
         to_return = []
@@ -32,6 +33,7 @@ class RaceManager(object):
                 to_return.append(member)
         return to_return
 
+    ## Already in necrobot :P
     ## Gets the user as a member of the server
     def get_as_member(self, user):
         for member in self._server.members:
@@ -39,6 +41,7 @@ class RaceManager(object):
                 return member
         return None
 
+    ## Move to necrobot
     ## Get a list of all admin roles on the server
     def get_admin_roles(self):
         admin_roles = []
@@ -47,7 +50,8 @@ class RaceManager(object):
                 if role.name == rolename:
                     admin_roles.append(role)
         return admin_roles
-        
+
+    ## TODO use more unique names so hope to avoid Spot's cacheing on tablet problem
     ## Return a new (unique) race room name from the race info
     def get_raceroom_name(self, race_info):
         counter = 0
@@ -63,6 +67,7 @@ class RaceManager(object):
             if name_is_ok:
                 return trial_name
 
+    ## Move into .make command for this module
     ## Make a race with the given RaceInfo
     @asyncio.coroutine
     def make_race(self, race_info, creator_id=None, mention=[]):
@@ -86,6 +91,7 @@ class RaceManager(object):
         
         return race_channel
 
+    ## Move into .makeprivate command for this module
     ## Make a private race with the given RaceInfo
     @asyncio.coroutine
     def make_private_race(self, race_private_info, creator_id=None):
@@ -100,6 +106,7 @@ class RaceManager(object):
         asyncio.ensure_future(new_race.initialize())
         return race_channel
 
+    ## Delegate to list of RaceRoom and RacePrivateRoom modules
     ## Parse a command entered somewhere on the server
     @asyncio.coroutine
     def parse_message(self, message):
@@ -107,12 +114,14 @@ class RaceManager(object):
             if race.channel.id == message.channel.id:
                 asyncio.ensure_future(race.parse_message(message))
 
+    ## Move this functionality into RaceRoom / RacePrivateRoom modules (no reason to have this method here; they have access to client) 
     ## Post a race result in the results channel
     @asyncio.coroutine
     def post_result(self, text):
         if self._results_channel:
             asyncio.ensure_future(self._client.send_message(self._results_channel, text))
 
+    ## Move into RaceRoom / RacePrivateRoom modules
     ## Write something to the main channel
     ## TODO: currently this is called by raceroom, when doing the .rematch command, to announce a rematch
     ## in the bot's main channel. I think its existence suggests some code refactoring should be done around here;

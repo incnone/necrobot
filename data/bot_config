@@ -17,7 +17,7 @@ race_record_after_seconds=120
 race_cleanup_after_room_is_silent_for_seconds=150
 race_cleanup_after_no_entrants_for_seconds=120
 race_give_cleanup_warning_after_no_entrants_for_seconds=60
-race_require_at_least_two=0
+race_require_at_least_two=1
 
 db_daily_filename=data/daily.db
 db_races_filename=data/races.db

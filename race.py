@@ -399,6 +399,7 @@ class Race(object):
         return False
 
     # Record the race in the database, and post results to the race_results channel
+    # DB_acc
     @asyncio.coroutine
     def record(self):
         time_str = ''
