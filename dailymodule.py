@@ -24,7 +24,7 @@ class Help(command.CommandType):
                 yield from self._dm.client.send_message(command.channel, command_list_text)
             elif len(command.args) == 1:
                 for cmd in self._dm.command_types:
-                    if command.args[0] == cmd.command:
+                    if cmd.called_by(command.args[0]):
                         yield from self._dm.client.send_message(command.channel, '`{0}`: {1}'.format(cmd.mention, cmd.help_text))
 
 class DailyResubmit(command.CommandType):

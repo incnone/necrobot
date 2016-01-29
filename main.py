@@ -15,6 +15,7 @@ from necrobot import Necrobot
 
 from colorer import ColorerModule
 from dailymodule import DailyModule
+from racemodule import RaceModule
 from seedgenmodule import SeedgenModule
 
 ##-Logging-------------------------------
@@ -158,7 +159,7 @@ def on_ready():
     necrobot.load_module(ColorerModule(necrobot))
     necrobot.load_module(SeedgenModule(necrobot))
     necrobot.load_module(DailyModule(necrobot, sqlite3.connect(config.DAILY_DB_FILENAME)))
-    #necrobot.load_module(public_race)
+    necrobot.load_module(RaceModule(necrobot, sqlite3.connect(config.RACE_DB_FILENAME)))
     print('...done.')
 
 @client.event

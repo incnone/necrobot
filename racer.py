@@ -90,7 +90,8 @@ class Racer(object):
     def forfeit(self):
         if self._state == RacerStatus['racing'] or self._state == RacerStatus['finished']:
             self._state = RacerStatus['forfeit']
-            self.time = 0
+            self.time = int(-1)
+            self.igt = int(-1)
             return True
         return False
 

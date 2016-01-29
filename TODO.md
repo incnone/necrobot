@@ -9,6 +9,7 @@ Current version: 0.3.4
 - Allow the race creator to change the race rules after creating the room. 
 - Mark the time of forfeit, and add the option to input death level (e.g. `.death 4-3`)
 - Add a command for viewing current user preferences
+- Replace lists with sets where appropriate
 
 ### Different race modes
 

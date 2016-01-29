@@ -155,7 +155,6 @@ class Race(object):
     def complete(self):
         return self._status >= RaceStatus['completed']
 
-
     # Begin the race countdown and transition race state from 'entry_open' to 'counting_down'
     @asyncio.coroutine
     def begin_race_countdown(self):
@@ -364,7 +363,7 @@ class Race(object):
     # Attempt to put the given Racer in the 'racing' state if they were finished
     @asyncio.coroutine
     def unfinish_racer(self, racer):
-        if self._status == RaceStatus['finalized']:
+        if self._status == RaceStatus['finalized'] or not racer.is_finished:
             return False
         
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,
@@ -387,7 +386,7 @@ class Race(object):
     # Attempt to put the given Racer in the 'racing' state if they had forfeit
     @asyncio.coroutine
     def unforfeit_racer(self, racer):
-        if self._status == RaceStatus['finalized']:
+        if self._status == RaceStatus['finalized'] or not racer.is_forfeit:
             return False
         
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,

@@ -37,18 +37,23 @@ class Command(object):
 # Abstract base class; a particular command that the bot can interpret, and how to interpret it
 # (For instance, racemodule has a CommandType object called make, for the `.make` command.)
 class CommandType(object):
-    def __init__(self, cmd_str):
-        self.command = cmd_str              # the string that calls this command (e.g. 'make')
-        help_text = 'Error: this command has no help text.'
-
+    def __init__(self, *args, **kwargs):
+        self.command_name_list = args             # the string that calls this command (e.g. 'make')
+        self.help_text = 'Error: this command has no help text.'
+        self.suppress_help = False              # If true, will not show this command on .help requests
+        
     @property
     def mention(self):
-        return config.BOT_COMMAND_PREFIX + self.command
+        return config.BOT_COMMAND_PREFIX + self.command_name_list[0]
+
+    # Returns True if the name can be used to call this command
+    def called_by(name):
+        return name in self.command_name_list
 
     # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
     @asyncio.coroutine
     def execute(self, command):
-        if command.command == self.command:
+        if command.command in self.command_name_list:
             yield from self._do_execute(command)
             
     # Overwrite this to determine what this CommandType should do with a given Command
@@ -78,6 +83,6 @@ class Module(object):
     # Otherwise, returns None
     def help_text(self, command):
         for cmd_type in self.command_types:
-            if cmd_type.command == command.command:
+            if cmd_type.called_by(command.command):
                 return cmd_type.help_text
         return None

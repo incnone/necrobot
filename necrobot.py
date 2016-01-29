@@ -5,10 +5,6 @@ import sqlite3
 
 import command
 import colorer
-import daily
-import racemgr
-import raceinfo
-import raceprivateinfo
 import userprefs
 
 import config
@@ -124,7 +120,7 @@ class Necrobot(object):
 
         #set up prefs manager
         pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
-        self.user_prefs = userprefs.UserPrefManager(pref_db_connection, self.server)
+        self.prefs = userprefs.UserPrefManager(pref_db_connection, self.server)
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
@@ -149,12 +145,30 @@ class Necrobot(object):
                 return channel
         return None
 
+    ## Get a list of all admin roles on the server
+    @property
+    def admin_roles(self):
+        admin_roles = []
+        for rolename in config.ADMIN_ROLE_NAMES:
+            for role in self.server.roles:
+                if role.name == rolename:
+                    admin_roles.append(role)
+        return admin_roles
+
     # Returns the channel with the given name on the server, if any
     def find_channel(self, channel_name):
         for channel in self.server.channels:
             if channel.name == channel_name:
                 return channel
         return None
+
+    ## Returns a list of all members with a given username (capitalization ignored)
+    def find_members(self, username):
+        to_return = []
+        for member in self.server.members:
+            if member.name == username:
+                to_return.append(member)
+        return to_return
 
     ## Log out of discord
     @asyncio.coroutine
@@ -317,7 +331,7 @@ class Necrobot(object):
                     # send PM alerts
                     some_alert_pref = userprefs.UserPrefs()
                     some_alert_pref.race_alert = userprefs.RaceAlerts['some']
-                    for user in self.user_prefs.get_all_matching(some_alert_pref):
+                    for user in self.prefs.get_all_matching(some_alert_pref):
                         asyncio.ensure_future(self.client.send_message(user, alert_string))
 
                     # alert in main channel
@@ -343,7 +357,7 @@ class Necrobot(object):
         elif command == 'setprefs':
             prefs = userprefs.parse_args(args)
             if prefs.contains_info:
-                self.user_prefs.set_prefs(prefs, message.author)
+                self.prefs.set_prefs(prefs, message.author)
                 yield from self._when_updated_prefs(prefs, message.author)
                 confirm_msg = 'Set the following preferences for {}:'.format(message.author.mention)
                 for pref_str in prefs.pref_strings:
