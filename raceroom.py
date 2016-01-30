@@ -76,11 +76,8 @@ class Ready(command.CommandType):
                 else:
                     yield from self._room.write('{0} is ready! {1} remaining.'.format(command.author.mention, self._room.race.num_not_ready))
 
-                if self._room.all_racers_ready:
-                    if self._room.admin_ready:
-                        yield from self._room.race.begin_race_countdown()
-                    else:
-                        yield from self.write('Waiting on an admin to type `.ready`.')
+                yield from self._room.begin_if_ready()
+
             elif racer.is_ready:
                 yield from self._room.write('{0} is already ready!'.format(command.author.mention))
         else:
@@ -422,6 +419,18 @@ class RaceRoom(command.Module):
     @property
     def admin_ready(self):
         return True
+
+    # Begins the race if ready. (Writes a message if all racers are ready but an admin is not.)
+    # Returns true on success
+    @asyncio.coroutine
+    def begin_if_ready(self):
+        if self.all_racers_ready:
+            if self.admin_ready:
+                yield from self.race.begin_race_countdown()
+                return True
+            else:
+                yield from self.write('Waiting on an admin to type `.ready`.')
+                return False
 
     # Makes a rematch of this race in a new room, if one has not already been made
     @asyncio.coroutine

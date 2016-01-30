@@ -18,7 +18,12 @@ class RandomSeed(command.CommandType):
 class SeedgenModule(command.Module):
     def __init__(self, necrobot):
         self._necrobot = necrobot
-        self.command_types = [RandomSeed(self)]
+        self.command_types = [command.DefaultHelp(self),
+                              RandomSeed(self)]
+
+    @property
+    def infostr(self):
+        return 'Seed generation'
 
     @property
     def client(self):

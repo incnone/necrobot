@@ -47,7 +47,7 @@ class CommandType(object):
         return config.BOT_COMMAND_PREFIX + self.command_name_list[0]
 
     # Returns True if the name can be used to call this command
-    def called_by(name):
+    def called_by(self, name):
         return name in self.command_name_list
 
     # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
@@ -55,12 +55,39 @@ class CommandType(object):
     def execute(self, command):
         if command.command in self.command_name_list:
             yield from self._do_execute(command)
-            
+
+    # Returns true if the command is "recognized" in the given channel
+    @asyncio.coroutine
+    def recognized_channel(self, channel):
+        return True
+    
     # Overwrite this to determine what this CommandType should do with a given Command
     @asyncio.coroutine
     def _do_execute(self, command):
         print('Error: called CommandType._do_execute in the abstract base class.')
         pass
+
+class DefaultHelp(CommandType):
+    def __init__(self, module):
+        CommandType.__init__(self, 'help')
+        self.help_text = 'Help.'
+        self.suppress_help = True
+        self.module = module
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        if len(command.args) == 0:
+            command_list_text = self.module.infostr + ": "
+            for cmd in self.module.command_types:
+                if not cmd.suppress_help:
+                    command_list_text += '`' + cmd.mention + '`, '
+            command_list_text = command_list_text[:-2]
+            yield from self.module.client.send_message(command.channel, command_list_text)
+        elif len(command.args) == 1:
+            for cmd_type in self.module.command_types:
+                if cmd_type.called_by(command.args[0]) and cmd_type.recognized_channel(command.channel):
+                    yield from self.module.client.send_message(command.channel, '`{0}`: {1}'.format(cmd_type.mention, cmd_type.help_text))
+            return None
 
 # Abstract base class; a module that can be attached to the Necrobot
 class Module(object):
@@ -73,16 +100,14 @@ class Module(object):
     def infostr(self):
         return 'Unknown module.'
 
+    # Return the discord client
+    # Overwrite this
+    @property
+    def client(self):
+        return None
+
     # Attempts to execute the given command (if a command of its type is in command_types)
     @asyncio.coroutine
     def execute(self, command):
         for cmd_type in self.command_types:
             yield from cmd_type.execute(command)
-
-    # Get the help text for the given command, if a command of its type is in command_list
-    # Otherwise, returns None
-    def help_text(self, command):
-        for cmd_type in self.command_types:
-            if cmd_type.called_by(command.command):
-                return cmd_type.help_text
-        return None

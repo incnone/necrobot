@@ -85,7 +85,12 @@ class RaceModule(command.Module):
         self._db_conn = db_connection
         self._results_channel = necrobot.find_channel(config.RACE_RESULTS_CHANNEL_NAME)
         self._racerooms = []
-        self.command_types = [Make(self)] #TODO add makeprivate
+        self.command_types = [command.DefaultHelp(self),
+                              Make(self)] #TODO add makeprivate
+
+    @property
+    def infostr(self):
+        return 'Races'
 
     @property
     def client(self):

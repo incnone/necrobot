@@ -6,27 +6,6 @@ import config
 import daily
 import userprefs
 
-class Help(command.CommandType):
-    def __init__(self, daily_module):
-        command.CommandType.__init__(self, 'help')
-        self.help_text = 'Help.'
-        self._dm = daily_module
-
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        #TODO: more specific channel-appropriate help
-        if command.is_private or command.channel == self._dm._spoilerchat_channel or command.channel == self._dm.main_channel:
-            if not command.args:
-                command_list_text = 'Speedrun daily commands: '
-                for cmd in self._dm.command_types:
-                    command_list_text += '`' + cmd.mention + '`, '
-                command_list_text = command_list_text[:-2]
-                yield from self._dm.client.send_message(command.channel, command_list_text)
-            elif len(command.args) == 1:
-                for cmd in self._dm.command_types:
-                    if cmd.called_by(command.args[0]):
-                        yield from self._dm.client.send_message(command.channel, '`{0}`: {1}'.format(cmd.mention, cmd.help_text))
-
 class DailyResubmit(command.CommandType):
     def __init__(self, daily_module):
         command.CommandType.__init__(self, 'dailyresubmit')
@@ -234,6 +213,7 @@ class DailyWhen(command.CommandType):
 class ForceRunNewDaily(command.CommandType): 
     def __init__(self, daily_module):
         command.CommandType.__init__(self, 'forcerunnewdaily')
+        self.suppress_help = True
         self._dm = daily_module
 
     @asyncio.coroutine
@@ -247,7 +227,7 @@ class DailyModule(command.Module):
         self._manager = daily.DailyManager(self, db_connection)
         self._spoilerchat_channel = necrobot.find_channel(config.DAILY_SPOILERCHAT_CHANNEL_NAME)
         self._leaderboard_channel = necrobot.find_channel(config.DAILY_LEADERBOARDS_CHANNEL_NAME)
-        self.command_types = [Help(self),
+        self.command_types = [command.DefaultHelp(self),
                               DailyResubmit(self),
                               DailyRules(self),
                               DailySeed(self),
@@ -259,7 +239,7 @@ class DailyModule(command.Module):
 
     @property
     def infostr(self):
-        return 'Speedrun daily.'
+        return 'Speedrun daily'
 
     @property
     def client(self):
