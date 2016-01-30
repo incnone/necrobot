@@ -223,6 +223,7 @@ class ForceRunNewDaily(command.CommandType):
 
 class DailyModule(command.Module):
     def __init__(self, necrobot, db_connection):
+        command.Module.__init__(self)
         self._necrobot = necrobot
         self._manager = daily.DailyManager(self, db_connection)
         self._spoilerchat_channel = necrobot.find_channel(config.DAILY_SPOILERCHAT_CHANNEL_NAME)
@@ -304,5 +305,18 @@ class DailyModule(command.Module):
             for msg in msg_list:
                 if int(msg.id) == msg_id:
                     asyncio.ensure_future(self.client.edit_message(msg, self.manager.leaderboard_text(daily_number, display_seed)))
-        
+
+    # Called when a user updates their preferences with the given UserPrefs
+    # Base method does nothing; override for functionality
+    @asyncio.coroutine
+    def on_update_prefs(self, prefs, member):
+        today_daily = self._manager.today_number()
+        if prefs.hide_spoilerchat == True and not self._manager.has_submitted(today_daily, member.id):
+            read_permit = discord.Permissions.none()
+            read_permit.read_messages = True
+            yield from self.client.edit_channel_permissions(self._spoilerchat_channel, member, deny=read_permit)  
+        elif prefs.hide_spoilerchat == False:
+            read_permit = discord.Permissions.none()
+            read_permit.read_messages = True
+            yield from self.client.edit_channel_permissions(self._spoilerchat_channel, member, allow=read_permit)  
         

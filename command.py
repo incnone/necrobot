@@ -111,3 +111,9 @@ class Module(object):
     def execute(self, command):
         for cmd_type in self.command_types:
             yield from cmd_type.execute(command)
+
+    # Called when a user updates their preferences with the given UserPrefs
+    # Base method does nothing; override for functionality
+    @asyncio.coroutine
+    def on_update_prefs(self, prefs, member):
+        pass

@@ -70,6 +70,7 @@ class ColorMe(command.CommandType):
                                 
 class ColorerModule(command.Module):
     def __init__(self, necrobot):
+        command.Module.__init__(self)
         self._necrobot = necrobot
         self.command_types = [ColorMe(self)]
 

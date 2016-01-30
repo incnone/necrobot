@@ -1,15 +1,18 @@
 # Necrobot TODO
 
-Current version: 0.3.4
+Current version: 0.4.0
 
 ## Small changes
 
+- Add a command `.randomseed (int)` only callable via PM to generate that many seeds
 - Daily leaderboards will break due to post length if more than ~45 people participate; fix
 - Ensure that the daily seed is different from the previous seed
 - Allow the race creator to change the race rules after creating the room. 
 - Mark the time of forfeit, and add the option to input death level (e.g. `.death 4-3`)
 - Add a command for viewing current user preferences
 - Replace lists with sets where appropriate
+- Don't reuse channel names for some time (to attempt to avoid Spooty's apparent cacheing problem)
+- If user enters `.forfeit` with text after it, treat it as a `.forfeit` + `.comment` command
 
 ### Different race modes
 
@@ -17,9 +20,11 @@ Current version: 0.3.4
 - Score
 - Flagplanting
 - Sudden death
+- Last man standing (?)
 
 ### Possiblilites to consider (not sure I want these yet)
 
+- Add top daily times to spoilerchat topic
 - Allow for people to set/store raceroom rules, so one can call e.g. `.setrules 4shrine` at the beginning of a race, and then people can call `.rules` to get the rules for the current race
 - Add a race mode where the victor is determined by a race admin, rather than times/etc.
 - If a user has two seeds active and both are submittable, force them to use a `-date` flag for their submission. (This should work like `-date Jan20`.) In general, allow use of the `-date` flag for daily submission, giving an error if the user inputs a date that isn't their most recent seed.
@@ -30,6 +35,14 @@ Current version: 0.3.4
 - Capture all text in a race channel when it's closed, and save it somewhere.
 
 ## Major feature improvements
+
+### Different character dailies
+
+Add a second speedrun daily for a rotating character. (Maybe also add "hidden" dailies for every character, with leaderboards accessable via a command.)
+
+### Individual run module
+
+Add a module accessable via PM that allows a user to store and track individual runs (e.g. for practice), and then later get stats on those runs.
 
 ### Support for voice rooms attached to race rooms
 

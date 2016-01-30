@@ -68,25 +68,27 @@ class MakePrivate(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         if command.channel.is_private or command.channel == self._rm.main_channel:
-            race_private_info = raceprivateinfo.parse_args(args)
+            race_private_info = raceprivateinfo.parse_args(command.args)
             if not command.author.name in race_private_info.admin_names:
                 race_private_info.admin_names.append(command.author.name)
             if race_private_info:
                 race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
                 if race_channel:
                     output_prestring = 'You have started a private race.' if command.channel.is_private else 'A private race has been started by {}.'.format(command.author.mention)
-                    asyncio.ensure_future(self.client.send_message(command.channel,
+                    asyncio.ensure_future(self._rm.client.send_message(command.channel,
                         '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))             
 
 class RaceModule(command.Module):
 
     def __init__(self, necrobot, db_connection):
+        command.Module.__init__(self)
         self._necrobot = necrobot
         self._db_conn = db_connection
         self._results_channel = necrobot.find_channel(config.RACE_RESULTS_CHANNEL_NAME)
         self._racerooms = []
         self.command_types = [command.DefaultHelp(self),
-                              Make(self)] #TODO add makeprivate
+                              Make(self),
+                              MakePrivate(self)]
 
     @property
     def infostr(self):
@@ -95,6 +97,10 @@ class RaceModule(command.Module):
     @property
     def client(self):
         return self._necrobot.client
+
+    @property
+    def server(self):
+        return self._necrobot.server
 
     @property
     def main_channel(self):
@@ -111,6 +117,9 @@ class RaceModule(command.Module):
     @property
     def admin_roles(self):
         return self._necrobot.admin_roles
+
+    def get_as_member(self, user):
+        return self._necrobot.get_as_member(user)
 
     ## TODO use more unique names so hope to avoid Spot's cacheing on tablet problem
     ## Return a new (unique) race room name from the race info

@@ -3,82 +3,13 @@ import discord
 import seedgen
 import sqlite3
 
+import config
 import command
 import colorer
-import userprefs
 
-import config
+from adminmodule import AdminModule
+from userprefs import PrefsModule
 
-HELP_INFO = {
-    "help":"`.help`: Help.",
-    "dailyresubmit":"`.dailyresubmit`: Submit for the daily, overriding a previous submission. Use this to correct a mistake in a daily submission.",
-    "dailyrules":"`.dailyrules`: Get the rules for the speedrun daily.",
-    "dailyseed":"`.dailyseed`: Get the seed for today's daily. (Will be sent via PM.)",
-    "dailystatus":"`.dailystatus`: Find out whether you've submitted to today's daily.",
-    "dailysubmit":"`.dailysubmit`: Submit a result for your most recent daily. Daily submissions close an hour after the next " \
-                    "daily opens. If you complete the game during the daily, submit your time in the form [m]:ss.hh, e.g.: " \
-                    "`.dailysubmit 12:34.56`. If you die during the daily, you may submit your run as `.dailysubmit death` " \
-                    "or provide the level of death, e.g. `.dailysubmit death 4-4` for a death on dead ringer. This command can " \
-                    "be called in #dailyspoilerchat or via PM.",
-    "dailyunsubmit":"`.dailyunsubmit`: Retract your most recent daily submission (only works while the daily is still open).",
-    "dailywhen":"`.dailywhen`: Get the date for the current daily, and the time until the next daily opens.",
-    "make":"`.make`: Create a new race room. By default this creates an unseeded Cadence race, " \
-                    "but there are optional parameters. First, the short form:\n" \
-                    "```" \
-                    ".make [char] [u|s]" \
-                    "```" \
-                    "makes a race with the given character and seeding options; `char` should be a Necrodancer character, and " \
-                    "the other field is either the letter `u` or the letter `s`, according to whether the race should be seeded " \
-                    "or unseeded. Examples: `.make dorian u` or `.make s dove` are both fine.\n" \
-                    "\n" \
-                    "More options are available using usual command-line syntax:" \
-                    "```" \
-                    ".make [-c char] [-u|-s|-seed number] [-custom desc]" \
-                    "```" \
-                    "makes a race with character char, and seeded/unseeded determined by the `-u` or `-s` flag. If instead number is specified, " \
-                    "the race will be seeded and forced to use the seed given. Number must be an integer (text seeds are not currently supported). " \
-                    "Finally, desc allows you to give any custom one-word description of the race (e.g., '4-shrine').",
-    "makeprivate":"`.makeprivate`: Create a new private race room. This takes the same command-line options as `.make`, as well as " \
-                    "a few more:\n" \
-                    "```" \
-                    ".makeprivate [-a admin...] [-r racer...]" ##[-bestof x | -repeat y]" \
-                    "```" \
-                    "Here `admin...` is a list of names of 'admins' for the race, which are users that can both see the race channel and " \
-                    "use special admin commands for managing the race, and `racer...` is a list of users that can see the race channel. " \
-                    "(Both admins and racers can enter the race.)", ##`x` causes the race to become a best-of-x match, and `y` causes it to " \
-                    ##"simply repeat the race y times (for instance, CoNDOR s3 had a `-repeat 3` format during the swiss.)",                    
-    "randomseed":"`.randomseed`: Get a randomly generated seed.",
-    "setprefs":"`.setprefs`: Set user preferences. Allowable flags:\n" \
-                    "`-spoilerchat [show|hide]` : `show` makes spoilerchat visible at all times; `hide` hides it until you've submitted for the daily.\n" \
-                    "`-dailyalert [true|false]` : if `true`, the bot will send a PM to alert you when the new daily is available.\n" \
-                    "`-racealert [none|some|all]` : `none` gives no race alerts; `some` sends a PM when a new race is created (but not a rematch); `all` sends a " \
-                    "PM for every race created (including rematches).",
-    "info":"`.info`: Necrobot version information.",
-    }
-
-class InfoCommand(command.CommandType):
-    def __init__(self, info_module):
-        command.CommandType.__init__(self, 'info')
-        self.help_text = "Necrobot version information."
-        self._im = info_module
-
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        yield from self._im.client.send_message(command.channel, 'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(config.BOT_VERSION, self._im.ref_channel.mention))
-    
-class InfoModule(command.Module):
-    def __init__(self, necrobot):
-        self._necrobot = necrobot
-        self.command_types = [InfoCommand(self)]
-    
-    @property
-    def ref_channel(self):
-        return self._necrobot.ref_channel
-
-    @property
-    def client(self):
-        return self._necrobot.client
-    
 class Necrobot(object):
 
     ## Barebones constructor
@@ -86,7 +17,7 @@ class Necrobot(object):
         self.client = client
         self.server = None
         self.prefs = None
-        self.modules = [InfoModule(self)]
+        self.modules = []
         self._main_channel = None
         self._admin_id = None
         self._wants_to_quit = False
@@ -117,10 +48,8 @@ class Necrobot(object):
             exit(1)
 
         self._main_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
-
-        #set up prefs manager
-        pref_db_connection = sqlite3.connect(config.USER_DB_FILENAME)
-        self.prefs = userprefs.UserPrefManager(pref_db_connection, self.server)
+        self.load_module(AdminModule(self))
+        self.load_module(PrefsModule(self, sqlite3.connect(config.USER_DB_FILENAME)))
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
@@ -154,6 +83,15 @@ class Necrobot(object):
                 if role.name == rolename:
                     admin_roles.append(role)
         return admin_roles
+
+    # Returns true if the user is a server admin
+    def is_admin(self, user):
+        member = self.get_as_member(user)
+        admin_roles = self.admin_roles
+        for role in member.roles:
+            if role in admin_roles:
+                return True
+        return False
 
     # Returns the channel with the given name on the server, if any
     def find_channel(self, channel_name):
@@ -205,29 +143,6 @@ class Necrobot(object):
         for member in self.server.members:
             if member.id == user.id:
                 return member
-
-###----------------------------OLD------------------------------------------
-
-    @asyncio.coroutine
-    def private_message_command(self, message):
-        args = message.content.split()
-        command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
-        if command == 'dailyrules':
-            yield from self.get_dailyrules(message.channel)  
-        elif command == 'dailysubmit':
-            author_as_member = None
-            for member in self.server.members:
-                if member.id == message.author.id:
-                    author_as_member = member
-            if author_as_member:
-                yield from self.try_daily_submit(message.channel, author_as_member, args) 
-        elif command == 'dailyseed':
-            author_as_member = None
-            for member in self.server.members:
-                if member.id == message.author.id:
-                    author_as_member = member
-            if author_as_member:
-                yield from self.try_daily_getseed(message.channel, author_as_member, args)             
 
     @asyncio.coroutine
     def main_channel_command(self, message):
@@ -491,16 +406,3 @@ class Necrobot(object):
         #yield from asyncio.sleep(1)
         asyncio.ensure_future(self.client.delete_message(message))
 
-    @asyncio.coroutine
-    def _when_updated_prefs(self, prefs, member):
-        dm = self._daily_manager
-        today_daily = dm.today_number()
-        if dm._spoilerchat_channel:
-            if prefs.hide_spoilerchat == True and not dm.has_submitted(today_daily, member.id):
-                read_permit = discord.Permissions.none()
-                read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(dm._spoilerchat_channel, member, deny=read_permit)  
-            elif prefs.hide_spoilerchat == False:
-                read_permit = discord.Permissions.none()
-                read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(dm._spoilerchat_channel, member, allow=read_permit)  

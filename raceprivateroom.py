@@ -9,6 +9,7 @@ import config
 import datetime
 import discord
 import permissioninfo
+import raceroom
 import racetime
 import random
 import sqlite3
@@ -19,7 +20,6 @@ from matchinfo import MatchInfo
 from permissioninfo import PermissionInfo
 from raceinfo import RaceInfo
 from racer import Racer
-from raceroom import RaceRoom
 
 class Ready(raceroom.Ready):
     def __init__(self, race_room):
@@ -54,6 +54,7 @@ class Add(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'add')
         self.help_text = 'Give a user permission to see the room.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -68,6 +69,7 @@ class Admins(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'admins')
         self.help_text = 'List all admins for this race.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -87,6 +89,7 @@ class Remove(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'remove')
         self.help_text = 'Remove a user\'s permission to see the room.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -102,6 +105,7 @@ class ChangeRules(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'changerules')
         self.help_text = 'Change the rules for the race. Takes the same parameters as `.make`.'
+        self.suppress_help = True
         self._room = race_room        
 
     @asyncio.coroutine
@@ -117,6 +121,7 @@ class MakeAdmin(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'makeadmin')
         self.help_text = 'Make specified users into admins for the race (cannot be undone).'
+        self.suppress_help = True
         self._room = race_room        
 
     @asyncio.coroutine
@@ -132,6 +137,7 @@ class Reseed(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'reseed')
         self.help_text = 'Randomly generate a new seed for this race.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -148,6 +154,7 @@ class ForceReset(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forcereset')
         self.help_text = 'Cancel and reset the current race.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -159,6 +166,7 @@ class Pause(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'pause')
         self.help_text = 'Pause the race timer.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -173,6 +181,7 @@ class Unpause(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'unpause')
         self.help_text = 'Unpause the race timer.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -182,12 +191,12 @@ class Unpause(command.CommandType):
             if success:
                 yield from self.write('Race unpaused! GO!')
 
-class RacePrivateRoom(RaceRoom):
+class RacePrivateRoom(raceroom.RaceRoom):
 
     def __init__(self, race_module, race_channel, race_private_info):
-        RaceRoom.__init__(self, race_module, race_channel, race_private_info.race_info)
+        raceroom.RaceRoom.__init__(self, race_module, race_channel, race_private_info.race_info)
         self._match_info = race_private_info.match_info
-        self.permission_info = permissioninfo.get_permission_info(race_manager._server, race_private_info)
+        self.permission_info = permissioninfo.get_permission_info(race_module.server, race_private_info)
         self.admin_ready = False
 
         self.command_types = [raceroom.Enter(self),
@@ -224,7 +233,7 @@ class RacePrivateRoom(RaceRoom):
     @asyncio.coroutine
     def initialize(self):
         yield from self._set_permissions()
-        yield from RaceRoom.initialize(self)
+        yield from raceroom.RaceRoom.initialize(self)
 
     # Makes a rematch of this race in this room, if one has not already been made
     # Overrides
@@ -241,7 +250,7 @@ class RacePrivateRoom(RaceRoom):
     # Overrides
     @asyncio.coroutine
     def begin_if_ready(self):
-        success = raceroom.RaceRoom.begin_if_ready(self):
+        success = yield from raceroom.RaceRoom.begin_if_ready(self)
         if success:
             self._rematch_made = False
         return success
@@ -281,10 +290,10 @@ class RacePrivateRoom(RaceRoom):
         read_permit.read_messages = True
 
         #deny access to @everyone
-        yield from self.deny(self._manager._server.default_role)
+        yield from self.deny(self._rm.server.default_role)
 
         #allow access for self
-        yield from self.allow(self._manager.get_as_member(self.client.user))
+        yield from self.allow(self._rm.get_as_member(self.client.user))
 
         #give admin roles permission
         for role in self.permission_info.admin_roles:

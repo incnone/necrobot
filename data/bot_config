@@ -1,5 +1,5 @@
 bot_command_prefix=.
-bot_version=0.3.3
+bot_version=0.4.0
 
 channel_main=necrobot_main
 channel_reference=command_list
@@ -7,7 +7,7 @@ channel_daily_spoilerchat=dailyspoilerchat
 channel_daily_leaderboards=daily_leaderboards
 channel_race_results=race_results
 
-admin_roles=Admin,CoNDOR Staff
+admin_roles=Admin
 
 daily_grace_period_length_minutes=60
 

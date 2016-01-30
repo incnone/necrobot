@@ -169,7 +169,4 @@ def on_message(message):
     yield from necrobot.execute(cmd)
 
 # Run client
-while not necrobot.quitting:
-    client.run(login_data.email, login_data.password)
-    #the above blocks, so if we're here, we've been logged out. wait one minute and try again.
-    time.sleep(60)
+client.run(login_data.email, login_data.password)

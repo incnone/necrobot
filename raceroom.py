@@ -269,7 +269,8 @@ class Time(command.CommandType):
 class ForceCancel(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forcecancel')
-        self.help_text = ''
+        self.help_text = 'Cancels the race.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -280,7 +281,8 @@ class ForceCancel(command.CommandType):
 class ForceClose(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forceclose')
-        self.help_text = ''
+        self.help_text = 'Cancel the race, and close the channel.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -291,7 +293,8 @@ class ForceClose(command.CommandType):
 class ForceForfeit(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forceforfeit')
-        self.help_text = ''
+        self.help_text = 'Force the given racer to forfeit the race (even if they have finished).'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -305,7 +308,8 @@ class ForceForfeit(command.CommandType):
 class ForceForfeitAll(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forceforfeitall')
-        self.help_text = ''
+        self.help_text = 'Force all unfinished racers to forfeit the race.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -318,7 +322,8 @@ class ForceForfeitAll(command.CommandType):
 class Kick(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'kick')
-        self.help_text = ''
+        self.help_text = 'Remove a racer from the race. (They can still re-enter with `.enter`.'
+        self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -338,12 +343,14 @@ class RaceRoom(command.Module):
         self.creator = None                         #Can store a user that created this room. Not used internally.
         self.is_closed = False                      #True if room has been closed
         self.race = Race(self, race_info)           #The current race
+        self.admin_ready = True
 
         self._rm = race_module           
         self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
         self._mention_on_rematch = []               #A list of users that should be @mentioned when a rematch is created
 
-        self.command_types = [Enter(self),
+        self.command_types = [command.DefaultHelp(self),
+                              Enter(self),
                               Unenter(self),
                               Ready(self),
                               Unready(self),
@@ -414,11 +421,6 @@ class RaceRoom(command.Module):
     @property
     def all_racers_ready(self):
         return self.race.num_not_ready == 0 and (not config.REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self.race.racers) > 1)
-
-    # Returns whether the admins are ready. Made for overriding.
-    @property
-    def admin_ready(self):
-        return True
 
     # Begins the race if ready. (Writes a message if all racers are ready but an admin is not.)
     # Returns true on success
