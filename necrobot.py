@@ -49,7 +49,8 @@ class Necrobot(object):
 
         self._main_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
         self.load_module(AdminModule(self))
-        self.load_module(PrefsModule(self, sqlite3.connect(config.USER_DB_FILENAME)))
+        self.prefs = PrefsModule(self, sqlite3.connect(config.USER_DB_FILENAME))
+        self.load_module(self.prefs)
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates

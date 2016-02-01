@@ -209,6 +209,7 @@ class RacePrivateRoom(raceroom.RaceRoom):
                               raceroom.Unforfeit(self),
                               raceroom.Comment(self),
                               raceroom.Igt(self),
+                              raceroom.Death(self),
                               raceroom.Rematch(self),
                               raceroom.DelayRecord(self),
                               raceroom.Notify(self),
@@ -293,7 +294,7 @@ class RacePrivateRoom(raceroom.RaceRoom):
         yield from self.deny(self._rm.server.default_role)
 
         #allow access for self
-        yield from self.allow(self._rm.get_as_member(self.client.user))
+        yield from self.allow(self._rm.necrobot.get_as_member(self.client.user))
 
         #give admin roles permission
         for role in self.permission_info.admin_roles:

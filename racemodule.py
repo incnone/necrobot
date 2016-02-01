@@ -33,24 +33,26 @@ class Make(command.CommandType):
                     "Finally, desc allows you to give any custom one-word description of the race (e.g., '4-shrine')."
         self._rm = race_module
 
+    def recognized_channel(self, channel):
+        return channel == self._rm.main_channel
+
     @asyncio.coroutine
     def _do_execute(self, command):
-        if command.channel == self._rm.main_channel:
-            race_info = raceinfo.parse_args(command.args)
-            if race_info:
-                race_channel = yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=True)
-                if race_channel:
-                    alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
-                    main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(command.author.mention, race_channel.mention, race_info.format_str())
+        race_info = raceinfo.parse_args(command.args)
+        if race_info:
+            race_channel = yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=True)
+            if race_channel:
+                alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
+                main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(command.author.mention, race_channel.mention, race_info.format_str())
 
-                    # send PM alerts
-                    some_alert_pref = userprefs.UserPrefs()
-                    some_alert_pref.race_alert = userprefs.RaceAlerts['some']
-                    for user in self._rm.prefs.get_all_matching(some_alert_pref):
-                        asyncio.ensure_future(self._rm.client.send_message(user, alert_string))
+                # send PM alerts
+                some_alert_pref = userprefs.UserPrefs()
+                some_alert_pref.race_alert = userprefs.RaceAlerts['some']
+                for user in self._rm.necrobot.prefs.get_all_matching(some_alert_pref):
+                    asyncio.ensure_future(self._rm.client.send_message(user, alert_string))
 
-                    # alert in main channel
-                    asyncio.ensure_future(self._rm.client.send_message(command.channel, main_channel_string))
+                # alert in main channel
+                asyncio.ensure_future(self._rm.client.send_message(command.channel, main_channel_string))
 
 class MakePrivate(command.CommandType):
     def __init__(self, race_module):
@@ -65,24 +67,25 @@ class MakePrivate(command.CommandType):
                     "(Both admins and racers can enter the race, or not, as they prefer.)"                 
         self._rm = race_module
 
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._rm.main_channel
+
     @asyncio.coroutine
     def _do_execute(self, command):
-        if command.channel.is_private or command.channel == self._rm.main_channel:
-            race_private_info = raceprivateinfo.parse_args(command.args)
-            if not command.author.name in race_private_info.admin_names:
-                race_private_info.admin_names.append(command.author.name)
-            if race_private_info:
-                race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
-                if race_channel:
-                    output_prestring = 'You have started a private race.' if command.channel.is_private else 'A private race has been started by {}.'.format(command.author.mention)
-                    asyncio.ensure_future(self._rm.client.send_message(command.channel,
-                        '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))             
+        race_private_info = raceprivateinfo.parse_args(command.args)
+        if not command.author.name in race_private_info.admin_names:
+            race_private_info.admin_names.append(command.author.name)
+        if race_private_info:
+            race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
+            if race_channel:
+                output_prestring = 'You have started a private race.' if command.channel.is_private else 'A private race has been started by {}.'.format(command.author.mention)
+                asyncio.ensure_future(self._rm.client.send_message(command.channel,
+                    '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))             
 
 class RaceModule(command.Module):
 
     def __init__(self, necrobot, db_connection):
-        command.Module.__init__(self)
-        self._necrobot = necrobot
+        command.Module.__init__(self, necrobot)
         self._db_conn = db_connection
         self._results_channel = necrobot.find_channel(config.RACE_RESULTS_CHANNEL_NAME)
         self._racerooms = []
@@ -95,47 +98,27 @@ class RaceModule(command.Module):
         return 'Races'
 
     @property
-    def client(self):
-        return self._necrobot.client
-
-    @property
-    def server(self):
-        return self._necrobot.server
-
-    @property
     def main_channel(self):
-        return self._necrobot.main_channel
+        return self.necrobot.main_channel
 
     @property
     def results_channel(self):
         return self._results_channel
 
-    @property
-    def prefs(self):
-        return self._necrobot.prefs
-
-    @property
-    def admin_roles(self):
-        return self._necrobot.admin_roles
-
-    def get_as_member(self, user):
-        return self._necrobot.get_as_member(user)
-
     ## TODO use more unique names so hope to avoid Spot's cacheing on tablet problem
     ## Return a new (unique) race room name from the race info
     def get_raceroom_name(self, race_info):
-        counter = 0
-        trial_name = ''
-        while True:
-            counter += 1
-            trial_name = '{0}_{1}'.format(race_info.raceroom_name(), counter)
-            name_is_ok = True
-            for c in self._necrobot.server.channels:
-                if c.name == trial_name:
-                    name_is_ok = False
-
-            if name_is_ok:
-                return trial_name
+        name_prefix = race_info.raceroom_name()
+        cut_length = len(name_prefix) + 1
+        largest_postfix = 0
+        for channel in self.necrobot.server.channels:
+            if channel.name.startswith(name_prefix):
+                try:
+                    val = int(channel.name[cut_length:])
+                    largest_postfix = max(largest_postfix, val)
+                except ValueError:
+                    pass
+        return '{0}_{1}'.format(name_prefix, largest_postfix + 1)
 
     ## Make a race with the given RaceInfo
     @asyncio.coroutine
@@ -144,7 +127,7 @@ class RaceModule(command.Module):
         self._racerooms = [r for r in self._racerooms if not r.is_closed]
         
         #Make a channel for the race
-        race_channel = yield from self.client.create_channel(self._necrobot.server, self.get_raceroom_name(race_info), type='text')
+        race_channel = yield from self.client.create_channel(self.necrobot.server, self.get_raceroom_name(race_info), type='text')
 
         if race_channel:
             # Make the actual RaceRoom and initialize it 
@@ -158,7 +141,7 @@ class RaceModule(command.Module):
                 all_alert_pref = userprefs.UserPrefs()
                 all_alert_pref.race_alert = userprefs.RaceAlerts['all']
                 alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
-                for user in self.prefs.get_all_matching(all_alert_pref):
+                for user in self.necrobot.prefs.get_all_matching(all_alert_pref):
                     asyncio.ensure_future(self.client.send_message(user, alert_string))
         
         return race_channel
@@ -170,7 +153,7 @@ class RaceModule(command.Module):
         self._racerooms = [r for r in self._racerooms if not r.is_closed]
         
         #Make the new race
-        race_channel = yield from self.client.create_channel(self._necrobot.server, self.get_raceroom_name(race_private_info.race_info), type='text')
+        race_channel = yield from self.client.create_channel(self.necrobot.server, self.get_raceroom_name(race_private_info.race_info), type='text')
         new_race = raceprivateroom.RacePrivateRoom(self, race_channel, race_private_info)
         new_race.creator = creator
         self._racerooms.append(new_race)

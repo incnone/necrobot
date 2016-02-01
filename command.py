@@ -13,7 +13,10 @@ class Command(object):
         self.message = None
 
         if message.content.startswith(config.BOT_COMMAND_PREFIX):
-            self.args = shlex.split(message.content)
+            try:
+                self.args = shlex.split(message.content)
+            except ValueError:
+                self.args = message.content.split()
             prefix_len = len(config.BOT_COMMAND_PREFIX)
             self.command = (self.args.pop(0)[prefix_len:]).lower()
             self.message = message
@@ -39,7 +42,7 @@ class Command(object):
 class CommandType(object):
     def __init__(self, *args, **kwargs):
         self.command_name_list = args             # the string that calls this command (e.g. 'make')
-        self.help_text = 'Error: this command has no help text.'
+        self.help_text = 'This command has no help text.'
         self.suppress_help = False              # If true, will not show this command on .help requests
         
     @property
@@ -53,11 +56,10 @@ class CommandType(object):
     # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
     @asyncio.coroutine
     def execute(self, command):
-        if command.command in self.command_name_list:
+        if command.command in self.command_name_list and self.recognized_channel(command.channel):
             yield from self._do_execute(command)
 
     # Returns true if the command is "recognized" in the given channel
-    @asyncio.coroutine
     def recognized_channel(self, channel):
         return True
     
@@ -78,11 +80,14 @@ class DefaultHelp(CommandType):
     def _do_execute(self, command):
         if len(command.args) == 0:
             command_list_text = self.module.infostr + ": "
-            for cmd in self.module.command_types:
-                if not cmd.suppress_help:
-                    command_list_text += '`' + cmd.mention + '`, '
-            command_list_text = command_list_text[:-2]
-            yield from self.module.client.send_message(command.channel, command_list_text)
+            found_any = False
+            for cmd_type in self.module.command_types:
+                if not cmd_type.suppress_help and cmd_type.recognized_channel(command.channel):
+                    found_any = True
+                    command_list_text += '`' + cmd_type.mention + '`, '
+            if found_any:
+                command_list_text = command_list_text[:-2]
+                yield from self.module.client.send_message(command.channel, command_list_text)
         elif len(command.args) == 1:
             for cmd_type in self.module.command_types:
                 if cmd_type.called_by(command.args[0]) and cmd_type.recognized_channel(command.channel):
@@ -91,20 +96,23 @@ class DefaultHelp(CommandType):
 
 # Abstract base class; a module that can be attached to the Necrobot
 class Module(object):
-    def __init__(self):
+    def __init__(self, necrobot):
+        self.necrobot = necrobot
         self.command_types = []
+
+    @property
+    def client(self):
+        return self.necrobot.client
+
+    @property
+    def server(self):
+        return self.necrobot.server
 
     # Brief information string on what kind of module this is.
     # Overwrite this
     @property
     def infostr(self):
-        return 'Unknown module.'
-
-    # Return the discord client
-    # Overwrite this
-    @property
-    def client(self):
-        return None
+        return 'Unknown module'   
 
     # Attempts to execute the given command (if a command of its type is in command_types)
     @asyncio.coroutine

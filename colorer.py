@@ -63,25 +63,18 @@ class ColorMe(command.CommandType):
 
     @asyncio.coroutine
     def _do_execute(self, command):
-        if command.channel == self._cm.main_channel:
-            asyncio.ensure_future(color_user(command.author, self._cm.client, self._cm.server))
-            #yield from asyncio.sleep(1)
-            asyncio.ensure_future(self._cm.client.delete_message(command.message))
+        asyncio.ensure_future(color_user(command.author, self._cm.client, self._cm.server))
+        #yield from asyncio.sleep(1)
+        asyncio.ensure_future(self._cm.client.delete_message(command.message))
+
+    def recognized_channel(self, channel):
+        return command.channel == self._cm.main_channel
                                 
 class ColorerModule(command.Module):
     def __init__(self, necrobot):
-        command.Module.__init__(self)
-        self._necrobot = necrobot
+        command.Module.__init__(self, necrobot)
         self.command_types = [ColorMe(self)]
 
     @property
-    def client(self):
-        return self._necrobot.client
-
-    @property
-    def server(self):
-        return self._necrobot.server
-
-    @property
     def main_channel(self):
-        return self._necrobot.main_channel
+        return self.necrobot.main_channel

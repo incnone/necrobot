@@ -7,6 +7,7 @@ import command
 import config
 import datetime
 import discord
+import level
 import racetime
 import textwrap
 import time
@@ -152,6 +153,14 @@ class Forfeit(command.CommandType):
         if success:
             yield from self._room.write('{} has forfeit the race.'.format(command.author.mention))
 
+        if len(command.args) > 0:
+            racer = self._room.race.get_racer(command.author)
+            if racer:
+                cut_length = len(command.command) + len(config.BOT_COMMAND_PREFIX) + 1
+                end_length = 255 + cut_length
+                racer.add_comment(command.message.content[cut_length:end_length])
+                asyncio.ensure_future(self._room.update_leaderboard())            
+
 class Unforfeit(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'unforfeit', 'unquit')
@@ -186,10 +195,29 @@ class Comment(command.CommandType):
             racer.add_comment(command.message.content[cut_length:end_length])
             asyncio.ensure_future(self._room.update_leaderboard())
 
+class Death(command.CommandType):
+    def __init__(self, race_room):
+        command.CommandType.__init__(self, 'death')
+        self.help_text = 'Marks your race as having died at a given level, e.g., `{} 3-2`.'.format(self.mention)
+        self._room = race_room
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        if self._room.race.is_before_race:
+            return
+
+        if len(command.args) == 1:
+            lvl = level.from_str(command.args[0])
+            racer = self._room.race.get_racer(command.author)
+            if lvl != -1 and racer:
+                yield from self._room.race.forfeit_racer(self._room.race.get_racer(command.author))
+                racer.level = lvl
+                asyncio.ensure_future(self._room.update_leaderboard())
+
 class Igt(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'igt')
-        self.help_text = 'Adds an in-game-time to your race. time takes the form 12:34.56.'
+        self.help_text = 'Adds an in-game-time to your race, e.g. `{} 12:34.56.`'.format(self.mention)
         self._room = race_room
 
     @asyncio.coroutine
@@ -200,7 +228,7 @@ class Igt(command.CommandType):
         if len(command.args) == 1:
             igt = racetime.from_str(command.args[0])
             racer = self._room.race.get_racer(command.author)
-            if igt != -1 and racer and racer.is_finished:
+            if igt != -1 and racer and racer.is_done_racing:
                 racer.igt = igt
                 asyncio.ensure_future(self._room.update_leaderboard())
 
@@ -213,7 +241,7 @@ class Rematch(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         if self._room.race.is_before_race:
-            yield from self._room.write('{}: Maybe we should do this race first.'.format(command.author))
+            yield from self._room.write('{}: Maybe we should do this race first.'.format(command.author.mention))
         elif self._room.race.complete:
             yield from self._room.make_rematch()
         else:
@@ -244,11 +272,11 @@ class Notify(command.CommandType):
 
     @asyncio.coroutine
     def _do_execute(self, command):        
-        if len(command.args) == 1 and command.args[1] == 'off':
-            self._rm.dont_notify(command.author)
+        if len(command.args) == 1 and command.args[0] == 'off':
+            self._room.dont_notify(command.author)
             yield from self._room.write('{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
         elif len(command.args) == 0 or len(command.args) == 1 and command.args[1] == 'on':
-            self._rm.notify(command.author)
+            self._room.notify(command.author)
             yield from self._room.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))      
 
 class Time(command.CommandType):
@@ -330,7 +358,7 @@ class Kick(command.CommandType):
     def _do_execute(self, command):
         if self._room.is_race_admin(command.author):
             names_to_kick = [n.lower() for n in command.args]
-            for racer in self._racers.values():
+            for racer in self._room.race.racers.values():
                 if racer.name.lower() in names_to_kick:
                     success = yield from self._room.race.unenter_racer(racer)
                     if success:
@@ -359,6 +387,7 @@ class RaceRoom(command.Module):
                               Forfeit(self),
                               Unforfeit(self),
                               Comment(self),
+                              Death(self),
                               Igt(self),
                               Rematch(self),
                               DelayRecord(self),
@@ -447,7 +476,7 @@ class RaceRoom(command.Module):
 
     #True if the user has admin permissions for this race
     def is_race_admin(self, member):
-        admin_roles = self._rm.admin_roles
+        admin_roles = self._rm.necrobot.admin_roles
         for role in member.roles:
             if role in admin_roles:
                 return True

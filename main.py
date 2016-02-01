@@ -52,11 +52,12 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 ##        raceid       : the identifier for this race
 ##        playerid     : the player's unique discord identifier
 ##        name         : the player's username 
-##        finished     : whether the player finished the race (rather than forfeiting) 
+##        finished     : whether the player finished the race (rather than forfeiting)
 ##        time         : the time (in hundredths of a second) for the race (undefined for forfeit races)
 ##        rank         : the rank the player finished in (undefined for forfeit races)
 ##        igt          : the in-game time, if the racer entered one (otherwise, -1)
 ##        comment      : any comment the racer entered
+##        level        : the level the player died on, if applicable
 ## In daily.db:-------------------------------------------------------------------------------
 ##    TABLE daily_races: stores one entry for each player-run of each daily
 ##        date         : the number of days since 1/1/2016 for this daily (with 1/1/2016 being date = 0) (the 'daily's number')
@@ -76,6 +77,7 @@ necrobot = Necrobot(client)                 # main class for necrobot behavior
 ##        playerid        : the user's unique discord identifier
 ##        hidespoilerchat : if true, hides #dailyspoilerchat until the user has submitted for the daily
 ##        dailyalert      : if true, sends a PM alerting user when daily rolls over
+##        racealert       : receive alerts when a new race starts
 
 
 ## Set up the databases for the first time.
@@ -88,10 +90,25 @@ def set_up_databases():
         races_db_cur.execute("""CREATE TABLE race_data
                             (raceid int, timestamp bigint, character varchar(255), descriptor varchar(255), seeded boolean, seed int, sudden_death boolean, flagplant boolean)""")
         races_db_cur.execute("""CREATE TABLE racer_data
-                            (raceid int, playerid bigint, name varchar(255), finished boolean, time int, rank tinyint, igt int, comment varchar(255))""")
+                            (raceid int, playerid bigint, name varchar(255), finished boolean, time int, rank tinyint, igt int, comment varchar(255), level tinyint)""")
         races_db_conn.commit()
         races_db_conn.close()
+    else: #handle later changes
+        races_db_conn = sqlite3.connect(config.RACE_DB_FILENAME)
+        races_db_cur = races_db_conn.cursor()
+        races_db_cur.execute("""PRAGMA table_info(racer_data)""")
+        level_found = False
+        for row in races_db_cur:
+            if row[1] == 'level':
+                level_found = True
 
+        if not level_found:
+            races_db_cur.execute("""ALTER TABLE racer_data
+                                   ADD level tinyint""")
+
+        races_db_conn.commit() 
+        races_db_conn.close()
+        
     if not os.path.isfile(config.DAILY_DB_FILENAME):
         daily_db_conn = sqlite3.connect(config.DAILY_DB_FILENAME)
         daily_db_cur = daily_db_conn.cursor()

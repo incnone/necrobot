@@ -107,11 +107,14 @@ class SetPrefs(command.CommandType):
                     "PM for every race created (including rematches)."
         self._pm = prefs_module
 
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._pm.necrobot.main_channel
+
     @asyncio.coroutine
     def _do_execute(self, command):
         prefs = parse_args(command.args)
         if prefs.contains_info:
-            self._pm.set_prefs(prefs, command.author)
+            asyncio.ensure_future(self._pm.set_prefs(prefs, command.author))
             confirm_msg = 'Set the following preferences for {}:'.format(command.author.mention)
             for pref_str in prefs.pref_strings:
                 confirm_msg += ' ' + pref_str
@@ -119,17 +122,36 @@ class SetPrefs(command.CommandType):
         else:
             asyncio.ensure_future(self._pm.client.send_message(command.channel, '{0}: Failure parsing arguments; did not set any user preferences.'.format(command.author.mention)))                         
 
+class ViewPrefs(command.CommandType):
+    def __init__(self, prefs_module):
+        command.CommandType.__init__(self, 'viewprefs')
+        self.help_text = "See your current user preferences."
+        self._pm = prefs_module
+
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._pm.necrobot.main_channel
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        prefs = self._pm.get_prefs(command.author)
+        prefs_string = ''
+        for pref_str in prefs.pref_strings:
+            prefs_string += ' ' + pref_str
+        yield from self._pm.client.send_message(command.author, 'Your current user preferences: {}'.format(prefs_string))
+
 class PrefsModule(command.Module):
     def __init__(self, necrobot, db_connection):
-        command.Module.__init__(self)
+        command.Module.__init__(self, necrobot)
         self._db_conn = db_connection
-        self._necrobot = necrobot
-        self.command_types = [SetPrefs(self)]
+        self.command_types = [command.DefaultHelp(self),
+                              SetPrefs(self),
+                              ViewPrefs(self)]
 
     @property
-    def client(self):
-        return self._necrobot.client
+    def infostr(self):
+        return 'User preferences'
 
+    @asyncio.coroutine
     def set_prefs(self, user_prefs, user):
         prefs = self.get_prefs(user)
         prefs.modify_with(user_prefs)
@@ -142,8 +164,8 @@ class PrefsModule(command.Module):
         db_cursor.execute("""INSERT INTO user_prefs (playerid, hidespoilerchat, dailyalert, racealert) VALUES (?,?,?,?)""", params)         
         self._db_conn.commit()
 
-        for module in self._necrobot.modules:
-            yield from module.on_update_prefs(user_prefs)
+        for module in self.necrobot.modules:
+            yield from module.on_update_prefs(user_prefs, user)
 
     def get_prefs(self, user):
         user_prefs = UserPrefs.get_default()
@@ -153,6 +175,7 @@ class PrefsModule(command.Module):
         for row in db_cursor:
             user_prefs.hide_spoilerchat = row[1]
             user_prefs.daily_alert = row[2]
+            user_prefs.race_alert = row[3]
         return user_prefs
 
     #get all user id's matching the given user prefs
@@ -169,7 +192,7 @@ class PrefsModule(command.Module):
             db_cursor.execute("""SELECT playerid FROM user_prefs WHERE hidespoilerchat=?""", params)
             for row in db_cursor:
                 userid = row[0]
-                for member in self._necrobot.server.members:
+                for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_spoilerchat.append(member)
 
@@ -179,7 +202,7 @@ class PrefsModule(command.Module):
             db_cursor.execute("""SELECT playerid FROM user_prefs WHERE dailyalert=?""", params)
             for row in db_cursor:
                 userid = row[0]
-                for member in self._necrobot.server.members:
+                for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_dailyalert.append(member)
 
@@ -190,7 +213,7 @@ class PrefsModule(command.Module):
             db_cursor.execute("""SELECT playerid FROM user_prefs WHERE racealert=?""", params)
             for row in db_cursor:
                 userid = row[0]
-                for member in self._necrobot.server.members:
+                for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_racealert.append(member)
 

@@ -353,8 +353,8 @@ class Race(object):
         if self._status != RaceStatus['racing']:
             return False
         
-        finish_time = time.clock()
-        if racer and racer.finish(int(100*(finish_time - self._start_time))):
+        finish_time = int(100*(time.clock() - self._start_time))
+        if racer and racer.finish(finish_time):
             asyncio.ensure_future(self._check_for_race_end())
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
@@ -377,7 +377,8 @@ class Race(object):
     # Puts the given Racer in the 'forfeit' state
     @asyncio.coroutine
     def forfeit_racer(self, racer):
-        if racer and racer.forfeit():
+        forfeit_time = int(100*(time.clock() - self._start_time))
+        if racer and racer.forfeit(forfeit_time):
             asyncio.ensure_future(self._check_for_race_end())
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
@@ -440,8 +441,8 @@ class Race(object):
         rank = 0
         for racer in racer_list:
             rank += 1
-            racer_params = (new_raceid, racer.id, racer.name, racer.is_finished, racer.time, rank, racer.igt, racer.comment[:255])
-            db_cur.execute("INSERT INTO racer_data VALUES (?,?,?,?,?,?,?,?)", racer_params)
+            racer_params = (new_raceid, racer.id, racer.name, racer.is_finished, racer.time, rank, racer.igt, racer.comment[:255], racer.level)
+            db_cur.execute("INSERT INTO racer_data VALUES (?,?,?,?,?,?,?,?,?)", racer_params)
 
         db_conn.commit()
 
