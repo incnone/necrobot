@@ -22,6 +22,9 @@ import clparse
 import seedgen
 
 NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']       
+SEEDED_FLAG = int(pow(2,0))
+SUDDEN_DEATH_FLAG = int(pow(2,1))
+FLAGPLANT_FLAG = int(pow(2,2))
 
 def _parse_seed(args, race_info):
     #note: this allows `-s (int)` to set a specific seed, while `-s` just sets seeded.
@@ -170,6 +173,10 @@ class RaceInfo(object):
         the_copy.sudden_death = self.sudden_death
         the_copy.flagplant = self.flagplant
         return the_copy
+
+    @property
+    def flags(self):
+        return int(self.seeded)*SEEDED_FLAG + int(self.sudden_death)*SUDDEN_DEATH_FLAG + int(self.flagplant)*FLAGPLANT_FLAG
     
     #returns a (possibly multi-line) string that can be used to header results for the race
     #depricated. do not use. use format_str and seed_str instead.

@@ -68,7 +68,7 @@ class ColorMe(command.CommandType):
         asyncio.ensure_future(self._cm.client.delete_message(command.message))
 
     def recognized_channel(self, channel):
-        return command.channel == self._cm.main_channel
+        return channel == self._cm.main_channel
                                 
 class ColorerModule(command.Module):
     def __init__(self, necrobot):

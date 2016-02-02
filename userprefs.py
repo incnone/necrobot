@@ -156,12 +156,8 @@ class PrefsModule(command.Module):
         prefs = self.get_prefs(user)
         prefs.modify_with(user_prefs)
 
-        db_cursor = self._db_conn.cursor()
-        params_id = (user.id,)
-        db_cursor.execute("""DELETE FROM user_prefs WHERE playerid=?""", params_id)
-        
         params = (user.id, prefs.hide_spoilerchat, prefs.daily_alert, prefs.race_alert,)
-        db_cursor.execute("""INSERT INTO user_prefs (playerid, hidespoilerchat, dailyalert, racealert) VALUES (?,?,?,?)""", params)         
+        self._db_conn.execute("""INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (?,?,?,?)""", params)         
         self._db_conn.commit()
 
         for module in self.necrobot.modules:
@@ -169,10 +165,8 @@ class PrefsModule(command.Module):
 
     def get_prefs(self, user):
         user_prefs = UserPrefs.get_default()
-        db_cursor = self._db_conn.cursor()
         params = (user.id,)
-        db_cursor.execute("""SELECT * FROM user_prefs WHERE playerid=?""", params)
-        for row in db_cursor:
+        for row in  self._db_conn.execute("""SELECT * FROM user_prefs WHERE discord_id=?""", params):
             user_prefs.hide_spoilerchat = row[1]
             user_prefs.daily_alert = row[2]
             user_prefs.race_alert = row[3]
@@ -184,13 +178,11 @@ class PrefsModule(command.Module):
         users_matching_dailyalert = []
         users_matching_racealert = []
         lists_to_use = []
-        db_cursor = self._db_conn.cursor()
 
         if user_prefs.hide_spoilerchat != None:
             lists_to_use.append(users_matching_spoilerchat)
             params = (user_prefs.hide_spoilerchat,)
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE hidespoilerchat=?""", params)
-            for row in db_cursor:
+            for row in self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE hidespoilerchat=?""", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
@@ -199,8 +191,7 @@ class PrefsModule(command.Module):
         if user_prefs.daily_alert != None:
             lists_to_use.append(users_matching_dailyalert)
             params = (user_prefs.daily_alert,)
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE dailyalert=?""", params)
-            for row in db_cursor:
+            for row in self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE dailyalert=?""", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
@@ -210,8 +201,7 @@ class PrefsModule(command.Module):
             lists_to_use.append(users_matching_racealert)
             params = (user_prefs.race_alert,)
                        
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE racealert=?""", params)
-            for row in db_cursor:
+            for row in  self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE racealert=?""", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):

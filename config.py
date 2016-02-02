@@ -27,6 +27,7 @@ def init():
     global REQUIRE_AT_LEAST_TWO_FOR_RACE           #if True, then races with only one entrant cannot be started
 
     #database
+    global DB_FILENAME
     global DAILY_DB_FILENAME
     global RACE_DB_FILENAME
     global USER_DB_FILENAME
@@ -47,6 +48,7 @@ def init():
         'race_cleanup_after_no_entrants_for_seconds':'120',
         'race_give_cleanup_warning_after_no_entrants_for_seconds':'90', 
         'race_require_at_least_two':'0',
+        'db_filename':'data/necrobot.db',
         'db_daily_filename':'data/daily.db',
         'db_races_filename':'data/races.db',
         'db_users_filename':'data/users.db'
@@ -84,6 +86,7 @@ def init():
     NO_ENTRANTS_CLEANUP_SEC = int(defaults['race_cleanup_after_no_entrants_for_seconds'])
     NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
     REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
+    DB_FILENAME = defaults['db_filename']
     DAILY_DB_FILENAME = defaults['db_daily_filename']
     RACE_DB_FILENAME = defaults['db_races_filename']
     USER_DB_FILENAME = defaults['db_users_filename']

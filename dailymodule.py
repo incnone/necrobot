@@ -343,5 +343,4 @@ class DailyModule(command.Module):
         elif prefs.hide_spoilerchat == False:
             read_permit = discord.Permissions.none()
             read_permit.read_messages = True
-            yield from self.client.edit_channel_permissions(self._spoilerchat_channel, member, allow=read_permit)  
-        
+            yield from self.client.edit_channel_permissions(self._spoilerchat_channel, member, allow=read_permit)
