@@ -12,6 +12,8 @@ def init():
     global REFERENCE_CHANNEL_NAME
     global DAILY_SPOILERCHAT_CHANNEL_NAME
     global DAILY_LEADERBOARDS_CHANNEL_NAME
+    global ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME
+    global ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME
     global RACE_RESULTS_CHANNEL_NAME
 
     #daily
@@ -37,8 +39,10 @@ def init():
         'bot_version':'0.2.3',
         'channel_main':'necrobot_main',
         'channel_reference':'command_list',
-        'channel_daily_spoilerchat':'dailyspoilerchat',
-        'channel_daily_leaderboards':'daily_leaderboards',
+        'channel_daily_spoilerchat':'cadence_dailyspoilerchat',
+        'channel_daily_leaderboards':'cadence_daily_leaderboards',
+        'channel_rot_daily_spoilerchat':'rotating_dailyspoilerchat',
+        'channel_rot_daily_leaderboards':'rotating_daily_leaderboards',
         'channel_race_results':'race_results',
         'daily_grace_period_length_minutes':'60',
         'race_countdown_time_seconds':'10',
@@ -77,6 +81,8 @@ def init():
     ADMIN_ROLE_NAMES = admin_roles
     DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_daily_spoilerchat']
     DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
+    ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_rot_daily_spoilerchat']
+    ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_rot_daily_leaderboards']
     RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
     DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
     COUNTDOWN_LENGTH = int(defaults['race_countdown_time_seconds'])

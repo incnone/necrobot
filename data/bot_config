@@ -3,8 +3,10 @@ bot_version=0.4.0
 
 channel_main=necrobot_main
 channel_reference=command_list
-channel_daily_spoilerchat=dailyspoilerchat
-channel_daily_leaderboards=daily_leaderboards
+channel_daily_spoilerchat=cadence_dailyspoilerchat
+channel_rot_daily_spoilerchat=rotating_dailyspoilerchat
+channel_daily_leaderboards=cadence_daily_leaderboards
+channel_rot_daily_leaderboards=rotating_daily_leaderboards
 channel_race_results=race_results
 
 admin_roles=Admin

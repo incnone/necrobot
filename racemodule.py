@@ -40,16 +40,10 @@ class Make(command.CommandType):
     def _do_execute(self, command):
         race_info = raceinfo.parse_args(command.args)
         if race_info:
-            race_channel = yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=True)
+            race_channel = yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=False)
             if race_channel:
                 alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
                 main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(command.author.mention, race_channel.mention, race_info.format_str())
-
-                # send PM alerts
-                some_alert_pref = userprefs.UserPrefs()
-                some_alert_pref.race_alert = userprefs.RaceAlerts['some']
-                for user in self._rm.necrobot.prefs.get_all_matching(some_alert_pref):
-                    asyncio.ensure_future(self._rm.client.send_message(user, alert_string))
 
                 # alert in main channel
                 asyncio.ensure_future(self._rm.client.send_message(command.channel, main_channel_string))
@@ -137,12 +131,15 @@ class RaceModule(command.Module):
             asyncio.ensure_future(new_race.initialize(mention))
 
             # Send PM alerts
-            if not suppress_alerts:
-                all_alert_pref = userprefs.UserPrefs()
-                all_alert_pref.race_alert = userprefs.RaceAlerts['all']
-                alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
-                for user in self.necrobot.prefs.get_all_matching(all_alert_pref):
-                    asyncio.ensure_future(self.client.send_message(user, alert_string))
+            alert_pref = userprefs.UserPrefs()
+            if suppress_alerts:
+                alert_pref.race_alert = userprefs.RaceAlerts['all']
+            else:
+                alert_pref.race_alert = userprefs.RaceAlerts['some']
+
+            alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
+            for user in self.necrobot.prefs.get_all_matching(alert_pref):
+                asyncio.ensure_future(self.client.send_message(user, alert_string))
         
         return race_channel
 

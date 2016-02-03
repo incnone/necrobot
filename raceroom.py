@@ -400,6 +400,10 @@ class RaceRoom(command.Module):
                               Kick(self)]
 
     @property
+    def infostr(self):
+        return 'Race'
+
+    @property
     def client(self):
         return self._rm.client
 
@@ -467,12 +471,14 @@ class RaceRoom(command.Module):
     @asyncio.coroutine
     def make_rematch(self):
         if not self._rematch_made:
+            self._rematch_made = True
             new_race_info = self.race.race_info.copy()
-            new_race_channel = yield from self._rm.make_race(new_race_info, mention=self._mention_on_rematch)
+            new_race_channel = yield from self._rm.make_race(new_race_info, mention=self._mention_on_rematch, suppress_alerts=True)
             if new_race_channel:
-                self._rematch_made = True
                 yield from self.write('Rematch created in {}!'.format(new_race_channel.mention))
                 yield from self._rm.client.send_message(self._rm.main_channel, 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(new_race_channel.mention, new_race_info.format_str()))
+            else:
+                self._rematch_made = False
 
     #True if the user has admin permissions for this race
     def is_race_admin(self, member):

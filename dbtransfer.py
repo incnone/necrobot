@@ -136,7 +136,8 @@ def transfer_user_prefs():
 
     try:
         for row in db_old.execute('SELECT * FROM user_prefs'):
-            params = (row['playerid'], row['hidespoilerchat'], row['dailyalert'], row['racealert'],)
+            dailyalert = 1 if row['dailyalert'] else 0
+            params = (row['playerid'], row['hidespoilerchat'], dailyalert, row['racealert'],)
             db_new.execute('INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (?,?,?,?)', params)
 
         db_new.commit()     

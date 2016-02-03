@@ -31,10 +31,6 @@ Current version: 0.4.0
 
 ## Major feature improvements
 
-### Different character dailies
-
-Add a second speedrun daily for a rotating character. (Maybe also add "hidden" dailies for every character, with leaderboards accessable via a command.)
-
 ### Database search & statistics; ratings based on daily/race rankings
 
 Implement a module for getting statistics for a user from races, dailies, etc. 

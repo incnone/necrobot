@@ -2,13 +2,14 @@ import asyncio
 import clparse
 import command
 
+DailyAlerts = {'none':0, 'cadence':1, 'all':2, 'rotating':3}
 RaceAlerts = {'none':0, 'some':1, 'all':2}
 
 class UserPrefs(object): 
     def get_default():
         prefs = UserPrefs()
         prefs.hide_spoilerchat = False
-        prefs.daily_alert = False
+        prefs.daily_alert = DailyAlerts['none']
         prefs.race_alert = RaceAlerts['none']
         return prefs
 
@@ -38,10 +39,14 @@ class UserPrefs(object):
         elif self.hide_spoilerchat == True:
             pref_str.append('Hide daily spoiler chat until after submission.')
 
-        if self.daily_alert == False:
+        if self.daily_alert == DailyAlerts['none']:
             pref_str.append('No daily alerts.')
-        elif self.daily_alert == True:
-            pref_str.append('Alert (via PM) when the new daily opens.')
+        elif self.daily_alert == DailyAlerts['cadence']:
+            pref_str.append('Get the seed when the new Cadence daily opens.')
+        elif self.daily_alert == DailyAlerts['all']:
+            pref_str.append('Get both seeds (via PM) when the new dailies open.')
+        elif self.daily_alert == DailyAlerts['rotating']:
+            pref_str.append('Get the seed when the new rotating-character daily opens.')        
 
         if self.race_alert == RaceAlerts['none']:
             pref_str.append('No race alerts.')
@@ -62,22 +67,13 @@ def _parse_show_spoilerchat(args, user_prefs):
 
 def _parse_daily_alert(args, user_prefs):
     command_list = ['dailyalert']
-    if len(args) >= 2 and args[0] in command_list:
-        if args[1] == 'true':
-            user_prefs.daily_alert = True
-        elif args[1] == 'false':
-            user_prefs.daily_alert = False
+    if len(args) >= 2 and args[0] in command_list and args[1] in DailyAlerts:
+        user_prefs.daily_alert = DailyAlerts[args[1]]
 
 def _parse_race_alert(args, user_prefs):
     command_list = ['racealert']
-    if len(args) >= 2 and args[0] in command_list:
-        if args[1] == 'none':
-            user_prefs.race_alert = RaceAlerts['none']
-        elif args[1] == 'some':
-            user_prefs.race_alert = RaceAlerts['some']
-        elif args[1] == 'all':
-            user_prefs.race_alert = RaceAlerts['all']
-            
+    if len(args) >= 2 and args[0] in command_list and args[1] in RaceAlerts:
+        user_prefs.race_alert = RaceAlerts[args[1]]            
 
 def parse_args(args):
     #user_prefs is a list of preferences we should change
@@ -102,7 +98,8 @@ class SetPrefs(command.CommandType):
         command.CommandType.__init__(self, 'setprefs')
         self.help_text = "Set user preferences. Allowable flags:\n" \
                     "`-spoilerchat [show|hide]` : `show` makes spoilerchat visible at all times; `hide` hides it until you've submitted for the daily.\n" \
-                    "`-dailyalert [true|false]` : if `true`, the bot will send a PM to alert you when the new daily is available.\n" \
+                    "`-dailyalert [none|all|cadence|rotating]` : sends the daily seed via PM when a new daily opens. `all` does this for both dailies; `cadence` " \
+                    "or `rotating` restricts to the appropriate daily.\n" \
                     "`-racealert [none|some|all]` : `none` gives no race alerts; `some` sends a PM when a new race is created (but not a rematch); `all` sends a " \
                     "PM for every race created (including rematches)."
         self._pm = prefs_module
@@ -191,17 +188,25 @@ class PrefsModule(command.Module):
         if user_prefs.daily_alert != None:
             lists_to_use.append(users_matching_dailyalert)
             params = (user_prefs.daily_alert,)
-            for row in self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE dailyalert=?""", params):
+            if user_prefs.daily_alert != DailyAlerts['none'] and user_prefs.daily_alert != DailyAlerts['all']:
+                params += (DailyAlerts['all'],)
+            else:
+                params += (user_prefs.daily_alert,)
+            for row in self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE dailyalert=? OR dailyalert=?""", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_dailyalert.append(member)
-
+                
         if user_prefs.race_alert != None:
             lists_to_use.append(users_matching_racealert)
             params = (user_prefs.race_alert,)
-                       
-            for row in  self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE racealert=?""", params):
+            if user_prefs.race_alert == RaceAlerts['some']:
+                params += (RaceAlerts['all'],)
+            else:
+                params += (user_prefs.race_alert,)
+                
+            for row in  self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE racealert=? OR racealert=?""", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
