@@ -1,7 +1,5 @@
 import command
 
-all_types = [CadenceSpeed(), RotatingSpeed()]
-
 class CadenceSpeed(object):
     class __CadenceSpeed(object):
         def __init__(self):
@@ -63,6 +61,8 @@ class CalledType(object):
         return self.type.character(self.number)
 
 #--------------------------------------
+
+all_types = [CadenceSpeed(), RotatingSpeed()]
 
 def _parse_dailytype_arg(arg):
     sarg = arg.lstrip('-').lower()
