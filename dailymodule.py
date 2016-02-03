@@ -164,7 +164,7 @@ class DailySeed(DailyCommandType):
 class DailyStatus(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'dailystatus')
-        self.help_text = 'Find out whether you\'ve submitted to today\'s Cadnece daily. Use the `-rot` flag to get status for the rotating-character daily.'
+        self.help_text = 'Find out whether you\'ve submitted to today\'s Cadence daily. Use the `-rot` flag to get status for the rotating-character daily.'
 
     def recognized_channel(self, channel):
         return channel.is_private or channel == self._dm.main_channel
@@ -320,6 +320,32 @@ class ForceRunNewDaily(DailyCommandType):
         if command.author.id == self._dm.necrobot.admin_id:
             yield from self._dm.on_new_daily()
 
+class ForceUpdateLeaderboard(DailyCommandType):
+    def __init__(self, daily_module):
+        DailyCommandType.__init__(self, daily_module, 'forceupdateleaderboard')
+        self.suppress_help = True
+
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._dm.main_channel
+
+    @asyncio.coroutine
+    def _daily_do_execute(self, command, called_type):
+        if command.author.id == self._dm.necrobot.admin_id:
+            days_back = 0
+            show_seed = False
+            for arg in command.args:
+                if arg.lstrip('-').lower() == 'showseed':
+                    show_seed = True
+                try:
+                    days_back = int(arg)
+                except ValueError:
+                    pass
+
+            for daily_type in dailytype.all_types:
+                number = self._dm.today_number - days_back
+                show_seed = show_seed or days_back > 0
+                yield from self._dm.update_leaderboard(number, daily_type, show_seed)
+
 class PublicDaily(daily.Daily):
     def __init__(self, daily_module, db_connection, daily_type):
         daily.Daily.__init__(self, daily_module, db_connection, daily_type)
@@ -388,7 +414,7 @@ class DailyModule(command.Module):
     # Do whatever UI things need to be done when a new daily happens
     @asyncio.coroutine
     def on_new_daily(self):
-        for daily_type in [dailytype.CadenceSpeed(), dailytype.RotatingSpeed()]:
+        for daily_type in dailytype.all_types:
             daily = self.daily(daily_type)
             today_date = daily.today_date
             today_number = daily.today_number
@@ -435,7 +461,13 @@ class DailyModule(command.Module):
     def update_leaderboard(self, daily_number, daily_type, display_seed=False):
         daily = self.daily(daily_type)
         msg_id = daily.get_message_id(daily_number)
-        if msg_id:
+
+        #If no message, make one
+        if not msg_id:
+            text = daily.leaderboard_text(today_number, daily_type)
+            msg = yield from self.client.send_message(daily.leaderboard_channel, text)
+            daily.register_message(today_number, msg.id)
+        else:
             msg_list = yield from self.client.logs_from(daily.leaderboard_channel, 10) #TODO: 10 is a "big enough" hack; make this more precise
             for msg in msg_list:
                 if int(msg.id) == msg_id:

@@ -1,5 +1,7 @@
 import command
 
+all_types = [CadenceSpeed(), RotatingSpeed()]
+
 class CadenceSpeed(object):
     class __CadenceSpeed(object):
         def __init__(self):

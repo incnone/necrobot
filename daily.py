@@ -298,7 +298,7 @@ class Daily(object):
         for row in self._db_conn.execute("SELECT msg_id FROM daily_data WHERE daily_id=? AND type=?", params):
             return int(row[0])
         return None
-
+        
     # Return a DailyUserStatus corresponding to the status of the current daily for the given user
     def user_status(self, user_id, daily_number):
         if not self.is_open(daily_number, self._type.id):
