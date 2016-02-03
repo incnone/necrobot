@@ -1,10 +1,12 @@
 bot_command_prefix=.
-bot_version=0.3.4
+bot_version=0.4.0
 
 channel_main=necrobot_main
 channel_reference=command_list
-channel_daily_spoilerchat=dailyspoilerchat
-channel_daily_leaderboards=daily_leaderboards
+channel_daily_spoilerchat=cadence_dailyspoilerchat
+channel_rot_daily_spoilerchat=rotating_dailyspoilerchat
+channel_daily_leaderboards=cadence_daily_leaderboards
+channel_rot_daily_leaderboards=rotating_daily_leaderboards
 channel_race_results=race_results
 
 admin_roles=Admin
@@ -19,6 +21,7 @@ race_cleanup_after_no_entrants_for_seconds=120
 race_give_cleanup_warning_after_no_entrants_for_seconds=60
 race_require_at_least_two=1
 
+db_filename=data/necrobot.db
 db_daily_filename=data/daily.db
 db_races_filename=data/races.db
 db_users_filename=data/users.db

@@ -6,12 +6,14 @@ import discord
 import sqlite3
 
 import config
+import dailytype
 import level
 import racetime
 import seedgen
 import userprefs
 
 DATE_ZERO = datetime.date(2016, 1, 1)
+DailyUserStatus = {'unregistered':0, 'registered':1, 'submitted':2, 'closed':3}
 
 def daily_to_date(daily_number):
     return (DATE_ZERO + datetime.timedelta(days=daily_number))
@@ -21,7 +23,7 @@ def daily_to_datestr(daily_number):
 
 def daily_to_shortstr(daily_number):
     return daily_to_date(daily_number).strftime("%d %b")
-
+    
 # Formats the given hours, minutes into a string
 def _format_as_timestr(hours, minutes):
     while minutes >= 60:
@@ -35,55 +37,26 @@ def _format_as_timestr(hours, minutes):
         hr_str = 'hour' if hours == 1 else 'hours'
         return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)  
 
-class DailyManager(object):
+class Daily(object):
 
-    def __init__(self, client, db_connection, prefs_manager=None):
-        self._client = client
+    def __init__(self, daily_module, db_connection, daily_type):
+        self._dm = daily_module
         self._db_conn = db_connection
-        self._prefs_manager = prefs_manager
-        self._leaderboard_channel = None
-        self._spoilerchat_channel = None
-        self._last_daily_number = None # The result of self.today_number on the most recent call of auto_pm_seeds()
+        self._type = daily_type
+        asyncio.ensure_future(self._daily_update())
 
-        for channel in self._client.get_all_channels():
-            if channel.name == config.DAILY_LEADERBOARDS_CHANNEL_NAME:
-                self._leaderboard_channel = channel
-
-        for channel in self._client.get_all_channels():
-            if channel.name == config.DAILY_SPOILERCHAT_CHANNEL_NAME:
-                self._spoilerchat_channel = channel        
-
-        asyncio.ensure_future(self._auto_pm_seeds())
+    @property
+    def daily_type(self):
+        return self._type
 
     # Coroutine running in the background; after it becomes a new daily, will automatically PM out the seeds to
     # users that have that preference.
     @asyncio.coroutine
-    def _auto_pm_seeds(self):
-        today_date = datetime.datetime.utcnow().date()
-        self._last_daily_number = self.today_number()
+    def _daily_update(self):
         while True:
-            yield from asyncio.sleep(120) #check every two minutes
-            today = self.today_number()
-            today_date = datetime.datetime.utcnow().date()
-            if today != self._last_daily_number:
-                # Send the PM's
-                auto_pref = userprefs.UserPrefs()
-                auto_pref.daily_alert = True
-                today_seed = self.get_seed(today)
-                for member in self._prefs_manager.get_all_matching(auto_pref):
-                    if self.has_submitted(self._last_daily_number, member.id):
-                        self.register(today, member.id)
-                        asyncio.ensure_future(self._client.send_message(member, "({0}) Today's Cadence speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed)))
-                    else:
-                        asyncio.ensure_future(self._client.send_message(member, "You have not yet submitted for yesterday's daily, so I am not yet sending you today's seed. " \
-                                                                                "When you want today's seed, please call `.dailyseed` in the main channel or via PM."))                        
-
-                # Announce the new daily in spoilerchat
-                asyncio.ensure_future(self._client.send_message(self._spoilerchat_channel, "The {} daily has begun!".format(today_date.strftime("%B %d"))))
-                
-                # Update the last daily number
-                self._last_daily_number = self.today_number()
-
+            yield from asyncio.sleep(self.time_until_next.total_seconds()) #sleep until next daily
+            self._dm.on_new_daily()
+            yield from asyncio.sleep(120) # buffer b/c i'm worried for some reason about silly microsecond rounding
 
     # Returns a string with the current daily's date and time until the next daily.
     def daily_time_info_str(self):
@@ -94,9 +67,21 @@ class DailyManager(object):
             return 'The {0} daily is currently active. The next daily will become available in {1}. Today\'s daily will close in {2}.'.format(date_str, self.next_daily_timestr(), self.daily_close_timestr())
 
     # Return today's daily number
+    @property
     def today_number(self):
-        utc_today = datetime.datetime.utcnow().date()
-        return (utc_today - DATE_ZERO).days
+        return (self.today_date - DATE_ZERO).days
+
+    # Return the date for today's daily (as a datetime.datetime)
+    @property
+    def today_date(self):
+        return datetime.datetime.utcnow().date()
+
+    # Return a datetime.timedelta giving the time until the next daily
+    @property
+    def time_until_next(self):
+        now = datetime.datetime.utcnow()
+        tomorrow = datetime.datetime.replace(now + datetime.timedelta(days=1), hour=0, minute=0, second=0)
+        return tomorrow - now
 
     # Returns whether we're in the grace period between daily rollouts
     def within_grace_period(self):
@@ -122,24 +107,25 @@ class DailyManager(object):
         
     # Returns true if the given daily is still open for submissions.
     def is_open(self, daily_number):
-        today = self.today_number();
+        today = self.today_number;
         return today == daily_number or (today == int(daily_number)+1 and self.within_grace_period())
 
-    # Return the text for the daily with the given daily number #DB_acc
-    def leaderboard_text(self, daily_number, display_seed=False):
-        date_str = daily_to_datestr(daily_number)
-        text = "``` \nCadence Speedrun Daily -- {0}\n".format(date_str)
+    # Returns the header for the daily leaderboard, given the type
+    def leaderboard_header(self, daily_number):
+        return "{0} -- {1}".format(self._type.leaderboard_header(daily_number), daily_to_datestr(daily_number))
 
-        db_cursor = self._db_conn.cursor()
-        params = (daily_number,)
+    # Return the text for the daily with the given daily number
+    #DB_acc
+    def leaderboard_text(self, daily_number, display_seed=False):
+        text = "``` \n"
+        text += self.leaderboard_header(daily_number) + '\n'
+
+        params = (daily_number, self._type.id)
 
         if display_seed:
-            db_cursor.execute("SELECT seed FROM daily_seeds WHERE date=?", params)
-            for row in db_cursor:
+            for row in self._db_conn.execute("SELECT seed FROM daily_data WHERE daily_id=? AND type=?", params):
                 text += "Seed: {}\n".format(row[0])
                 break
-        
-        db_cursor.execute("SELECT * FROM daily_races WHERE date=? ORDER BY level DESC, time ASC", params)
 
         no_entries = True
         rank = int(0)
@@ -147,21 +133,27 @@ class DailyManager(object):
         prior_result = ''   #detect and handle ties
         rank_to_display = int(1)
 
-        for row in db_cursor:
-            rank += 1
-            no_entries = False
-            name = row[1]
-            lv = row[3]
-            time = row[4]
+        for row in self._db_conn.execute("""SELECT user_data.name,daily_races.level,daily_races.time
+                                         FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id
+                                         WHERE daily_races.daily_id=? AND daily_races.type=?
+                                         ORDER BY daily_races.level DESC, daily_races.time ASC""", params):
+            name = row[0]
+            lv = row[1]
+            time = row[2]
             result_string = ''
             if lv == 18:
                 result_string = racetime.to_str(time)
+            elif lv == -1:
+                continue
             else:
                 result_string = level.to_str(lv)
                 if result_string == '':
                     result_string = "death"
                 else:
                     result_string = "death ({0})".format(result_string)
+
+            rank += 1
+            no_entries = False
 
             # update the rank only if we've gotten a different result than the last entrant
             if not result_string == prior_result: #kinda hacky to use a string comparison here, but works for the moment
@@ -177,56 +169,56 @@ class DailyManager(object):
         text += '```'
         return text
     
-    # True if the given user has submitted for the given daily #DB_acc          
+    # True if the given user has submitted for the given daily
+    # DB_acc          
     def has_submitted(self, daily_number, user_id):
-        db_cursor = self._db_conn.cursor()
-        params = (daily_number, user_id,)
-        db_cursor.execute("SELECT * FROM daily_races WHERE date=? AND playerid=?", params)
-        for row in db_cursor:
-            return True
+        params = (user_id, daily_number, self._type.id)
+        for row in self._db_conn.execute("SELECT level FROM daily_races WHERE discord_id=? AND daily_id=? AND type=?", params):
+            if row[0] != -1:
+                return True
         return False
 
-    # True if the given user has registered for the given daily #DB_acc
+    # True if the given user has registered for the given daily
+    # DB_acc
     def has_registered(self, daily_number, user_id):
-        db_cursor = self._db_conn.cursor()
-        params = (user_id, daily_number,)
-        db_cursor.execute("SELECT * FROM last_daily WHERE playerid=? AND date=?", params)
-        for row in db_cursor:
+        params = (user_id, daily_number, self._type.id)
+        for row in self._db_conn.execute("SELECT * FROM daily_races WHERE discord_id=? AND daily_id=? AND type=?", params):
             return True
         return False
 
-    # Attempts to register the given user for the given daily #DB_acc
+    # Attempts to register the given user for the given daily
+    # DB_acc
     def register(self, daily_number, user_id):
         if self.has_registered(daily_number, user_id):
             return False
         else:
-            db_cursor = self._db_conn.cursor()
-            params = (user_id, daily_number,)
-            db_cursor.execute("INSERT INTO last_daily VALUES (?,?)", params)
+            params = (user_id, daily_number, self._type.id, -1, -1)
+            self._db_conn.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (?,?,?,?,?)", params)
             self._db_conn.commit()
             return True
 
-    # Returns the most recent daily for which the user is registered (or 0 if no such) #DB_acc
+    # Returns the most recent daily for which the user is registered (or 0 if no such)
+    # DB_acc
     def registered_daily(self, user_id):
-        db_cursor = self._db_conn.cursor()
-        params = (user_id,)
-        db_cursor.execute("SELECT date FROM last_daily WHERE playerid=? ORDER BY date DESC", params)
-        for row in db_cursor:
+        params = (user_id, self._type.id)
+        for row in self._db_conn.execute("SELECT daily_id FROM daily_races WHERE discord_id=? AND type=? ORDER BY daily_id DESC", params):
             return row[0]
         return 0    
 
-    # Returns the most recent daily for which the user has submitted (or 0 if no such) #DB_acc
+    # Returns the most recent daily for which the user has submitted (or 0 if no such)
+    # DB_acc
     def submitted_daily(self, user_id):
-        db_cursor = self._db_conn.cursor()
-        params = (user_id,)
-        db_cursor.execute("SELECT date FROM daily_races WHERE playerid=? ORDER BY date DESC", params)
-        for row in db_cursor:
-            return row[0]
+        params = (user_id, self._type.id,)
+        for row in self._db_conn.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=? AND type=? ORDER BY daily_id DESC", params):
+            if row[1] != -1:
+                return row[0]
         return 0
 
-    # Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.  #DB_acc
+    # Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.
     # Returns a string whose content confirms parse, or the empty string if parse fails.
-    def parse_submission(self, daily_number, user, args, overwrite=False):
+    # DB_acc
+    asyncio.coroutine
+    def parse_submission(self, daily_number, user, args):
         lv = -1
         time = -1
         ret_str = ''
@@ -246,86 +238,76 @@ class DailyManager(object):
                     ret_str = 'finished in {}'.format(racetime.to_str(time))
 
         if not lv == -1: # parse succeeded
-            if overwrite:
-                self.delete_from_daily(daily_number, user)
-
             asyncio.ensure_future(self.submit_to_daily(daily_number, user, lv, time))
             return ret_str
         else:
             return ''
                         
-    # Submit a run to the given daily number    #DB_acc
+    # Submit a run to the given daily number
+    # DB_acc
     @asyncio.coroutine
     def submit_to_daily(self, daily_number, user, lv, time):
-        db_cursor = self._db_conn.cursor()
-        race_params = (daily_number, user.name, user.id, lv, time,)
-        db_cursor.execute("INSERT INTO daily_races VALUES (?,?,?,?,?)", race_params)
+        race_params = (user.id, daily_number, self._type.id, lv, time,)
+        self._db_conn.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (?,?,?,?,?)", race_params)
         self._db_conn.commit()
-
-        #if submitting for today, make spoilerchat visible
-        if daily_number == self.today_number():
-            read_permit = discord.Permissions.none()
-            read_permit.read_messages = True
-            yield from self._client.edit_channel_permissions(self._spoilerchat_channel, user, allow=read_permit)
-                    
-    # Delete a run from the daily #DB_acc
+           
+    # Delete a run from the daily
+    # DB_acc
     def delete_from_daily(self, daily_number, user):
-        db_cursor = self._db_conn.cursor()
-        delete_params = (daily_number, user.id,)
-        db_cursor.execute("DELETE FROM daily_races WHERE date=? AND playerid=?", delete_params)
+        params = (-1, user.id, daily_number, self._type.id)
+        self._db_conn.execute("UPDATE daily_races SET level=? WHERE discord_id=? AND daily_id=? AND type=?", params)
         self._db_conn.commit()
     
-    # Return the seed for the given daily number. Create seed if it doesn't already exist. #DB_acc
-    @asyncio.coroutine
+    # Return the seed for the given daily number. Create seed if it doesn't already exist.
+    # DB_acc
     def get_seed(self, daily_number):
         db_cursor = self._db_conn.cursor()
-        param = (daily_number,)
-        db_cursor.execute("SELECT seed FROM daily_seeds WHERE date=?", param)
+        param = (daily_number, self._type.id)
+        db_cursor.execute("SELECT seed FROM daily_data WHERE daily_id=? AND type=?", param)
 
         for row in db_cursor:
             return row[0]
 
-        #if we made it here, there was no entry in the table, so make one, and make the leaderboard message
+        #if we made it here, there was no entry in the table, so make one
         today_seed = seedgen.get_new_seed()
-        date_str = daily_to_datestr(daily_number)
-        if self._leaderboard_channel:
-            text = self.leaderboard_text(daily_number)
-            msg = yield from self._client.send_message(self._leaderboard_channel, text)
-            values = (daily_number, today_seed, msg.id,)
-            db_cursor.execute("INSERT INTO daily_seeds VALUES (?,?,?)", values)
-            self._db_conn.commit()
-
-            #update the most recent leaderboard with the seed
-            db_cursor.execute("SELECT date FROM daily_seeds ORDER BY date DESC")
-            for row in db_cursor:
-                if row[0] != self.today_number():
-                    asyncio.ensure_future(self.update_leaderboard(row[0], True))
-                    break #only do the most recent one that isn't today
-
-            #hide dailyspoilerchat for those users with that preference
-            if self._prefs_manager and self._spoilerchat_channel:
-                hide_pref = userprefs.UserPrefs()
-                hide_pref.hide_spoilerchat = True
-                
-                members_to_hide_for = self._prefs_manager.get_all_matching(hide_pref)
-                for member in members_to_hide_for:
-                    read_permit = discord.Permissions.none()
-                    read_permit.read_messages = True
-                    yield from self._client.edit_channel_permissions(self._spoilerchat_channel, member, deny=read_permit)                
-
+        values = (daily_number, self._type.id, today_seed, 0,)
+        db_cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (?,?,?,?)", values)
+        self._db_conn.commit()
         return today_seed
+
+    # Registers the given Message ID in the database for the given daily number
+    def register_message(self, daily_number, message_id):
+        param = (daily_number, self._type.id)
+        for row in self._db_conn.execute("SELECT seed FROM daily_data WHERE daily_id=? AND type=?", param):
+            #if here, there was an entry in the table, so we will update it
+            values = (message_id, daily_number, self._type.id)
+            self._db_conn.execute("UPDATE daily_data SET msg_id=? WHERE daily_id=? AND type=?", values)
+            self._db_conn.commit()
+            return
+
+        #else, there was no entry, so make one
+        today_seed = seedgen.get_new_seed()
+        values = (daily_number, self._type.id, today_seed, message_id,)
+        self._db_conn.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (?,?,?,?)", values)
+        self._db_conn.commit()
+
+    # Returns the Discord Message ID for the leaderboard entry for the given daily number
+    # DB_acc
+    def get_message_id(self, daily_number):
+        params = (daily_number, self._type.id)
+        for row in self._db_conn.execute("SELECT msg_id FROM daily_data WHERE daily_id=? AND type=?", params):
+            return int(row[0])
+        return None
+
+    # Return a DailyUserStatus corresponding to the status of the current daily for the given user
+    def user_status(self, user_id, daily_number):
+        if not self.is_open(daily_number, self._type.id):
+            return DailyUserStatus['closed']
+        elif self.has_submitted(daily_number, self._type.id):
+            return DailyUserStatus['submitted']
+        elif self.has_registered(daily_number, self._type.id):
+            return DailyUserStatus['registered']
+        else:
+            return DailyUserStatus['unregistered']
+            
         
-    # Update an existing leaderboard message for the given daily number #DB_acc
-    @asyncio.coroutine
-    def update_leaderboard(self, daily_number, display_seed=False):
-        db_cursor = self._db_conn.cursor()
-        params = (daily_number,)
-        db_cursor.execute("SELECT * FROM daily_seeds WHERE date=?", params)
-        for row in db_cursor: #hack to check non-empty. only ever doing this once.
-            if self._leaderboard_channel:
-                seed = row[1]
-                msg_id = row[2]
-                msg_list = yield from self._client.logs_from(self._leaderboard_channel, 10)
-                for msg in msg_list:
-                    if int(msg.id) == int(msg_id):
-                        asyncio.ensure_future(self._client.edit_message(msg, self.leaderboard_text(daily_number, display_seed)))
