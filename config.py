@@ -12,6 +12,8 @@ def init():
     global REFERENCE_CHANNEL_NAME
     global DAILY_SPOILERCHAT_CHANNEL_NAME
     global DAILY_LEADERBOARDS_CHANNEL_NAME
+    global ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME
+    global ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME
     global RACE_RESULTS_CHANNEL_NAME
 
     #daily
@@ -27,6 +29,7 @@ def init():
     global REQUIRE_AT_LEAST_TWO_FOR_RACE           #if True, then races with only one entrant cannot be started
 
     #database
+    global DB_FILENAME
     global DAILY_DB_FILENAME
     global RACE_DB_FILENAME
     global USER_DB_FILENAME
@@ -36,8 +39,10 @@ def init():
         'bot_version':'0.2.3',
         'channel_main':'necrobot_main',
         'channel_reference':'command_list',
-        'channel_daily_spoilerchat':'dailyspoilerchat',
-        'channel_daily_leaderboards':'daily_leaderboards',
+        'channel_daily_spoilerchat':'cadence_dailyspoilerchat',
+        'channel_daily_leaderboards':'cadence_daily_leaderboards',
+        'channel_rot_daily_spoilerchat':'rotating_dailyspoilerchat',
+        'channel_rot_daily_leaderboards':'rotating_daily_leaderboards',
         'channel_race_results':'race_results',
         'daily_grace_period_length_minutes':'60',
         'race_countdown_time_seconds':'10',
@@ -47,6 +52,7 @@ def init():
         'race_cleanup_after_no_entrants_for_seconds':'120',
         'race_give_cleanup_warning_after_no_entrants_for_seconds':'90', 
         'race_require_at_least_two':'0',
+        'db_filename':'data/necrobot.db',
         'db_daily_filename':'data/daily.db',
         'db_races_filename':'data/races.db',
         'db_users_filename':'data/users.db'
@@ -75,6 +81,8 @@ def init():
     ADMIN_ROLE_NAMES = admin_roles
     DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_daily_spoilerchat']
     DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
+    ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_rot_daily_spoilerchat']
+    ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_rot_daily_leaderboards']
     RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
     DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
     COUNTDOWN_LENGTH = int(defaults['race_countdown_time_seconds'])
@@ -84,6 +92,7 @@ def init():
     NO_ENTRANTS_CLEANUP_SEC = int(defaults['race_cleanup_after_no_entrants_for_seconds'])
     NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
     REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
+    DB_FILENAME = defaults['db_filename']
     DAILY_DB_FILENAME = defaults['db_daily_filename']
     RACE_DB_FILENAME = defaults['db_races_filename']
     USER_DB_FILENAME = defaults['db_users_filename']

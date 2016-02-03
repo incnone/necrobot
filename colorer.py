@@ -2,6 +2,8 @@ import asyncio
 import discord
 import random
 
+import command
+
 PROTECTED_ROLENAMES = ['Necrobot']
 ROLES_COLORS = {\
 'teal':discord.Color.teal(),
@@ -53,4 +55,26 @@ def get_random_colorname(protected_colors):
     allowed_colornames = [cname for cname in ROLES_COLORS.keys() if (not ROLES_COLORS[cname] in protected_colors)]
     idx = random.randint(0, len(allowed_colornames) - 1)
     return allowed_colornames[idx]
+
+class ColorMe(command.CommandType):
+    def __init__(self, colorer_module):
+        command.CommandType.__init__(self, 'dankify')
+        self._cm = colorer_module
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        asyncio.ensure_future(color_user(command.author, self._cm.client, self._cm.server))
+        #yield from asyncio.sleep(1)
+        asyncio.ensure_future(self._cm.client.delete_message(command.message))
+
+    def recognized_channel(self, channel):
+        return channel == self._cm.main_channel
                                 
+class ColorerModule(command.Module):
+    def __init__(self, necrobot):
+        command.Module.__init__(self, necrobot)
+        self.command_types = [ColorMe(self)]
+
+    @property
+    def main_channel(self):
+        return self.necrobot.main_channel

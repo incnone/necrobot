@@ -22,6 +22,9 @@ import clparse
 import seedgen
 
 NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']       
+SEEDED_FLAG = int(pow(2,0))
+SUDDEN_DEATH_FLAG = int(pow(2,1))
+FLAGPLANT_FLAG = int(pow(2,2))
 
 def _parse_seed(args, race_info):
     #note: this allows `-s (int)` to set a specific seed, while `-s` just sets seeded.
@@ -154,7 +157,7 @@ class RaceInfo(object):
     def __init__(self):
         self.seed = int(0)                   #the seed for the race
         self.seed_fixed = False              #True means the specific seed is part of the race rules (seed doesn't change on rematch)
-        self.seeded = False                  #whether the race is run in seeded mode
+        self.seeded = True                   #whether the race is run in seeded mode
         self.character = 'Cadence'           #the character for the race
         self.descriptor = 'All-zones'        #a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
         self.sudden_death = False            #whether the race is sudden-death (cannot restart race after death)
@@ -170,6 +173,10 @@ class RaceInfo(object):
         the_copy.sudden_death = self.sudden_death
         the_copy.flagplant = self.flagplant
         return the_copy
+
+    @property
+    def flags(self):
+        return int(self.seeded)*SEEDED_FLAG + int(self.sudden_death)*SUDDEN_DEATH_FLAG + int(self.flagplant)*FLAGPLANT_FLAG
     
     #returns a (possibly multi-line) string that can be used to header results for the race
     #depricated. do not use. use format_str and seed_str instead.

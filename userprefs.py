@@ -1,12 +1,15 @@
+import asyncio
 import clparse
+import command
 
+DailyAlerts = {'none':0, 'cadence':1, 'all':2, 'rotating':3}
 RaceAlerts = {'none':0, 'some':1, 'all':2}
 
 class UserPrefs(object): 
     def get_default():
         prefs = UserPrefs()
         prefs.hide_spoilerchat = False
-        prefs.daily_alert = False
+        prefs.daily_alert = DailyAlerts['none']
         prefs.race_alert = RaceAlerts['none']
         return prefs
 
@@ -36,10 +39,14 @@ class UserPrefs(object):
         elif self.hide_spoilerchat == True:
             pref_str.append('Hide daily spoiler chat until after submission.')
 
-        if self.daily_alert == False:
+        if self.daily_alert == DailyAlerts['none']:
             pref_str.append('No daily alerts.')
-        elif self.daily_alert == True:
-            pref_str.append('Alert (via PM) when the new daily opens.')
+        elif self.daily_alert == DailyAlerts['cadence']:
+            pref_str.append('Get the seed when the new Cadence daily opens.')
+        elif self.daily_alert == DailyAlerts['all']:
+            pref_str.append('Get both seeds (via PM) when the new dailies open.')
+        elif self.daily_alert == DailyAlerts['rotating']:
+            pref_str.append('Get the seed when the new rotating-character daily opens.')        
 
         if self.race_alert == RaceAlerts['none']:
             pref_str.append('No race alerts.')
@@ -60,22 +67,13 @@ def _parse_show_spoilerchat(args, user_prefs):
 
 def _parse_daily_alert(args, user_prefs):
     command_list = ['dailyalert']
-    if len(args) >= 2 and args[0] in command_list:
-        if args[1] == 'true':
-            user_prefs.daily_alert = True
-        elif args[1] == 'false':
-            user_prefs.daily_alert = False
+    if len(args) >= 2 and args[0] in command_list and args[1] in DailyAlerts:
+        user_prefs.daily_alert = DailyAlerts[args[1]]
 
 def _parse_race_alert(args, user_prefs):
     command_list = ['racealert']
-    if len(args) >= 2 and args[0] in command_list:
-        if args[1] == 'none':
-            user_prefs.race_alert = RaceAlerts['none']
-        elif args[1] == 'some':
-            user_prefs.race_alert = RaceAlerts['some']
-        elif args[1] == 'all':
-            user_prefs.race_alert = RaceAlerts['all']
-            
+    if len(args) >= 2 and args[0] in command_list and args[1] in RaceAlerts:
+        user_prefs.race_alert = RaceAlerts[args[1]]            
 
 def parse_args(args):
     #user_prefs is a list of preferences we should change
@@ -95,31 +93,80 @@ def parse_args(args):
 
     return user_prefs
 
-class UserPrefManager(object):
-    def __init__(self, db_connection, server):
-        self._db_conn = db_connection
-        self._server = server
+class SetPrefs(command.CommandType):
+    def __init__(self, prefs_module):
+        command.CommandType.__init__(self, 'setprefs')
+        self.help_text = "Set user preferences. Allowable flags:\n" \
+                    "`-spoilerchat [show|hide]` : `show` makes spoilerchat visible at all times; `hide` hides it until you've submitted for the daily.\n" \
+                    "`-dailyalert [none|all|cadence|rotating]` : sends the daily seed via PM when a new daily opens. `all` does this for both dailies; `cadence` " \
+                    "or `rotating` restricts to the appropriate daily.\n" \
+                    "`-racealert [none|some|all]` : `none` gives no race alerts; `some` sends a PM when a new race is created (but not a rematch); `all` sends a " \
+                    "PM for every race created (including rematches)."
+        self._pm = prefs_module
 
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._pm.necrobot.main_channel
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        prefs = parse_args(command.args)
+        if prefs.contains_info:
+            asyncio.ensure_future(self._pm.set_prefs(prefs, command.author))
+            confirm_msg = 'Set the following preferences for {}:'.format(command.author.mention)
+            for pref_str in prefs.pref_strings:
+                confirm_msg += ' ' + pref_str
+            asyncio.ensure_future(self._pm.client.send_message(command.channel, confirm_msg))                 
+        else:
+            asyncio.ensure_future(self._pm.client.send_message(command.channel, '{0}: Failure parsing arguments; did not set any user preferences.'.format(command.author.mention)))                         
+
+class ViewPrefs(command.CommandType):
+    def __init__(self, prefs_module):
+        command.CommandType.__init__(self, 'viewprefs')
+        self.help_text = "See your current user preferences."
+        self._pm = prefs_module
+
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._pm.necrobot.main_channel
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        prefs = self._pm.get_prefs(command.author)
+        prefs_string = ''
+        for pref_str in prefs.pref_strings:
+            prefs_string += ' ' + pref_str
+        yield from self._pm.client.send_message(command.author, 'Your current user preferences: {}'.format(prefs_string))
+
+class PrefsModule(command.Module):
+    def __init__(self, necrobot, db_connection):
+        command.Module.__init__(self, necrobot)
+        self._db_conn = db_connection
+        self.command_types = [command.DefaultHelp(self),
+                              SetPrefs(self),
+                              ViewPrefs(self)]
+
+    @property
+    def infostr(self):
+        return 'User preferences'
+
+    @asyncio.coroutine
     def set_prefs(self, user_prefs, user):
         prefs = self.get_prefs(user)
         prefs.modify_with(user_prefs)
 
-        db_cursor = self._db_conn.cursor()
-        params_id = (user.id,)
-        db_cursor.execute("""DELETE FROM user_prefs WHERE playerid=?""", params_id)
-        
         params = (user.id, prefs.hide_spoilerchat, prefs.daily_alert, prefs.race_alert,)
-        db_cursor.execute("""INSERT INTO user_prefs (playerid, hidespoilerchat, dailyalert, racealert) VALUES (?,?,?,?)""", params)         
+        self._db_conn.execute("""INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (?,?,?,?)""", params)         
         self._db_conn.commit()
+
+        for module in self.necrobot.modules:
+            yield from module.on_update_prefs(user_prefs, user)
 
     def get_prefs(self, user):
         user_prefs = UserPrefs.get_default()
-        db_cursor = self._db_conn.cursor()
         params = (user.id,)
-        db_cursor.execute("""SELECT * FROM user_prefs WHERE playerid=?""", params)
-        for row in db_cursor:
+        for row in  self._db_conn.execute("""SELECT * FROM user_prefs WHERE discord_id=?""", params):
             user_prefs.hide_spoilerchat = row[1]
             user_prefs.daily_alert = row[2]
+            user_prefs.race_alert = row[3]
         return user_prefs
 
     #get all user id's matching the given user prefs
@@ -128,36 +175,40 @@ class UserPrefManager(object):
         users_matching_dailyalert = []
         users_matching_racealert = []
         lists_to_use = []
-        db_cursor = self._db_conn.cursor()
 
         if user_prefs.hide_spoilerchat != None:
             lists_to_use.append(users_matching_spoilerchat)
             params = (user_prefs.hide_spoilerchat,)
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE hidespoilerchat=?""", params)
-            for row in db_cursor:
+            for row in self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE hidespoilerchat=?""", params):
                 userid = row[0]
-                for member in self._server.members:
+                for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_spoilerchat.append(member)
 
         if user_prefs.daily_alert != None:
             lists_to_use.append(users_matching_dailyalert)
             params = (user_prefs.daily_alert,)
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE dailyalert=?""", params)
-            for row in db_cursor:
+            if user_prefs.daily_alert != DailyAlerts['none'] and user_prefs.daily_alert != DailyAlerts['all']:
+                params += (DailyAlerts['all'],)
+            else:
+                params += (user_prefs.daily_alert,)
+            for row in self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE dailyalert=? OR dailyalert=?""", params):
                 userid = row[0]
-                for member in self._server.members:
+                for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_dailyalert.append(member)
-
+                
         if user_prefs.race_alert != None:
             lists_to_use.append(users_matching_racealert)
             params = (user_prefs.race_alert,)
-                       
-            db_cursor.execute("""SELECT playerid FROM user_prefs WHERE racealert=?""", params)
-            for row in db_cursor:
+            if user_prefs.race_alert == RaceAlerts['some']:
+                params += (RaceAlerts['all'],)
+            else:
+                params += (user_prefs.race_alert,)
+                
+            for row in  self._db_conn.execute("""SELECT discord_id FROM user_prefs WHERE racealert=? OR racealert=?""", params):
                 userid = row[0]
-                for member in self._server.members:
+                for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_racealert.append(member)
 

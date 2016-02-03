@@ -155,7 +155,6 @@ class Race(object):
     def complete(self):
         return self._status >= RaceStatus['completed']
 
-
     # Begin the race countdown and transition race state from 'entry_open' to 'counting_down'
     @asyncio.coroutine
     def begin_race_countdown(self):
@@ -354,8 +353,8 @@ class Race(object):
         if self._status != RaceStatus['racing']:
             return False
         
-        finish_time = time.clock()
-        if racer and racer.finish(int(100*(finish_time - self._start_time))):
+        finish_time = int(100*(time.clock() - self._start_time))
+        if racer and racer.finish(finish_time):
             asyncio.ensure_future(self._check_for_race_end())
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
@@ -364,7 +363,7 @@ class Race(object):
     # Attempt to put the given Racer in the 'racing' state if they were finished
     @asyncio.coroutine
     def unfinish_racer(self, racer):
-        if self._status == RaceStatus['finalized']:
+        if self._status == RaceStatus['finalized'] or not racer.is_finished:
             return False
         
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,
@@ -378,7 +377,8 @@ class Race(object):
     # Puts the given Racer in the 'forfeit' state
     @asyncio.coroutine
     def forfeit_racer(self, racer):
-        if racer and racer.forfeit():
+        forfeit_time = int(100*(time.clock() - self._start_time))
+        if racer and racer.forfeit(forfeit_time):
             asyncio.ensure_future(self._check_for_race_end())
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
@@ -387,7 +387,7 @@ class Race(object):
     # Attempt to put the given Racer in the 'racing' state if they had forfeit
     @asyncio.coroutine
     def unforfeit_racer(self, racer):
-        if self._status == RaceStatus['finalized']:
+        if self._status == RaceStatus['finalized'] or not racer.is_forfeit:
             return False
         
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,
@@ -399,6 +399,10 @@ class Race(object):
         return False
 
     # Record the race in the database, and post results to the race_results channel
+    # TODO: this should be moved in some way, somewhere, when I implement "matches" (best-of-x or repeat-y-times); it shouldn't be here.
+    # Thus I'm not worried atm about the inflexibility/nonmodularity issues here; I'll have a better idea where this should go after I
+    # implement that "match" system.
+    # DB_acc
     @asyncio.coroutine
     def record(self):
         time_str = ''
@@ -408,9 +412,9 @@ class Race(object):
         #TODO: be better (since results posted should adapt for best-of-3, repeat-3, etc; this shouldn't be called here
         yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
 
-        db_conn = sqlite3.connect('data/races.db')
+        db_conn = sqlite3.connect('data/necrobot.db')
         db_cur = db_conn.cursor()
-        db_cur.execute("SELECT raceid FROM race_data ORDER BY raceid DESC")
+        db_cur.execute("SELECT race_id FROM race_data ORDER BY race_id DESC")
         new_raceid = 0
         for row in db_cur:
             new_raceid = row[0] + 1
@@ -418,13 +422,11 @@ class Race(object):
 
         race_params = (new_raceid,
                        self._start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                       self.race_info.character[:255],
-                       self.race_info.descriptor[:255],
-                       self.race_info.seeded,
-                       self.race_info.seed,
-                       self.race_info.sudden_death,
-                       self.race_info.flagplant,)          
-        db_cur.execute("INSERT INTO race_data VALUES (?,?,?,?,?,?,?,?)", race_params)
+                       self.race_info.character,
+                       self.race_info.descriptor,
+                       self.race_info.flags,
+                       self.race_info.seed,)          
+        db_cur.execute("INSERT INTO race_data (race_id, timestamp, character, descriptor, flags, seed) VALUES (?,?,?,?,?,?)", race_params)
 
         racer_list = []
         max_time = 0
@@ -437,11 +439,15 @@ class Race(object):
 
         racer_list.sort(key=lambda r: r.time if r.is_finished else max_time)
 
-        rank = 0
+        rank = 1
         for racer in racer_list:
-            rank += 1
-            racer_params = (new_raceid, racer.id, racer.name, racer.is_finished, racer.time, rank, racer.igt, racer.comment[:255])
-            db_cur.execute("INSERT INTO racer_data VALUES (?,?,?,?,?,?,?,?)", racer_params)
+            racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
+            db_cur.execute("INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (?,?,?,?,?,?,?)", racer_params)
+            if racer.is_finished:
+                rank += 1
+
+            user_params = (racer.id, racer.name)
+            db_cur.execute('INSERT INTO user_data VALUES (?,?)', user_params)         
 
         db_conn.commit()
 
