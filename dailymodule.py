@@ -36,7 +36,7 @@ class DailyCommandType(command.CommandType):
 
 class DailyChar(DailyCommandType):
     def __init__(self, daily_module):
-        DailyCommandType.__init__(self, daily_module, 'dailychar')
+        DailyCommandType.__init__(self, daily_module, 'dailychar', 'dailywho')
         self.help_text = 'Get the character for the current rotating-character daily.'
 
     @asyncio.coroutine
