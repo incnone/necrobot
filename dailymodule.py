@@ -336,8 +336,10 @@ class ForceUpdateLeaderboard(DailyCommandType):
             for arg in command.args:
                 if arg.lstrip('-').lower() == 'showseed':
                     show_seed = True
+                    
                 try:
-                    days_back = int(arg)
+                    arg_as_int = int(arg)
+                    days_back = arg_as_int
                 except ValueError:
                     pass
 
