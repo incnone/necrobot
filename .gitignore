@@ -1,7 +1,5 @@
 data/login_info
+data/condorbot_login_info
 *.db
 *.pyc
 *.log
-discord.log
-*.log
-data/condorbot_login_info
