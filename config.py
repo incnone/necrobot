@@ -1,6 +1,4 @@
-CONFIG_FILE = 'data/bot_config'
-
-def init():
+def init(config_filename):
     global BOT_COMMAND_PREFIX
     global BOT_VERSION
 
@@ -60,7 +58,7 @@ def init():
 
     admin_roles = []
             
-    file = open(CONFIG_FILE, 'r')
+    file = open(config_filename, 'r')
     if file:
         for line in file:
             args = line.split('=')

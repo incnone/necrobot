@@ -54,7 +54,6 @@ class Daily(object):
     @asyncio.coroutine
     def _daily_update(self):
         while True:
-            print('Sleeping for {} seconds'.format(self.time_until_next.total_seconds()))
             yield from asyncio.sleep(self.time_until_next.total_seconds()) #sleep until next daily
             yield from self._dm.on_new_daily()
             yield from asyncio.sleep(120) # buffer b/c i'm worried for some reason about silly microsecond rounding

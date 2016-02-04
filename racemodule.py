@@ -41,12 +41,11 @@ class Make(command.CommandType):
         race_info = raceinfo.parse_args(command.args)
         if race_info:
             race_channel = yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=False)
-            if race_channel:
-                alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
-                main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(command.author.mention, race_channel.mention, race_info.format_str())
-
-                # alert in main channel
-                asyncio.ensure_future(self._rm.client.send_message(command.channel, main_channel_string))
+##            # alert in main channel
+##            if race_channel:
+##                main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(command.author.mention, race_channel.mention, race_info.format_str())
+##
+##                asyncio.ensure_future(self._rm.client.send_message(command.channel, main_channel_string))
 
 class MakePrivate(command.CommandType):
     def __init__(self, race_module):
@@ -72,8 +71,8 @@ class MakePrivate(command.CommandType):
         if race_private_info:
             race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
             if race_channel:
-                output_prestring = 'You have started a private race.' if command.channel.is_private else 'A private race has been started by {}.'.format(command.author.mention)
-                asyncio.ensure_future(self._rm.client.send_message(command.channel,
+                output_prestring = 'You have started a private race.'
+                asyncio.ensure_future(self._rm.client.send_message(command.author,
                     '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))             
 
 class RaceModule(command.Module):

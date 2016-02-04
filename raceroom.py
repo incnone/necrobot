@@ -476,7 +476,7 @@ class RaceRoom(command.Module):
             new_race_channel = yield from self._rm.make_race(new_race_info, mention=self._mention_on_rematch, suppress_alerts=True)
             if new_race_channel:
                 yield from self.write('Rematch created in {}!'.format(new_race_channel.mention))
-                yield from self._rm.client.send_message(self._rm.main_channel, 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(new_race_channel.mention, new_race_info.format_str()))
+##                yield from self._rm.client.send_message(self._rm.main_channel, 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(new_race_channel.mention, new_race_info.format_str()))
             else:
                 self._rematch_made = False
 

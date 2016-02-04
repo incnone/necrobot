@@ -24,6 +24,7 @@ from racer import Racer
 class Ready(raceroom.Ready):
     def __init__(self, race_room):
         raceroom.Ready.__init__(self, race_room)
+        self._room = race_room
 
     @asyncio.coroutine
     def _do_execute(self, command):
@@ -33,12 +34,13 @@ class Ready(raceroom.Ready):
         if self._room.is_race_admin(command.author):
             self._room.admin_ready = True
             yield from self._room.write('Race admins are ready!')
-            yield from self._race.begin_if_ready() 
+            yield from self._room.begin_if_ready() 
             yield from raceroom.Ready._do_execute(self, command)
 
 class Unready(raceroom.Unready):
     def __init__(self, race_room):
         raceroom.Unready.__init__(self, race_room)
+        self._room = race_room
 
     @asyncio.coroutine
     def _do_execute(self, command):

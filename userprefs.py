@@ -121,7 +121,7 @@ class SetPrefs(command.CommandType):
 
 class ViewPrefs(command.CommandType):
     def __init__(self, prefs_module):
-        command.CommandType.__init__(self, 'viewprefs')
+        command.CommandType.__init__(self, 'viewprefs', 'getprefs')
         self.help_text = "See your current user preferences."
         self._pm = prefs_module
 

@@ -9,11 +9,6 @@ import seedgen
 
 from necrobot import Necrobot
 
-from colorer import ColorerModule
-from dailymodule import DailyModule
-from racemodule import RaceModule
-from seedgenmodule import SeedgenModule
-
 ##-Logging-------------------------------
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -29,10 +24,10 @@ class LoginData(object):
     server_id = None
 
 #----Main------------------------------------------------------
-config.init('data/bot_config')
+config.init('data/condorbot_config')
 login_data = LoginData()                                                        # data to be read from the login file
 
-login_info = open('data/login_info', 'r')
+login_info = open('data/condorbot_login_info', 'r')
 login_data.email = login_info.readline().rstrip('\n')
 login_data.password = login_info.readline().rstrip('\n')
 login_data.admin_id = login_info.readline().rstrip('\n')
@@ -56,10 +51,6 @@ def on_ready():
     print('Initializing necrobot...')
     necrobot.post_login_init(login_data.server_id, login_data.admin_id)
 
-    necrobot.load_module(ColorerModule(necrobot))
-    necrobot.load_module(SeedgenModule(necrobot))
-    necrobot.load_module(DailyModule(necrobot, necrobot.db_conn))
-    necrobot.load_module(RaceModule(necrobot, necrobot.db_conn))
     print('...done.')
 
 @client.event
