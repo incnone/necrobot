@@ -4,3 +4,4 @@ data/login_info
 *.log
 discord.log
 *.log
+data/condorbot_login_info
