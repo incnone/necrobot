@@ -374,7 +374,8 @@ class DailyModule(command.Module):
                               DailySubmit(self),
                               DailyUnsubmit(self),
                               DailyWhen(self),
-                              ForceRunNewDaily(self)]
+                              ForceRunNewDaily(self),
+                              ForceUpdateLeaderboard(self)]
 
     @property
     def infostr(self):
@@ -464,9 +465,9 @@ class DailyModule(command.Module):
 
         #If no message, make one
         if not msg_id:
-            text = daily.leaderboard_text(today_number, daily_type)
+            text = daily.leaderboard_text(daily_number, daily_type)
             msg = yield from self.client.send_message(daily.leaderboard_channel, text)
-            daily.register_message(today_number, msg.id)
+            daily.register_message(daily_number, msg.id)
         else:
             msg_list = yield from self.client.logs_from(daily.leaderboard_channel, 10) #TODO: 10 is a "big enough" hack; make this more precise
             for msg in msg_list:
