@@ -25,7 +25,7 @@ def ordinal(num):
 
 class Enter(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'enter', 'join')
+        command.CommandType.__init__(self, 'enter', 'join', 'e')
         self.help_text = 'Enters (registers for) the race. After entering, use `.ready` to indicate you are ready to begin the race. You may use `.join` instead of `.enter` if preferred.'
         self._room = race_room
 
@@ -59,7 +59,7 @@ class Unenter(command.CommandType):
 
 class Ready(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'ready')
+        command.CommandType.__init__(self, 'ready', 'r')
         self.help_text = 'Indicates that you are ready to begin the race. The race begins when all entrants are ready.'
         self._room = race_room
 
@@ -106,7 +106,7 @@ class Unready(command.CommandType):
 
 class Done(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'done', 'finish')
+        command.CommandType.__init__(self, 'done', 'finish', 'd')
         self.help_text = 'Indicates you have finished the race goal, and gets your final time. You may instead use `.finish` if preferred.'
         self._room = race_room
 
@@ -294,6 +294,67 @@ class Time(command.CommandType):
         else:
             yield from self._room.write('The current race time is {}.'.format(self._room.race.current_time_str))
 
+class Missing(command.CommandType):
+    def __init__(self, race_room):
+        command.CommandType.__init__(self, 'missing')
+        self.help_text = 'List users that were notified but have not yet entered.'
+        self._room = race_room
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        missing_usernames = ''
+        for user in self._room.mentioned_users:
+            user_entered = False
+            for racer in self._room.race.racers.values():
+                if int(racer.member.id) == int(user.id):
+                    user_entered = True
+                    break
+            if not user_entered:
+                missing_usernames += user.name + ', '
+        if missing_usernames:
+            yield from self._room.write('Missing: {0}.'.format(missing_usernames[:-2]))
+        else:
+            yield from self._room.write('No one missing!')
+
+class Shame(command.CommandType):
+    def __init__(self, race_room):
+        command.CommandType.__init__(self, 'shame')
+        self.help_text = ''
+        self.suppress_help = True
+        self._room = race_room
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        yield from self._room.write('Shame on you {0}!'.format(command.author))
+
+class Poke(command.CommandType):
+    def __init__(self, race_room):
+        command.CommandType.__init__(self, 'poke')
+        self.help_text = 'If only one, or fewer than 1/4, of the racers are unready, this command @mentions them.'
+        self._room = race_room
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        if not self._room.race.is_before_race:
+            return
+        
+        ready_racers = []
+        unready_racers = []
+        for racer in self._room.race.racers.values():
+            if racer.is_ready:
+                ready_racers.append(racer)
+            else:
+                unready_racers.append(racer)
+
+        num_unready = len(unready_racers)
+        quorum = (num_unready == 1) or (3*num_unready >= len(ready_racers))
+
+        if ready_racers and quorum:
+            alert_string = ''
+            for racer in unready_racers:
+                alert_string += racer.member.mention + ', '
+            yield from self._room.write('Poking {0}.'.format(alert_string[:-2]))
+
 class ForceCancel(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forcecancel')
@@ -376,6 +437,7 @@ class RaceRoom(command.Module):
         self._rm = race_module           
         self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
         self._mention_on_rematch = []               #A list of users that should be @mentioned when a rematch is created
+        self.mentioned_users = []                  #A list of users that were @mentioned when this race started
 
         self.command_types = [command.DefaultHelp(self),
                               Enter(self),
@@ -393,6 +455,9 @@ class RaceRoom(command.Module):
                               DelayRecord(self),
                               Notify(self),
                               Time(self),
+                              Missing(self),
+                              Shame(self),
+                              Poke(self),
                               ForceCancel(self),
                               ForceClose(self),
                               ForceForfeit(self),
@@ -427,6 +492,7 @@ class RaceRoom(command.Module):
         mention_text = ''
         for user in users_to_mention:
             mention_text += user.mention + ' '
+            self.mentioned_users.append(user)
         if mention_text:
             asyncio.ensure_future(self.client.send_message(self.channel, 'Alerting users: ' + mention_text))
 

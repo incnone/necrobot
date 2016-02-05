@@ -86,6 +86,8 @@ In general, the `-rot` flag, where applicable, calls the command for the rotatin
 - `.delayrecord`: Delays recording of the race for an extra 120 seconds, if the race is not already being delayed.
 - `.notify [off]`: Will send an @mention to you when a rematch for this race is created. Such mentions are automatically sent to racers. You can disable this mention with `.notify off`.
 - `.time`: Get the current race time.
+- `.missing`: List users that were @notified but who have not yet entered the race.
+- `.poke`: Give an @mention poke to users that have entered but are not ready, if either only one or fewer than 1/4 are unready.
 - `.admins`: In a private race, lists the admins for the given race.
 
 #### Admin commands

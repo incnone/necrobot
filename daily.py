@@ -54,9 +54,9 @@ class Daily(object):
     @asyncio.coroutine
     def _daily_update(self):
         while True:
-            yield from asyncio.sleep(self.time_until_next.total_seconds()) #sleep until next daily
-            yield from self._dm.on_new_daily()
-            yield from asyncio.sleep(120) # buffer b/c i'm worried for some reason about silly microsecond rounding
+            yield from asyncio.sleep(self.time_until_next.total_seconds() + 1) #sleep until next daily
+            yield from self._dm.on_new_daily(self)
+            yield from asyncio.sleep(120) # buffer b/c i'm worried for some reason about idk
 
     # Returns a string with the current daily's date and time until the next daily.
     def daily_time_info_str(self):

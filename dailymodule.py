@@ -318,7 +318,8 @@ class ForceRunNewDaily(DailyCommandType):
     @asyncio.coroutine
     def _daily_do_execute(self, command, called_type):
         if command.author.id == self._dm.necrobot.admin_id:
-            yield from self._dm.on_new_daily()
+            for daily_type in dailytype.all_types:
+                yield from self._dm.on_new_daily(self._dm.daily(daily_type))
 
 class ForceUpdateLeaderboard(DailyCommandType):
     def __init__(self, daily_module):
@@ -416,48 +417,47 @@ class DailyModule(command.Module):
 
     # Do whatever UI things need to be done when a new daily happens
     @asyncio.coroutine
-    def on_new_daily(self):
-        for daily_type in dailytype.all_types:
-            daily = self.daily(daily_type)
-            today_date = daily.today_date
-            today_number = daily.today_number
-            today_seed = daily.get_seed(today_number)
-            character = daily_type.character(today_number)
-            
-            # Make the leaderboard message
-            text = daily.leaderboard_text(today_number, daily_type)
-            msg = yield from self.client.send_message(daily.leaderboard_channel, text)
-            daily.register_message(today_number, msg.id)
+    def on_new_daily(self, daily):
+        daily_type = daily.daily_type
+        today_date = daily.today_date
+        today_number = daily.today_number
+        today_seed = daily.get_seed(today_number)
+        character = daily_type.character(today_number)
+        
+        # Make the leaderboard message
+        text = daily.leaderboard_text(today_number, display_seed=False)
+        msg = yield from self.client.send_message(daily.leaderboard_channel, text)
+        daily.register_message(today_number, msg.id)
 
-            # Update yesterday's leaderboard with the seed
-            asyncio.ensure_future(self.update_leaderboard(today_number - 1, daily_type, display_seed=True))
+        # Update yesterday's leaderboard with the seed
+        asyncio.ensure_future(self.update_leaderboard(today_number - 1, daily_type, display_seed=True))
 
-            # Announce the new daily in spoilerchat
-            asyncio.ensure_future(self.client.send_message(daily.spoilerchat_channel, "The {0} {1} daily has begun!".format(today_date.strftime("%B %d"), character)))
-                    
-            # PM users with the daily_alert preference
-            auto_pref = userprefs.UserPrefs()
-            if daily_type == dailytype.CadenceSpeed():
-                auto_pref.daily_alert = userprefs.DailyAlerts['cadence']
-            elif daily_type == dailytype.RotatingSpeed():
-                auto_pref.daily_alert = userprefs.DailyAlerts['rotating']
+        # Announce the new daily in spoilerchat
+        asyncio.ensure_future(self.client.send_message(daily.spoilerchat_channel, "The {0} {1} daily has begun!".format(today_date.strftime("%B %d"), character)))
                 
-            for member in self.necrobot.prefs.get_all_matching(auto_pref):
-                if daily.has_submitted(today_number - 1, member.id) or not daily.has_registered(today_number - 1, member.id):
-                    daily.register(today_number, member.id)
-                    asyncio.ensure_future(self.client.send_message(member, "({0}) Today's {2} speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed, character)))
-                else:
-                    asyncio.ensure_future(self.client.send_message(member, "You have not yet submitted for yesterday's {0} daily, so I am not yet sending you today's seed. " \
-                                                                            "When you want today's seed, please call `.dailyseed` in the main channel or via PM.".format(character)))                        
+        # PM users with the daily_alert preference
+        auto_pref = userprefs.UserPrefs()
+        if daily_type == dailytype.CadenceSpeed():
+            auto_pref.daily_alert = userprefs.DailyAlerts['cadence']
+        elif daily_type == dailytype.RotatingSpeed():
+            auto_pref.daily_alert = userprefs.DailyAlerts['rotating']
+            
+        for member in self.necrobot.prefs.get_all_matching(auto_pref):
+            if daily.has_submitted(today_number - 1, member.id) or not daily.has_registered(today_number - 1, member.id):
+                daily.register(today_number, member.id)
+                asyncio.ensure_future(self.client.send_message(member, "({0}) Today's {2} speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed, character)))
+            else:
+                asyncio.ensure_future(self.client.send_message(member, "You have not yet submitted for yesterday's {0} daily, so I am not yet sending you today's seed. " \
+                                                                        "When you want today's seed, please call `.dailyseed` in the main channel or via PM.".format(character)))                        
 
-            # Hide dailyspoilerchat for those users with that preference
-            hide_pref = userprefs.UserPrefs()
-            hide_pref.hide_spoilerchat = True
-            members_to_hide_for = self.necrobot.prefs.get_all_matching(hide_pref)
-            for member in members_to_hide_for:
-                read_permit = discord.Permissions.none()
-                read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)
+        # Hide dailyspoilerchat for those users with that preference
+        hide_pref = userprefs.UserPrefs()
+        hide_pref.hide_spoilerchat = True
+        members_to_hide_for = self.necrobot.prefs.get_all_matching(hide_pref)
+        for member in members_to_hide_for:
+            read_permit = discord.Permissions.none()
+            read_permit.read_messages = True
+            yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)
 
     # Update an existing leaderboard message for the given daily number
     @asyncio.coroutine
@@ -467,7 +467,7 @@ class DailyModule(command.Module):
 
         #If no message, make one
         if not msg_id:
-            text = daily.leaderboard_text(daily_number, daily_type)
+            text = daily.leaderboard_text(daily_number, display_seed)
             msg = yield from self.client.send_message(daily.leaderboard_channel, text)
             daily.register_message(daily_number, msg.id)
         else:

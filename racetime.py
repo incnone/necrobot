@@ -5,9 +5,19 @@
 ##  [m]m:ss
 def from_str(time_str):    
     args = time_str.split(':')
-    if len(args) == 2:
+    if len(args) == 1: #look for [m]m.ss.hh format
+        args = time_str.split('.')
+        if len(args) == 3 and len(args[1]) == 2 and len(args[2]) == 2:
+            try:
+                t_min = int(args[0])
+                t_sec = int(args[1])
+                t_hun = int(args[2])
+                return 6000*t_min + 100*t_sec + t_hun
+            except ValueError:
+                return -1
+    elif len(args) == 2:
         args_2 = args[1].split('.')
-        if len(args_2) == 1 and len(args_2[0]) == 2:    #[m]:ss format
+        if len(args_2) == 1 and len(args_2[0]) == 2:    #[m]m:ss format
             try:
                 t_min = int(args[0])
                 t_sec = int(args_2[0])
