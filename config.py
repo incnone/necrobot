@@ -25,6 +25,7 @@ def init(config_filename):
     global NO_ENTRANTS_CLEANUP_SEC                 #room is cleaned if there are no race entrants for this duration of time
     global NO_ENTRANTS_CLEANUP_WARNING_SEC         #give a warning re: cleaning race room if no entrants for this duration of time
     global REQUIRE_AT_LEAST_TWO_FOR_RACE           #if True, then races with only one entrant cannot be started
+    global RACE_POKE_DELAY                         #number of seconds to wait between allowing pokes 
 
     #database
     global DB_FILENAME
@@ -50,6 +51,7 @@ def init(config_filename):
         'race_cleanup_after_no_entrants_for_seconds':'120',
         'race_give_cleanup_warning_after_no_entrants_for_seconds':'90', 
         'race_require_at_least_two':'0',
+        'race_poke_delay':'10',
         'db_filename':'data/necrobot.db',
         'db_daily_filename':'data/daily.db',
         'db_races_filename':'data/races.db',
@@ -90,6 +92,7 @@ def init(config_filename):
     NO_ENTRANTS_CLEANUP_SEC = int(defaults['race_cleanup_after_no_entrants_for_seconds'])
     NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
     REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
+    RACE_POKE_DELAY = int(defaults['race_poke_delay'])
     DB_FILENAME = defaults['db_filename']
     DAILY_DB_FILENAME = defaults['db_daily_filename']
     RACE_DB_FILENAME = defaults['db_races_filename']

@@ -25,7 +25,7 @@ def ordinal(num):
 
 class Enter(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'enter', 'join', 'e')
+        command.CommandType.__init__(self, 'enter', 'join', 'e', 'j')
         self.help_text = 'Enters (registers for) the race. After entering, use `.ready` to indicate you are ready to begin the race. You may use `.join` instead of `.enter` if preferred.'
         self._room = race_room
 
@@ -338,22 +338,7 @@ class Poke(command.CommandType):
         if not self._room.race.is_before_race:
             return
         
-        ready_racers = []
-        unready_racers = []
-        for racer in self._room.race.racers.values():
-            if racer.is_ready:
-                ready_racers.append(racer)
-            else:
-                unready_racers.append(racer)
-
-        num_unready = len(unready_racers)
-        quorum = (num_unready == 1) or (3*num_unready <= len(ready_racers))
-
-        if ready_racers and quorum:
-            alert_string = ''
-            for racer in unready_racers:
-                alert_string += racer.member.mention + ', '
-            yield from self._room.write('Poking {0}.'.format(alert_string[:-2]))
+        yield from self._room.poke()
 
 class ForceCancel(command.CommandType):
     def __init__(self, race_room):
@@ -438,6 +423,7 @@ class RaceRoom(command.Module):
         self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
         self._mention_on_rematch = []               #A list of users that should be @mentioned when a rematch is created
         self.mentioned_users = []                  #A list of users that were @mentioned when this race started
+        self._nopoke = False
 
         self.command_types = [command.DefaultHelp(self),
                               Enter(self),
@@ -585,3 +571,37 @@ class RaceRoom(command.Module):
     @asyncio.coroutine
     def post_result(self, text):
         asyncio.ensure_future(self.client.send_message(self._rm.results_channel, text))
+
+
+    # Alerts unready users
+    @asyncio.coroutine
+    def poke(self):
+        if self._nopoke:
+            return
+        
+        ready_racers = []
+        unready_racers = []
+        for racer in self.race.racers.values():
+            if racer.is_ready:
+                ready_racers.append(racer)
+            else:
+                unready_racers.append(racer)
+
+        num_unready = len(unready_racers)
+        quorum = (num_unready == 1) or (3*num_unready <= len(ready_racers))
+
+        if ready_racers and quorum:
+            self._nopoke = True
+            asyncio.ensure_future(self.run_nopoke_delay())
+            alert_string = ''
+            for racer in unready_racers:
+                alert_string += racer.member.mention + ', '
+            yield from self.write('Poking {0}.'.format(alert_string[:-2]))
+
+    # Implements a delay before pokes can happen again
+    @asyncio.coroutine
+    def run_nopoke_delay(self):
+        yield from asyncio.sleep(config.RACE_POKE_DELAY)
+        self._nopoke = False
+        
+        
