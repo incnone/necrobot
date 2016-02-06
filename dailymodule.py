@@ -55,17 +55,16 @@ class DailyResubmit(DailyCommandType):
     def _daily_do_execute(self, command, called_type):       
         client = self._dm.client
         manager = self._dm.daily(called_type.type)
-        character = called_type.character
         
         # Command sent via PM or in #dailyspoilerchat
         if command.is_private or command.channel == manager.spoilerchat_channel:
             
             last_submitted = manager.submitted_daily(command.author.id)
+            character = called_type.type.character(last_submitted)
+
             if last_submitted == 0:
-                vowels = ['a','e','i','o','u']
-                article = 'an' if character[0].lower() in vowels else 'a'
                 asyncio.ensure_future(client.send_message(command.channel,
-                    "{0}: You've never submitted for {1} {2} daily.".format(command.author.mention, article, character)))
+                    "{0}: You've never submitted for a daily of this type.".format(command.author.mention)))
             elif not manager.is_open(last_submitted):
                 asyncio.ensure_future(client.send_message(command.channel,
                     "{0}: The {1} {2} daily has closed.".format(command.author.mention, daily.daily_to_shortstr(last_submitted), character)))
@@ -208,7 +207,7 @@ class DailySubmit(DailyCommandType):
         # Command sent via PM or in #dailyspoilerchat
         if command.is_private or command.channel == manager.spoilerchat_channel:
             daily_number = manager.registered_daily(command.author.id)
-            character = called_type.character
+            character = called_type.type.character(daily_number)
 
             if daily_number == 0:
                 asyncio.ensure_future(client.send_message(command.channel,
@@ -259,7 +258,7 @@ class DailyUnsubmit(DailyCommandType):
         client = self._dm.client
         manager = self._dm.daily(called_type.type)
         daily_number = manager.submitted_daily(command.author.id)
-        character = called_type.character
+        character = called_type.type.character(daily_number)
 
         if daily_number == 0:
             asyncio.ensure_future(client.send_message(command.channel,

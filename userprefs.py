@@ -158,7 +158,7 @@ class PrefsModule(command.Module):
         self._db_conn.commit()
 
         for module in self.necrobot.modules:
-            yield from module.on_update_prefs(user_prefs, user)
+            yield from module.on_update_prefs(user_prefs, self.necrobot.get_as_member(user))
 
     def get_prefs(self, user):
         user_prefs = UserPrefs.get_default()

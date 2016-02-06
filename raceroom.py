@@ -347,7 +347,7 @@ class Poke(command.CommandType):
                 unready_racers.append(racer)
 
         num_unready = len(unready_racers)
-        quorum = (num_unready == 1) or (3*num_unready >= len(ready_racers))
+        quorum = (num_unready == 1) or (3*num_unready <= len(ready_racers))
 
         if ready_racers and quorum:
             alert_string = ''
