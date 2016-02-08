@@ -72,7 +72,7 @@ def init(config_filename):
                     for arg in arglist:
                         admin_roles.append(arg)
                 else:
-                    print("Error in {0}: variable {1} isn't recognized.".format(CONFIG_FILE, args[0]))
+                    print("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
 
     BOT_COMMAND_PREFIX = defaults['bot_command_prefix']
     BOT_VERSION = defaults['bot_version']

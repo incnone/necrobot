@@ -1,4 +1,5 @@
 import asyncio
+import calendar
 import datetime
 import discord
 
@@ -151,7 +152,7 @@ class DailySeed(DailyCommandType):
         if manager.has_submitted(today, user_id):
             asyncio.ensure_future(client.send_message(command.channel, "{0}: You have already submitted for today's {1} daily.".format(command.author.mention, character)))
         elif manager.within_grace_period() and manager.has_registered(today - 1, user_id) and not manager.has_submitted(today - 1, user_id) and not (len(command.args) == 1 and command.args[0].lstrip('-') == 'override'):
-            asyncio.ensure_future(client.send_message(member, "{0}: Warning: You have not yet " \
+            asyncio.ensure_future(client.send_message(command.author, "{0}: Warning: You have not yet " \
                 "submitted for yesterday's {2} daily, which is open for another {1}. If you want to forfeit the " \
                 "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(command.author.mention, manager.daily_grace_timestr(), character)))                
         else:
@@ -172,20 +173,23 @@ class DailyStatus(DailyCommandType):
     def _daily_do_execute(self, command, called_type):
         client = self._dm.client
         status = ''
-        manager = self._dm.daily(called_type.type)
-        character = called_type.character        
-        last_registered = manager.registered_daily(command.author.id)
-        days_since_registering = manager.today_number - last_registered
-        submitted = manager.has_submitted(last_registered, command.author.id)
 
-        if days_since_registering == 1 and not submitted and manager.within_grace_period():
-            status = "You have not gotten today's {1} seed. You may still submit for yesterday's daily, which is open for another {0}.".format(manager.daily_grace_timestr(), character)
-        elif days_since_registering != 0:
-            status = "You have not yet registered for the {0} daily: Use `.dailyseed` to get today's seed.".format(character)
-        elif submitted:
-            status = "You have submitted to the {1} daily. The next daily opens in {0}.".format(manager.next_daily_timestr(), character)
-        else:
-            status = "You have not yet submitted to the {1} daily: Use `.dailysubmit` to submit a result. Today's {1} daily is open for another {0}.".format(manager.daily_close_timestr(), character)
+        for dtype in self._dm.daily_types:
+            manager = self._dm.daily(dtype)
+            character = dtype.character(manager.today_number)
+            old_char = dtype.character(manager.today_number - 1)
+            last_registered = manager.registered_daily(command.author.id)
+            days_since_registering = manager.today_number - last_registered
+            submitted = manager.has_submitted(last_registered, command.author.id)
+
+            if days_since_registering == 1 and not submitted and manager.within_grace_period():
+                status += "You have not gotten today's {1} seed. You may still submit for yesterday's {2} daily, which is open for another {0}. ".format(manager.daily_grace_timestr(), character, old_char)
+            elif days_since_registering != 0:
+                status += "You have not yet registered for the {0} daily: Use `.dailyseed` to get today's seed. ".format(character)
+            elif submitted:
+                status += "You have submitted to the {1} daily. The next daily opens in {0}. ".format(manager.next_daily_timestr(), character)
+            else:
+                status += "You have not yet submitted to the {1} daily: Use `.dailysubmit` to submit a result. Today's {1} daily is open for another {0}. ".format(manager.daily_close_timestr(), character)
 
         asyncio.ensure_future(client.send_message(command.channel, '{0}: {1}'.format(command.author.mention, status)))        
 
@@ -294,7 +298,7 @@ class DailyWhen(DailyCommandType):
                     string_to_send = 'The {0} daily is tomorrow!'.format(charname)
                 elif days_until != None:
                     date = datetime.datetime.utcnow().date() + datetime.timedelta(days=days_until)
-                    string_to_send = 'The {0} daily is in {1} days ({2}).'.format(charname, days_until, date.strftime("%B %d"))
+                    string_to_send = 'The {0} daily is in {1} days ({2}, {3}).'.format(charname, days_until, calendar.day_name[date.weekday()], date.strftime("%B %d"))
                 asyncio.ensure_future(self._dm.client.send_message(command.channel, string_to_send))
         if found_char:
             return
@@ -387,6 +391,10 @@ class DailyModule(command.Module):
     def main_channel(self):
         return self.necrobot.main_channel
 
+    @property
+    def daily_types(self):
+        return [dailytype.CadenceSpeed(), dailytype.RotatingSpeed()]
+
     def spoilerchat_channel(self, daily_type):
         return self.daily(daily_type).spoilerchat_channel
 
@@ -447,7 +455,8 @@ class DailyModule(command.Module):
                 asyncio.ensure_future(self.client.send_message(member, "({0}) Today's {2} speedrun seed: {1}".format(today_date.strftime("%d %b"), today_seed, character)))
             else:
                 asyncio.ensure_future(self.client.send_message(member, "You have not yet submitted for yesterday's {0} daily, so I am not yet sending you today's seed. " \
-                                                                        "When you want today's seed, please call `.dailyseed` in the main channel or via PM.".format(character)))                        
+                                                                        "When you want today's seed, please call `.dailyseed` in the main channel or via PM. (Use `.dailyseed -override` " \
+                                                                        "to get today's seed and forfeit your ability to submit for yesterday's daily.)".format(character)))                        
 
         # Hide dailyspoilerchat for those users with that preference
         hide_pref = userprefs.UserPrefs()

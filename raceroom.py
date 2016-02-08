@@ -140,7 +140,7 @@ class Undone(command.CommandType):
 
 class Forfeit(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'forfeit', 'quit')
+        command.CommandType.__init__(self, 'forfeit', 'quit', 'f', 'q')
         self.help_text = 'Forfeits from the race. You may use `.quit` instead of `.forfeit` if preferred.'
         self._room = race_room
 
@@ -179,7 +179,7 @@ class Unforfeit(command.CommandType):
                     
 class Comment(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'comment')
+        command.CommandType.__init__(self, 'comment', 'c')
         self.help_text = 'Adds text as a comment to your race.'
         self._room = race_room
 
@@ -234,7 +234,7 @@ class Igt(command.CommandType):
 
 class Rematch(command.CommandType):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'rematch')
+        command.CommandType.__init__(self, 'rematch', 're', 'rm')
         self.help_text = 'If the race is complete, creates a new race with the same rules in a separate room.'
         self._room = race_room
 

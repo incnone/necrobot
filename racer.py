@@ -41,7 +41,7 @@ class Racer(object):
                 status += ' ('
                 if self.level > 0 and self.level < 18:
                     status += level.to_str(self.level) + ', '
-                status += racetime.to_str(self.time)
+                status += 'rta {}'.format(racetime.to_str(self.time))
                 if not self.igt == -1:
                     status += ', igt {}'.format(racetime.to_str(self.igt))
                 status += ')'
