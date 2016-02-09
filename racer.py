@@ -38,10 +38,9 @@ class Racer(object):
         else:
             status += RacerStatusInv[str(self._state)]
             if self._state == RacerStatus['forfeit']:
-                status += ' ('
+                status += ' (rta {}'.format(racetime.to_str(self.time))
                 if self.level > 0 and self.level < 18:
-                    status += level.to_str(self.level) + ', '
-                status += 'rta {}'.format(racetime.to_str(self.time))
+                    status += ', ' + level.to_str(self.level)
                 if not self.igt == -1:
                     status += ', igt {}'.format(racetime.to_str(self.igt))
                 status += ')'
