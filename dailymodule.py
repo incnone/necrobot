@@ -238,9 +238,7 @@ class DailySubmit(DailyCommandType):
 
                     # If submitting for today, make spoilerchat visible
                     if daily_number == manager.today_number:
-                        read_permit = discord.Permissions.none()
-                        read_permit.read_messages = True
-                        yield from client.edit_channel_permissions(manager.spoilerchat_channel, self._dm.necrobot.get_as_member(command.author), allow=read_permit)
+                        yield from client.delete_channel_permissions(manager.spoilerchat_channel, self._dm.necrobot.get_as_member(command.author))
                     
                 else: # parse failed
                     asyncio.ensure_future(client.send_message(command.channel,
@@ -496,6 +494,4 @@ class DailyModule(command.Module):
                 read_permit.read_messages = True
                 yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)  
             elif prefs.hide_spoilerchat == False:
-                read_permit = discord.Permissions.none()
-                read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, allow=read_permit)
+                yield from self.client.delete_channel_permissions(daily.spoilerchat_channel, member)
