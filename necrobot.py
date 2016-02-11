@@ -22,6 +22,7 @@ class Necrobot(object):
         self.db_conn = db_conn
         self._main_channel = None
         self._wants_to_quit = False
+        self._admin_module = None
 
     ## Initializes object; call after client has been logged in to discord
     def post_login_init(self, server_id, admin_id=0):
@@ -120,6 +121,21 @@ class Necrobot(object):
     def reboot(self):
         self._wants_to_quit = False
         yield from self.client.logout()
+
+    @asyncio.coroutine
+    def on_member_join(self, member):
+        self.register_user(member)
+
+    def register_all_users(self):
+        for member in self.server.members:
+            params = (member.id, member.name,)
+            self.db_conn.execute("INSERT OR IGNORE INTO user_data (discord_id, name) VALUES (?,?)", params)
+        self.db_conn.commit()        
+
+    def register_user(self, member):
+        params = (member.id, member.name,)
+        self.db_conn.execute("INSERT INTO user_data (discord_id, name) VALUES (?,?)", params)
+        self.db_conn.commit()
 
     @asyncio.coroutine
     def execute(self, cmd):
