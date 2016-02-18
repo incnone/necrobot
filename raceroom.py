@@ -404,7 +404,8 @@ class Kick(command.CommandType):
     def _do_execute(self, command):
         if self._room.is_race_admin(command.author):
             names_to_kick = [n.lower() for n in command.args]
-            for racer in self._room.race.racers.values():
+            racers = self._room.race.racers.values()
+            for racer in racers:
                 if racer.name.lower() in names_to_kick:
                     success = yield from self._room.race.unenter_racer(racer)
                     if success:
