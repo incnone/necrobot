@@ -56,6 +56,7 @@ class Unenter(command.CommandType):
         success = yield from self._room.race.unenter_racer(command.author)
         if success:
             yield from self._room.write('{0} is no longer entered.'.format(command.author.mention))
+            yield from self._room.begin_if_ready()
 
 class Ready(command.CommandType):
     def __init__(self, race_room):

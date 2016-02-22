@@ -21,42 +21,11 @@ from permissioninfo import PermissionInfo
 from raceinfo import RaceInfo
 from racer import Racer
 
-class Ready(raceroom.Ready):
-    def __init__(self, race_room):
-        raceroom.Ready.__init__(self, race_room)
-        self._room = race_room
-
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if not self._room.race.is_before_race:
-            return
-
-        if self._room.is_race_admin(command.author):
-            self._room.admin_ready = True
-            yield from self._room.write('Race admins are ready!')
-            yield from self._room.begin_if_ready() 
-            yield from raceroom.Ready._do_execute(self, command)
-
-class Unready(raceroom.Unready):
-    def __init__(self, race_room):
-        raceroom.Unready.__init__(self, race_room)
-        self._room = race_room
-
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if not self._room.race.is_before_race:
-            return
-
-        if self._room.is_race_admin(command.author):
-            self._room.admin_ready = False
-            yield from self._room.write('Race admins are not ready!')
-            yield from raceroom.Unready._do_execute(self, command)
-
 class Add(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'add')
         self.help_text = 'Give a user permission to see the room.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -71,7 +40,7 @@ class Admins(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'admins')
         self.help_text = 'List all admins for this race.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -91,7 +60,7 @@ class Remove(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'remove')
         self.help_text = 'Remove a user\'s permission to see the room.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -107,7 +76,7 @@ class ChangeRules(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'changerules')
         self.help_text = 'Change the rules for the race. Takes the same parameters as `.make`.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room        
 
     @asyncio.coroutine
@@ -123,7 +92,7 @@ class MakeAdmin(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'makeadmin')
         self.help_text = 'Make specified users into admins for the race (cannot be undone).'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room        
 
     @asyncio.coroutine
@@ -139,7 +108,7 @@ class Reseed(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'reseed')
         self.help_text = 'Randomly generate a new seed for this race.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -156,7 +125,7 @@ class ForceReset(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'forcereset')
         self.help_text = 'Cancel and reset the current race.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -168,7 +137,7 @@ class Pause(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'pause')
         self.help_text = 'Pause the race timer.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -183,7 +152,7 @@ class Unpause(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'unpause')
         self.help_text = 'Unpause the race timer.'
-        self.suppress_help = True
+        #self.suppress_help = True
         self._room = race_room
 
     @asyncio.coroutine
@@ -199,12 +168,12 @@ class RacePrivateRoom(raceroom.RaceRoom):
         raceroom.RaceRoom.__init__(self, race_module, race_channel, race_private_info.race_info)
         self._match_info = race_private_info.match_info
         self.permission_info = permissioninfo.get_permission_info(race_module.server, race_private_info)
-        self.admin_ready = False
 
-        self.command_types = [raceroom.Enter(self),
+        self.command_types = [command.DefaultHelp(self),
+                              raceroom.Enter(self),
                               raceroom.Unenter(self),
-                              Ready(self),
-                              Unready(self),
+                              raceroom.Ready(self),
+                              raceroom.Unready(self),
                               raceroom.Done(self),
                               raceroom.Undone(self),
                               raceroom.Forfeit(self),
@@ -230,6 +199,10 @@ class RacePrivateRoom(raceroom.RaceRoom):
                               ForceReset(self),
                               Pause(self),
                               Unpause(self)] 
+
+    @property
+    def infostr(self):
+        return 'Private race'
 
     # Sets up the leaderboard for the race
     # Overrides
@@ -260,7 +233,7 @@ class RacePrivateRoom(raceroom.RaceRoom):
 
     # Find all members with the given username
     def find_members(self, username):
-        return self._rm._necrobot.find_members(username)
+        return self._rm.necrobot.find_members(username)
     
     # True if the user has admin permissions for this race
     # Overrides
@@ -309,117 +282,3 @@ class RacePrivateRoom(raceroom.RaceRoom):
         #give racers permission
         for member in self.permission_info.racers:
             yield from self.allow(member)
-
-##    # Parse chat input.
-##    # Overrides
-##    @asyncio.coroutine
-##    def _derived_parse_message(self, message):
-##        args = message.content.split()
-##        command = args.pop(0).replace(config.BOT_COMMAND_PREFIX, '', 1)
-##
-##        #.admins : List race admins
-##        if command == 'admins':
-##            admin_names = ''
-##            for member in self.permission_info.admins:
-##                admin_names += member.name + ', '
-##            for role in self.permission_info.admin_roles:
-##                admin_names += role.name + ' (role), '
-##
-##            if admin_names:
-##                yield from self.write('The admins for this race are: {}'.format(admin_names[:-2]))
-##
-##        # Admin-only commands
-##        if self._is_race_admin(message.author):
-##            #.remove : Disallow users from seeing the channel (doesn't work on admins)
-##            if command == 'remove':
-##                for username in args:
-##                    for member in self._manager.find_members_with_name(username):
-##                        if not self._is_race_admin(member):
-##                            yield from self.deny(member)
-##                return True
-##
-##            # Before the race
-##            if self._race.is_before_race:
-##                
-##                #.add : Allow users to see the channel
-##                if command == 'add':
-##                    for username in args:
-##                        for member in self._manager.find_members_with_name(username):
-##                            yield from self.allow(member)
-##                    return True
-##                
-##                #.changerules : Change the rules for the race
-##                elif command == 'changerules':
-##                    new_race_info = raceinfo.parse_args_modify(args, self._race.race_info.copy())
-##                    if new_race_info:
-##                        self._race.race_info = new_race_info
-##                        yield from self.write('Changed rules for the next race.')
-##                        yield from self._race.update_leaderboard()
-##                    return True
-##                
-##                #.makeadmin : Make a user admin for the race (cannot be undone)
-##                elif command == 'makeadmin':
-##                    for username in args:
-##                        for member in self._manager.find_members_with_name(username):
-##                            yield from self.allow(member)
-##                            if not member in self.permission_info.admins:
-##                                self.permission_info.admins.append(member)
-##                    return True
-##                
-##                #.ready : Declare admins ready for race (must be called once by any admin before race can begin, unless no admins)
-##                elif command == 'ready':
-##                    self._admin_ready = True
-##                    if message.author.id in self._race.racers:
-##                        return False
-##                    else:
-##                        yield from self.write('Race admins are ready!')
-##                        if self._all_racers_ready():
-##                            yield from self._race.begin_race_countdown() 
-##                        return True
-##                
-##                #.reseed : Get a new random seed for the race (only works on seeded races)
-##                elif command == 'reseed':
-##                    if self._race.race_info.seeded and not self._race.race_info.seed_fixed:
-##                        self._race.race_info.seed = seedgen.get_new_seed()
-##                        yield from self.write('Changed seed to {}.'.format(self._race.race_info.seed))
-##                        yield from self._race.update_leaderboard()
-##                    else:
-##                        yield from self.write('Cannot reseed this race; it is not a randomly seeded race. Use `.changerules -s` to change this.')
-##                    return True
-##                
-##            # During/After the race:
-##            else:
-##                
-##                #.forcereset : Cancel the race, and return all racers to the entered but not ready state
-##                if command == 'forcereset':
-##                    yield from self._race.reset()
-##                    return True
-##                
-##                # During the race
-##                if not self._race.complete:
-##                    #.pause : Pause Necrobot's race timer
-##                    if command == 'pause':
-##                        success = yield from self._race.pause()
-##                        if success:
-##                            yield from self.write('Race paused by {}!'.format(message.author.mention))
-##                        return True
-##
-##                    #.unpause : Unpause Necrobot's race timer
-##                    elif command == 'unpause':
-##                        success = yield from self._race.unpause()
-##                        if success:
-##                            yield from self.write('Race unpaused! GO!')
-##                        return True
-##                    
-##                # After the race
-##                else:
-##                    
-##                    #.rematch : Overrides. Create a new match in this same room.
-##                    if command == 'rematch':
-##                        new_race_info = self._race.race_info.copy()
-##                        self._race = Race(self, new_race_info)
-##                        asyncio.ensure_future(self._race.initialize())
-##                        return True
-##
-##
-##        return False

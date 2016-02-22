@@ -304,7 +304,13 @@ class Race(object):
     # Enters the given discord Member in the race
     @asyncio.coroutine
     def enter_racer(self, racer_member):
-        if self._status == RaceStatus['entry_open'] and not self.has_racer(racer_member):
+        if self.has_racer(racer_member):
+            return False
+        
+        if self._status == RaceStatus['counting_down']:
+            yield from self.cancel_countdown()
+            
+        if self._status == RaceStatus['entry_open']:
             racer = Racer(racer_member)
             self.racers[racer_member.id] = racer
             asyncio.ensure_future(self.room.update_leaderboard())
