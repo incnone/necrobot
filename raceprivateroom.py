@@ -12,6 +12,7 @@ import permissioninfo
 import raceroom
 import racetime
 import random
+import seedgen
 import sqlite3
 import textwrap
 import time
@@ -143,7 +144,7 @@ class Pause(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         if self._room.is_race_admin(command.author):
-            success = yield from self._race.pause()
+            success = yield from self._room.race.pause()
             if success:
                 yield from self.write('Race paused by {}!'.format(message.author.mention))
 

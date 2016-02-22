@@ -66,9 +66,10 @@ class MakePrivate(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         race_private_info = raceprivateinfo.parse_args(command.args)
-        if not command.author.name in race_private_info.admin_names:
-            race_private_info.admin_names.append(command.author.name)
         if race_private_info:
+            if not command.author.name in race_private_info.admin_names:
+                race_private_info.admin_names.append(command.author.name)
+
             race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
             if race_channel:
                 output_prestring = 'You have started a private race.'
