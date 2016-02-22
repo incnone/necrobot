@@ -238,7 +238,11 @@ class DailySubmit(DailyCommandType):
 
                     # If submitting for today, make spoilerchat visible
                     if daily_number == manager.today_number:
-                        yield from client.delete_channel_permissions(manager.spoilerchat_channel, self._dm.necrobot.get_as_member(command.author))
+                        try:
+                            yield from client.delete_channel_permissions(manager.spoilerchat_channel, self._dm.necrobot.get_as_member(command.author))
+                        except AttributeError:
+                            print('User {0}, Spoilerchat Channel {1}'.format(command.author.name, manager.spoilerchat_channel.name))
+                            raise
                     
                 else: # parse failed
                     asyncio.ensure_future(client.send_message(command.channel,
