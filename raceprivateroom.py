@@ -218,6 +218,7 @@ class RacePrivateRoom(raceroom.RaceRoom):
     @asyncio.coroutine
     def make_rematch(self):
         if not self._rematch_made:
+            yield from self.race.record()
             new_race_info = self.race.race_info.copy()
             self.race = Race(self, new_race_info)
             asyncio.ensure_future(self.race.initialize())

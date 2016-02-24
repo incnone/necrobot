@@ -44,6 +44,7 @@ class Race(object):
         self.delay_record = False                   #When true, delays an extra config.FINALIZE_TIME_SEC before recording
         self._countdown_future = None               #The Future object for the race countdown
         self._finalize_future = None                #The Future object for the finalization countdown
+        self._recorded = False
 
     # Sets up the leaderboard, etc., for the race
     @asyncio.coroutine
@@ -411,6 +412,10 @@ class Race(object):
     # DB_acc
     @asyncio.coroutine
     def record(self):
+        if self._recorded:
+            return
+        self._recorded = True
+
         time_str = ''
         if self._start_datetime:
             time_str = self._start_datetime.strftime("%d %B %Y, UTC %H:%M")
