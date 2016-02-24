@@ -21,6 +21,7 @@ from matchinfo import MatchInfo
 from permissioninfo import PermissionInfo
 from raceinfo import RaceInfo
 from racer import Racer
+from race import Race
 
 class Add(command.CommandType):
     def __init__(self, race_room):
@@ -117,7 +118,7 @@ class Reseed(command.CommandType):
         if self._room.is_race_admin(command.author):
             if self._room.race.race_info.seeded and not self._room.race.race_info.seed_fixed:
                 self._room.race.race_info.seed = seedgen.get_new_seed()
-                yield from self._room.write('Changed seed to {}.'.format(self._race.race_info.seed))
+                yield from self._room.write('Changed seed to {}.'.format(self._room.race.race_info.seed))
                 yield from self._room.race.update_leaderboard()
             else:
                 yield from self._room.write('Cannot reseed this race; it is not a randomly seeded race. Use `.changerules -s` to change this.')
@@ -132,7 +133,7 @@ class ForceReset(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         if self._room.is_race_admin(command.author):
-            yield from self._race.reset()
+            yield from self._room.race.reset()
 
 class Pause(command.CommandType):
     def __init__(self, race_room):
@@ -159,7 +160,7 @@ class Unpause(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         if self._room.is_race_admin(command.author):
-            success = yield from self._race.unpause()
+            success = yield from self._room.race.unpause()
             if success:
                 yield from self.write('Race unpaused! GO!')
 
@@ -217,9 +218,9 @@ class RacePrivateRoom(raceroom.RaceRoom):
     @asyncio.coroutine
     def make_rematch(self):
         if not self._rematch_made:
-            new_race_info = self._race.race_info.copy()
-            self._race = Race(self, new_race_info)
-            asyncio.ensure_future(self._race.initialize())
+            new_race_info = self.race.race_info.copy()
+            self.race = Race(self, new_race_info)
+            asyncio.ensure_future(self.race.initialize())
             self._rematch_made = True
             yield from self.write('Rematch created!')
 
