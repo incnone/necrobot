@@ -149,12 +149,13 @@ class DailySeed(DailyCommandType):
         
         today = manager.today_number
         today_date = daily.daily_to_date(today)
+        yesterday_char = called_type.type.character(today_date - 1)
         if manager.has_submitted(today, user_id):
             asyncio.ensure_future(client.send_message(command.channel, "{0}: You have already submitted for today's {1} daily.".format(command.author.mention, character)))
         elif manager.within_grace_period() and manager.has_registered(today - 1, user_id) and not manager.has_submitted(today - 1, user_id) and not (len(command.args) == 1 and command.args[0].lstrip('-') == 'override'):
             asyncio.ensure_future(client.send_message(command.author, "{0}: Warning: You have not yet " \
                 "submitted for yesterday's {2} daily, which is open for another {1}. If you want to forfeit the " \
-                "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(command.author.mention, manager.daily_grace_timestr(), character)))                
+                "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(command.author.mention, manager.daily_grace_timestr(), yesterday_char)))                
         else:
             manager.register(today, user_id)
             seed = manager.get_seed(today)

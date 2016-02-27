@@ -80,7 +80,9 @@ class Race(object):
                     
     # Returns a list of racers and their statuses.
     @property
-    def leaderboard_text(self):
+    def leaderboard_text(self, shortened=False):
+        CHAR_LIMIT = int(1900)
+        
         racer_list = []
         max_name_len = 0
         max_time = 0
@@ -100,8 +102,14 @@ class Race(object):
         for racer in racer_list:
             rank += 1
             rank_str = '{0: >4} '.format(str(rank) + '.' if racer.is_finished else ' ')
-            text += (rank_str + racer.name + (' ' * (max_name_len - len(racer.name))) + ' --- ' + racer.status_str + '\n')
-        return text
+            stat_str = racer.short_status_str if shortened else racer.status_str 
+            text += (rank_str + racer.name + (' ' * (max_name_len - len(racer.name))) + ' --- ' + stat_str + '\n')
+
+        if len(text) > CHAR_LIMIT and not shortened:
+            return self.leaderboard_text(shortened=True)
+        else:
+            return text
+        
 
     # True if the given racer is entered in the race
     def has_racer(self, racer_usr):

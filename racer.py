@@ -30,14 +30,21 @@ class Racer(object):
 
     @property
     def status_str(self):
+        return self._status_str(False)
+
+    @property
+    def short_status_str(self):
+        return self._status_str(True)
+    
+    def _status_str(self, short):
         status = ''
         if self._state == RacerStatus['finished']:
             status += racetime.to_str(self.time)
-            if not self.igt == -1:
+            if not self.igt == -1 and not short:
                 status += ' (igt {})'.format(racetime.to_str(self.igt))
         else:
             status += RacerStatusInv[str(self._state)]
-            if self._state == RacerStatus['forfeit']:
+            if self._state == RacerStatus['forfeit'] and not short:
                 status += ' (rta {}'.format(racetime.to_str(self.time))
                 if self.level > 0 and self.level < 18:
                     status += ', ' + level.to_str(self.level)
@@ -45,7 +52,7 @@ class Racer(object):
                     status += ', igt {}'.format(racetime.to_str(self.igt))
                 status += ')'
 
-        if not self.comment == '':
+        if not self.comment == '' and not short:
             status += ': ' + self.comment
 
         return status
