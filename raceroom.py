@@ -393,7 +393,20 @@ class ForceForfeitAll(command.CommandType):
             for racer in self._room.race.racers.values():
                 if racer.is_racing:
                     asyncio.ensure_future(self._room.race.forfeit_racer(racer))
-                        
+
+class ForceRecord(command.CommandType):
+    def __init__(self, race_room):
+        command.CommandType.__init__(self, 'forcerecord')
+        self.help_text = 'Force the race to finalize and record.'
+        self.suppress_help = True
+        self._room = race_room
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        if self._room.is_race_admin(command.author) and self._room.race.complete:
+            yield from self._room.race.record()
+            yield from self._room.write('Race recorded.')
+                  
 class Kick(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'kick')
@@ -450,6 +463,7 @@ class RaceRoom(command.Module):
                               ForceClose(self),
                               ForceForfeit(self),
                               ForceForfeitAll(self),
+                              ForceRecord(self),
                               Kick(self)]
 
     @property

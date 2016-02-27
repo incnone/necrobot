@@ -420,6 +420,8 @@ class Race(object):
     # DB_acc
     @asyncio.coroutine
     def record(self):
+        self._status = RaceStatus['finalized'] if self.num_finished else RaceStatus['cancelled']
+
         if self._recorded:
             return
         self._recorded = True
