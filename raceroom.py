@@ -498,6 +498,10 @@ class RaceRoom(command.Module):
         if mention_text:
             asyncio.ensure_future(self.client.send_message(self.channel, 'Alerting users: ' + mention_text))
 
+        #put seed in chat
+        if self.race.race_info.seeded:
+            asyncio.ensure_future(self.client.send_message(self.channel, 'The seed for this race is {0}.'.format(self.race.race_info.seed)))
+
     # Write text to the raceroom. Return a Message for the text written
     @asyncio.coroutine
     def write(self, text):
