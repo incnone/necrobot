@@ -1,6 +1,8 @@
 import asyncio
+import datetime
 import discord
 import logging
+import os
 import sqlite3
 
 import command
@@ -14,10 +16,34 @@ from dailymodule import DailyModule
 from racemodule import RaceModule
 from seedgenmodule import SeedgenModule
 
+print('Initializing necrobot...')
+
 ##-Logging-------------------------------
+file_format_str = '%b%d'
+utc_today = datetime.datetime.utcnow().date()
+utc_yesterday = utc_today - datetime.timedelta(days=1)
+utc_today_str = utc_today.strftime(file_format_str)
+utc_yesterday_str = utc_yesterday.strftime(file_format_str)
+
+## clean old logs
+filenames_in_dir = os.listdir('logging')
+for file in filenames_in_dir:
+    if not file.startswith(utc_today_str) or file.startswith(utc_yesterday_str):
+        os.remove(file)
+
+## get log output filename
+filename_rider = 0
+while True:
+    filename_rider += 1
+    log_output_filename = '{0}-{1}.log'.format(utc_today_str, filename_rider)
+    if not (log_output_filename in filenames_in_dir):
+        break
+log_output_filename = 'logging/{0}'.format(log_output_filename)
+
+## set up logger
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename=log_output_filename, encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 ##--------------------------------------
@@ -40,7 +66,7 @@ login_info.close()
 seedgen.init_seed()
 
 client = discord.Client()                                                       # the client for discord
-necrobot = Necrobot(client, sqlite3.connect(config.DB_FILENAME))                # main class for necrobot behavior
+necrobot = Necrobot(client, sqlite3.connect(config.DB_FILENAME), logger)                # main class for necrobot behavior
      
 # Define client events
 @client.event
@@ -49,17 +75,15 @@ def on_ready():
     print('-Logged in---------------')
     print('User name: {0}'.format(client.user.name))
     print('User id  : {0}'.format(client.user.id))
-    print('-------------------------')
-    print(' ')
-    print('Initializing necrobot...')
     necrobot.post_login_init(login_data.server_id, login_data.admin_id)
 
     necrobot.load_module(ColorerModule(necrobot))
     necrobot.load_module(SeedgenModule(necrobot))
     necrobot.load_module(DailyModule(necrobot, necrobot.db_conn))
     necrobot.load_module(RaceModule(necrobot, necrobot.db_conn))
-    print('...done.')
-
+    print('-------------------------')
+    print(' ')
+    
 @client.event
 @asyncio.coroutine
 def on_message(message):

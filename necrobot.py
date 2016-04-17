@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import logging
 import seedgen
 import sqlite3
 
@@ -13,13 +14,14 @@ from userprefs import PrefsModule
 class Necrobot(object):
 
     ## Barebones constructor
-    def __init__(self, client, db_conn):
+    def __init__(self, client, db_conn, logger):
         self.client = client
         self.server = None
         self.prefs = None
         self.modules = []
         self.admin_id = None
         self.db_conn = db_conn
+        self.logger = logger
         self._main_channel = None
         self._wants_to_quit = False
         self._admin_module = None

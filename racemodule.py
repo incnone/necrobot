@@ -140,7 +140,7 @@ class RaceModule(command.Module):
             alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
             for user in self.necrobot.prefs.get_all_matching(alert_pref):
                 asyncio.ensure_future(self.client.send_message(user, alert_string))
-        
+                
         return race_channel
 
     ## Make a private race with the given RaceInfo
