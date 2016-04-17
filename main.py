@@ -23,8 +23,7 @@ logger.addHandler(handler)
 ##--------------------------------------
 
 class LoginData(object):
-    email = ''
-    password = ''
+    token = ''
     admin_id = None
     server_id = None
 
@@ -33,8 +32,7 @@ config.init('data/bot_config')
 login_data = LoginData()                                                        # data to be read from the login file
 
 login_info = open('data/login_info', 'r')
-login_data.email = login_info.readline().rstrip('\n')
-login_data.password = login_info.readline().rstrip('\n')
+login_data.token = login_info.readline().rstrip('\n')
 login_data.admin_id = login_info.readline().rstrip('\n')
 login_data.server_id = login_info.readline().rstrip('\n')
 login_info.close()
@@ -74,4 +72,4 @@ def on_member_join(member):
     yield from necrobot.on_member_join(member)
 
 # Run client
-client.run(login_data.email, login_data.password)
+client.run(login_data.token)

@@ -1,5 +1,7 @@
 data/login_info
 data/condorbot_login_info
+ignore/
 *.db
 *.pyc
 *.log
+bot_conversion.py
