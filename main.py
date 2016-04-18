@@ -25,8 +25,8 @@ utc_yesterday = utc_today - datetime.timedelta(days=1)
 utc_today_str = utc_today.strftime(file_format_str)
 utc_yesterday_str = utc_yesterday.strftime(file_format_str)
 
+filenames_in_dir = os.listdir('logging')
 #### clean old logs
-##filenames_in_dir = os.listdir('logging')
 ##for file in filenames_in_dir:
 ##    if not file.startswith(utc_today_str) or file.startswith(utc_yesterday_str):
 ##        os.remove(file)
