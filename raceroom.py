@@ -211,9 +211,11 @@ class Death(command.CommandType):
             lvl = level.from_str(command.args[0])
             racer = self._room.race.get_racer(command.author)
             if lvl != -1 and racer:
-                yield from self._room.race.forfeit_racer(self._room.race.get_racer(command.author))
+                success = yield from self._room.race.forfeit_racer(self._room.race.get_racer(command.author))
                 racer.level = lvl
-                asyncio.ensure_future(self._room.update_leaderboard())
+                if success:
+                    asyncio.ensure_future(self._room.update_leaderboard())
+                    yield from self._room.write('{} has forfeit the race.'.format(command.author.mention))
 
 class Igt(command.CommandType):
     def __init__(self, race_room):

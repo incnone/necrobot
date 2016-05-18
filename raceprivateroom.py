@@ -88,7 +88,7 @@ class ChangeRules(command.CommandType):
             if new_race_info:
                 self._room.race.race_info = new_race_info
                 yield from self._room.write('Changed rules for the next race.')
-                yield from self._room.race.update_leaderboard()
+                yield from self._room.update_leaderboard()
 
 class MakeAdmin(command.CommandType):
     def __init__(self, race_room):
@@ -119,7 +119,7 @@ class Reseed(command.CommandType):
             if self._room.race.race_info.seeded and not self._room.race.race_info.seed_fixed:
                 self._room.race.race_info.seed = seedgen.get_new_seed()
                 yield from self._room.write('Changed seed to {}.'.format(self._room.race.race_info.seed))
-                yield from self._room.race.update_leaderboard()
+                yield from self._room.update_leaderboard()
             else:
                 yield from self._room.write('Cannot reseed this race; it is not a randomly seeded race. Use `.changerules -s` to change this.')
 
