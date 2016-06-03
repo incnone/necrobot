@@ -4,6 +4,7 @@ import sqlite3
 
 import command
 import config
+import logging
 import raceroom
 import raceprivateroom
 import raceinfo
@@ -40,12 +41,12 @@ class Make(command.CommandType):
     def _do_execute(self, command):
         race_info = raceinfo.parse_args(command.args)
         if race_info:
-            race_channel = yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=False)
-##            # alert in main channel
-##            if race_channel:
-##                main_channel_string = 'A new race has been started by {0}:\nFormat: {2}\nChannel: {1}'.format(command.author.mention, race_channel.mention, race_info.format_str())
-##
-##                asyncio.ensure_future(self._rm.client.send_message(command.channel, main_channel_string))
+            try:
+                yield from self._rm.make_race(race_info, creator=command.author, suppress_alerts=False)
+            except discord.HTTPException as e:
+                asyncio.ensure_future(self._rm.client.send_message(command.channel,
+                    'Error making race.'))
+                logging.getLogger('discord').warning(e.response)
 
 class MakePrivate(command.CommandType):
     def __init__(self, race_module):
@@ -70,11 +71,17 @@ class MakePrivate(command.CommandType):
             if not command.author.name in race_private_info.admin_names:
                 race_private_info.admin_names.append(command.author.name)
 
-            race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
-            if race_channel:
-                output_prestring = 'You have started a private race.'
-                asyncio.ensure_future(self._rm.client.send_message(command.author,
-                    '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))             
+            try:
+                yield from self._rm.make_private_race(race_private_info, creator=command.author)
+##                race_channel = yield from self._rm.make_private_race(race_private_info, creator=command.author)
+##                if race_channel:
+##                    output_prestring = 'You have started a private race.'
+##                    asyncio.ensure_future(self._rm.client.send_message(command.author,
+##                        '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))            
+            except discord.HTTPException as e:
+                asyncio.ensure_future(self._rm.client.send_message(command.channel,
+                    'Error making race.'))
+                logging.getLogger('discord').warning(e.response)
 
 class RaceModule(command.Module):
 
@@ -121,7 +128,7 @@ class RaceModule(command.Module):
         self._racerooms = [r for r in self._racerooms if not r.is_closed]
         
         #Make a channel for the race
-        race_channel = yield from self.client.create_channel(self.necrobot.server, self.get_raceroom_name(race_info), type='text')
+        race_channel = yield from self.client.create_channel(self.necrobot.server, self.get_raceroom_name(race_info))
 
         if race_channel:
             # Make the actual RaceRoom and initialize it 
