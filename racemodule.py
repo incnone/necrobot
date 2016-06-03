@@ -119,7 +119,7 @@ class RaceModule(command.Module):
                     largest_postfix = max(largest_postfix, val)
                 except ValueError:
                     pass
-        return '{0}_{1}'.format(name_prefix, largest_postfix + 1)
+        return '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
     ## Make a race with the given RaceInfo
     @asyncio.coroutine
@@ -128,7 +128,8 @@ class RaceModule(command.Module):
         self._racerooms = [r for r in self._racerooms if not r.is_closed]
         
         #Make a channel for the race
-        race_channel = yield from self.client.create_channel(self.necrobot.server, self.get_raceroom_name(race_info))
+        new_room_name = self.get_raceroom_name(race_info)
+        race_channel = yield from self.client.create_channel(self.necrobot.server, new_room_name, discord.ChannelType.text)
 
         if race_channel:
             # Make the actual RaceRoom and initialize it 
