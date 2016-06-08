@@ -1,6 +1,7 @@
 import asyncio
 import command
 import config
+import sys
 
 class Die(command.CommandType):
     def __init__(self, admin_module):
@@ -26,6 +27,21 @@ class Info(command.CommandType):
     @asyncio.coroutine
     def _do_execute(self, command):
         yield from self._am.client.send_message(command.channel, 'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(config.BOT_VERSION, self._am.necrobot.ref_channel.mention))
+
+    def recognized_channel(self, channel):
+        return channel.is_private or channel == self._am.necrobot.main_channel
+
+class Reboot(command.CommandType):
+    def __init__(self, admin_module):
+        command.CommandType.__init__(self, 'reboot')
+        self.help_text = ''
+        self.suppress_help = True
+        self._am = admin_module
+
+    @asyncio.coroutine
+    def _do_execute(self, command):
+        if self._am.necrobot.is_admin(command.author):
+            yield from self._am.necrobot.reboot()
 
     def recognized_channel(self, channel):
         return channel.is_private or channel == self._am.necrobot.main_channel
@@ -78,6 +94,7 @@ class AdminModule(command.Module):
         command.Module.__init__(self, necrobot)
         self.command_types = [Die(self),
                               Info(self),
+                              #Reboot(self),
                               Register(self),
                               RegisterAll(self)]
         

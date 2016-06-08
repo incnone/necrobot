@@ -66,8 +66,8 @@ login_info.close()
 seedgen.init_seed()
 
 client = discord.Client()                                                       # the client for discord
-necrobot = Necrobot(client, sqlite3.connect(config.DB_FILENAME), logger)                # main class for necrobot behavior
-     
+necrobot = Necrobot(client, sqlite3.connect(config.DB_FILENAME), logger)        # main class for necrobot behavior
+
 # Define client events
 @client.event
 @asyncio.coroutine
@@ -96,4 +96,11 @@ def on_member_join(member):
     yield from necrobot.on_member_join(member)
 
 # Run client
-client.run(login_data.token)
+try:
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(client.login(login_data.token))
+    loop.run_until_complete(client.connect())
+except Exception:
+    loop.run_until_complete(client.close())
+finally:
+    loop.close()
