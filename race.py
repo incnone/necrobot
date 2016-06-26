@@ -322,7 +322,7 @@ class Race(object):
 
         if self._status == RaceStatus['entry_open']:
             racer = Racer(racer_member)
-            self.racers[racer_member.id] = racer
+            self.racers[int(racer_member.id)] = racer                 
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
         else:

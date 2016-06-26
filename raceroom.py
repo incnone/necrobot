@@ -278,7 +278,7 @@ class Notify(command.CommandType):
         if len(command.args) == 1 and command.args[0] == 'off':
             self._room.dont_notify(command.author)
             yield from self._room.write('{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
-        elif len(command.args) == 0 or len(command.args) == 1 and command.args[1] == 'on':
+        elif len(command.args) == 0 or (len(command.args) == 1 and command.args[1] == 'on'):
             self._room.notify(command.author)
             yield from self._room.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
 
