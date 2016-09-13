@@ -3,7 +3,7 @@ import datetime
 import discord
 import logging
 import os
-import sqlite3
+import mysql.connector
 
 import command
 import config
@@ -66,7 +66,7 @@ login_info.close()
 seedgen.init_seed()
 
 client = discord.Client()                                                       # the client for discord
-necrobot = Necrobot(client, sqlite3.connect(config.DB_FILENAME), logger)        # main class for necrobot behavior
+necrobot = Necrobot(client, mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD, host=config.MYSQL_DB_HOST, database=config.MYSQL_DB_NAME), logger)        # main class for necrobot behavior
 
 # Define client events
 @client.event

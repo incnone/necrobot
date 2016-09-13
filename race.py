@@ -8,7 +8,7 @@ import config
 import datetime
 import discord
 import racetime
-import sqlite3
+import mysql.connector
 import time
 
 from raceinfo import RaceInfo
@@ -433,7 +433,7 @@ class Race(object):
         #TODO: be better (since results posted should adapt for best-of-3, repeat-3, etc; this shouldn't be called here
         yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
 
-        db_conn = sqlite3.connect('data/necrobot.db')
+        db_conn = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD, host=config.MYSQL_DB_HOST, database=config.MYSQL_DB_NAME)
         db_cur = db_conn.cursor()
         db_cur.execute("SELECT race_id FROM race_data ORDER BY race_id DESC")
         new_raceid = 0
@@ -447,7 +447,7 @@ class Race(object):
                        self.race_info.descriptor,
                        self.race_info.flags,
                        self.race_info.seed,)          
-        db_cur.execute("INSERT INTO race_data (race_id, timestamp, character, descriptor, flags, seed) VALUES (?,?,?,?,?,?)", race_params)
+        db_cur.execute("INSERT INTO race_data (race_id, timestamp, character_name, descriptor, flags, seed) VALUES (%s,%s,%s,%s,%s,%s)", race_params)
 
         racer_list = []
         max_time = 0
@@ -463,12 +463,12 @@ class Race(object):
         rank = 1
         for racer in racer_list:
             racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
-            db_cur.execute("INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (?,?,?,?,?,?,?)", racer_params)
+            db_cur.execute("INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (%s,%s,%s,%s,%s,%s,%s)", racer_params)
             if racer.is_finished:
                 rank += 1
 
             user_params = (racer.id, racer.name)
-            db_cur.execute('INSERT INTO user_data VALUES (?,?)', user_params)         
+            db_cur.execute('INSERT INTO user_data VALUES (%s,%s)', user_params) #TODO test this, it looks like it'll insert duplicate ids for existing racers, sqlite used ON CONFLICT REPLACE so we might want to use ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), name=VALUES(name)       
 
         db_conn.commit()
 

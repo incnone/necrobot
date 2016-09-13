@@ -123,7 +123,9 @@ class Daily(object):
         params = (daily_number, self._type.id)
 
         if display_seed:
-            for row in self._db_conn.execute("SELECT seed FROM daily_data WHERE daily_id=? AND type=?", params):
+            cursor = self._db_conn.cursor()
+            cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", params)
+            for row in cursor:
                 text += "Seed: {}\n".format(row[0])
                 break
 
@@ -133,10 +135,12 @@ class Daily(object):
         prior_result = ''   #detect and handle ties
         rank_to_display = int(1)
 
-        for row in self._db_conn.execute("""SELECT user_data.name,daily_races.level,daily_races.time
+        cursor = self._db_conn.cursor()
+        cursor.execute("""SELECT user_data.name,daily_races.level,daily_races.time
                                          FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id
-                                         WHERE daily_races.daily_id=? AND daily_races.type=?
-                                         ORDER BY daily_races.level DESC, daily_races.time ASC""", params):
+                                         WHERE daily_races.daily_id=%s AND daily_races.type=%s
+                                         ORDER BY daily_races.level DESC, daily_races.time ASC""", params)
+        for row in cursor:
             name = row[0]
             lv = row[1]
             time = row[2]
@@ -173,7 +177,9 @@ class Daily(object):
     # DB_acc          
     def has_submitted(self, daily_number, user_id):
         params = (user_id, daily_number, self._type.id)
-        for row in self._db_conn.execute("SELECT level FROM daily_races WHERE discord_id=? AND daily_id=? AND type=?", params):
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT level FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        for row in cursor:
             if row[0] != -1:
                 return True
         return False
@@ -182,7 +188,9 @@ class Daily(object):
     # DB_acc
     def has_registered(self, daily_number, user_id):
         params = (user_id, daily_number, self._type.id)
-        for row in self._db_conn.execute("SELECT * FROM daily_races WHERE discord_id=? AND daily_id=? AND type=?", params):
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        for row in cursor:
             return True
         return False
 
@@ -193,7 +201,8 @@ class Daily(object):
             return False
         else:
             params = (user_id, daily_number, self._type.id, -1, -1)
-            self._db_conn.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (?,?,?,?,?)", params)
+            cursor = self._db_conn.cursor()
+            cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)", params)
             self._db_conn.commit()
             return True
 
@@ -201,7 +210,9 @@ class Daily(object):
     # DB_acc
     def registered_daily(self, user_id):
         params = (user_id, self._type.id)
-        for row in self._db_conn.execute("SELECT daily_id FROM daily_races WHERE discord_id=? AND type=? ORDER BY daily_id DESC", params):
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT daily_id FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
+        for row in cursor:
             return row[0]
         return 0    
 
@@ -209,7 +220,9 @@ class Daily(object):
     # DB_acc
     def submitted_daily(self, user_id):
         params = (user_id, self._type.id,)
-        for row in self._db_conn.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=? AND type=? ORDER BY daily_id DESC", params):
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
+        for row in cursor:
             if row[1] != -1:
                 return row[0]
         return 0
@@ -248,14 +261,16 @@ class Daily(object):
     @asyncio.coroutine
     def submit_to_daily(self, daily_number, user, lv, time):
         race_params = (user.id, daily_number, self._type.id, lv, time,)
-        self._db_conn.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (?,?,?,?,?)", race_params)
+        cursor = self._db_conn.cursor()
+        cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)", race_params)
         self._db_conn.commit()
            
     # Delete a run from the daily
     # DB_acc
     def delete_from_daily(self, daily_number, user):
         params = (-1, user.id, daily_number, self._type.id)
-        self._db_conn.execute("UPDATE daily_races SET level=? WHERE discord_id=? AND daily_id=? AND type=?", params)
+        cursor = self._db_conn.cursor()
+        cursor.execute("UPDATE daily_races SET level=%s WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
         self._db_conn.commit()
     
     # Return the seed for the given daily number. Create seed if it doesn't already exist.
@@ -263,7 +278,7 @@ class Daily(object):
     def get_seed(self, daily_number):
         db_cursor = self._db_conn.cursor()
         param = (daily_number, self._type.id)
-        db_cursor.execute("SELECT seed FROM daily_data WHERE daily_id=? AND type=?", param)
+        db_cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", param)
 
         for row in db_cursor:
             return row[0]
@@ -271,31 +286,35 @@ class Daily(object):
         #if we made it here, there was no entry in the table, so make one
         today_seed = seedgen.get_new_seed()
         values = (daily_number, self._type.id, today_seed, 0,)
-        db_cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (?,?,?,?)", values)
+        db_cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)", values)
         self._db_conn.commit()
         return today_seed
 
     # Registers the given Message ID in the database for the given daily number
     def register_message(self, daily_number, message_id):
         param = (daily_number, self._type.id)
-        for row in self._db_conn.execute("SELECT seed FROM daily_data WHERE daily_id=? AND type=?", param):
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", param)
+        for row in cursor:
             #if here, there was an entry in the table, so we will update it
             values = (message_id, daily_number, self._type.id)
-            self._db_conn.execute("UPDATE daily_data SET msg_id=? WHERE daily_id=? AND type=?", values)
+            cursor.execute("UPDATE daily_data SET msg_id=%s WHERE daily_id=%s AND type=%s", values) #TODO test this, dunno if reusing the same cursor in the loop will work
             self._db_conn.commit()
             return
 
         #else, there was no entry, so make one
         today_seed = seedgen.get_new_seed()
         values = (daily_number, self._type.id, today_seed, message_id,)
-        self._db_conn.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (?,?,?,?)", values)
+        cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)", values)
         self._db_conn.commit()
 
     # Returns the Discord Message ID for the leaderboard entry for the given daily number
     # DB_acc
     def get_message_id(self, daily_number):
         params = (daily_number, self._type.id)
-        for row in self._db_conn.execute("SELECT msg_id FROM daily_data WHERE daily_id=? AND type=?", params):
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT msg_id FROM daily_data WHERE daily_id=%s AND type=%s", params)
+        for row in cursor:
             return int(row[0])
         return None
         

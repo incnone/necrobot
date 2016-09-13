@@ -2,7 +2,7 @@ import asyncio
 import discord
 import logging
 import seedgen
-import sqlite3
+import mysql.connector
 
 import config
 import command
@@ -131,12 +131,14 @@ class Necrobot(object):
     def register_all_users(self):
         for member in self.server.members:
             params = (member.id, member.name,)
-            self.db_conn.execute("INSERT OR IGNORE INTO user_data (discord_id, name) VALUES (?,?)", params)
+            cursor = self.db_conn.cursor()
+            cursor.execute("INSERT IGNORE INTO user_data (discord_id, name) VALUES (%s,%s)", params)
         self.db_conn.commit()        
 
     def register_user(self, member):
         params = (member.id, member.name,)
-        self.db_conn.execute("INSERT INTO user_data (discord_id, name) VALUES (?,?)", params)
+        cursor = self.db_conn.cursor()
+        cursor.execute("INSERT INTO user_data (discord_id, name) VALUES (%s,%s)", params)
         self.db_conn.commit()
 
     @asyncio.coroutine
