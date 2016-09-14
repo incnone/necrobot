@@ -13,7 +13,6 @@ import raceroom
 import racetime
 import random
 import seedgen
-import sqlite3
 import textwrap
 import time
 

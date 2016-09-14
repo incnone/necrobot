@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import sqlite3
 
 import command
 import config

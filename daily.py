@@ -3,7 +3,6 @@
 import asyncio
 import datetime
 import discord
-import sqlite3
 
 import config
 import dailytype
