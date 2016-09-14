@@ -155,7 +155,7 @@ class PrefsModule(command.Module):
 
         params = (user.id, prefs.hide_spoilerchat, prefs.daily_alert, prefs.race_alert,)
         cursor = self._db_conn.cursor()
-        cursor.execute("""INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (%s,%s,%s,%s)""", params)         
+        cursor.execute("""INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (%s,%s,%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), hidespoilerchat=VALUES(hidespoilerchat), dailyalert=VALUES(dailyalert), racealert=VALUES(racealert)""", params)         
         self._db_conn.commit()
 
         for module in self.necrobot.modules:
@@ -164,7 +164,7 @@ class PrefsModule(command.Module):
     def get_prefs(self, user):
         user_prefs = UserPrefs.get_default()
         params = (user.id,)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("""SELECT * FROM user_prefs WHERE discord_id=%s""", params)
         for row in cursor:
             user_prefs.hide_spoilerchat = row[1]

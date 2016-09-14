@@ -122,7 +122,7 @@ class Daily(object):
         params = (daily_number, self._type.id)
 
         if display_seed:
-            cursor = self._db_conn.cursor()
+            cursor = self._db_conn.cursor(buffered=True)
             cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", params)
             for row in cursor:
                 text += "Seed: {}\n".format(row[0])
@@ -134,7 +134,7 @@ class Daily(object):
         prior_result = ''   #detect and handle ties
         rank_to_display = int(1)
 
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("""SELECT user_data.name,daily_races.level,daily_races.time
                                          FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id
                                          WHERE daily_races.daily_id=%s AND daily_races.type=%s
@@ -176,7 +176,7 @@ class Daily(object):
     # DB_acc          
     def has_submitted(self, daily_number, user_id):
         params = (user_id, daily_number, self._type.id)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT level FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
         for row in cursor:
             if row[0] != -1:
@@ -187,7 +187,7 @@ class Daily(object):
     # DB_acc
     def has_registered(self, daily_number, user_id):
         params = (user_id, daily_number, self._type.id)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
         for row in cursor:
             return True
@@ -209,7 +209,7 @@ class Daily(object):
     # DB_acc
     def registered_daily(self, user_id):
         params = (user_id, self._type.id)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT daily_id FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
         for row in cursor:
             return row[0]
@@ -219,7 +219,7 @@ class Daily(object):
     # DB_acc
     def submitted_daily(self, user_id):
         params = (user_id, self._type.id,)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
         for row in cursor:
             if row[1] != -1:
@@ -311,7 +311,7 @@ class Daily(object):
     # DB_acc
     def get_message_id(self, daily_number):
         params = (daily_number, self._type.id)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT msg_id FROM daily_data WHERE daily_id=%s AND type=%s", params)
         for row in cursor:
             return int(row[0])
