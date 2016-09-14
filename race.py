@@ -434,7 +434,7 @@ class Race(object):
         yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
 
         db_conn = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD, host=config.MYSQL_DB_HOST, database=config.MYSQL_DB_NAME)
-        db_cur = db_conn.cursor()
+        db_cur = db_conn.cursor(buffered=True)
         db_cur.execute("SELECT race_id FROM race_data ORDER BY race_id DESC")
         new_raceid = 0
         for row in db_cur:
@@ -468,7 +468,7 @@ class Race(object):
                 rank += 1
 
             user_params = (racer.id, racer.name)
-            db_cur.execute('INSERT INTO user_data VALUES (%s,%s)', user_params) #TODO test this, it looks like it'll insert duplicate ids for existing racers, sqlite used ON CONFLICT REPLACE so we might want to use ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), name=VALUES(name)       
+            db_cur.execute('INSERT INTO user_data (discord_id, name) VALUES (%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), name=VALUES(name)', user_params)
 
         db_conn.commit()
 

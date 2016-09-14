@@ -275,7 +275,7 @@ class Daily(object):
     # Return the seed for the given daily number. Create seed if it doesn't already exist.
     # DB_acc
     def get_seed(self, daily_number):
-        db_cursor = self._db_conn.cursor()
+        db_cursor = self._db_conn.cursor(buffered=True)
         param = (daily_number, self._type.id)
         db_cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", param)
 
@@ -292,7 +292,7 @@ class Daily(object):
     # Registers the given Message ID in the database for the given daily number
     def register_message(self, daily_number, message_id):
         param = (daily_number, self._type.id)
-        cursor = self._db_conn.cursor()
+        cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", param)
         for row in cursor:
             #if here, there was an entry in the table, so we will update it
