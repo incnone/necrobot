@@ -79,9 +79,9 @@ class NecroDB():
         self._db_conn.commit()
         self._close()
 
-    def register_all_users(self, members)
+    def register_all_users(self, members):
         self._connect()
-        db_cur = self._db_conn.cursor(buffered=True)
+        db_cur = self._db_conn.cursor()
         for member in members:
             params = (member.id, member.name,)
             db_cur.execute("INSERT IGNORE INTO user_data (discord_id, name) VALUES (%s,%s)", params)
@@ -95,3 +95,95 @@ class NecroDB():
         cursor.execute("INSERT INTO user_data (discord_id, name) VALUES (%s,%s)", params)
         self.db_conn.commit()
         self._close()
+
+    def get_daily_seed(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", params)
+        seed = cursor.fetchall()
+        self._close()
+        return seed
+
+    def get_daily_times(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("""SELECT user_data.name,daily_races.level,daily_races.time
+                                         FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id
+                                         WHERE daily_races.daily_id=%s AND daily_races.type=%s
+                                         ORDER BY daily_races.level DESC, daily_races.time ASC""", params)
+        times = cursor.fetchall()
+        self._close()
+        return times
+
+    def has_submitted_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor(buffered=True)
+        cursor.execute("SELECT level FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        for row in cursor:
+            if row[0] != -1:
+                self._close()
+                return True
+        self._close()
+        return False
+
+    def has_registered_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor(buffered=True)
+        cursor.execute("SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        for row in cursor:
+            self._close()
+            return True
+        self._close()
+        return False
+
+    def register_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)", params)
+        self._db_conn.commit()
+        self._close()
+
+    def registered_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor(buffered=True)
+        cursor.execute("SELECT daily_id FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
+        dailies = cursor.fetchall()
+        self._close()
+        return dailies
+
+    def submitted_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor(buffered=True)
+        cursor.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
+        dailies = cursor.fetchall()
+        self._close()
+        return dailies
+
+    def delete_from_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("UPDATE daily_races SET level=%s WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        self._db_conn.commit()
+        self._close()
+
+    def create_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)", params)
+        self._db_conn.commit()
+        self._close()
+
+    def update_daily(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("UPDATE daily_data SET msg_id=%s WHERE daily_id=%s AND type=%s", params)
+        self._db_conn.commit()
+        self._close()
+
+    def get_daily_message_id(self, params):
+        self._connect()
+        cursor = self._db_conn.cursor()
+        cursor.execute("SELECT msg_id FROM daily_data WHERE daily_id=%s AND type=%s", params)
+        msg_id = cursor.fetchall()
+        self._close()
+        return msg_id

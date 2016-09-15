@@ -22,25 +22,25 @@ def daily_to_datestr(daily_number):
 
 def daily_to_shortstr(daily_number):
     return daily_to_date(daily_number).strftime("%d %b")
-    
+
 # Formats the given hours, minutes into a string
 def _format_as_timestr(hours, minutes):
     while minutes >= 60:
         minutes -= 60
         hours += 1
-        
+
     if minutes == 0 and hours == 0:
         return 'under a minute'
     else:
         min_str = 'minute' if minutes == 1 else 'minutes'
         hr_str = 'hour' if hours == 1 else 'hours'
-        return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)  
+        return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)
 
 class Daily(object):
 
-    def __init__(self, daily_module, db_connection, daily_type):
+    def __init__(self, daily_module, necrodb, daily_type):
         self._dm = daily_module
-        self._db_conn = db_connection
+        self.necrodb = necrodb
         self._type = daily_type
         asyncio.ensure_future(self._daily_update())
 
@@ -96,14 +96,14 @@ class Daily(object):
     def next_daily_timestr(self):
         utc_now = datetime.datetime.utcnow()
         date_str = utc_now.strftime("%B %d")
-        return _format_as_timestr(23 - utc_now.hour, 60 - utc_now.minute)  
+        return _format_as_timestr(23 - utc_now.hour, 60 - utc_now.minute)
 
     # Returns a string giving the time until the current daily closes
     def daily_close_timestr(self):
         utc_now = datetime.datetime.utcnow()
         date_str = utc_now.strftime("%B %d")
-        return _format_as_timestr(24 - utc_now.hour, 60 - utc_now.minute)  
-        
+        return _format_as_timestr(24 - utc_now.hour, 60 - utc_now.minute)
+
     # Returns true if the given daily is still open for submissions.
     def is_open(self, daily_number):
         today = self.today_number;
@@ -122,24 +122,17 @@ class Daily(object):
         params = (daily_number, self._type.id)
 
         if display_seed:
-            cursor = self._db_conn.cursor(buffered=True)
-            cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", params)
-            for row in cursor:
+            for row in self.necrodb.get_daily_seed(params):
                 text += "Seed: {}\n".format(row[0])
                 break
 
         no_entries = True
         rank = int(0)
-        
+
         prior_result = ''   #detect and handle ties
         rank_to_display = int(1)
 
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("""SELECT user_data.name,daily_races.level,daily_races.time
-                                         FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id
-                                         WHERE daily_races.daily_id=%s AND daily_races.type=%s
-                                         ORDER BY daily_races.level DESC, daily_races.time ASC""", params)
-        for row in cursor:
+        for row in self.necrodb.get_daily_times(params):
             name = row[0]
             lv = row[1]
             time = row[2]
@@ -163,7 +156,7 @@ class Daily(object):
                 rank_to_display = rank
 
             prior_result = result_string
-            
+
             text += '{0: >3}. {1: <24} {2}\n'.format(rank_to_display, name, result_string)
 
         if no_entries:
@@ -171,27 +164,18 @@ class Daily(object):
 
         text += '```'
         return text
-    
+
     # True if the given user has submitted for the given daily
-    # DB_acc          
+    # DB_acc
     def has_submitted(self, daily_number, user_id):
         params = (user_id, daily_number, self._type.id)
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT level FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
-        for row in cursor:
-            if row[0] != -1:
-                return True
-        return False
+        return self.necrodb.has_submitted_daily(params)
 
     # True if the given user has registered for the given daily
     # DB_acc
     def has_registered(self, daily_number, user_id):
         params = (user_id, daily_number, self._type.id)
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
-        for row in cursor:
-            return True
-        return False
+        return self.necrodb.has_registered_daily(params)
 
     # Attempts to register the given user for the given daily
     # DB_acc
@@ -200,28 +184,22 @@ class Daily(object):
             return False
         else:
             params = (user_id, daily_number, self._type.id, -1, -1)
-            cursor = self._db_conn.cursor()
-            cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)", params)
-            self._db_conn.commit()
+            self.necrodb.register_daily(params)
             return True
 
     # Returns the most recent daily for which the user is registered (or 0 if no such)
     # DB_acc
     def registered_daily(self, user_id):
         params = (user_id, self._type.id)
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT daily_id FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
-        for row in cursor:
+        for row in self.necrodb.registered_daily(params):
             return row[0]
-        return 0    
+        return 0
 
     # Returns the most recent daily for which the user has submitted (or 0 if no such)
     # DB_acc
     def submitted_daily(self, user_id):
         params = (user_id, self._type.id,)
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
-        for row in cursor:
+        for row in self.necrodb.submitted_daily(params):
             if row[1] != -1:
                 return row[0]
         return 0
@@ -254,69 +232,56 @@ class Daily(object):
             return ret_str
         else:
             return ''
-                        
+
     # Submit a run to the given daily number
     # DB_acc
     @asyncio.coroutine
     def submit_to_daily(self, daily_number, user, lv, time):
         race_params = (user.id, daily_number, self._type.id, lv, time,)
-        cursor = self._db_conn.cursor()
-        cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)", race_params)
-        self._db_conn.commit()
-           
+        self.necrodb.register_daily(params)
+
     # Delete a run from the daily
     # DB_acc
     def delete_from_daily(self, daily_number, user):
         params = (-1, user.id, daily_number, self._type.id)
-        cursor = self._db_conn.cursor()
-        cursor.execute("UPDATE daily_races SET level=%s WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
-        self._db_conn.commit()
-    
+        self.necrodb.delete_from_daily(params)
+
     # Return the seed for the given daily number. Create seed if it doesn't already exist.
     # DB_acc
     def get_seed(self, daily_number):
-        db_cursor = self._db_conn.cursor(buffered=True)
-        param = (daily_number, self._type.id)
-        db_cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", param)
+        params = (daily_number, self._type.id)
 
-        for row in db_cursor:
+        for row in self.necrodb.get_daily_seed(params):
             return row[0]
 
         #if we made it here, there was no entry in the table, so make one
         today_seed = seedgen.get_new_seed()
         values = (daily_number, self._type.id, today_seed, 0,)
-        db_cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)", values)
-        self._db_conn.commit()
+        self.necrodb.create_daily(values)
         return today_seed
 
     # Registers the given Message ID in the database for the given daily number
     def register_message(self, daily_number, message_id):
-        param = (daily_number, self._type.id)
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", param)
-        for row in cursor:
+        params = (daily_number, self._type.id)
+        for row in self.necrodb.get_daily_seed(params):
             #if here, there was an entry in the table, so we will update it
             values = (message_id, daily_number, self._type.id)
-            cursor.execute("UPDATE daily_data SET msg_id=%s WHERE daily_id=%s AND type=%s", values) #TODO test this, dunno if reusing the same cursor in the loop will work
-            self._db_conn.commit()
+            self.necrodb.update_daily(values)
             return
 
         #else, there was no entry, so make one
         today_seed = seedgen.get_new_seed()
         values = (daily_number, self._type.id, today_seed, message_id,)
-        cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)", values)
-        self._db_conn.commit()
+        self.necrodb.create_daily(values)
 
     # Returns the Discord Message ID for the leaderboard entry for the given daily number
     # DB_acc
     def get_message_id(self, daily_number):
         params = (daily_number, self._type.id)
-        cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT msg_id FROM daily_data WHERE daily_id=%s AND type=%s", params)
-        for row in cursor:
+        for row in self.necrodb.get_daily_message_id(params):
             return int(row[0])
         return None
-        
+
     # Return a DailyUserStatus corresponding to the status of the current daily for the given user
     def user_status(self, user_id, daily_number):
         if not self.is_open(daily_number, self._type.id):
@@ -327,5 +292,4 @@ class Daily(object):
             return DailyUserStatus['registered']
         else:
             return DailyUserStatus['unregistered']
-            
-        
+

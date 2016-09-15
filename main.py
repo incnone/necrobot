@@ -79,11 +79,11 @@ def on_ready():
 
     necrobot.load_module(ColorerModule(necrobot))
     necrobot.load_module(SeedgenModule(necrobot))
-    necrobot.load_module(DailyModule(necrobot, necrobot.db_conn))
-    necrobot.load_module(RaceModule(necrobot, necrobot.db_conn))
+    necrobot.load_module(DailyModule(necrobot, necrobot.necrodb))
+    necrobot.load_module(RaceModule(necrobot, necrobot.necrodb))
     print('-------------------------')
     print(' ')
-    
+
 @client.event
 @asyncio.coroutine
 def on_message(message):
