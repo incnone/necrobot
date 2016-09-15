@@ -31,7 +31,7 @@ class Necrobot(object):
     ## Initializes object; call after client has been logged in to discord
     def post_login_init(self, server_id, admin_id=0):
         self.admin_id = admin_id if admin_id else None
-       
+
         #set up server
         id_is_int = False
         try:
@@ -39,7 +39,7 @@ class Necrobot(object):
             id_is_int = True
         except ValueError:
             id_is_int = False
-            
+
         if self.client.servers:
             for s in self.client.servers:
                 if id_is_int and s.id == server_id:
@@ -131,24 +131,17 @@ class Necrobot(object):
         self.register_user(member)
 
     def register_all_users(self):
-        for member in self.server.members:
-            params = (member.id, member.name,)
-            cursor = self.db_conn.cursor()
-            cursor.execute("INSERT IGNORE INTO user_data (discord_id, name) VALUES (%s,%s)", params)
-        self.db_conn.commit()        
+        self.necrodb.register_all_users(self.server.members)
 
     def register_user(self, member):
-        params = (member.id, member.name,)
-        cursor = self.db_conn.cursor()
-        cursor.execute("INSERT INTO user_data (discord_id, name) VALUES (%s,%s)", params)
-        self.db_conn.commit()
+        self.necrodb.register_all_users(member)
 
     @asyncio.coroutine
     def execute(self, cmd):
         # don't care about bad commands
         if cmd.command == None:
             return
-        
+
         # don't reply to self
         if cmd.author == self.client.user:
             return

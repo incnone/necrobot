@@ -5,7 +5,7 @@ import command
 DailyAlerts = {'none':0, 'cadence':1, 'all':2, 'rotating':3}
 RaceAlerts = {'none':0, 'some':1, 'all':2}
 
-class UserPrefs(object): 
+class UserPrefs(object):
     def get_default():
         prefs = UserPrefs()
         prefs.hide_spoilerchat = False
@@ -25,7 +25,7 @@ class UserPrefs(object):
             self.daily_alert = user_prefs.daily_alert
         if user_prefs.race_alert != None:
             self.race_alert = user_prefs.race_alert
-            
+
     @property
     def contains_info(self):
         return self.hide_spoilerchat != None or self.daily_alert != None or self.race_alert != None
@@ -46,15 +46,15 @@ class UserPrefs(object):
         elif self.daily_alert == DailyAlerts['all']:
             pref_str.append('Get both seeds (via PM) when the new dailies open.')
         elif self.daily_alert == DailyAlerts['rotating']:
-            pref_str.append('Get the seed when the new rotating-character daily opens.')        
+            pref_str.append('Get the seed when the new rotating-character daily opens.')
 
         if self.race_alert == RaceAlerts['none']:
             pref_str.append('No race alerts.')
         elif self.race_alert == RaceAlerts['some']:
-            pref_str.append('Alert (via PM) when a new race (not a rematch) begins.')        
+            pref_str.append('Alert (via PM) when a new race (not a rematch) begins.')
         elif self.race_alert == RaceAlerts['all']:
             pref_str.append('Alert (via PM) when any race begins (includes rematches).')
-            
+
         return pref_str
 
 def _parse_show_spoilerchat(args, user_prefs):
@@ -63,7 +63,7 @@ def _parse_show_spoilerchat(args, user_prefs):
         if args[1] == 'hide':
             user_prefs.hide_spoilerchat = True
         elif args[1] == 'show':
-            user_prefs.hide_spoilerchat = False         
+            user_prefs.hide_spoilerchat = False
 
 def _parse_daily_alert(args, user_prefs):
     command_list = ['dailyalert']
@@ -73,7 +73,7 @@ def _parse_daily_alert(args, user_prefs):
 def _parse_race_alert(args, user_prefs):
     command_list = ['racealert']
     if len(args) >= 2 and args[0] in command_list and args[1] in RaceAlerts:
-        user_prefs.race_alert = RaceAlerts[args[1]]            
+        user_prefs.race_alert = RaceAlerts[args[1]]
 
 def parse_args(args):
     #user_prefs is a list of preferences we should change
@@ -115,9 +115,9 @@ class SetPrefs(command.CommandType):
             confirm_msg = 'Set the following preferences for {}:'.format(command.author.mention)
             for pref_str in prefs.pref_strings:
                 confirm_msg += ' ' + pref_str
-            asyncio.ensure_future(self._pm.client.send_message(command.channel, confirm_msg))                 
+            asyncio.ensure_future(self._pm.client.send_message(command.channel, confirm_msg))
         else:
-            asyncio.ensure_future(self._pm.client.send_message(command.channel, '{0}: Failure parsing arguments; did not set any user preferences.'.format(command.author.mention)))                         
+            asyncio.ensure_future(self._pm.client.send_message(command.channel, '{0}: Failure parsing arguments; did not set any user preferences.'.format(command.author.mention)))
 
 class ViewPrefs(command.CommandType):
     def __init__(self, prefs_module):
@@ -197,7 +197,7 @@ class PrefsModule(command.Module):
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
                         users_matching_dailyalert.append(member)
-                
+
         if user_prefs.race_alert != None:
             lists_to_use.append(users_matching_racealert)
             params = (user_prefs.race_alert,)
@@ -205,7 +205,7 @@ class PrefsModule(command.Module):
                 params += (RaceAlerts['all'],)
             else:
                 params += (user_prefs.race_alert,)
-        
+
             for row in self.necrodb.get_all_matching_prefs("racealert", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:

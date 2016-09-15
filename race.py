@@ -433,44 +433,8 @@ class Race(object):
         #TODO: be better (since results posted should adapt for best-of-3, repeat-3, etc; this shouldn't be called here
         yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
 
-        db_conn = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD, host=config.MYSQL_DB_HOST, database=config.MYSQL_DB_NAME)
-        db_cur = db_conn.cursor(buffered=True)
-        db_cur.execute("SELECT race_id FROM race_data ORDER BY race_id DESC")
-        new_raceid = 0
-        for row in db_cur:
-            new_raceid = row[0] + 1
-            break
-
-        race_params = (new_raceid,
-                       self._start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                       self.race_info.character,
-                       self.race_info.descriptor,
-                       self.race_info.flags,
-                       self.race_info.seed,)          
-        db_cur.execute("INSERT INTO race_data (race_id, timestamp, character_name, descriptor, flags, seed) VALUES (%s,%s,%s,%s,%s,%s)", race_params)
-
-        racer_list = []
-        max_time = 0
-        for r_id in self.racers:
-            racer = self.racers[r_id]
-            racer_list.append(racer)
-            if racer.is_finished:
-                max_time = max(racer.time, max_time)
-        max_time += 1
-
-        racer_list.sort(key=lambda r: r.time if r.is_finished else max_time)
-
-        rank = 1
-        for racer in racer_list:
-            racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
-            db_cur.execute("INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (%s,%s,%s,%s,%s,%s,%s)", racer_params)
-            if racer.is_finished:
-                rank += 1
-
-            user_params = (racer.id, racer.name)
-            db_cur.execute('INSERT INTO user_data (discord_id, name) VALUES (%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), name=VALUES(name)', user_params)
-
-        db_conn.commit()
+        necrodb = NecroDB()
+        necrodb.record_race(self)
 
     # Cancel the race.
     @asyncio.coroutine
