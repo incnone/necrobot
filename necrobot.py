@@ -8,6 +8,7 @@ import config
 import command
 import colorer
 
+from necrodb import NecroDB
 from adminmodule import AdminModule
 from userprefs import PrefsModule
 
@@ -21,6 +22,7 @@ class Necrobot(object):
         self.modules = []
         self.admin_id = None
         self.db_conn = db_conn
+        self.necrodb = NecroDB()
         self.logger = logger
         self._main_channel = None
         self._wants_to_quit = False
@@ -52,7 +54,7 @@ class Necrobot(object):
 
         self._main_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
         self.load_module(AdminModule(self))
-        self.prefs = PrefsModule(self, self.db_conn)
+        self.prefs = PrefsModule(self, self.necrodb)
         self.load_module(self.prefs)
 
     # Causes the Necrobot to use the given module
