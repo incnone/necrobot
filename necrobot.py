@@ -15,13 +15,12 @@ from userprefs import PrefsModule
 class Necrobot(object):
 
     ## Barebones constructor
-    def __init__(self, client, db_conn, logger):
+    def __init__(self, client, logger):
         self.client = client
         self.server = None
         self.prefs = None
         self.modules = []
         self.admin_id = None
-        self.db_conn = db_conn
         self.necrodb = NecroDB()
         self.logger = logger
         self._main_channel = None
