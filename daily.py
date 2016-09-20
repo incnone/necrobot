@@ -237,7 +237,7 @@ class Daily(object):
     # DB_acc
     @asyncio.coroutine
     def submit_to_daily(self, daily_number, user, lv, time):
-        race_params = (user.id, daily_number, self._type.id, lv, time,)
+        params = (user.id, daily_number, self._type.id, lv, time,)
         self.necrodb.register_daily(params)
 
     # Delete a run from the daily
