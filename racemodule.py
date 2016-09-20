@@ -128,7 +128,7 @@ class RaceModule(command.Module):
 
         #Make a channel for the race
         new_room_name = self.get_raceroom_name(race_info)
-        race_channel = yield from self.client.create_channel(self.necrobot.server, new_room_name, discord.ChannelType.text)
+        race_channel = yield from self.client.create_channel(self.necrobot.server, new_room_name, type=discord.ChannelType.text)
 
         if race_channel:
             # Make the actual RaceRoom and initialize it
