@@ -133,7 +133,7 @@ class Necrobot(object):
         self.necrodb.register_all_users(self.server.members)
 
     def register_user(self, member):
-        self.necrodb.register_all_users(member)
+        self.necrodb.register_all_users([member])
 
     @asyncio.coroutine
     def execute(self, cmd):
