@@ -139,7 +139,7 @@ class NecroDB():
     def register_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)", params)
+        cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), daily_id=VALUES(daily_id), type=VALUES(type), level=VALUES(level), time=VALUES(time)", params)
         self._db_conn.commit()
         self._close()
 
