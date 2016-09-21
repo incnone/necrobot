@@ -11,6 +11,7 @@ import racetime
 import mysql.connector
 import time
 
+from necrodb import NecroDB
 from raceinfo import RaceInfo
 from racer import Racer
 
