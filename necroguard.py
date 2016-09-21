@@ -6,7 +6,7 @@ last_reboot_time = 0
 
 while run_again:
     run_again = False
-    last_reboot_time = time.clock()
+    last_reboot_time = time.monotonic()
     necrobot_proc = subprocess.Popen('cmd /k python main.py')
     try:
         necrobot_proc.wait()
@@ -19,11 +19,11 @@ while run_again:
         run_again = True
 
     if run_again:
-        if time.clock() - last_reboot_time < 60:
+        if time.monotonic() - last_reboot_time < 60:
             print("It has been less than one minute since the last restart attempt, so necroguard is shutting down.")
             run_again = False
         else:
             print("Attempting to restart.")
 
 
-    
+
