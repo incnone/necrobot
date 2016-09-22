@@ -482,7 +482,7 @@ class DailyModule(command.Module):
             msg = yield from self.client.send_message(daily.leaderboard_channel, text)
             daily.register_message(daily_number, msg.id)
         else:
-            msg_list = yield from self.client.logs_from(daily.leaderboard_channel, 10) #TODO: 10 is a "big enough" hack; make this more precise
+            msg_list = yield from self.client.logs_from(daily.leaderboard_channel, limit=10) #TODO: 10 is a "big enough" hack; make this more precise
             for msg in msg_list:
                 if int(msg.id) == msg_id:
                     asyncio.ensure_future(self.client.edit_message(msg, daily.leaderboard_text(daily_number, display_seed)))
