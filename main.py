@@ -19,7 +19,7 @@ from seedgenmodule import SeedgenModule
 print('Initializing necrobot...')
 
 ##-Logging-------------------------------
-file_format_str = '%b%d'
+file_format_str = '%Y-%m-%d'
 utc_today = datetime.datetime.utcnow().date()
 utc_yesterday = utc_today - datetime.timedelta(days=1)
 utc_today_str = utc_today.strftime(file_format_str)
