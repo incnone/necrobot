@@ -8,9 +8,10 @@ import config
 import datetime
 import discord
 import racetime
-import sqlite3
+import mysql.connector
 import time
 
+from necrodb import NecroDB
 from raceinfo import RaceInfo
 from racer import Racer
 
@@ -52,8 +53,8 @@ class Race(object):
         if self._status != RaceStatus['uninitialized']:
             return
 
-        self._status = RaceStatus['entry_open'] 
-        self.no_entrants_time = time.clock()
+        self._status = RaceStatus['entry_open']
+        self.no_entrants_time = time.monotonic()
         yield from self.room.write('Enter the race with `.enter`, and type `.ready` when ready. Finish the race with `.done` or `.forfeit`. Use `.help` for a command list.')
 
     # Returns the string to go in the topic for the leaderboard
@@ -64,7 +65,7 @@ class Race(object):
         new_leaderboard += self.leaderboard_text
         new_leaderboard += '```'
         return new_leaderboard
-   
+
     # Returns 'header' text for the race, giving info about the rules etc.
     @property
     def leaderboard_header(self):
@@ -77,12 +78,12 @@ class Race(object):
             seed_str = '\n' + seed_str
 
         return self.race_info.format_str() + room_rider + seed_str + '\n'
-                    
+
     # Returns a list of racers and their statuses.
     @property
     def leaderboard_text(self, shortened=False):
         CHAR_LIMIT = int(1900)
-        
+
         racer_list = []
         max_name_len = 0
         max_time = 0
@@ -102,14 +103,14 @@ class Race(object):
         for racer in racer_list:
             rank += 1
             rank_str = '{0: >4} '.format(str(rank) + '.' if racer.is_finished else ' ')
-            stat_str = racer.short_status_str if shortened else racer.status_str 
+            stat_str = racer.short_status_str if shortened else racer.status_str
             text += (rank_str + racer.name + (' ' * (max_name_len - len(racer.name))) + ' --- ' + stat_str + '\n')
 
         if len(text) > CHAR_LIMIT and not shortened:
             return self.leaderboard_text(shortened=True)
         else:
             return text
-        
+
 
     # True if the given racer is entered in the race
     def has_racer(self, racer_usr):
@@ -128,7 +129,7 @@ class Race(object):
         if self._status == RaceStatus['paused']:
             return racetime.to_str( int(100*(self._pause_time - self._start_time)) )
         elif self._status == RaceStatus['racing']:
-            return racetime.to_str( int(100*(time.clock() - self._start_time)) )
+            return racetime.to_str( int(100*(time.monotonic() - self._start_time)) )
         else:
             return ''
 
@@ -148,7 +149,7 @@ class Race(object):
         for r_name in self.racers:
             if self.racers[r_name].is_finished:
                 num += 1
-        return num        
+        return num
 
     @property
     def entry_open(self):
@@ -173,25 +174,25 @@ class Race(object):
             asyncio.ensure_future(self.room.update_leaderboard())
 
     @asyncio.coroutine
-    # Pause the race timer. 
+    # Pause the race timer.
     def pause(self):
         if self._status == RaceStatus['racing']:
             self._status = RaceStatus['paused']
-            self._pause_time = time.clock()
+            self._pause_time = time.monotonic()
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
         return False
-    
+
     @asyncio.coroutine
     # Unpause the race timer.
     def unpause(self):
         if self._status == RaceStatus['paused']:
             self._status = RaceStatus['racing']
-            self._start_time += time.clock() - self._pause_time
+            self._start_time += time.monotonic() - self._pause_time
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
         return False
-    
+
     # Begins the race. Called by the countdown.
     @asyncio.coroutine
     def _begin_race(self):
@@ -199,7 +200,7 @@ class Race(object):
             if not self.racers[r_id].begin_race():
                 print("{} isn't ready while calling race.begin_race -- unexpected error.".format(racer.name))
 
-        self._start_time = time.clock()
+        self._start_time = time.monotonic()
         self._start_datetime = datetime.datetime.utcnow()
         yield from self.room.write('GO!')
         self._status = RaceStatus['racing']
@@ -229,7 +230,7 @@ class Race(object):
     def _race_countdown(self):
         countdown_timer = config.COUNTDOWN_LENGTH
         yield from asyncio.sleep(1) #Pause before countdown
-        
+
         yield from self.room.write('The race will begin in {0} seconds.'.format(countdown_timer))
         while countdown_timer > 0:
             if countdown_timer <= config.INCREMENTAL_COUNTDOWN_START:
@@ -260,9 +261,9 @@ class Race(object):
         while self.delay_record:
             self.delay_record = False
             yield from asyncio.sleep(config.FINALIZE_TIME_SEC)
-            
+
         yield from self._finalize_race()
-            
+
     # Finalizes the race
     @asyncio.coroutine
     def _finalize_race(self):
@@ -315,10 +316,10 @@ class Race(object):
     def enter_racer(self, racer_member):
         if self.has_racer(racer_member):
             return False
-        
+
         if self._status == RaceStatus['counting_down']:
             yield from self.cancel_countdown()
-            
+
         if self._status == RaceStatus['entry_open']:
             racer = Racer(racer_member)
             self.racers[racer_member.id] = racer
@@ -334,7 +335,7 @@ class Race(object):
             del self.racers[racer_member.id]
             asyncio.ensure_future(self.room.update_leaderboard())
             if not self.racers:
-                self.no_entrants_time = time.clock()
+                self.no_entrants_time = time.monotonic()
             if (len(self.racers) < 2 and config.REQUIRE_AT_LEAST_TWO_FOR_RACE) or len(self.racers) < 1:
                 yield from self.cancel_countdown() #TODO: implement correct behavior if this fails
             return True
@@ -356,7 +357,7 @@ class Race(object):
         # See if we can cancel a countdown. If cancel_countdown() returns False,
         # then there is a countdown and we failed to cancel it, so racer cannot be made unready.
         success = yield from self.cancel_countdown()
-        if success and racer.unready(): 
+        if success and racer.unready():
             asyncio.ensure_future(self.room.update_leaderboard())
             return True
         else:
@@ -367,8 +368,8 @@ class Race(object):
     def finish_racer(self, racer):
         if self._status != RaceStatus['racing']:
             return False
-        
-        finish_time = int(100*(time.clock() - self._start_time))
+
+        finish_time = int(100*(time.monotonic() - self._start_time))
         if racer and racer.finish(finish_time):
             asyncio.ensure_future(self._check_for_race_end())
             asyncio.ensure_future(self.room.update_leaderboard())
@@ -380,7 +381,7 @@ class Race(object):
     def unfinish_racer(self, racer):
         if self._status == RaceStatus['finalized'] or not racer.is_finished:
             return False
-        
+
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,
         # then there is a finalization and we failed to cancel it, so racer cannot be made unready.
         success = yield from self.cancel_finalization()
@@ -392,7 +393,7 @@ class Race(object):
     # Puts the given Racer in the 'forfeit' state
     @asyncio.coroutine
     def forfeit_racer(self, racer):
-        forfeit_time = int(100*(time.clock() - self._start_time))
+        forfeit_time = int(100*(time.monotonic() - self._start_time))
         if racer and racer.forfeit(forfeit_time):
             asyncio.ensure_future(self._check_for_race_end())
             asyncio.ensure_future(self.room.update_leaderboard())
@@ -404,7 +405,7 @@ class Race(object):
     def unforfeit_racer(self, racer):
         if self._status == RaceStatus['finalized'] or not racer.is_forfeit:
             return False
-        
+
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,
         # then there is a finalization and we failed to cancel it, so racer cannot be made unready.
         success = yield from self.cancel_finalization()
@@ -431,46 +432,10 @@ class Race(object):
             time_str = self._start_datetime.strftime("%d %B %Y, UTC %H:%M")
 
         #TODO: be better (since results posted should adapt for best-of-3, repeat-3, etc; this shouldn't be called here
-        yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))           
+        yield from self.room.post_result('Race begun at {0}:\n```\n{1}{2}\n```'.format(time_str, self.leaderboard_header, self.leaderboard_text))
 
-        db_conn = sqlite3.connect('data/necrobot.db')
-        db_cur = db_conn.cursor()
-        db_cur.execute("SELECT race_id FROM race_data ORDER BY race_id DESC")
-        new_raceid = 0
-        for row in db_cur:
-            new_raceid = row[0] + 1
-            break
-
-        race_params = (new_raceid,
-                       self._start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                       self.race_info.character,
-                       self.race_info.descriptor,
-                       self.race_info.flags,
-                       self.race_info.seed,)          
-        db_cur.execute("INSERT INTO race_data (race_id, timestamp, character, descriptor, flags, seed) VALUES (?,?,?,?,?,?)", race_params)
-
-        racer_list = []
-        max_time = 0
-        for r_id in self.racers:
-            racer = self.racers[r_id]
-            racer_list.append(racer)
-            if racer.is_finished:
-                max_time = max(racer.time, max_time)
-        max_time += 1
-
-        racer_list.sort(key=lambda r: r.time if r.is_finished else max_time)
-
-        rank = 1
-        for racer in racer_list:
-            racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
-            db_cur.execute("INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (?,?,?,?,?,?,?)", racer_params)
-            if racer.is_finished:
-                rank += 1
-
-            user_params = (racer.id, racer.name)
-            db_cur.execute('INSERT INTO user_data VALUES (?,?)', user_params)         
-
-        db_conn.commit()
+        necrodb = NecroDB()
+        necrodb.record_race(self)
 
     # Cancel the race.
     @asyncio.coroutine
@@ -488,8 +453,8 @@ class Race(object):
         success = yield from self.cancel_finalization()
         self._status = RaceStatus['entry_open']
         self.racers = []
-        self.no_entrants_time = time.clock()
+        self.no_entrants_time = time.monotonic()
         yield from self.room.write('The race has been reset.')
-        asyncio.ensure_future(self.room.update_leaderboard())        
-            
+        asyncio.ensure_future(self.room.update_leaderboard())
+
 

@@ -13,7 +13,6 @@ import raceroom
 import racetime
 import random
 import seedgen
-import sqlite3
 import textwrap
 import time
 
@@ -36,7 +35,7 @@ class Add(command.CommandType):
             for username in command.args:
                 for member in self._room.find_members(username):
                     yield from self._room.allow(member)
-            return True        
+            return True
 
 class Admins(command.CommandType):
     def __init__(self, race_room):
@@ -72,14 +71,14 @@ class Remove(command.CommandType):
                 for member in self._room.find_members(username):
                     if not self._room.is_race_admin(member):
                         yield from self._room.deny(member)
-            return True        
+            return True
 
 class ChangeRules(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'changerules')
         self.help_text = 'Change the rules for the race. Takes the same parameters as `.make`.'
         #self.suppress_help = True
-        self._room = race_room        
+        self._room = race_room
 
     @asyncio.coroutine
     def _do_execute(self, command):
@@ -95,7 +94,7 @@ class MakeAdmin(command.CommandType):
         command.CommandType.__init__(self, 'makeadmin')
         self.help_text = 'Make specified users into admins for the race (cannot be undone).'
         #self.suppress_help = True
-        self._room = race_room        
+        self._room = race_room
 
     @asyncio.coroutine
     def _do_execute(self, command):
@@ -200,7 +199,7 @@ class RacePrivateRoom(raceroom.RaceRoom):
                               Reseed(self),
                               ForceReset(self),
                               Pause(self),
-                              Unpause(self)] 
+                              Unpause(self)]
 
     @property
     def infostr(self):
@@ -237,7 +236,7 @@ class RacePrivateRoom(raceroom.RaceRoom):
     # Find all members with the given username
     def find_members(self, username):
         return self._rm.necrobot.find_members(username)
-    
+
     # True if the user has admin permissions for this race
     # Overrides
     def is_race_admin(self, member):
@@ -251,16 +250,16 @@ class RacePrivateRoom(raceroom.RaceRoom):
     # Allow the member to see the channel
     @asyncio.coroutine
     def allow(self, member):
-        read_permit = discord.Permissions.none()
+        read_permit = discord.PermissionOverwrite()
         read_permit.read_messages = True
-        yield from self.client.edit_channel_permissions(self.channel, member, allow=read_permit)
+        yield from self.client.edit_channel_permissions(self.channel, member, read_permit)
 
     #Restrict the member from seeing the channel
     @asyncio.coroutine
     def deny(self, member):
-        read_permit = discord.Permissions.none()
-        read_permit.read_messages = True
-        yield from self.client.edit_channel_permissions(self.channel, member, deny=read_permit)        
+        read_deny = discord.PermissionOverwrite()
+        read_deny.read_messages = False
+        yield from self.client.edit_channel_permissions(self.channel, member, read_deny)
 
     # Make room private to all but admins and racers in permission_info
     @asyncio.coroutine

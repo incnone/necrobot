@@ -1,6 +1,6 @@
 user_data
 	discord_id (pk) 	bigint
-	name			text		
+	name			text
 user_prefs
 	discord_id (pk,fk)	bigint
 	hidespoilerchat		boolean
@@ -20,9 +20,9 @@ daily_races
 race_data
 	race_id (pk)
 	timestamp
-	character
+	character_name
 	descriptor
-	flags	
+	flags
 	seed
 racer_data
 	race_id (pk, fk:race_data)

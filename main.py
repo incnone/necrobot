@@ -3,7 +3,7 @@ import datetime
 import discord
 import logging
 import os
-import sqlite3
+import mysql.connector
 
 import command
 import config
@@ -19,7 +19,7 @@ from seedgenmodule import SeedgenModule
 print('Initializing necrobot...')
 
 ##-Logging-------------------------------
-file_format_str = '%b%d'
+file_format_str = '%Y-%m-%d'
 utc_today = datetime.datetime.utcnow().date()
 utc_yesterday = utc_today - datetime.timedelta(days=1)
 utc_today_str = utc_today.strftime(file_format_str)
@@ -66,7 +66,7 @@ login_info.close()
 seedgen.init_seed()
 
 client = discord.Client()                                                       # the client for discord
-necrobot = Necrobot(client, sqlite3.connect(config.DB_FILENAME), logger)        # main class for necrobot behavior
+necrobot = Necrobot(client, logger)        # main class for necrobot behavior
 
 # Define client events
 @client.event
@@ -79,11 +79,11 @@ def on_ready():
 
     necrobot.load_module(ColorerModule(necrobot))
     necrobot.load_module(SeedgenModule(necrobot))
-    necrobot.load_module(DailyModule(necrobot, necrobot.db_conn))
-    necrobot.load_module(RaceModule(necrobot, necrobot.db_conn))
+    necrobot.load_module(DailyModule(necrobot, necrobot.necrodb))
+    necrobot.load_module(RaceModule(necrobot, necrobot.necrodb))
     print('-------------------------')
     print(' ')
-    
+
 @client.event
 @asyncio.coroutine
 def on_message(message):

@@ -16,7 +16,7 @@ class DailyCommandType(command.CommandType):
 
     def recognized_channel(self, channel):
         return channel.is_private or channel == self._dm.main_channel or self._dm.is_spoilerchat_channel(channel)
-        
+
     @asyncio.coroutine
     def _do_execute(self, command):
         today_number = self._dm.today_number
@@ -29,7 +29,7 @@ class DailyCommandType(command.CommandType):
             yield from self._daily_do_execute(command, called_type)
         else:
             asyncio.ensure_future(self._dm.client.send_message(command.channel,
-                "{0}: I couldn't figure out which daily you wanted to call a command for.".format(command.author.mention)))              
+                "{0}: I couldn't figure out which daily you wanted to call a command for.".format(command.author.mention)))
 
     @asyncio.coroutine
     def _daily_do_execute(self, command, called_type):
@@ -53,13 +53,13 @@ class DailyResubmit(DailyCommandType):
                          'Use the `-rot` flag to resubmit for the rotating-character daily.'
 
     @asyncio.coroutine
-    def _daily_do_execute(self, command, called_type):       
+    def _daily_do_execute(self, command, called_type):
         client = self._dm.client
         manager = self._dm.daily(called_type.type)
-        
+
         # Command sent via PM or in #dailyspoilerchat
         if command.is_private or command.channel == manager.spoilerchat_channel:
-            
+
             last_submitted = manager.submitted_daily(command.author.id)
             character = called_type.type.character(last_submitted)
 
@@ -84,13 +84,13 @@ class DailyResubmit(DailyCommandType):
 
                 else: # parse failed
                     asyncio.ensure_future(client.send_message(command.channel,
-                        "{0}: I had trouble parsing your submission. Please use one of the forms: `{1} 12:34.56` or `{1} death 4-4`.".format(command.author.mention, self.mention)))  
+                        "{0}: I had trouble parsing your submission. Please use one of the forms: `{1} 12:34.56` or `{1} death 4-4`.".format(command.author.mention, self.mention)))
 
         # Command sent in main channel
         elif command.channel == self._dm.main_channel:
-            
+
             asyncio.ensure_future(client.send_message(command.channel,
-                "{0}: Please call `{1}` from {2} (this helps avoid spoilers in the main channel).".format(command.author.mention, self.mention, manager.spoilerchat_channel.mention)))      
+                "{0}: Please call `{1}` from {2} (this helps avoid spoilers in the main channel).".format(command.author.mention, self.mention, manager.spoilerchat_channel.mention)))
             asyncio.ensure_future(client.delete_message(command.message))
 
 class DailyRules(DailyCommandType):
@@ -106,7 +106,7 @@ class DailyRules(DailyCommandType):
             "\N{BULLET} {0} seeded all zones; get the seed for the daily using `.dailyseed`.\n" \
             "\N{BULLET} Run the seed blind. Make one attempt and submit the result (even if you die).\n" \
             "\N{BULLET} No restriction on resolution, display settings, zoom, etc.\n" \
-            "\N{BULLET} Mods that disable leaderboard submission are not allowed (e.g. xml / music mods).".format(character))) 
+            "\N{BULLET} Mods that disable leaderboard submission are not allowed (e.g. xml / music mods).".format(character)))
 
 class DailySchedule(DailyCommandType):
     def __init__(self, daily_module):
@@ -146,7 +146,7 @@ class DailySeed(DailyCommandType):
         manager = self._dm.daily(called_type.type)
         user_id = command.author.id
         character = called_type.character
-        
+
         today = manager.today_number
         today_date = daily.daily_to_date(today)
         yesterday_char = called_type.type.character(today - 1)
@@ -155,12 +155,12 @@ class DailySeed(DailyCommandType):
         elif manager.within_grace_period() and manager.has_registered(today - 1, user_id) and not manager.has_submitted(today - 1, user_id) and not (len(command.args) == 1 and command.args[0].lstrip('-') == 'override'):
             asyncio.ensure_future(client.send_message(command.author, "{0}: Warning: You have not yet " \
                 "submitted for yesterday's {2} daily, which is open for another {1}. If you want to forfeit the " \
-                "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(command.author.mention, manager.daily_grace_timestr(), yesterday_char)))                
+                "ability to submit for yesterday's daily and get today's seed, call `.dailyseed -override`.".format(command.author.mention, manager.daily_grace_timestr(), yesterday_char)))
         else:
             manager.register(today, user_id)
             seed = manager.get_seed(today)
             asyncio.ensure_future(client.send_message(command.author, "({0}) {2} speedrun seed: {1}. " \
-                "This is a single-attempt {2} seeded all zones run. (See `.dailyrules` for complete rules.)".format(today_date.strftime("%d %b"), seed, character)))                                                
+                "This is a single-attempt {2} seeded all zones run. (See `.dailyrules` for complete rules.)".format(today_date.strftime("%d %b"), seed, character)))
 
 class DailyStatus(DailyCommandType):
     def __init__(self, daily_module):
@@ -192,7 +192,7 @@ class DailyStatus(DailyCommandType):
             else:
                 status += "You have not yet submitted to the {1} daily: Use `.dailysubmit` to submit a result. Today's {1} daily is open for another {0}. ".format(manager.daily_close_timestr(), character)
 
-        asyncio.ensure_future(client.send_message(command.channel, '{0}: {1}'.format(command.author.mention, status)))        
+        asyncio.ensure_future(client.send_message(command.channel, '{0}: {1}'.format(command.author.mention, status)))
 
 class DailySubmit(DailyCommandType):
     def __init__(self, daily_module):
@@ -207,7 +207,7 @@ class DailySubmit(DailyCommandType):
     @asyncio.coroutine
     def _daily_do_execute(self, command, called_type):
         client = self._dm.client
-        manager = self._dm.daily(called_type.type)    
+        manager = self._dm.daily(called_type.type)
 
         # Command sent via PM or in #dailyspoilerchat
         if command.is_private or command.channel == manager.spoilerchat_channel:
@@ -244,7 +244,7 @@ class DailySubmit(DailyCommandType):
                         except AttributeError:
                             print('User {0}, Spoilerchat Channel {1}'.format(command.author.name, manager.spoilerchat_channel.name))
                             raise
-                    
+
                 else: # parse failed
                     asyncio.ensure_future(client.send_message(command.channel,
                         "{0}: I had trouble parsing your submission. Please use one of the forms: `{1} 12:34.56` or `{1} death 4-4`.".format(command.author.mention, self.mention)))
@@ -252,7 +252,7 @@ class DailySubmit(DailyCommandType):
         # Command sent in main channel
         elif command.channel == self._dm.main_channel:
             asyncio.ensure_future(client.send_message(command.channel,
-                "{0}: Please call `{1}` from {2}, or via PM (this helps avoid spoilers in the main channel).".format(command.author.mention, self.mention, manager.spoilerchat_channel.mention)))      
+                "{0}: Please call `{1}` from {2}, or via PM (this helps avoid spoilers in the main channel).".format(command.author.mention, self.mention, manager.spoilerchat_channel.mention)))
             asyncio.ensure_future(client.delete_message(command.message))
 
 class DailyUnsubmit(DailyCommandType):
@@ -277,7 +277,7 @@ class DailyUnsubmit(DailyCommandType):
             manager.delete_from_daily(daily_number, command.author)
             asyncio.ensure_future(client.send_message(command.channel,
                 "Deleted {1}'s daily submission for {0}, {2}.".format(daily.daily_to_shortstr(daily_number), command.author.mention, character)))
-            asyncio.ensure_future(self._dm.update_leaderboard(daily_number, called_type.type))        
+            asyncio.ensure_future(self._dm.update_leaderboard(daily_number, called_type.type))
 
 class DailyWhen(DailyCommandType):
     def __init__(self, daily_module):
@@ -305,7 +305,7 @@ class DailyWhen(DailyCommandType):
                 asyncio.ensure_future(self._dm.client.send_message(command.channel, string_to_send))
         if found_char:
             return
-                
+
         manager = self._dm.daily(called_type.type)
         string_to_send = manager.daily_time_info_str()
         if called_type.type == dailytype.RotatingSpeed():
@@ -313,7 +313,7 @@ class DailyWhen(DailyCommandType):
         asyncio.ensure_future(self._dm.client.send_message(command.channel, string_to_send))
 
 #For debugging/testing
-class ForceRunNewDaily(DailyCommandType): 
+class ForceRunNewDaily(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'forcerunnewdaily')
         self.suppress_help = True
@@ -343,7 +343,7 @@ class ForceUpdateLeaderboard(DailyCommandType):
             for arg in command.args:
                 if arg.lstrip('-').lower() == 'showseed':
                     show_seed = True
-                    
+
                 try:
                     arg_as_int = int(arg)
                     days_back = arg_as_int
@@ -356,22 +356,22 @@ class ForceUpdateLeaderboard(DailyCommandType):
                 yield from self._dm.update_leaderboard(number, daily_type, show_seed)
 
 class PublicDaily(daily.Daily):
-    def __init__(self, daily_module, db_connection, daily_type):
-        daily.Daily.__init__(self, daily_module, db_connection, daily_type)
+    def __init__(self, daily_module, necrodb, daily_type):
+        daily.Daily.__init__(self, daily_module, necrodb, daily_type)
         self.spoilerchat_channel = None
         self.leaderboard_channel = None
 
 class DailyModule(command.Module):
-    def __init__(self, necrobot, db_connection):
+    def __init__(self, necrobot, necrodb):
         command.Module.__init__(self, necrobot)
 
-        self._cadence_daily = PublicDaily(self, db_connection, dailytype.CadenceSpeed())
+        self._cadence_daily = PublicDaily(self, necrodb, dailytype.CadenceSpeed())
         self._cadence_daily.spoilerchat_channel = necrobot.find_channel(config.DAILY_SPOILERCHAT_CHANNEL_NAME)
         self._cadence_daily.leaderboard_channel = necrobot.find_channel(config.DAILY_LEADERBOARDS_CHANNEL_NAME)
 
-        self._rotating_daily = PublicDaily(self, db_connection, dailytype.RotatingSpeed())
+        self._rotating_daily = PublicDaily(self, necrodb, dailytype.RotatingSpeed())
         self._rotating_daily.spoilerchat_channel = necrobot.find_channel(config.ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME)
-        self._rotating_daily.leaderboard_channel = necrobot.find_channel(config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME)        
+        self._rotating_daily.leaderboard_channel = necrobot.find_channel(config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME)
 
         self.command_types = [command.DefaultHelp(self),
                               DailyChar(self),
@@ -411,7 +411,7 @@ class DailyModule(command.Module):
         if channel == self._cadence_daily.spoilerchat_channel:
             return dailytype.CalledType(dailytype.CadenceSpeed(), self._cadence_daily.today_number, explicit_char=True, for_previous=False)
         elif channel == self._rotating_daily.spoilerchat_channel:
-            return dailytype.CalledType(dailytype.RotatingSpeed(), self._rotating_daily.today_number, explicit_char=True, for_previous=False)            
+            return dailytype.CalledType(dailytype.RotatingSpeed(), self._rotating_daily.today_number, explicit_char=True, for_previous=False)
 
     @property
     def today_number(self):
@@ -433,7 +433,7 @@ class DailyModule(command.Module):
         today_number = daily.today_number
         today_seed = daily.get_seed(today_number)
         character = daily_type.character(today_number)
-        
+
         # Make the leaderboard message
         text = daily.leaderboard_text(today_number, display_seed=False)
         msg = yield from self.client.send_message(daily.leaderboard_channel, text)
@@ -444,14 +444,14 @@ class DailyModule(command.Module):
 
         # Announce the new daily in spoilerchat
         asyncio.ensure_future(self.client.send_message(daily.spoilerchat_channel, "The {0} {1} daily has begun!".format(today_date.strftime("%B %d"), character)))
-                
+
         # PM users with the daily_alert preference
         auto_pref = userprefs.UserPrefs()
         if daily_type == dailytype.CadenceSpeed():
             auto_pref.daily_alert = userprefs.DailyAlerts['cadence']
         elif daily_type == dailytype.RotatingSpeed():
             auto_pref.daily_alert = userprefs.DailyAlerts['rotating']
-            
+
         for member in self.necrobot.prefs.get_all_matching(auto_pref):
             if daily.has_submitted(today_number - 1, member.id) or not daily.has_registered(today_number - 1, member.id):
                 daily.register(today_number, member.id)
@@ -459,7 +459,7 @@ class DailyModule(command.Module):
             else:
                 asyncio.ensure_future(self.client.send_message(member, "You have not yet submitted for yesterday's {0} daily, so I am not yet sending you today's seed. " \
                                                                         "When you want today's seed, please call `.dailyseed` in the main channel or via PM. (Use `.dailyseed -override` " \
-                                                                        "to get today's seed and forfeit your ability to submit for yesterday's daily.)".format(character)))                        
+                                                                        "to get today's seed and forfeit your ability to submit for yesterday's daily.)".format(character)))
 
         # Hide dailyspoilerchat for those users with that preference
         hide_pref = userprefs.UserPrefs()
@@ -482,7 +482,7 @@ class DailyModule(command.Module):
             msg = yield from self.client.send_message(daily.leaderboard_channel, text)
             daily.register_message(daily_number, msg.id)
         else:
-            msg_list = yield from self.client.logs_from(daily.leaderboard_channel, 10) #TODO: 10 is a "big enough" hack; make this more precise
+            msg_list = yield from self.client.logs_from(daily.leaderboard_channel, limit=10) #TODO: 10 is a "big enough" hack; make this more precise
             for msg in msg_list:
                 if int(msg.id) == msg_id:
                     asyncio.ensure_future(self.client.edit_message(msg, daily.leaderboard_text(daily_number, display_seed)))
@@ -497,6 +497,6 @@ class DailyModule(command.Module):
             if prefs.hide_spoilerchat == True and not daily.has_submitted(today_daily, member.id):
                 read_permit = discord.Permissions.none()
                 read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)  
+                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)
             elif prefs.hide_spoilerchat == False:
                 yield from self.client.delete_channel_permissions(daily.spoilerchat_channel, member)

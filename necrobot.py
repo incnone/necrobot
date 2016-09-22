@@ -2,25 +2,26 @@ import asyncio
 import discord
 import logging
 import seedgen
-import sqlite3
+import mysql.connector
 
 import config
 import command
 import colorer
 
+from necrodb import NecroDB
 from adminmodule import AdminModule
 from userprefs import PrefsModule
 
 class Necrobot(object):
 
     ## Barebones constructor
-    def __init__(self, client, db_conn, logger):
+    def __init__(self, client, logger):
         self.client = client
         self.server = None
         self.prefs = None
         self.modules = []
         self.admin_id = None
-        self.db_conn = db_conn
+        self.necrodb = NecroDB()
         self.logger = logger
         self._main_channel = None
         self._wants_to_quit = False
@@ -29,7 +30,7 @@ class Necrobot(object):
     ## Initializes object; call after client has been logged in to discord
     def post_login_init(self, server_id, admin_id=0):
         self.admin_id = admin_id if admin_id else None
-       
+
         #set up server
         id_is_int = False
         try:
@@ -37,7 +38,7 @@ class Necrobot(object):
             id_is_int = True
         except ValueError:
             id_is_int = False
-            
+
         if self.client.servers:
             for s in self.client.servers:
                 if id_is_int and s.id == server_id:
@@ -52,7 +53,7 @@ class Necrobot(object):
 
         self._main_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
         self.load_module(AdminModule(self))
-        self.prefs = PrefsModule(self, self.db_conn)
+        self.prefs = PrefsModule(self, self.necrodb)
         self.load_module(self.prefs)
 
     # Causes the Necrobot to use the given module
@@ -129,22 +130,17 @@ class Necrobot(object):
         self.register_user(member)
 
     def register_all_users(self):
-        for member in self.server.members:
-            params = (member.id, member.name,)
-            self.db_conn.execute("INSERT OR IGNORE INTO user_data (discord_id, name) VALUES (?,?)", params)
-        self.db_conn.commit()        
+        self.necrodb.register_all_users(self.server.members)
 
     def register_user(self, member):
-        params = (member.id, member.name,)
-        self.db_conn.execute("INSERT INTO user_data (discord_id, name) VALUES (?,?)", params)
-        self.db_conn.commit()
+        self.necrodb.register_all_users([member])
 
     @asyncio.coroutine
     def execute(self, cmd):
         # don't care about bad commands
         if cmd.command == None:
             return
-        
+
         # don't reply to self
         if cmd.author == self.client.user:
             return

@@ -33,13 +33,13 @@ class Enter(command.CommandType):
     def _do_execute(self, command):
         if not self._room.race.is_before_race:
             return
-        
+
         new_entry = yield from self._room.race.enter_racer(command.author)
         if new_entry:
             self._room.notify(command.author)
             yield from self._room.write('{0} has entered the race. {1} entrants.'.format(command.author.mention, len(self._room.race.racers)))
         else:
-            yield from self._room.write('{0} is already entered.'.format(command.author.mention))     
+            yield from self._room.write('{0} is already entered.'.format(command.author.mention))
 
 class Unenter(command.CommandType):
     def __init__(self, race_room):
@@ -51,7 +51,7 @@ class Unenter(command.CommandType):
     def _do_execute(self, command):
         if not self._room.race.is_before_race:
             return
-        
+
         self._room.dont_notify(command.author)
         success = yield from self._room.race.unenter_racer(command.author)
         if success:
@@ -68,7 +68,7 @@ class Ready(command.CommandType):
     def _do_execute(self, command):
         if not self._room.race.is_before_race:
             return
-        
+
         racer = self._room.race.get_racer(command.author)
         if racer:
             success = yield from self._room.race.ready_racer(racer)    #success is True if the racer was unready and now is ready
@@ -84,7 +84,7 @@ class Ready(command.CommandType):
                 yield from self._room.write('{0} is already ready!'.format(command.author.mention))
         else:
             yield from self._room.write('{}: Please `.enter` the race before readying.'.format(command.author.mention))
-                    
+
 class Unready(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'unready')
@@ -95,7 +95,7 @@ class Unready(command.CommandType):
     def _do_execute(self, command):
         if not self._room.race.is_before_race:
             return
-        
+
         racer = self._room.race.get_racer(command.author)
         if racer:
             success = yield from self._room.race.unready_racer(racer)  #success is True if the racer was ready and now is unready
@@ -136,7 +136,7 @@ class Undone(command.CommandType):
 
         success = yield from self._room.race.unfinish_racer(self._room.race.get_racer(command.author)) #success is true if the racer was finished and now is not
         #NB: success might be False even in reasonable-use contexts, e.g., if the race became finalized
-        if success: 
+        if success:
             yield from self._room.write('{} is no longer done and continues to race.'.format(command.author.mention))
 
 class Forfeit(command.CommandType):
@@ -160,7 +160,7 @@ class Forfeit(command.CommandType):
                 cut_length = len(command.command) + len(config.BOT_COMMAND_PREFIX) + 1
                 end_length = 255 + cut_length
                 racer.add_comment(command.message.content[cut_length:end_length])
-                asyncio.ensure_future(self._room.update_leaderboard())            
+                asyncio.ensure_future(self._room.update_leaderboard())
 
 class Unforfeit(command.CommandType):
     def __init__(self, race_room):
@@ -175,9 +175,9 @@ class Unforfeit(command.CommandType):
 
         success = yield from self._room.race.unforfeit_racer(self._room.race.get_racer(command.author)) #success is true if the racer was forfeit and now is not
         #NB: success might be False even in reasonable-use contexts, e.g., if the race became finalized
-        if success: 
+        if success:
             yield from self._room.write('{} is no longer forfeit and continues to race.'.format(command.author.mention))
-                    
+
 class Comment(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'comment', 'c')
@@ -260,13 +260,13 @@ class DelayRecord(command.CommandType):
     def _do_execute(self, command):
         if not self._room.race.complete:
             return
-        
+
         if not self._room.race.delay_record:
             self._room.race.delay_record = True
             yield from self._room.write('Delaying recording for an extra {} seconds.'.format(config.FINALIZE_TIME_SEC))
         else:
             yield from self._room.write('Recording is already delayed.')
-                    
+
 class Notify(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'notify')
@@ -274,13 +274,13 @@ class Notify(command.CommandType):
         self._room = race_room
 
     @asyncio.coroutine
-    def _do_execute(self, command):        
+    def _do_execute(self, command):
         if len(command.args) == 1 and command.args[0] == 'off':
             self._room.dont_notify(command.author)
             yield from self._room.write('{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
         elif len(command.args) == 0 or len(command.args) == 1 and command.args[1] == 'on':
             self._room.notify(command.author)
-            yield from self._room.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))      
+            yield from self._room.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
 
 class Time(command.CommandType):
     def __init__(self, race_room):
@@ -340,7 +340,7 @@ class Poke(command.CommandType):
     def _do_execute(self, command):
         if not self._room.race.is_before_race:
             return
-        
+
         yield from self._room.poke()
 
 class ForceCancel(command.CommandType):
@@ -408,7 +408,7 @@ class ForceRecord(command.CommandType):
         if self._room.is_race_admin(command.author) and self._room.race.complete:
             yield from self._room.race.record()
             yield from self._room.write('Race recorded.')
-                  
+
 class Kick(command.CommandType):
     def __init__(self, race_room):
         command.CommandType.__init__(self, 'kick')
@@ -426,7 +426,7 @@ class Kick(command.CommandType):
                     success = yield from self._room.race.unenter_racer(racer)
                     if success:
                         yield from self._room.write('Kicked {} from the race.'.format(racer.name))
-                                
+
 class RaceRoom(command.Module):
 
     def __init__(self, race_module, race_channel, race_info):
@@ -436,7 +436,7 @@ class RaceRoom(command.Module):
         self.race = Race(self, race_info)           #The current race
         self.admin_ready = True
 
-        self._rm = race_module           
+        self._rm = race_module
         self._rematch_made = False                  #True once a rematch of this has been made (prevents duplicates)
         self._mention_on_rematch = []               #A list of users that should be @mentioned when a rematch is created
         self.mentioned_users = []                  #A list of users that were @mentioned when this race started
@@ -516,7 +516,7 @@ class RaceRoom(command.Module):
     #Updates the leaderboard
     @asyncio.coroutine
     def update_leaderboard(self):
-        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self.race.leaderboard))        
+        asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self.race.leaderboard))
 
     # Close the channel.
     @asyncio.coroutine
@@ -560,7 +560,7 @@ class RaceRoom(command.Module):
         for role in member.roles:
             if role in admin_roles:
                 return True
-        
+
         return False
 
     # Checks to see whether the room should be cleaned.
@@ -573,7 +573,7 @@ class RaceRoom(command.Module):
             # Pre-race
             if self.race.is_before_race:
                 if (not self.race.racers) and self.race.no_entrants_time: #if there are no entrants (and we've stored the last time this was not the case)
-                    if time.clock() - self.race.no_entrants_time > config.NO_ENTRANTS_CLEANUP_WARNING_SEC:
+                    if time.monotonic() - self.race.no_entrants_time > config.NO_ENTRANTS_CLEANUP_WARNING_SEC:
                         time_remaining = config.NO_ENTRANTS_CLEANUP_SEC - config.NO_ENTRANTS_CLEANUP_WARNING_SEC
                         yield from self.write('Warning: Race has had zero entrants for some time and will be closed in {} seconds.'.format(time_remaining))
                         yield from asyncio.sleep(time_remaining)
@@ -587,7 +587,7 @@ class RaceRoom(command.Module):
                 for msg in msg_list:
                     if (datetime.datetime.utcnow() - msg.timestamp).total_seconds() > config.CLEANUP_TIME_SEC:
                         yield from self.close()
-                        return               
+                        return
 
     ## TODO: more intelligent result posting
     @asyncio.coroutine
@@ -600,7 +600,7 @@ class RaceRoom(command.Module):
     def poke(self):
         if self._nopoke:
             return
-        
+
         ready_racers = []
         unready_racers = []
         for racer in self.race.racers.values():
@@ -625,5 +625,5 @@ class RaceRoom(command.Module):
     def run_nopoke_delay(self):
         yield from asyncio.sleep(config.RACE_POKE_DELAY)
         self._nopoke = False
-        
-        
+
+

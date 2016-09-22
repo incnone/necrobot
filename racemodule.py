@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import sqlite3
 
 import command
 import config
@@ -58,7 +57,7 @@ class MakePrivate(command.CommandType):
                     "```" \
                     "Here `admin...` is a list of names of 'admins' for the race, which are users that can both see the race channel and " \
                     "use special admin commands for managing the race, and `racer...` is a list of users that can see the race channel. " \
-                    "(Both admins and racers can enter the race, or not, as they prefer.)"                 
+                    "(Both admins and racers can enter the race, or not, as they prefer.)"
         self._rm = race_module
 
     def recognized_channel(self, channel):
@@ -77,7 +76,7 @@ class MakePrivate(command.CommandType):
 ##                if race_channel:
 ##                    output_prestring = 'You have started a private race.'
 ##                    asyncio.ensure_future(self._rm.client.send_message(command.author,
-##                        '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))            
+##                        '{0}\nFormat: {2}\nChannel: {1}'.format(output_prestring, race_channel.mention, race_private_info.race_info.format_str())))
             except discord.HTTPException as e:
                 asyncio.ensure_future(self._rm.client.send_message(command.channel,
                     'Error making race.'))
@@ -85,9 +84,9 @@ class MakePrivate(command.CommandType):
 
 class RaceModule(command.Module):
 
-    def __init__(self, necrobot, db_connection):
+    def __init__(self, necrobot, necrodb):
         command.Module.__init__(self, necrobot)
-        self._db_conn = db_connection
+        self.necrodb = necrodb
         self._results_channel = necrobot.find_channel(config.RACE_RESULTS_CHANNEL_NAME)
         self._racerooms = []
         self.command_types = [command.DefaultHelp(self),
@@ -126,13 +125,13 @@ class RaceModule(command.Module):
     def make_race(self, race_info, creator=None, mention=[], suppress_alerts=False):
         #Garbage collect closed race rooms
         self._racerooms = [r for r in self._racerooms if not r.is_closed]
-        
+
         #Make a channel for the race
         new_room_name = self.get_raceroom_name(race_info)
-        race_channel = yield from self.client.create_channel(self.necrobot.server, new_room_name, discord.ChannelType.text)
+        race_channel = yield from self.client.create_channel(self.necrobot.server, new_room_name, type=discord.ChannelType.text)
 
         if race_channel:
-            # Make the actual RaceRoom and initialize it 
+            # Make the actual RaceRoom and initialize it
             new_race = raceroom.RaceRoom(self, race_channel, race_info)
             new_race.creator = creator
             self._racerooms.append(new_race)
@@ -148,7 +147,7 @@ class RaceModule(command.Module):
             alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(race_channel.mention, race_info.format_str())
             for user in self.necrobot.prefs.get_all_matching(alert_pref):
                 asyncio.ensure_future(self.client.send_message(user, alert_string))
-                
+
         return race_channel
 
     ## Make a private race with the given RaceInfo
@@ -156,7 +155,7 @@ class RaceModule(command.Module):
     def make_private_race(self, race_private_info, creator=None):
         #Garbage collect closed race rooms
         self._racerooms = [r for r in self._racerooms if not r.is_closed]
-        
+
         #Make the new race
         race_channel = yield from self.client.create_channel(self.necrobot.server, self.get_raceroom_name(race_private_info.race_info), type='text')
         new_race = raceprivateroom.RacePrivateRoom(self, race_channel, race_private_info)
@@ -175,7 +174,7 @@ class RaceModule(command.Module):
             if command.channel == room.channel:
                 yield from room.execute(command)
 
-##    ## Move this functionality into RaceRoom / RacePrivateRoom modules (no reason to have this method here; they have access to client) 
+##    ## Move this functionality into RaceRoom / RacePrivateRoom modules (no reason to have this method here; they have access to client)
 ##    ## Post a race result in the results channel
 ##    @asyncio.coroutine
 ##    def post_result(self, text):

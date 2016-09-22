@@ -32,6 +32,10 @@ def init(config_filename):
     global DAILY_DB_FILENAME
     global RACE_DB_FILENAME
     global USER_DB_FILENAME
+    global MYSQL_DB_HOST
+    global MYSQL_DB_USER
+    global MYSQL_DB_PASSWD
+    global MYSQL_DB_NAME
     
     defaults = {
         'bot_command_prefix':'.',
@@ -55,7 +59,11 @@ def init(config_filename):
         'db_filename':'data/necrobot.db',
         'db_daily_filename':'data/daily.db',
         'db_races_filename':'data/races.db',
-        'db_users_filename':'data/users.db'
+        'db_users_filename':'data/users.db',
+        'mysql_db_host':'localhost',
+        'mysql_db_user':'root',
+        'mysql_db_passwd':'',
+        'mysql_db_name':'necrobot'
         }
 
     admin_roles = []
@@ -97,4 +105,8 @@ def init(config_filename):
     DAILY_DB_FILENAME = defaults['db_daily_filename']
     RACE_DB_FILENAME = defaults['db_races_filename']
     USER_DB_FILENAME = defaults['db_users_filename']
+    MYSQL_DB_HOST = defaults['mysql_db_host']
+    MYSQL_DB_USER = defaults['mysql_db_user']
+    MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
+    MYSQL_DB_NAME = defaults['mysql_db_name']
         
