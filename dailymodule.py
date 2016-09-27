@@ -466,9 +466,9 @@ class DailyModule(command.Module):
         hide_pref.hide_spoilerchat = True
         members_to_hide_for = self.necrobot.prefs.get_all_matching(hide_pref)
         for member in members_to_hide_for:
-            read_permit = discord.Permissions.none()
+            read_permit = discord.PermissionOverwrite()
             read_permit.read_messages = True
-            yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)
+            yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, read_permit)
 
     # Update an existing leaderboard message for the given daily number
     @asyncio.coroutine
@@ -495,8 +495,8 @@ class DailyModule(command.Module):
             daily = self.daily(daily_type)
             today_daily = daily.today_number
             if prefs.hide_spoilerchat == True and not daily.has_submitted(today_daily, member.id):
-                read_permit = discord.Permissions.none()
+                read_permit = discord.PermissionOverwrite()
                 read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, deny=read_permit)
+                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, read_permit)
             elif prefs.hide_spoilerchat == False:
                 yield from self.client.delete_channel_permissions(daily.spoilerchat_channel, member)
