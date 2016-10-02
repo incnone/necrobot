@@ -5,3 +5,4 @@ ignore/
 *.pyc
 *.log
 bot_conversion.py
+data/bot_config

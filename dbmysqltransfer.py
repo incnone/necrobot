@@ -123,6 +123,6 @@ def transfer_race_data():
 
 config.init('data/bot_config')
 make_new_database()
-transfer_user_data()
-transfer_daily_data()
-transfer_race_data()
+##transfer_user_data()
+##transfer_daily_data()
+##transfer_race_data()

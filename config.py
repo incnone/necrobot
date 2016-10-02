@@ -28,10 +28,6 @@ def init(config_filename):
     global RACE_POKE_DELAY                         #number of seconds to wait between allowing pokes 
 
     #database
-    global DB_FILENAME
-    global DAILY_DB_FILENAME
-    global RACE_DB_FILENAME
-    global USER_DB_FILENAME
     global MYSQL_DB_HOST
     global MYSQL_DB_USER
     global MYSQL_DB_PASSWD
@@ -39,7 +35,7 @@ def init(config_filename):
     
     defaults = {
         'bot_command_prefix':'.',
-        'bot_version':'0.2.3',
+        'bot_version':'0.0.0',
         'channel_main':'necrobot_main',
         'channel_reference':'command_list',
         'channel_daily_spoilerchat':'cadence_dailyspoilerchat',
@@ -56,10 +52,6 @@ def init(config_filename):
         'race_give_cleanup_warning_after_no_entrants_for_seconds':'90', 
         'race_require_at_least_two':'0',
         'race_poke_delay':'10',
-        'db_filename':'data/necrobot.db',
-        'db_daily_filename':'data/daily.db',
-        'db_races_filename':'data/races.db',
-        'db_users_filename':'data/users.db',
         'mysql_db_host':'localhost',
         'mysql_db_user':'root',
         'mysql_db_passwd':'',
@@ -101,12 +93,13 @@ def init(config_filename):
     NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
     REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
     RACE_POKE_DELAY = int(defaults['race_poke_delay'])
-    DB_FILENAME = defaults['db_filename']
-    DAILY_DB_FILENAME = defaults['db_daily_filename']
-    RACE_DB_FILENAME = defaults['db_races_filename']
-    USER_DB_FILENAME = defaults['db_users_filename']
     MYSQL_DB_HOST = defaults['mysql_db_host']
     MYSQL_DB_USER = defaults['mysql_db_user']
     MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
     MYSQL_DB_NAME = defaults['mysql_db_name']
+
+##--Testing-------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    init('data/bot_config')
         

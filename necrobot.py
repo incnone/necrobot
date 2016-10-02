@@ -13,8 +13,10 @@ from adminmodule import AdminModule
 from userprefs import PrefsModule
 
 class Necrobot(object):
-
-    ## Barebones constructor
+    
+    # Barebones constructor
+    # client: [discord.Client] 
+    # logger: [logging.Logger]
     def __init__(self, client, logger):
         self.client = client
         self.server = None
@@ -27,7 +29,9 @@ class Necrobot(object):
         self._wants_to_quit = False
         self._admin_module = None
 
-    ## Initializes object; call after client has been logged in to discord
+    # Initializes object; call after client has been logged in to discord
+    # server_id: [int]
+    # admin_id: [int]
     def post_login_init(self, server_id, admin_id=0):
         self.admin_id = admin_id if admin_id else None
 
@@ -58,20 +62,24 @@ class Necrobot(object):
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
+    # module: [command.Module]
     def load_module(self, module):
         self.modules.append(module)
 
     # True if the bot wants to quit (and not re-login)
+    # return: [bool]
     @property
     def quitting(self):
         return self._wants_to_quit
 
     # Return the #necrobot_main channel
+    # return: [discord.Channel]
     @property
     def main_channel(self):
         return self._main_channel
 
     # Return the #command_list channel
+    # return: [discord.Channel]
     @property
     def ref_channel(self):
         for channel in self.server.channels:
@@ -79,7 +87,8 @@ class Necrobot(object):
                 return channel
         return None
 
-    ## Get a list of all admin roles on the server
+    # Get a list of all admin roles on the server
+    # return: [list<discord.Role>]
     @property
     def admin_roles(self):
         admin_roles = []
@@ -90,6 +99,8 @@ class Necrobot(object):
         return admin_roles
 
     # Returns true if the user is a server admin
+    # user: [discord.User]
+    # return: [bool]
     def is_admin(self, user):
         member = self.get_as_member(user)
         admin_roles = self.admin_roles
@@ -99,13 +110,17 @@ class Necrobot(object):
         return False
 
     # Returns the channel with the given name on the server, if any
+    # channel_name: [string]
+    # return: [discord.Channel]
     def find_channel(self, channel_name):
         for channel in self.server.channels:
             if channel.name == channel_name:
                 return channel
         return None
 
-    ## Returns a list of all members with a given username (capitalization ignored)
+    # Returns a list of all members with a given username (capitalization ignored)
+    # username: [string]
+    # return: [list<discord.Member>]
     def find_members(self, username):
         to_return = []
         for member in self.server.members:
@@ -113,30 +128,41 @@ class Necrobot(object):
                 to_return.append(member)
         return to_return
 
-    ## Log out of discord
-    @asyncio.coroutine
-    def logout(self):
-        self._wants_to_quit = True
-        yield from self.client.logout()
+    # Returns the given Discord user as a member of the server
+    # user: [discord.User]
+    # return: [discord.Member]
+    def get_as_member(self, user):
+        for member in self.server.members:
+            if member.id == user.id:
+                return member
 
-    ## Reboot our login to discord (log out, but do not set quitting = true)
-    @asyncio.coroutine
-    def reboot(self):
-        self._wants_to_quit = False
-        yield from self.client.logout()
-
-    @asyncio.coroutine
-    def on_member_join(self, member):
-        self.register_user(member)
-
+    # Registers all users currently on the server
     def register_all_users(self):
         self.necrodb.register_all_users(self.server.members)
 
+    # Registers a specific user on the server
+    # member: [discord.Member]
     def register_user(self, member):
         self.necrodb.register_all_users([member])
 
-    @asyncio.coroutine
-    def execute(self, cmd):
+    ##--Coroutines--------------------
+    # Log out of discord
+    async def logout(self):
+        self._wants_to_quit = True
+        await self.client.logout()
+
+    # Reboot our login to discord (log out, but do not set quitting = true)
+    async def reboot(self):
+        self._wants_to_quit = False
+        await self.client.logout()
+
+    # Call this when anyone joins the server
+    async def on_member_join(self, member):
+        self.register_user(member)
+        
+    # Executes a command
+    # cmd: [command.Command]
+    async def execute(self, cmd):
         # don't care about bad commands
         if cmd.command == None:
             return
@@ -152,9 +178,3 @@ class Necrobot(object):
         # let each module attempt to handle the command in turn
         for module in self.modules:
             asyncio.ensure_future(module.execute(cmd))
-
-    # Returns the given Discord User as a Member of the server
-    def get_as_member(self, user):
-        for member in self.server.members:
-            if member.id == user.id:
-                return member
