@@ -328,7 +328,7 @@ class Shame(command.CommandType):
 
     @asyncio.coroutine
     def _do_execute(self, command):
-        yield from self._room.write('Shame on you {0}!'.format(command.author))
+        yield from self._room.write('Shame on you {0}!'.format(command.author.mention))
 
 class Poke(command.CommandType):
     def __init__(self, race_room):
