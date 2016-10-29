@@ -1,41 +1,44 @@
 import asyncio
-import discord
-import logging
-import seedgen
-import mysql.connector
 
-import config
-import command
-import colorer
+from .channel.mainchannel import MainBotChannel
+from .channel.pmbotchannel import PMBotChannel
+from .daily.dailymanager import DailyManager
+from .necrodb import NecroDB
+from .race.racemanager import RaceManager
+from .util import config
 
-from necrodb import NecroDB
-from adminmodule import AdminModule
-from userprefs import PrefsModule
+# from util.userprefs import PrefsModule
+#
+# from daily.dailymodule import DailyModule
+
 
 class Necrobot(object):
-    
     # Barebones constructor
     # client: [discord.Client] 
     # logger: [logging.Logger]
     def __init__(self, client, logger):
-        self.client = client
-        self.server = None
-        self.prefs = None
-        self.modules = []
-        self.admin_id = None
-        self.necrodb = NecroDB()
-        self.logger = logger
-        self._main_channel = None
-        self._wants_to_quit = False
-        self._admin_module = None
+        self.client = client                    # the discord.Client object
+        self.server = None                      # the discord.Server on which to read commands
+        self.admin_id = None                    # int (discord user id)
+        self.necrodb = NecroDB()                # NecroDB object
+        self.logger = logger                    # logging.Logger
+
+        self._main_discord_channel = None       # discord.Channel
+
+        self._bot_channels = {}                 # maps discord.Channels onto BotChannels
+        self._pm_bot_channel = PMBotChannel(self)
+
+        self.prefs = None                       # userprefs.Prefsmodule
+        self._daily_manager = DailyManager(self)
+        self._race_manager = RaceManager(self)
 
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
     # admin_id: [int]
-    def post_login_init(self, server_id, admin_id=0):
-        self.admin_id = admin_id if admin_id else None
+    def post_login_init(self, server_id, admin_id=None):
+        self.admin_id = admin_id
 
-        #set up server
+        # set up server
         id_is_int = False
         try:
             server_id_int = int(server_id)
@@ -55,28 +58,30 @@ class Necrobot(object):
             print('Error: Could not find the server.')
             exit(1)
 
-        self._main_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
-        self.load_module(AdminModule(self))
-        self.prefs = PrefsModule(self, self.necrodb)
-        self.load_module(self.prefs)
+        self._main_discord_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
+        self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
+        # self.prefs = PrefsModule(self, self.necrodb)
+        # self.load_module(self.prefs)
+
+    # Returns the BotChannel corresponding to the given discord.Channel, if one exists
+    # discord_channel: [discord.Channel]
+    def get_bot_channel(self, discord_channel):
+        if discord_channel.is_private:
+            return self._pm_bot_channel
+        else:
+            return self._bot_channels[discord_channel]
 
     # Causes the Necrobot to use the given module
     # Doesn't check for duplicates
     # module: [command.Module]
-    def load_module(self, module):
-        self.modules.append(module)
-
-    # True if the bot wants to quit (and not re-login)
-    # return: [bool]
-    @property
-    def quitting(self):
-        return self._wants_to_quit
+    def register_bot_channel(self, discord_channel, bot_channel):
+        self._bot_channels[discord_channel] = bot_channel
 
     # Return the #necrobot_main channel
     # return: [discord.Channel]
     @property
     def main_channel(self):
-        return self._main_channel
+        return self._main_discord_channel
 
     # Return the #command_list channel
     # return: [discord.Channel]
@@ -97,6 +102,10 @@ class Necrobot(object):
                 if role.name == rolename:
                     admin_roles.append(role)
         return admin_roles
+
+    @property
+    def race_manager(self):
+        return self._race_manager
 
     # Returns true if the user is a server admin
     # user: [discord.User]
@@ -145,15 +154,9 @@ class Necrobot(object):
     def register_user(self, member):
         self.necrodb.register_all_users([member])
 
-    ##--Coroutines--------------------
+# Coroutines--------------------
     # Log out of discord
     async def logout(self):
-        self._wants_to_quit = True
-        await self.client.logout()
-
-    # Reboot our login to discord (log out, but do not set quitting = true)
-    async def reboot(self):
-        self._wants_to_quit = False
         await self.client.logout()
 
     # Call this when anyone joins the server
@@ -164,7 +167,7 @@ class Necrobot(object):
     # cmd: [command.Command]
     async def execute(self, cmd):
         # don't care about bad commands
-        if cmd.command == None:
+        if cmd.command is None:
             return
 
         # don't reply to self

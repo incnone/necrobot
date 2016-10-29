@@ -1,10 +1,8 @@
 ## Class holding info data for a private race.
 
-from matchinfo import MatchInfo
-from permissioninfo import PermissionInfo
-
-import clparse
-import raceinfo
+from command import clparse
+from race import raceinfo
+from race.matchinfo import MatchInfo
 
 ADMIN_COMMANDS = ['a']
 RACER_COMMANDS = ['r']

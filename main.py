@@ -1,31 +1,54 @@
 import asyncio
+import aiohttp
 import datetime
-import discord
 import logging
 import os
-import mysql.connector
-import sys
+import websockets
 
-import command
-import config
-import seedgen
+import discord
+from necrobot.command.command import Command
+from necrobot.necrobot import Necrobot
+from necrobot.util import backoff
 
-from necrobot import Necrobot
-
-from colorer import ColorerModule
-from dailymodule import DailyModule
-from racemodule import RaceModule
-from seedgenmodule import SeedgenModule
 
 class LoginData(object):
     token = ''
     admin_id = None
     server_id = None
 
+
+# This reconnect code stolen from https://gist.github.com/Hornwitser/93aceb86533ed3538b6f
+async def keep_running(client, token):
+    retry = backoff.ExponentialBackoff()
+
+    while True:
+        try:
+            await client.login(token)
+        except (discord.HTTPException, aiohttp.ClientError):
+            logging.exception('Exception while logging in.')
+            await asyncio.sleep(retry.delay())
+        else:
+            break
+
+    while client.is_logged_in:
+        if client.is_closed:
+            client._closed.clear()
+            client.http.recreate()
+
+        try:
+            await client.connect()
+        except (discord.HTTPException, aiohttp.ClientError, discord.GatewayNotFound, discord.ConnectionClosed,
+                websockets.InvalidHandshake, websockets.WebSocketProtocolError) as e:
+            if isinstance(e, discord.ConnectionClosed) and e.code == 4004:
+                raise # Do not reconnect on authentication failure
+            logging.exception('Exception while running. Retrying.')
+            await asyncio.sleep(retry.delay())
+
+
 if __name__ == "__main__":
     print('Initializing necrobot...')
 
-##-Logging-------------------------------
+# Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
     utc_yesterday = utc_today - datetime.timedelta(days=1)
@@ -34,7 +57,7 @@ if __name__ == "__main__":
 
     filenames_in_dir = os.listdir('logging')
 
-    ## get log output filename
+    # Get log output filename
     filename_rider = 0
     while True:
         filename_rider += 1
@@ -43,20 +66,20 @@ if __name__ == "__main__":
             break
     log_output_filename = 'logging/{0}'.format(log_output_filename)
 
-    ## set up logger
+    # Set up logger
     logger = logging.getLogger('discord')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     handler = logging.FileHandler(filename=log_output_filename, encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 
-##--Initialize config file--------------------------------
+# Initialize config file----------------------------------
     config.init('data/bot_config')
 
-##--Seed the random number generator----------------------
+# Seed the random number generator------------------------
     seedgen.init_seed()
 
-##--Make data for logging in to discord-------------------
+# Make data for logging in to discord---------------------
     login_data = LoginData()
     login_info = open('data/login_info', 'r')
     login_data.token = login_info.readline().rstrip('\n')
@@ -64,46 +87,35 @@ if __name__ == "__main__":
     login_data.server_id = login_info.readline().rstrip('\n')
     login_info.close()
 
-##--Create the discord.py Client object and the Necrobot--
+    # Create the discord.py Client object and the Necrobot----
     client = discord.Client()
-    necrobot = Necrobot(client, logger)   
+    the_necrobot = Necrobot(client, logger)
 
-##--Define client events----------------------------------
 
+# Define client events------------------------------------
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
         print('-Logged in---------------')
         print('User name: {0}'.format(client.user.name))
         print('User id  : {0}'.format(client.user.id))
-        necrobot.post_login_init(login_data.server_id, login_data.admin_id)
-
-        necrobot.load_module(ColorerModule(necrobot))
-        necrobot.load_module(SeedgenModule(necrobot))
-        necrobot.load_module(DailyModule(necrobot, necrobot.necrodb))
-        necrobot.load_module(RaceModule(necrobot, necrobot.necrodb))
+        the_necrobot.post_login_init(login_data.server_id, login_data.admin_id)
         print('-------------------------')
         print(' ')
+
 
     # Called whenever a new message is posted in any channel on any server
     @client.event
     async def on_message(message):
-        cmd = command.Command(message)
-        await necrobot.execute(cmd)
-    
+        cmd = Command(message)
+        await the_necrobot.execute(cmd)
+
+
     # Called when a new member joins any server
     @client.event
     async def on_member_join(member):
-        await necrobot.on_member_join(member)
+        await the_necrobot.on_member_join(member)
 
-##--Run client------------------------------------------
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(client.login(login_data.token))
-        loop.run_until_complete(client.connect())
-    except Exception as e:
-        exc_type, exc_value = sys.exc_info()[:2]
-        print('Uncaught exception while running main asyncio loop of type {0}. ({1})'.format(exc_type.__name__, exc_value))
-        loop.run_until_complete(client.close())
-    finally:
-        loop.close()
+
+# Run client---------------------------------------------
+    asyncio.get_event_loop().run_until_complete(keep_running(client, login_data.token))

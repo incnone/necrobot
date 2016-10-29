@@ -3,17 +3,14 @@
 # responsible for creating such rooms.
 
 import asyncio
-import command
-import config
 import datetime
-import discord
-import level
-import racetime
-import textwrap
 import time
 
-from race import Race
-from racer import Racer
+from . import racetime
+from .race import Race
+from ..command import command
+from ..util import config
+from ..util import level
 
 SUFFIXES = {1: 'st', 2: 'nd', 3: 'rd'}
 def ordinal(num):
@@ -431,7 +428,6 @@ class RaceRoom(command.Module):
 
     def __init__(self, race_module, race_channel, race_info):
         self.channel = race_channel                 #The channel in which this race is taking place
-        self.creator = None                         #Can store a user that created this room. Not used internally.
         self.is_closed = False                      #True if room has been closed
         self.race = Race(self, race_info)           #The current race
         self.admin_ready = True
@@ -486,8 +482,7 @@ class RaceRoom(command.Module):
         self._mention_on_rematch = [u for u in self._mention_on_rematch if u != user]
 
     # Set up the leaderboard etc. Should be called after creation; code not put into __init__ b/c coroutine
-    @asyncio.coroutine
-    def initialize(self, users_to_mention=[]):
+    async def initialize(self):
         asyncio.ensure_future(self.race.initialize())
         asyncio.ensure_future(self.client.edit_channel(self.channel, topic=self.race.leaderboard))
         asyncio.ensure_future(self._monitor_for_cleanup())

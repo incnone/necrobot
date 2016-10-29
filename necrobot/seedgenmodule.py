@@ -1,7 +1,7 @@
 import asyncio
 
 import command
-import seedgen
+from util import seedgen
 
 MAX_NUM_SEEDS_TO_GENERATE = 20
 
@@ -9,7 +9,8 @@ class RandomSeed(command.CommandType):
     def __init__(self, seedgen_module):
         command.CommandType.__init__(self, 'randomseed')
         self.help_text = "Get a randomly generated seed (returns a random integer between {0} and {1}). " \
-                         "Calling `{2} N` will generate N seeds and return them via PM. (Limited to {3} seeds at once.)".format(seedgen.MIN_SEED, seedgen.MAX_SEED, self.mention, MAX_NUM_SEEDS_TO_GENERATE)
+                         "Calling `{2} N` will generate N seeds and return them via PM. (Limited to {3} seeds at once.)".format(
+            seedgen.MIN_SEED, seedgen.MAX_SEED, self.mention, MAX_NUM_SEEDS_TO_GENERATE)
         self._sm = seedgen_module
 
     def recognized_channel(self, channel):

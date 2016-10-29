@@ -18,10 +18,10 @@
 ## bolt-sdf
 ## 4-shrine-uf
 
-import clparse
-import seedgen
+from ..command import clparse
+from ..util import seedgen
 
-NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']       
+NDChars = ['Cadence', 'Melody', 'Aria', 'Dorian', 'Eli', 'Monk', 'Dove', 'Coda', 'Bolt', 'Bard']
 SEEDED_FLAG = int(pow(2,0))
 SUDDEN_DEATH_FLAG = int(pow(2,1))
 FLAGPLANT_FLAG = int(pow(2,2))

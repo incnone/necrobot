@@ -2,14 +2,11 @@
 
 import asyncio
 import datetime
-import discord
 
-import config
-import dailytype
-import level
-import racetime
-import seedgen
-import userprefs
+from race import racetime
+from util import seedgen, config
+
+from necrobot.util import level
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 DailyUserStatus = {'unregistered':0, 'registered':1, 'submitted':2, 'closed':3}
@@ -90,7 +87,7 @@ class Daily(object):
     # Returns a string giving the remaining time in the grace period
     def daily_grace_timestr(self):
         utc_now = datetime.datetime.utcnow()
-        return _format_as_timestr(0, config.DAILY_GRACE_PERIOD - utc_now.hour*60 - utc_now.minute)
+        return _format_as_timestr(0, config.DAILY_GRACE_PERIOD - utc_now.hour * 60 - utc_now.minute)
 
     # Returns a string giving the time until the next daily
     def next_daily_timestr(self):

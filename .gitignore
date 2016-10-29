@@ -6,3 +6,5 @@ ignore/
 *.log
 bot_conversion.py
 data/bot_config
+*.xml
+.idea/necrobot.iml

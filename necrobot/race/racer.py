@@ -1,5 +1,5 @@
-import level
-import racetime
+from .race import racetime
+from ..util import level
 
 RacerStatus = {'unready':1, 'ready':2, 'racing':3, 'forfeit':4, 'finished':5}
 RacerStatusInv = {'1':'Not ready.', '2':'Ready!', '3':'Racing!', '4':'Forfeit', '5':''}

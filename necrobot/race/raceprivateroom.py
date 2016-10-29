@@ -4,23 +4,13 @@
 ## Derived class; makes a private race room
 
 import asyncio
-import command
-import config
-import datetime
-import discord
-import permissioninfo
-import raceroom
-import racetime
-import random
-import seedgen
-import textwrap
-import time
 
-from matchinfo import MatchInfo
-from permissioninfo import PermissionInfo
-from raceinfo import RaceInfo
-from racer import Racer
-from race import Race
+import discord
+
+import command
+from race import Race, raceroom, permissioninfo
+from util import seedgen
+
 
 class Add(command.CommandType):
     def __init__(self, race_room):

@@ -1,5 +1,7 @@
 bot_command_prefix=.
-bot_version=0.4.5
+bot_version=1.0
+
+admin_roles=Admin
 
 channel_main=necrobot_main
 channel_reference=command_list
@@ -8,8 +10,6 @@ channel_rot_daily_spoilerchat=rotating_dailyspoilerchat
 channel_daily_leaderboards=cadence_daily_leaderboards
 channel_rot_daily_leaderboards=rotating_daily_leaderboards
 channel_race_results=race_results
-
-admin_roles=Admin
 
 daily_grace_period_length_minutes=60
 
@@ -22,7 +22,7 @@ race_give_cleanup_warning_after_no_entrants_for_seconds=60
 race_require_at_least_two=1
 race_poke_delay=10
 
-db_filename=data/necrobot.db
-db_daily_filename=data/daily.db
-db_races_filename=data/races.db
-db_users_filename=data/users.db
+mysql_db_host=localhost
+mysql_db_user=root
+mysql_db_passwd=NbarnZEec4mHXXgjtZKX
+mysql_db_name=necrobot

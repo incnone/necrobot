@@ -4,16 +4,14 @@
 ## Handles bot actions for a single race room
 
 import asyncio
-import config
 import datetime
-import discord
-import racetime
-import mysql.connector
 import time
 
-from necrodb import NecroDB
-from raceinfo import RaceInfo
-from racer import Racer
+from . import racetime
+
+from ..necrodb import NecroDB
+from .racer import Racer
+from ..util import config
 
 RaceStatus = {'uninitialized':0, 'entry_open':1, 'counting_down':2, 'racing':3, 'paused':4, 'completed':5, 'finalized':6, 'cancelled':7}
 StatusStrs = {'0':'Not initialized.', '1':'Entry open!', '2':'Starting!', '3':'In progress!', '4':'Paused!', '5':'Complete.', '6':'Results Finalized.', '7':'Race Cancelled.'}
@@ -127,9 +125,9 @@ class Race(object):
     @property
     def current_time_str(self):
         if self._status == RaceStatus['paused']:
-            return racetime.to_str( int(100*(self._pause_time - self._start_time)) )
+            return racetime.to_str(int(100 * (self._pause_time - self._start_time)))
         elif self._status == RaceStatus['racing']:
-            return racetime.to_str( int(100*(time.monotonic() - self._start_time)) )
+            return racetime.to_str(int(100 * (time.monotonic() - self._start_time)))
         else:
             return ''
 
@@ -253,9 +251,11 @@ class Race(object):
 
         yield from asyncio.sleep(1) # Waiting for a short time feels good UI-wise
         if self.num_finished:
-            yield from self.room.write('The race is over. Results will be recorded in {} seconds. Until then, you may comment with `.comment [text]` or add an in-game-time with `.igt [time]`.'.format(config.FINALIZE_TIME_SEC))
+            yield from self.room.write('The race is over. Results will be recorded in {} seconds. Until then, you may comment with `.comment [text]` or add an in-game-time with `.igt [time]`.'.format(
+                config.FINALIZE_TIME_SEC))
         else:
-            yield from self.room.write('All racers have forfeit. This race will be cancelled in {} seconds.'.format(config.FINALIZE_TIME_SEC))
+            yield from self.room.write('All racers have forfeit. This race will be cancelled in {} seconds.'.format(
+                config.FINALIZE_TIME_SEC))
 
         self.delay_record = True
         while self.delay_record:

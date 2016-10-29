@@ -1,6 +1,7 @@
 import asyncio
-import clparse
+
 import command
+from command import clparse
 
 DailyAlerts = {'none':0, 'cadence':1, 'all':2, 'rotating':3}
 RaceAlerts = {'none':0, 'some':1, 'all':2}

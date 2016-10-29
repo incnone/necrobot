@@ -1,13 +1,14 @@
 import asyncio
 import calendar
 import datetime
+
 import discord
 
 import command
-import config
 import daily
-import dailytype
-import userprefs
+from daily import dailytype
+from util import config, userprefs
+
 
 class DailyCommandType(command.CommandType):
     def __init__(self, daily_module, *args, **kwargs):
@@ -371,7 +372,8 @@ class DailyModule(command.Module):
 
         self._rotating_daily = PublicDaily(self, necrodb, dailytype.RotatingSpeed())
         self._rotating_daily.spoilerchat_channel = necrobot.find_channel(config.ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME)
-        self._rotating_daily.leaderboard_channel = necrobot.find_channel(config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME)
+        self._rotating_daily.leaderboard_channel = necrobot.find_channel(
+            config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME)
 
         self.command_types = [command.DefaultHelp(self),
                               DailyChar(self),

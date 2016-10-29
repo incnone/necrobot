@@ -1,5 +1,7 @@
-import config
 import mysql.connector
+
+from .util import config
+
 
 class NecroDB():
 
