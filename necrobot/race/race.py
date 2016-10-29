@@ -28,9 +28,8 @@ def status_str(race_status):
 class Race(object):
 
     # NB: Call the coroutine initialize() to set up the room
-    def __init__(self, race_room, race_info):
+    def __init__(self, race_room):
         self.room = race_room
-        self.race_info = race_info                  #Information on the type of race (e.g. seeded, seed, character) -- see RaceInfo for details
         self.racers = dict()                        #a dictionary of racers indexed by user id
         self._status = RaceStatus['uninitialized']  #see RaceStatus
 
@@ -44,6 +43,27 @@ class Race(object):
         self._countdown_future = None               #The Future object for the race countdown
         self._finalize_future = None                #The Future object for the finalization countdown
         self._recorded = False
+
+    # Begins the race if ready. (Writes a message if all racers are ready but an admin is not.)
+    # Returns true on success
+    @asyncio.coroutine
+    def begin_if_ready(self):
+        if self.all_racers_ready:
+            if self.admin_ready:
+                yield from self.race.begin_race_countdown()
+                return True
+            else:
+                yield from self.write('Waiting on an admin to type `.ready`.')
+                return False
+
+    # Returns true if all racers are ready
+    @property
+    def all_racers_ready(self):
+        return self.num_not_ready == 0 and (not config.REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self.racers) > 1)
+
+    @property
+    def race_info(self):
+        return self.room.race_info
 
     # Sets up the leaderboard, etc., for the race
     @asyncio.coroutine
