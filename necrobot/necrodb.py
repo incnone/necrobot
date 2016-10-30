@@ -3,7 +3,7 @@ import mysql.connector
 from .util import config
 
 
-class NecroDB():
+class NecroDB(object):
 
     def _connect(self):
         self._db_conn = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD, host=config.MYSQL_DB_HOST, database=config.MYSQL_DB_NAME)

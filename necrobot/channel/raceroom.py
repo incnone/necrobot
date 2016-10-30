@@ -19,7 +19,7 @@ class RaceRoom(BotChannel):
         self.race_info = race_info              # The type of races to be run in this room
         self.race = None                        # The current race
 
-        self._race_manager = race_manager
+        self._race_manager = race_manager       # The parent managing all race rooms
         self._mention_on_new_race = []          # A list of users that should be @mentioned when a rematch is created
         self._nopoke = False                    # When True, the .poke command fails
 
@@ -60,16 +60,16 @@ class RaceRoom(BotChannel):
 
     # Notifies the given user on a rematch
     def notify(self, user):
-        if user not in self._mention_on_rematch:
-            self._mention_on_rematch.append(user)
+        if user not in self._mention_on_new_race:
+            self._mention_on_new_race.append(user)
 
     # Removes notifications for the given user on rematch
     def dont_notify(self, user):
-        self._mention_on_rematch = [u for u in self._mention_on_rematch if u != user]
+        self._mention_on_new_race = [u for u in self._mention_on_new_race if u != user]
 
     # True if the user has admin permissions for this race
     def is_race_admin(self, member):
-        admin_roles = self._rm.necrobot.admin_roles
+        admin_roles = self.necrobot.admin_roles
         for role in member.roles:
             if role in admin_roles:
                 return True
@@ -100,6 +100,7 @@ class RaceRoom(BotChannel):
             await self._make_new_race()
 
     # TODO: more intelligent result posting
+    # Post the race result to the race channel
     async def post_result(self, text):
         await self.client.send_message(self._race_manager.results_channel, text)
 
@@ -158,13 +159,13 @@ class RaceRoom(BotChannel):
             await asyncio.sleep(30)  # Wait between check times
 
             # Pre-race
-            if self.race.is_before_race:
+            if self.race.before_race:
                 if (not self.race.racers) and self.race.no_entrants_time:
                     if time.monotonic() - self.race.no_entrants_time > config.NO_ENTRANTS_CLEANUP_WARNING_SEC:
                         time_remaining = config.NO_ENTRANTS_CLEANUP_SEC - config.NO_ENTRANTS_CLEANUP_WARNING_SEC
                         await self.write(
-                            'Warning: Race has had zero entrants for some time and will be closed in {} seconds.'.format(
-                                time_remaining))
+                            'Warning: Race has had zero entrants for some time and will be closed in {} '
+                            'seconds.'.format(time_remaining))
                         await asyncio.sleep(time_remaining)
                         if not self.race.racers:
                             await self.close()
