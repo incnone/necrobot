@@ -1,21 +1,21 @@
-from enum import Enum
+from enum import IntEnum
 
 from .race import racetime
 from ..util import level
 
 
-class RacerStatus(Enum):
+class RacerStatus(IntEnum):
     unready = 1
     ready = 2
     racing = 3
     forfeit = 4
     finished = 5
 
-StatusStrs = {RacerStatus.unready, 'Not ready.',
-              RacerStatus.ready, 'Ready!',
-              RacerStatus.racing, 'Racing!',
-              RacerStatus.forfeit, 'Forfeit!',
-              RacerStatus.finished, ''
+StatusStrs = {RacerStatus.unready: 'Not ready.',
+              RacerStatus.ready: 'Ready!',
+              RacerStatus.racing: 'Racing!',
+              RacerStatus.forfeit: 'Forfeit!',
+              RacerStatus.finished: ''
               }
 
 # Allowable transitions are:
@@ -36,11 +36,11 @@ class Racer(object):
 
     @property
     def name(self):
-        return self.member.name
+        return self.member.display_name
 
     @property
     def id(self):
-        return self.member.id
+        return int(self.member.id)
 
     @property
     def status_str(self):
@@ -52,15 +52,15 @@ class Racer(object):
     
     def _status_str(self, short):
         status = ''
-        if self._state == RacerStatus['finished']:
+        if self._state == RacerStatus.finished:
             status += racetime.to_str(self.time)
             if not self.igt == -1 and not short:
                 status += ' (igt {})'.format(racetime.to_str(self.igt))
         else:
             status += StatusStrs[self._state]
-            if self._state == RacerStatus['forfeit'] and not short:
+            if self._state == RacerStatus.forfeit and not short:
                 status += ' (rta {}'.format(racetime.to_str(self.time))
-                if self.level > 0 and self.level < 18:
+                if (self.level > 0) and (self.level < 18):
                     status += ', ' + level.to_str(self.level)
                 if not self.igt == -1:
                     status += ', igt {}'.format(racetime.to_str(self.igt))

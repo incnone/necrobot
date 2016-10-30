@@ -1,5 +1,5 @@
 from .command import CommandType
-from ..util import config
+from ..util.config import Config
 
 
 class Die(CommandType):
@@ -27,7 +27,7 @@ class Help(CommandType):
             command_list_text = command_list_text[:-2]
             await self.necrobot.client.send_message(
                 command.channel,
-                'Available commands in this channel: {0}\n\nType `{1} <command>` for more info about a particular'
+                'Available commands in this channel: {0}\n\nType `{1} <command>` for more info about a particular '
                 'command.'.format(command_list_text, self.mention))
         elif len(command.args) == 1:
             for cmd_type in self.bot_channel.command_types:
@@ -39,7 +39,7 @@ class Help(CommandType):
 
 class Info(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, 'info')
+        CommandType.__init__(self, bot_channel.necrobot, 'info')
         self.help_text = "Necrobot version information."
         self.bot_channel = bot_channel
 
@@ -47,7 +47,7 @@ class Info(CommandType):
         await self.bot_channel.client.send_message(
             cmd.channel,
             'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(
-                config.BOT_VERSION, self.bot_channel.necrobot.ref_channel.mention))
+                Config.BOT_VERSION, self.bot_channel.necrobot.ref_channel.mention))
 
 
 class Register(CommandType):

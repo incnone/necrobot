@@ -1,12 +1,12 @@
 import mysql.connector
 
-from .util import config
+from .util.config import Config
 
 
 class NecroDB(object):
 
     def _connect(self):
-        self._db_conn = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD, host=config.MYSQL_DB_HOST, database=config.MYSQL_DB_NAME)
+        self._db_conn = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD, host=Config.MYSQL_DB_HOST, database=Config.MYSQL_DB_NAME)
 
     def _close(self):
         self._db_conn.close()

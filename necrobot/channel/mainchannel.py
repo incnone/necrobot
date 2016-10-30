@@ -11,6 +11,7 @@ class MainBotChannel(BotChannel):
         self.command_types = [
             admin.Die(self),
             admin.Help(self),
+            admin.Info(self),
             admin.Register(self),
             admin.RegisterAll(self),
             color.ColorMe(self),

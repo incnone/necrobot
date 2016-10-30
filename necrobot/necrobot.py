@@ -5,7 +5,8 @@ from .channel.pmbotchannel import PMBotChannel
 from .daily.dailymanager import DailyManager
 from .necrodb import NecroDB
 from .race.racemanager import RaceManager
-from .util import config
+from .util import console
+from .util.config import Config
 
 # from util.userprefs import PrefsModule
 #
@@ -16,21 +17,20 @@ class Necrobot(object):
     # Barebones constructor
     # client: [discord.Client] 
     # logger: [logging.Logger]
-    def __init__(self, client, logger):
+    def __init__(self, client):
         self.client = client                    # the discord.Client object
         self.server = None                      # the discord.Server on which to read commands
         self.admin_id = None                    # int (discord user id)
         self.necrodb = NecroDB()                # NecroDB object
-        self.logger = logger                    # logging.Logger
 
         self._main_discord_channel = None       # discord.Channel
 
         self._bot_channels = {}                 # maps discord.Channels onto BotChannels
-        self._pm_bot_channel = PMBotChannel(self)
+        self._pm_bot_channel = None
 
         self.prefs = None                       # userprefs.Prefsmodule
-        self._daily_manager = DailyManager(self)
-        self._race_manager = RaceManager(self)
+        self._daily_manager = None
+        self._race_manager = None
 
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
@@ -39,9 +39,8 @@ class Necrobot(object):
         self.admin_id = admin_id
 
         # set up server
-        id_is_int = False
         try:
-            server_id_int = int(server_id)
+            int(server_id)
             id_is_int = True
         except ValueError:
             id_is_int = False
@@ -55,11 +54,17 @@ class Necrobot(object):
                     print("Server id: {}".format(s.id))
                     self.server = s
         else:
-            print('Error: Could not find the server.')
+            console.error('Could not find the server.')
             exit(1)
 
-        self._main_discord_channel = self.find_channel(config.MAIN_CHANNEL_NAME)
+        self._main_discord_channel = self.find_channel(Config.MAIN_CHANNEL_NAME)
+        if self._main_discord_channel is None:
+            console.error('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
+            exit(1)
+
         self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
+        self._pm_bot_channel = PMBotChannel(self)
+        self._race_manager = RaceManager(self)
         # self.prefs = PrefsModule(self, self.necrodb)
         # self.load_module(self.prefs)
 
@@ -77,6 +82,9 @@ class Necrobot(object):
     def register_bot_channel(self, discord_channel, bot_channel):
         self._bot_channels[discord_channel] = bot_channel
 
+    def unregister_bot_channel(self, discord_channel):
+        del self._bot_channels[discord_channel]
+
     # Return the #necrobot_main channel
     # return: [discord.Channel]
     @property
@@ -88,7 +96,7 @@ class Necrobot(object):
     @property
     def ref_channel(self):
         for channel in self.server.channels:
-            if channel.name == config.REFERENCE_CHANNEL_NAME:
+            if channel.name == Config.REFERENCE_CHANNEL_NAME:
                 return channel
         return None
 
@@ -97,7 +105,7 @@ class Necrobot(object):
     @property
     def admin_roles(self):
         admin_roles = []
-        for rolename in config.ADMIN_ROLE_NAMES:
+        for rolename in Config.ADMIN_ROLE_NAMES:
             for role in self.server.roles:
                 if role.name == rolename:
                     admin_roles.append(role)
@@ -142,7 +150,7 @@ class Necrobot(object):
     # return: [discord.Member]
     def get_as_member(self, user):
         for member in self.server.members:
-            if member.id == user.id:
+            if int(member.id) == int(user.id):
                 return member
 
     # Registers all users currently on the server
@@ -179,5 +187,5 @@ class Necrobot(object):
             return
 
         # let each module attempt to handle the command in turn
-        for module in self.modules:
-            asyncio.ensure_future(module.execute(cmd))
+        if cmd.channel in self._bot_channels:
+            await self._bot_channels[cmd.channel].execute(cmd)

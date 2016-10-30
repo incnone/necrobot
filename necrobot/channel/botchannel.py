@@ -12,3 +12,7 @@ class BotChannel(object):
     async def execute(self, command):
         for cmd_type in self.command_types:
             await cmd_type.execute(command)
+
+    @property
+    def client(self):
+        return self.necrobot.client

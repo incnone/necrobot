@@ -1,6 +1,6 @@
 import shlex
 
-from ..util import config
+from ..util.config import Config
 from ..util import console
 
 
@@ -11,12 +11,12 @@ class Command(object):
         self.args = []      
         self.message = None
 
-        if message.content.startswith(config.BOT_COMMAND_PREFIX):
+        if message.content.startswith(Config.BOT_COMMAND_PREFIX):
             try:
                 self.args = shlex.split(message.content)
             except ValueError:
                 self.args = message.content.split()
-            prefix_len = len(config.BOT_COMMAND_PREFIX)
+            prefix_len = len(Config.BOT_COMMAND_PREFIX)
             self.command = (self.args.pop(0)[prefix_len:]).lower()
             self.message = message
 
@@ -49,7 +49,7 @@ class CommandType(object):
         
     @property
     def mention(self):
-        return config.BOT_COMMAND_PREFIX + self.command_name_list[0]
+        return Config.BOT_COMMAND_PREFIX + str(self.command_name_list[0])
 
     # Returns True if the name can be used to call this command
     def called_by(self, name):

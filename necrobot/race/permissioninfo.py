@@ -1,4 +1,5 @@
-## Holds permission data for a private race room
+# Holds permission data for a private race room
+
 
 def get_permission_info(server, race_private_info):
     permission_info = PermissionInfo()
@@ -16,9 +17,9 @@ def get_permission_info(server, race_private_info):
                 permission_info.racers.append(member)
 
     return permission_info
-        
-class PermissionInfo(object):
 
+
+class PermissionInfo(object):
     def __init__(self):
         self.admins = []
         self.admin_roles = []

@@ -31,7 +31,7 @@ class Make(CommandType):
         race_info = raceinfo.parse_args(command.args)
         if race_info:
             try:
-                await self.necrobot.race_manager.make_room(race_info, creator=command.author, suppress_alerts=False)
+                await self.necrobot.race_manager.make_room(race_info)
             except discord.HTTPException as e:
                 await self.necrobot.client.send_message(command.channel, 'Error making race.')
                 logging.getLogger('discord').warning(e.response)

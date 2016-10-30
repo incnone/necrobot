@@ -154,7 +154,7 @@ class PrefsModule(command.Module):
         prefs = self.get_prefs(user)
         prefs.modify_with(user_prefs)
 
-        params = (user.id, prefs.hide_spoilerchat, prefs.daily_alert, prefs.race_alert,)
+        params = (int(user.id), prefs.hide_spoilerchat, prefs.daily_alert, prefs.race_alert,)
         self.necrodb.set_prefs(params)
 
         for module in self.necrobot.modules:
@@ -162,7 +162,7 @@ class PrefsModule(command.Module):
 
     def get_prefs(self, user):
         user_prefs = UserPrefs.get_default()
-        params = (user.id,)
+        params = (int(user.id),)
         for row in self.necrodb.get_prefs(params):
             user_prefs.hide_spoilerchat = row[1]
             user_prefs.daily_alert = row[2]

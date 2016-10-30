@@ -7,7 +7,8 @@ import discord
 import command
 import daily
 from daily import dailytype
-from util import config, userprefs
+from util.config import Config
+from util import userprefs
 
 
 class DailyCommandType(command.CommandType):
@@ -367,13 +368,13 @@ class DailyModule(command.Module):
         command.Module.__init__(self, necrobot)
 
         self._cadence_daily = PublicDaily(self, necrodb, dailytype.CadenceSpeed())
-        self._cadence_daily.spoilerchat_channel = necrobot.find_channel(config.DAILY_SPOILERCHAT_CHANNEL_NAME)
-        self._cadence_daily.leaderboard_channel = necrobot.find_channel(config.DAILY_LEADERBOARDS_CHANNEL_NAME)
+        self._cadence_daily.spoilerchat_channel = necrobot.find_channel(Config.DAILY_SPOILERCHAT_CHANNEL_NAME)
+        self._cadence_daily.leaderboard_channel = necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
 
         self._rotating_daily = PublicDaily(self, necrodb, dailytype.RotatingSpeed())
-        self._rotating_daily.spoilerchat_channel = necrobot.find_channel(config.ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME)
+        self._rotating_daily.spoilerchat_channel = necrobot.find_channel(Config.ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME)
         self._rotating_daily.leaderboard_channel = necrobot.find_channel(
-            config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME)
+            Config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME)
 
         self.command_types = [command.DefaultHelp(self),
                               DailyChar(self),

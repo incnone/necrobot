@@ -4,18 +4,18 @@ import asyncio
 
 from ..command.command import CommandType
 from ..race import racetime
-from ..util import config
+from ..util.config import Config
 from ..util import level
 
 
 class RaceCommand(CommandType):
     def __init__(self, race_room, *args):
-        CommandType.__init__(self, race_room.necrobot, args)
+        CommandType.__init__(self, race_room.necrobot, *args)
         self._room = race_room
 
     async def _do_execute(self, command):
         if self._room.race:
-            await _race_do_execute(command)
+            await self._race_do_execute(command)
         else:
             await self._room.write('No race currently in this room.')
 
@@ -48,7 +48,7 @@ class Ready(RaceCommand):
         self.help_text = 'Indicates that you are ready to begin the race. The race begins when all entrants are ready.'
 
     async def _race_do_execute(self, command):
-        await self._room.enter_and_ready_member(command.author)
+        await self._room.race.enter_and_ready_member(command.author)
 
 
 class Unready(RaceCommand):
@@ -57,7 +57,7 @@ class Unready(RaceCommand):
         self.help_text = 'Undoes `.ready`.'
 
     async def _race_do_execute(self, command):
-        await self._room.unready_member(command.author)
+        await self._room.race.unready_member(command.author)
 
 
 class Done(RaceCommand):
@@ -67,7 +67,7 @@ class Done(RaceCommand):
                          'You may instead use `.finish` if preferred.'
 
     async def _race_do_execute(self, command):
-        await self._room.finish_member(command.author)
+        await self._room.race.finish_member(command.author)
 
 
 class Undone(RaceCommand):
@@ -76,7 +76,7 @@ class Undone(RaceCommand):
         self.help_text = 'Undoes an earlier `.done`.'
 
     async def _race_do_execute(self, command):
-        await self._room.unfinish_member(command.author)
+        await self._room.race.unfinish_member(command.author)
 
 
 class Forfeit(RaceCommand):
@@ -85,7 +85,7 @@ class Forfeit(RaceCommand):
         self.help_text = 'Forfeits from the race. You may use `.quit` instead of `.forfeit` if preferred.'
 
     async def _race_do_execute(self, command):
-        await self._room.forfeit_member(command.author)
+        await self._room.race.forfeit_member(command.author)
 
 
 class Unforfeit(RaceCommand):
@@ -94,7 +94,7 @@ class Unforfeit(RaceCommand):
         self.help_text = 'Undoes an earlier `.forfeit`.'
 
     async def _race_do_execute(self, command):
-        await self._room.unforfeit_member(command.author)
+        await self._room.race.unforfeit_member(command.author)
 
 
 class Comment(RaceCommand):
@@ -103,8 +103,8 @@ class Comment(RaceCommand):
         self.help_text = 'Adds text as a comment to your race.'
 
     async def _race_do_execute(self, command):
-        cut_length = len(command.command) + len(config.BOT_COMMAND_PREFIX) + 1
-        await self._room.add_comment_for_member(command.author, command.message.content[cut_length:])
+        cut_length = len(command.command) + len(Config.BOT_COMMAND_PREFIX) + 1
+        await self._room.race.add_comment_for_member(command.author, command.message.content[cut_length:])
 
 
 class Death(RaceCommand):
@@ -115,7 +115,7 @@ class Death(RaceCommand):
     async def _race_do_execute(self, command):
         if len(command.args) == 1:
             lvl = level.from_str(command.args[0])
-            await self._room.set_death_for_member(command.author, lvl)
+            await self._room.race.set_death_for_member(command.author, lvl)
 
 
 class Igt(RaceCommand):
@@ -126,79 +126,72 @@ class Igt(RaceCommand):
     async def _race_do_execute(self, command):
         if len(command.args) == 1:
             igt = racetime.from_str(command.args[0])
-            await self._room.set_igt_for_member(command.author, igt)
+            await self._room.race.set_igt_for_member(command.author, igt)
 
 
-class Rematch(command.CommandType):
+class Rematch(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'rematch', 're', 'rm')
+        RaceCommand.__init__(self, race_room, 'rematch', 're', 'rm')
         self.help_text = 'If the race is complete, creates a new race with the same rules in a separate room.'
-        self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.race.before_race:
-            yield from self._room.write('{}: Maybe we should do this race first.'.format(command.author.mention))
-        elif self._room.race.complete:
-            yield from self._room.make_rematch()
-        else:
-            yield from self._room.write('{}: The current race has not yet ended!'.format(command.author.mention))
+    async def _race_do_execute(self, command):
+        if self._room.race.complete:
+            await self._room.make_rematch()
+        elif not self._room.race.before_race:
+            await self._room.write('{}: The current race has not yet ended!'.format(command.author.mention))
 
-class DelayRecord(command.CommandType):
+
+class DelayRecord(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'delayrecord')
+        RaceCommand.__init__(self, race_room, 'delayrecord')
         self.help_text = 'If the race is complete, delays recording of the race for some extra time.'
-        self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
+    async def _race_do_execute(self, command):
         if not self._room.race.complete:
             return
 
         if not self._room.race.delay_record:
             self._room.race.delay_record = True
-            yield from self._room.write('Delaying recording for an extra {} seconds.'.format(config.FINALIZE_TIME_SEC))
+            await self._room.write('Delaying recording for an extra {} seconds.'.format(Config.FINALIZE_TIME_SEC))
         else:
-            yield from self._room.write('Recording is already delayed.')
+            await self._room.write('Recording is already delayed.')
 
-class Notify(command.CommandType):
+
+class Notify(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'notify')
-        self.help_text = 'If a rematch of this race is made, you will be @mentioned at the start of its channel. Use `.notify off` to cancel this.'
-        self._room = race_room
+        RaceCommand.__init__(self, race_room, 'notify')
+        self.help_text = 'If a rematch of this race is made, you will be @mentioned at the start of its channel. ' \
+                         'Use `.notify off` to cancel this.'
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
+    async def _race_do_execute(self, command):
         if len(command.args) == 1 and command.args[0] == 'off':
             self._room.dont_notify(command.author)
-            yield from self._room.write('{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
+            await self._room.write('{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
         elif len(command.args) == 0 or (len(command.args) == 1 and command.args[1] == 'on'):
             self._room.notify(command.author)
-            yield from self._room.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
+            await self._room.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
 
-class Time(command.CommandType):
+
+class Time(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'time')
+        RaceCommand.__init__(self, race_room, 'time')
         self.help_text = 'Get the current race time.'
-        self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
+    async def _race_do_execute(self, command):
         if self._room.race.before_race:
-            yield from self._room.write('The race hasn\'t started.')
+            await self._room.write('The race hasn\'t started.')
         elif self._room.race.complete:
-            yield from self._room.write('The race is over.')
+            await self._room.write('The race is over.')
         else:
-            yield from self._room.write('The current race time is {}.'.format(self._room.race.current_time_str))
+            await self._room.write('The current race time is {}.'.format(self._room.race.current_time_str))
 
-class Missing(command.CommandType):
+
+class Missing(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'missing')
+        RaceCommand.__init__(self, race_room, 'missing')
         self.help_text = 'List users that were notified but have not yet entered.'
-        self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
+    async def _race_do_execute(self, command):
         missing_usernames = ''
         for user in self._room.mentioned_users:
             user_entered = False
@@ -207,117 +200,94 @@ class Missing(command.CommandType):
                     user_entered = True
                     break
             if not user_entered:
-                missing_usernames += user.name + ', '
+                missing_usernames += user.display_name + ', '
         if missing_usernames:
-            yield from self._room.write('Missing: {0}.'.format(missing_usernames[:-2]))
+            await self._room.write('Missing: {0}.'.format(missing_usernames[:-2]))
         else:
-            yield from self._room.write('No one missing!')
+            await self._room.write('No one missing!')
 
-class Shame(command.CommandType):
+
+class Shame(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'shame')
+        RaceCommand.__init__(self, race_room, 'shame')
         self.help_text = ''
-        self.suppress_help = True
-        self._room = race_room
+        self.secret_command = True
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        yield from self._room.write('Shame on you {0}!'.format(command.author))
+    async def _race_do_execute(self, command):
+        await self._room.write('Shame on you {0}!'.format(command.author.display_name))
 
-class Poke(command.CommandType):
+
+class Poke(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'poke')
+        RaceCommand.__init__(self, race_room, 'poke')
         self.help_text = 'If only one, or fewer than 1/4, of the racers are unready, this command @mentions them.'
-        self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if not self._room.race.before_race:
-            return
+    async def _race_do_execute(self, command):
+        await self._room.poke()
 
-        yield from self._room.poke()
 
-class ForceCancel(command.CommandType):
+class ForceCancel(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'forcecancel')
+        RaceCommand.__init__(self, race_room, 'forcecancel')
         self.help_text = 'Cancels the race.'
-        self.suppress_help = True
+        self.admin_only = True
         self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.is_race_admin(command.author):
-            yield from self._room.race.cancel()
+    async def _race_do_execute(self, command):
+        await self._room.race.cancel()
 
-class ForceClose(command.CommandType):
+
+class ForceClose(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'forceclose')
+        RaceCommand.__init__(self, race_room, 'forceclose')
         self.help_text = 'Cancel the race, and close the channel.'
-        self.suppress_help = True
+        self.admin_only = True
         self._room = race_room
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.is_race_admin(command.author):
-            yield from self._room.close()
+    async def _race_do_execute(self, command):
+        await self._room.close()
 
-class ForceForfeit(command.CommandType):
+
+class ForceForfeit(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'forceforfeit')
+        RaceCommand.__init__(self, race_room, 'forceforfeit')
         self.help_text = 'Force the given racer to forfeit the race (even if they have finished).'
-        self.suppress_help = True
-        self._room = race_room
+        self.admin_only = True
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.is_race_admin(command.author) and not self._room.race.before_race:
+    async def _race_do_execute(self, command):
+        if not self._room.race.before_race:
             for name in command.args:
                 for racer in self._room.race.racers.values():
                     if racer.name.lower() == name.lower():
-                        asyncio.ensure_future(self._room.race.forfeit_racer(racer))
+                        await self._room.race.forfeit_racer(racer)
 
-class ForceForfeitAll(command.CommandType):
+
+class ForceForfeitAll(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'forceforfeitall')
+        RaceCommand.__init__(self, race_room, 'forceforfeitall')
         self.help_text = 'Force all unfinished racers to forfeit the race.'
-        self.suppress_help = True
-        self._room = race_room
+        self.admin_only = True
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.is_race_admin(command.author) and not self._room.race.before_race:
-            for racer in self._room.race.racers.values():
-                if racer.is_racing:
-                    asyncio.ensure_future(self._room.race.forfeit_racer(racer))
+    async def _race_do_execute(self, command):
+        await self._room.race.forfeit_all_remaining()
 
-class ForceRecord(command.CommandType):
+
+class ForceRecord(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'forcerecord')
+        RaceCommand.__init__(self, race_room, 'forcerecord')
         self.help_text = 'Force the race to finalize and record.'
-        self.suppress_help = True
-        self._room = race_room
+        self.admin_only = True
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.is_race_admin(command.author) and self._room.race.complete:
-            yield from self._room.race.record()
-            yield from self._room.write('Race recorded.')
+    async def _race_do_execute(self, command):
+        await self._room.race.record()
 
-class Kick(command.CommandType):
+
+class Kick(RaceCommand):
     def __init__(self, race_room):
-        command.CommandType.__init__(self, 'kick')
-        self.help_text = 'Remove a racer from the race. (They can still re-enter with `.enter`.'
-        self.suppress_help = True
-        self._room = race_room
+        RaceCommand.__init__(self, race_room, 'kick')
+        self.help_text = 'Remove a racer from the race. (They can still re-enter with `.enter`.)'
+        self.admin_only = True
 
-    @asyncio.coroutine
-    def _do_execute(self, command):
-        if self._room.is_race_admin(command.author):
-            names_to_kick = [n.lower() for n in command.args]
-            racers = self._room.race.racers.values()
-            for racer in racers:
-                if racer.name.lower() in names_to_kick:
-                    success = yield from self._room.race.unenter_member(racer)
-                    if success:
-                        yield from self._room.write('Kicked {} from the race.'.format(racer.name))
-
+    async def _race_do_execute(self, command):
+        names_to_kick = [n.lower() for n in command.args]
+        await self._room.race.kick_racers(names_to_kick)

@@ -1,38 +1,51 @@
+class Config(object):
+    BOT_COMMAND_PREFIX = '.'
+    BOT_VERSION = '0.0.0'
+
+    # admin
+    ADMIN_ROLE_NAMES = []  # list of names of roles to give admin access
+
+    # channels
+    MAIN_CHANNEL_NAME = 'necrobot_main'
+    REFERENCE_CHANNEL_NAME = 'command_list'
+    DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
+    RACE_RESULTS_CHANNEL_NAME = 'race_results'
+
+    # minutes to allow for submissions on old dailies after new ones are rolled out
+    DAILY_GRACE_PERIOD = int(60)
+
+    # number of seconds between the final .ready and race start
+    COUNTDOWN_LENGTH = int(10)
+
+    # number of seconds at which to start counting down each second in chat
+    INCREMENTAL_COUNTDOWN_START = int(5)
+
+    # seconds after race end to finalize+record race
+    FINALIZE_TIME_SEC = int(30)
+
+    # minutes of no chatting until the room may be cleaned (only applies if race has been finalized)
+    CLEANUP_TIME_SEC = int(180)
+
+    # room is cleaned if there are no race entrants for this duration of time
+    NO_ENTRANTS_CLEANUP_SEC = int(120)
+
+    # give a warning re: cleaning race room if no entrants for this duration of time
+    NO_ENTRANTS_CLEANUP_WARNING_SEC = int(90)
+
+    # if True, then races with only one entrant cannot be started
+    REQUIRE_AT_LEAST_TWO_FOR_RACE = True
+
+    # number of seconds to wait between allowing pokes
+    RACE_POKE_DELAY = int(10)
+
+    # database
+    MYSQL_DB_HOST = 'localhost'
+    MYSQL_DB_USER = 'root'
+    MYSQL_DB_PASSWD = ''
+    MYSQL_DB_NAME = 'necrobot'
+
+
 def init(config_filename):
-    global BOT_COMMAND_PREFIX
-    global BOT_VERSION
-
-    #admin
-    global ADMIN_ROLE_NAMES                     #list of names of roles to give admin access
-
-    #channels
-    global MAIN_CHANNEL_NAME
-    global REFERENCE_CHANNEL_NAME
-    global DAILY_SPOILERCHAT_CHANNEL_NAME
-    global DAILY_LEADERBOARDS_CHANNEL_NAME
-    global ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME
-    global ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME
-    global RACE_RESULTS_CHANNEL_NAME
-
-    #daily
-    global DAILY_GRACE_PERIOD                     #minutes to allow for submissions on old dailies after new ones are rolled out
-
-    #race
-    global COUNTDOWN_LENGTH                        #number of seconds between the final .ready and race start
-    global INCREMENTAL_COUNTDOWN_START             #number of seconds at which to start counting down each second in chat
-    global FINALIZE_TIME_SEC                       #seconds after race end to finalize+record race
-    global CLEANUP_TIME_SEC                        #minutes of no chatting until the room may be cleaned (only applies if race has been finalized)
-    global NO_ENTRANTS_CLEANUP_SEC                 #room is cleaned if there are no race entrants for this duration of time
-    global NO_ENTRANTS_CLEANUP_WARNING_SEC         #give a warning re: cleaning race room if no entrants for this duration of time
-    global REQUIRE_AT_LEAST_TWO_FOR_RACE           #if True, then races with only one entrant cannot be started
-    global RACE_POKE_DELAY                         #number of seconds to wait between allowing pokes 
-
-    #database
-    global MYSQL_DB_HOST
-    global MYSQL_DB_USER
-    global MYSQL_DB_PASSWD
-    global MYSQL_DB_NAME
-    
     defaults = {
         'bot_command_prefix': '.',
         'bot_version': '0.0.0',
@@ -74,32 +87,31 @@ def init(config_filename):
                 else:
                     print("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
 
-    BOT_COMMAND_PREFIX = defaults['bot_command_prefix']
-    BOT_VERSION = defaults['bot_version']
-    MAIN_CHANNEL_NAME = defaults['channel_main']
-    REFERENCE_CHANNEL_NAME = defaults['channel_reference']
-    ADMIN_ROLE_NAMES = admin_roles
-    DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_daily_spoilerchat']
-    DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
-    ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_rot_daily_spoilerchat']
-    ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_rot_daily_leaderboards']
-    RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
-    DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
-    COUNTDOWN_LENGTH = int(defaults['race_countdown_time_seconds'])
-    INCREMENTAL_COUNTDOWN_START = int(defaults['race_begin_counting_down_at'])
-    FINALIZE_TIME_SEC = int(defaults['race_record_after_seconds'])
-    CLEANUP_TIME_SEC = int(defaults['race_cleanup_after_room_is_silent_for_seconds'])
-    NO_ENTRANTS_CLEANUP_SEC = int(defaults['race_cleanup_after_no_entrants_for_seconds'])
-    NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
-    REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
-    RACE_POKE_DELAY = int(defaults['race_poke_delay'])
-    MYSQL_DB_HOST = defaults['mysql_db_host']
-    MYSQL_DB_USER = defaults['mysql_db_user']
-    MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
-    MYSQL_DB_NAME = defaults['mysql_db_name']
+    Config.BOT_COMMAND_PREFIX = defaults['bot_command_prefix']
+    Config.BOT_VERSION = defaults['bot_version']
+    Config.MAIN_CHANNEL_NAME = defaults['channel_main']
+    Config.REFERENCE_CHANNEL_NAME = defaults['channel_reference']
+    Config.ADMIN_ROLE_NAMES = admin_roles
+    Config.DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_daily_spoilerchat']
+    Config.DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
+    Config.ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_rot_daily_spoilerchat']
+    Config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_rot_daily_leaderboards']
+    Config.RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
+    Config.DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
+    Config.COUNTDOWN_LENGTH = int(defaults['race_countdown_time_seconds'])
+    Config.INCREMENTAL_COUNTDOWN_START = int(defaults['race_begin_counting_down_at'])
+    Config.FINALIZE_TIME_SEC = int(defaults['race_record_after_seconds'])
+    Config.CLEANUP_TIME_SEC = int(defaults['race_cleanup_after_room_is_silent_for_seconds'])
+    Config.NO_ENTRANTS_CLEANUP_SEC = int(defaults['race_cleanup_after_no_entrants_for_seconds'])
+    Config.NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
+    Config.REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
+    Config.RACE_POKE_DELAY = int(defaults['race_poke_delay'])
+    Config.MYSQL_DB_HOST = defaults['mysql_db_host']
+    Config.MYSQL_DB_USER = defaults['mysql_db_user']
+    Config.MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
+    Config.MYSQL_DB_NAME = defaults['mysql_db_name']
 
-##--Testing-------------------------------------------------------------------------
+# -Testing-------------------------------------------------------------------------
 
 if __name__ == "__main__":
     init('data/bot_config')
-        

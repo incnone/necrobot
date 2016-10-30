@@ -82,12 +82,12 @@ class Daily(object):
     # Returns whether we're in the grace period between daily rollouts
     def within_grace_period(self):
         utc_now = datetime.datetime.utcnow()
-        return (utc_now.time().hour * 60) + utc_now.time().minute <= config.DAILY_GRACE_PERIOD
+        return (utc_now.time().hour * 60) + utc_now.time().minute <= Config.DAILY_GRACE_PERIOD
 
     # Returns a string giving the remaining time in the grace period
     def daily_grace_timestr(self):
         utc_now = datetime.datetime.utcnow()
-        return _format_as_timestr(0, config.DAILY_GRACE_PERIOD - utc_now.hour * 60 - utc_now.minute)
+        return _format_as_timestr(0, Config.DAILY_GRACE_PERIOD - utc_now.hour * 60 - utc_now.minute)
 
     # Returns a string giving the time until the next daily
     def next_daily_timestr(self):

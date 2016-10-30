@@ -2,14 +2,14 @@ import sqlite3
 
 import mysql.connector
 
-from util import config
+from necrobot.util.config import Config
 
 
-## Create new MySQL db (use DATETIME for race_data timestamp and rename character to character_name)
+# Create new MySQL db (use DATETIME for race_data timestamp and rename character to character_name)
 def make_new_database():
-    cnx = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD,
-                                  host=config.MYSQL_DB_HOST,
-                                  database=config.MYSQL_DB_NAME)
+    cnx = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD,
+                                  host=Config.MYSQL_DB_HOST,
+                                  database=Config.MYSQL_DB_NAME)
     cursor = cnx.cursor()
     cursor.execute("""CREATE TABLE IF NOT EXISTS user_data
                     (discord_id BIGINT,
@@ -54,13 +54,12 @@ def make_new_database():
     cnx.close()
 
 
-
-## Transfer user data
+# Transfer user data
 def transfer_user_data():
-    db = sqlite3.connect(config.DB_FILENAME)
-    cnx = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD,
-                                  host=config.MYSQL_DB_HOST,
-                                  database=config.MYSQL_DB_NAME)
+    db = sqlite3.connect(Config.DB_FILENAME)
+    cnx = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD,
+                                  host=Config.MYSQL_DB_HOST,
+                                  database=Config.MYSQL_DB_NAME)
     cursor = cnx.cursor()
 
     try:
@@ -78,12 +77,12 @@ def transfer_user_data():
         cnx.close()          
 
 
-## Transfer daily data
+# Transfer daily data
 def transfer_daily_data():
-    db = sqlite3.connect(config.DB_FILENAME)
-    cnx = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD,
-                                  host=config.MYSQL_DB_HOST,
-                                  database=config.MYSQL_DB_NAME)
+    db = sqlite3.connect(Config.DB_FILENAME)
+    cnx = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD,
+                                  host=Config.MYSQL_DB_HOST,
+                                  database=Config.MYSQL_DB_NAME)
     cursor = cnx.cursor()
 
     try:
@@ -101,12 +100,12 @@ def transfer_daily_data():
         db.close()
         cnx.close()
 
-## Transfer race data
+# Transfer race data
 def transfer_race_data():
-    db = sqlite3.connect(config.DB_FILENAME)
-    cnx = mysql.connector.connect(user=config.MYSQL_DB_USER, password=config.MYSQL_DB_PASSWD,
-                                  host=config.MYSQL_DB_HOST,
-                                  database=config.MYSQL_DB_NAME)
+    db = sqlite3.connect(Config.DB_FILENAME)
+    cnx = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD,
+                                  host=Config.MYSQL_DB_HOST,
+                                  database=Config.MYSQL_DB_NAME)
     cursor = cnx.cursor()
 
     try:
@@ -122,10 +121,11 @@ def transfer_race_data():
     finally:
         db.close()
         cnx.close()
-##-------------------------
+# ------------------------
 
-config.init('data/bot_config')
-make_new_database()
-##transfer_user_data()
-##transfer_daily_data()
-##transfer_race_data()
+if __name__ == "__main__":
+    config.init('data/bot_config')
+    make_new_database()
+    # transfer_user_data()
+    # transfer_daily_data()
+    # transfer_race_data()

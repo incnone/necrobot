@@ -1,16 +1,15 @@
 # Manages all the racerooms on the necrobot's server
 
 import discord
-from ..race import raceroom, raceprivateroom
-from ..util import config
+from ..channel import raceroom
+from ..race import raceprivateroom
+from ..util.config import Config
 
 
 class RaceManager(object):
     def __init__(self, necrobot):
         self.necrobot = necrobot
-        self._results_channel = necrobot.find_channel(config.RACE_RESULTS_CHANNEL_NAME)
-        self._racerooms = []
-        # TODO garbage collect closed race rooms
+        self._results_channel = necrobot.find_channel(Config.RACE_RESULTS_CHANNEL_NAME)
 
     @property
     def necrodb(self):
@@ -22,7 +21,7 @@ class RaceManager(object):
 
     # Return a new (unique) race room name from the race info
     def get_raceroom_name(self, race_info):
-        name_prefix = race_info.raceroom_name()
+        name_prefix = race_info.raceroom_name
         cut_length = len(name_prefix) + 1
         largest_postfix = 0
         for channel in self.necrobot.server.channels:
@@ -43,8 +42,9 @@ class RaceManager(object):
         if race_channel:
             # Make the actual RaceRoom and initialize it
             new_room = raceroom.RaceRoom(self, race_channel, race_info)
-            self._racerooms.append(new_room)
             await new_room.initialize()
+
+            self.necrobot.register_bot_channel(race_channel, new_room)
 
             # TODO Send PM alerts
             # # Send PM alerts
@@ -58,14 +58,19 @@ class RaceManager(object):
 
         return race_channel
 
-    # Make a private race with the given RacePrivateInfo
-    async def make_private_room(self, race_private_info):
-        # Make the new race
-        race_channel = await self.necrobot.client.create_channel(
-            self.necrobot.server,
-            self.get_raceroom_name(race_private_info.race_info),
-            type='text')
-        new_room = raceprivateroom.RacePrivateRoom(self, race_channel, race_private_info)
-        self._racerooms.append(new_room)
-        await new_room.initialize()
-        return race_channel
+    async def close_room(self, race_room):
+        race_channel = race_room.channel
+        self.necrobot.unregister_bot_channel(race_channel)
+        await self.necrobot.client.delete_channel(race_channel)
+
+    # # Make a private race with the given RacePrivateInfo
+    # async def make_private_room(self, race_private_info):
+    #     # Make the new race
+    #     race_channel = await self.necrobot.client.create_channel(
+    #         self.necrobot.server,
+    #         self.get_raceroom_name(race_private_info.race_info),
+    #         type='text')
+    #     new_room = raceprivateroom.RacePrivateRoom(self, race_channel, race_private_info)
+    #     self._racerooms[race_channel] = new_room
+    #     await new_room.initialize()
+    #     return race_channel

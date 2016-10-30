@@ -8,7 +8,7 @@ import websockets
 import discord
 from necrobot.command.command import Command
 from necrobot.necrobot import Necrobot
-from necrobot.util import backoff
+from necrobot.util import backoff, config, seedgen
 
 
 class LoginData(object):
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     # Create the discord.py Client object and the Necrobot----
     client = discord.Client()
-    the_necrobot = Necrobot(client, logger)
+    the_necrobot = Necrobot(client)
 
 
 # Define client events------------------------------------
