@@ -90,7 +90,9 @@ class Comment(CommandType):
             return
 
         cut_length = len(command.command) + len(Config.BOT_COMMAND_PREFIX) + 1
-        await self.bot_channel.last_begun_race.add_comment_for_member(command.author, command.message.content[cut_length:])
+        await self.bot_channel.last_begun_race.add_comment_for_member(
+            command.author,
+            command.message.content[cut_length:])
 
 
 class Death(CommandType):
@@ -158,10 +160,12 @@ class Notify(CommandType):
     async def _do_execute(self, command):
         if len(command.args) == 1 and command.args[0] == 'off':
             self.bot_channel.dont_notify(command.author)
-            await self.bot_channel.write('{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
+            await self.bot_channel.write(
+                '{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
         elif len(command.args) == 0 or (len(command.args) == 1 and command.args[1] == 'on'):
             self.bot_channel.notify(command.author)
-            await self.bot_channel.write('{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
+            await self.bot_channel.write(
+                '{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
 
 
 class Time(CommandType):
@@ -175,7 +179,8 @@ class Time(CommandType):
         elif self.bot_channel.current_race.complete:
             await self.bot_channel.write('The race is over.')
         else:
-            await self.bot_channel.write('The current race time is {}.'.format(self.bot_channel.last_begun_race.current_time_str))
+            await self.bot_channel.write(
+                'The current race time is {}.'.format(self.bot_channel.last_begun_race.current_time_str))
 
 
 class Missing(CommandType):

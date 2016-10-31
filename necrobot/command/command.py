@@ -61,7 +61,8 @@ class CommandType(object):
 
     # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
     async def execute(self, command):
-        if command.command in self.command_name_list and ((not self.admin_only) or self.bot_channel.is_admin(command.author)):
+        if command.command in self.command_name_list and \
+                ((not self.admin_only) or self.bot_channel.is_admin(command.author)):
             await self._do_execute(command)
 
     # Virtual; determine what this CommandType should do with a given Command

@@ -1,7 +1,5 @@
 from .botchannel import BotChannel
-from ..command import admin
-# from ..command import racemake
-from ..command import seedgen
+from ..command import admin, daily, racemake, seedgen
 
 
 class PMBotChannel(BotChannel):
@@ -10,8 +8,20 @@ class PMBotChannel(BotChannel):
         self.command_types = [
             admin.Die(self),
             admin.Help(self),
+            admin.Info(self),
             admin.Register(self),
             admin.RegisterAll(self),
-            # racemake.MakePrivate(self),
+            daily.DailyChar(necrobot.daily_manager),
+            daily.DailyResubmit(necrobot.daily_manager),
+            daily.DailyRules(necrobot.daily_manager),
+            daily.DailySchedule(necrobot.daily_manager),
+            daily.DailySeed(necrobot.daily_manager),
+            daily.DailyStatus(necrobot.daily_manager),
+            daily.DailySubmit(necrobot.daily_manager),
+            daily.DailyUnsubmit(necrobot.daily_manager),
+            daily.DailyWhen(necrobot.daily_manager),
+            daily.ForceRunNewDaily(necrobot.daily_manager),
+            daily.ForceUpdateLeaderboard(necrobot.daily_manager),
+            racemake.MakePrivate(self),
             seedgen.RandomSeed(self),
         ]

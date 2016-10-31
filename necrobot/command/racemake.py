@@ -47,5 +47,5 @@ class MakePrivate(CommandType):
         if private_race_info is not None:
             await self.necrobot.race_manager.make_private_room(private_race_info, command.author)
         else:
-            await self.client.send_message(
+            await self.necrobot.client.send_message(
                 command.channel, 'Error parsing arguments to `.makeprivate`.')

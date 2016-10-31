@@ -35,9 +35,9 @@ class UserPrefs(object):
     @property
     def pref_strings(self):
         pref_str = []
-        if self.hide_spoilerchat == False:
+        if not self.hide_spoilerchat:
             pref_str.append('Show daily spoiler chat at all times.')
-        elif self.hide_spoilerchat == True:
+        elif self.hide_spoilerchat:
             pref_str.append('Hide daily spoiler chat until after submission.')
 
         if self.daily_alert == DailyAlerts['none']:

@@ -2,6 +2,7 @@ import sqlite3
 
 import mysql.connector
 
+from necrobot.util import config
 from necrobot.util.config import Config
 
 
@@ -63,13 +64,19 @@ def transfer_user_data():
     cursor = cnx.cursor()
 
     try:
-        #user_data
+        # user_data
         for row in db.execute('SELECT * FROM user_data'):
-            cursor.execute('INSERT INTO user_data (discord_id, name) VALUES (%s,%s)', row)
+            cursor.execute(
+                'INSERT INTO user_data (discord_id, name) '
+                'VALUES (%s,%s)',
+                row)
 
-        #user_prefs
+        # user_prefs
         for row in db.execute('SELECT * FROM user_prefs'):
-            cursor.execute('INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (%s,%s,%s,%s)', row)
+            cursor.execute(
+                'INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) '
+                'VALUES (%s,%s,%s,%s)',
+                row)
 
         cnx.commit()     
     finally:
@@ -80,25 +87,38 @@ def transfer_user_data():
 # Transfer daily data
 def transfer_daily_data():
     db = sqlite3.connect(Config.DB_FILENAME)
-    cnx = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD,
-                                  host=Config.MYSQL_DB_HOST,
-                                  database=Config.MYSQL_DB_NAME)
+    cnx = mysql.connector.connect(
+        user=Config.MYSQL_DB_USER,
+        password=Config.MYSQL_DB_PASSWD,
+        host=Config.MYSQL_DB_HOST,
+        database=Config.MYSQL_DB_NAME)
     cursor = cnx.cursor()
 
     try:
+        # daily_data
+        for row in db.execute(
+                'SELECT * '
+                'FROM daily_data'):
+            cursor.execute(
+                'INSERT INTO daily_data (daily_id, type, seed, msg_id) '
+                'VALUES (%s,%s,%s,%s)',
+                row)
 
-        #daily_data
-        for row in db.execute('SELECT * FROM daily_data'):
-            cursor.execute('INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)', row)
-
-        #daily_races
-        for row in db.execute('SELECT * FROM daily_races'):
-            cursor.execute('INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s)', row)
+        # daily_races
+        for row in db.execute(
+                'SELECT * '
+                'FROM daily_races'):
+            cursor.execute(
+                'INSERT INTO daily_races (discord_id, daily_id, type, level, time) '
+                'VALUES (%s,%s,%s,%s,%s)',
+                row)
 
         cnx.commit()
+
     finally:
         db.close()
         cnx.close()
+
 
 # Transfer race data
 def transfer_race_data():
@@ -109,13 +129,25 @@ def transfer_race_data():
     cursor = cnx.cursor()
 
     try:
-        #race_data
-        for row in db.execute('SELECT * FROM race_data'):
-            cursor.execute('INSERT INTO race_data (race_id, timestamp, character_name, descriptor, flags, seed) VALUES (%s,%s,%s,%s,%s,%s)', row)
+        # race_data
+        for row in db.execute(
+                'SELECT * '
+                'FROM race_data'):
+            cursor.execute(
+                'INSERT INTO race_data '
+                '(race_id, timestamp, character_name, descriptor, flags, seed) '
+                'VALUES (%s,%s,%s,%s,%s,%s)',
+                row)
 
-        #racer_data
-        for row in db.execute('SELECT * FROM racer_data'):
-            cursor.execute('INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (%s,%s,%s,%s,%s,%s,%s)', row)
+        # racer_data
+        for row in db.execute(
+                'SELECT * '
+                'FROM racer_data'):
+            cursor.execute(
+                'INSERT INTO racer_data '
+                '(race_id, discord_id, time, rank, igt, comment, level) '
+                'VALUES (%s,%s,%s,%s,%s,%s,%s)',
+                row)
             
         cnx.commit()    
     finally:

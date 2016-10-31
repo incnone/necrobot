@@ -1,5 +1,4 @@
 from ..command.command import CommandType
-from ..race import raceinfo
 
 
 class Add(CommandType):

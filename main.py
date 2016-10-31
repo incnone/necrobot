@@ -33,6 +33,7 @@ async def keep_running(client, token):
 
     while client.is_logged_in:
         if client.is_closed:
+            # noinspection PyProtectedMember
             client._closed.clear()
             client.http.recreate()
 
@@ -41,7 +42,7 @@ async def keep_running(client, token):
         except (discord.HTTPException, aiohttp.ClientError, discord.GatewayNotFound, discord.ConnectionClosed,
                 websockets.InvalidHandshake, websockets.WebSocketProtocolError) as e:
             if isinstance(e, discord.ConnectionClosed) and e.code == 4004:
-                raise # Do not reconnect on authentication failure
+                raise       # Do not reconnect on authentication failure
             logging.exception('Exception while running. Retrying.')
             await asyncio.sleep(retry.delay())
 

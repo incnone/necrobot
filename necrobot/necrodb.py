@@ -133,7 +133,7 @@ class NecroDB(object):
         self._connect()
         cursor = self._db_conn.cursor(buffered=True)
         cursor.execute("SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
-        for row in cursor:
+        for _ in cursor:
             self._close()
             return True
         self._close()

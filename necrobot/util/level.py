@@ -15,7 +15,7 @@ def from_str(level_str):
 # converts a level number from 1 to 17 into the appropriate x-y format; otherwise returns an empty string
 def to_str(level):     
     if 1 <= level <= 17:
-        world = min( ((level-1) // 4) + 1, 4)
+        world = min(((level-1) // 4) + 1, 4)
         lvl = level - 4*(world-1)
         return '{0}-{1}'.format(world, lvl)
     else:

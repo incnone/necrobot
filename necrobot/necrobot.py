@@ -62,6 +62,7 @@ class Necrobot(object):
 
         self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
         self._pm_bot_channel = PMBotChannel(self)
+        self._daily_manager = DailyManager(self)
         self._race_manager = RaceManager(self)
         # self.prefs = PrefsModule(self, self.necrodb)
         # self.load_module(self.prefs)
@@ -112,6 +113,10 @@ class Necrobot(object):
     @property
     def race_manager(self):
         return self._race_manager
+
+    @property
+    def daily_manager(self):
+        return self._daily_manager
 
     # Returns true if the user is a server admin
     # user: [discord.User]

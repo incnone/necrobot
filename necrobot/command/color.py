@@ -47,7 +47,11 @@ async def color_user(member, client, server):
             role_to_use = role
 
     if role_to_use is None:
-        role_to_use = await client.create_role(server, name=new_colorname, color=ROLES_COLORS[new_colorname], hoist=False)
+        role_to_use = await client.create_role(
+            server,
+            name=new_colorname,
+            color=ROLES_COLORS[new_colorname],
+            hoist=False)
 
     await client.add_roles(member, role_to_use)
 
