@@ -52,7 +52,7 @@ class RaceManager(object):
             alert_pref.race_alert = True
 
             alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
-                race_channel.mention, race_info.format_str())
+                race_channel.mention, race_info.format_str)
             for user in self.necrobot.prefs_manager.get_all_matching(alert_pref):
                 await self.necrobot.client.send_message(user, alert_string)
 

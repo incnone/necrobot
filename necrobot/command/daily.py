@@ -5,9 +5,9 @@ from ..daily import dailytype
 
 
 class DailyCommandType(CommandType):
-    def __init__(self, daily_manager, *args):
-        CommandType.__init__(self, daily_manager.necrobot, *args)
-        self._daily_manager = daily_manager
+    def __init__(self, bot_channel, *args):
+        CommandType.__init__(self, bot_channel, *args)
+        self._daily_manager = bot_channel.necrobot.daily_manager
 
     @property
     def client(self):
@@ -30,8 +30,8 @@ class DailyCommandType(CommandType):
 
 
 class DailyChar(DailyCommandType):
-    def __init__(self, daily_manager):
-        DailyCommandType.__init__(self, daily_manager, 'dailychar', 'dailywho')
+    def __init__(self, bot_channel):
+        DailyCommandType.__init__(self, bot_channel, 'dailychar', 'dailywho')
         self.help_text = 'Get the character for the current rotating-character daily.'
 
     async def _daily_do_execute(self, command, daily_type):
