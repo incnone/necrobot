@@ -18,7 +18,10 @@ class RandomSeed(CommandType):
     async def _do_execute(self, command):
         if len(command.args) == 0:
             seed = seedgen.get_new_seed()
-            await self.necrobot.client.send_message(command.channel, 'Seed generated for {0}: {1}'.format(command.author.mention, seed))
+            await self.necrobot.client.send_message(
+                command.channel,
+                'Seed generated for {0}: {1}'.format(command.author.mention, seed))
+
         elif len(command.args) == 1:
             try:
                 num_seeds = max(0, min(MAX_NUM_SEEDS_TO_GENERATE, int(command.args[0])))
@@ -26,6 +29,8 @@ class RandomSeed(CommandType):
                 for i in range(num_seeds):
                     seedstr += '{}, '.format(seedgen.get_new_seed())
                 if seedstr:
-                    await self.necrobot.client.send_message(command.author, 'Generated {0} seeds: {1}.'.format(num_seeds, seedstr[:-2]))
+                    await self.necrobot.client.send_message(
+                        command.author,
+                        'Generated {0} seeds: {1}.'.format(num_seeds, seedstr[:-2]))
             except ValueError:
                 pass

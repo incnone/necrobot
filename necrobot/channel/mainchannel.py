@@ -1,8 +1,5 @@
 from .botchannel import BotChannel
-from ..command import admin
-from ..command import color
-from ..command import racemake
-from ..command import seedgen
+from ..command import admin, color, daily, prefs, racemake, seedgen
 
 
 class MainBotChannel(BotChannel):
@@ -13,8 +10,14 @@ class MainBotChannel(BotChannel):
             admin.Help(self),
             admin.Info(self),
             admin.Register(self),
-            admin.RegisterAll(self),
             color.ColorMe(self),
+            daily.DailyChar(necrobot.daily_manager),
+            daily.DailyRules(necrobot.daily_manager),
+            daily.DailySchedule(necrobot.daily_manager),
+            daily.DailyWhen(necrobot.daily_manager),
+            prefs.DailyAlert(self),
+            prefs.RaceAlert(self),
+            prefs.ViewPrefs(self),
             racemake.Make(self),
             racemake.MakePrivate(self),
             seedgen.RandomSeed(self),

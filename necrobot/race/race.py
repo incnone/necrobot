@@ -1,7 +1,3 @@
-# TODO mod options for races (assist in cleanup)
-
-# Handles bot actions for a single race room
-
 import asyncio
 import datetime
 import time
@@ -13,15 +9,7 @@ from .racer import Racer
 from ..necrodb import NecroDB
 from ..util.config import Config
 from ..util import console
-
-
-def ordinal(num):
-    suffixes = {1: 'st', 2: 'nd', 3: 'rd'}
-    if 10 <= num % 100 <= 20:
-        suffix = 'th'
-    else:
-        suffix = suffixes.get(num % 10, 'th')
-    return str(num) + suffix
+from ..util.ordinal import ordinal
 
 
 # RaceStatus enum ---------------------------------------------------------
@@ -312,7 +300,7 @@ class Race(object):
             if not self.racers:
                 self._last_no_entrants_time = time.monotonic()
             if (len(self.racers) < 2 and Config.REQUIRE_AT_LEAST_TWO_FOR_RACE) or len(self.racers) < 1:
-                await self._cancel_countdown()   # TODO: implement correct behavior if this fails
+                await self._cancel_countdown()
             await self.room.write('{0} is no longer entered.'.format(racer_member.mention))
             await self.begin_if_ready()
             asyncio.ensure_future(self.room.update_leaderboard())

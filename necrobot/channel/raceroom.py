@@ -150,7 +150,7 @@ class RaceRoom(BotChannel):
 
             await self.write('Race paused. (Alerting {0}.)'.format(mention_str))
 
-    # Unpause the race TODO: countdown
+    # Unpause the race
     async def unpause(self):
         if self._current_race.paused:
             await self._current_race.unpause()

@@ -2,6 +2,7 @@ from .channel.mainchannel import MainBotChannel
 from .channel.pmbotchannel import PMBotChannel
 from .daily.dailymanager import DailyManager
 from .necrodb import NecroDB
+from .prefs.prefsmanager import PrefsManager
 from .race.racemanager import RaceManager
 from .util import console
 from .util.config import Config
@@ -26,9 +27,9 @@ class Necrobot(object):
         self._bot_channels = {}                 # maps discord.Channels onto BotChannels
         self._pm_bot_channel = None
 
-        self.prefs = None                       # userprefs.Prefsmodule
         self._daily_manager = None
         self._race_manager = None
+        self._prefs_manager = None
 
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
@@ -64,8 +65,7 @@ class Necrobot(object):
         self._pm_bot_channel = PMBotChannel(self)
         self._daily_manager = DailyManager(self)
         self._race_manager = RaceManager(self)
-        # self.prefs = PrefsModule(self, self.necrodb)
-        # self.load_module(self.prefs)
+        self._prefs_manager = PrefsManager(self)
 
     # Returns the BotChannel corresponding to the given discord.Channel, if one exists
     # discord_channel: [discord.Channel]
@@ -117,6 +117,10 @@ class Necrobot(object):
     @property
     def daily_manager(self):
         return self._daily_manager
+
+    @property
+    def prefs_manager(self):
+        return self._prefs_manager
 
     # Returns true if the user is a server admin
     # user: [discord.User]

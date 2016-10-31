@@ -1,7 +1,9 @@
 import datetime
+from . import dailytype
 from .dailytype import DailyType
 from .daily import DATE_ZERO
 from .daily import Daily
+from ..prefs.userprefs import UserPrefs
 from ..util.config import Config
 
 
@@ -42,17 +44,17 @@ class DailyManager(object):
         # Update yesterday's leaderboard with the seed
         await self.update_leaderboard(self.today_number - 1, daily.daily_type, display_seed=True)
 
-        # # TODO PM users with the daily_alert preference
-        # auto_pref = userprefs.UserPrefs()
-        # if daily_type == dailytype.CadenceSpeed():
-        #     auto_pref.daily_alert = userprefs.DailyAlerts['cadence']
-        # elif daily_type == dailytype.RotatingSpeed():
-        #     auto_pref.daily_alert = userprefs.DailyAlerts['rotating']
-        #
-        # for member in self.necrobot.prefs.get_all_matching(auto_pref):
-        #     daily.register(today_number, member.id)
-        #     asyncio.ensure_future(self.client.send_message(member, "({0}) Today's {2} speedrun seed: {1}".format(
-        #         today_date.strftime("%d %b"), today_seed, character)))
+        # PM users with the daily_alert preference
+        auto_pref = UserPrefs()
+        auto_pref.daily_alert = True
+        for member in self.necrobot.prefs_manager.get_all_matching(auto_pref):
+            daily.register(self.today_number, member.id)
+            await self.client.send_message(
+                member,
+                "({0}) Today's {2} speedrun seed: {1}".format(
+                    self.today_date.strftime("%d %b"),
+                    daily.get_seed(self.today_number),
+                    dailytype.character(daily.daily_type, self.today_number)))
 
     # Update an existing leaderboard message for the given daily number
     async def update_leaderboard(self, daily_number, daily_type, display_seed=False):
@@ -68,17 +70,3 @@ class DailyManager(object):
             async for msg in self.client.logs_from(self._leaderboard_channel, limit=10):
                 if int(msg.id) == msg_id:
                     await self.client.edit_message(msg, daily.leaderboard_text(daily_number, display_seed))
-
-    # Called when a user updates their preferences with the given UserPrefs
-    # Base method does nothing; override for functionality
-    # async def on_update_prefs(self, prefs, member):
-    #     for daily_type in [dailytype.CadenceSpeed(), dailytype.RotatingSpeed()]:
-    #         daily = self.daily(daily_type)
-    #         today_daily = daily.today_number
-    #         if prefs.hide_spoilerchat:
-    #             if not daily.has_submitted(today_daily, member.id):
-    #                 read_permit = discord.PermissionOverwrite()
-    #                 read_permit.read_messages = True
-    #                 await self.client.edit_channel_permissions(daily.spoilerchat_channel, member, read_permit)
-    #         else:
-    #             await self.client.delete_channel_permissions(daily.spoilerchat_channel, member)

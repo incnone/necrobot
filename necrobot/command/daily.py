@@ -319,7 +319,6 @@ class DailyWhen(DailyCommandType):
                             calendar.day_name[date.weekday()], date.strftime("%B %d")))
                     return
 
-        daily = self._daily_manager.daily(daily_type)
         if daily_type == dailytype.DailyType.rotating:
             await self.client.send_message(
                 command.channel,

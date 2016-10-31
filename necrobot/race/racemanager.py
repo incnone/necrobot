@@ -1,8 +1,7 @@
-# Manages all the racerooms on the necrobot's server
-
 import discord
 from ..channel.raceroom import RaceRoom
 from ..channel.privateraceroom import PrivateRaceRoom
+from ..prefs.userprefs import UserPrefs
 from ..util.config import Config
 
 
@@ -48,15 +47,14 @@ class RaceManager(object):
 
             self.necrobot.register_bot_channel(race_channel, new_room)
 
-            # TODO Send PM alerts
-            # # Send PM alerts
-            # alert_pref = userprefs.UserPrefs()
-            # alert_pref.race_alert = userprefs.RaceAlerts['some']
-            #
-            # alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
-            #     race_channel.mention, race_info.format_str())
-            # for user in self.necrobot.prefs.get_all_matching(alert_pref):
-            #     asyncio.ensure_future(self.client.send_message(user, alert_string))
+            # Send PM alerts
+            alert_pref = UserPrefs()
+            alert_pref.race_alert = True
+
+            alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
+                race_channel.mention, race_info.format_str())
+            for user in self.necrobot.prefs_manager.get_all_matching(alert_pref):
+                await self.necrobot.client.send_message(user, alert_string)
 
         return race_channel
 

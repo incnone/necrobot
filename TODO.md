@@ -6,7 +6,6 @@ Current version: 0.4.0
 
 - Daily leaderboards will break due to post length if more than ~45 people participate; fix
 - Ensure that the daily seed is different from the previous seed
-- Allow the race creator to change the race rules after creating the room. 
 - Replace lists with sets where appropriate
 
 ### Different race modes
@@ -15,7 +14,7 @@ Current version: 0.4.0
 - Score
 - Flagplanting
 - Sudden death
-- Last man standing (?)
+- Last man standing
 
 ### Possiblilites to consider (not sure I want these yet)
 

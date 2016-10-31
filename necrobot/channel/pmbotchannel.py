@@ -1,5 +1,5 @@
 from .botchannel import BotChannel
-from ..command import admin, daily, racemake, seedgen
+from ..command import admin, daily, prefs, racemake, seedgen
 
 
 class PMBotChannel(BotChannel):
@@ -22,6 +22,9 @@ class PMBotChannel(BotChannel):
             daily.DailyWhen(necrobot.daily_manager),
             daily.ForceRunNewDaily(necrobot.daily_manager),
             daily.ForceUpdateLeaderboard(necrobot.daily_manager),
+            prefs.DailyAlert(self),
+            prefs.RaceAlert(self),
+            prefs.ViewPrefs(self),
             racemake.MakePrivate(self),
             seedgen.RandomSeed(self),
         ]

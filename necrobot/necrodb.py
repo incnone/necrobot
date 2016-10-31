@@ -6,7 +6,11 @@ from .util.config import Config
 class NecroDB(object):
 
     def _connect(self):
-        self._db_conn = mysql.connector.connect(user=Config.MYSQL_DB_USER, password=Config.MYSQL_DB_PASSWD, host=Config.MYSQL_DB_HOST, database=Config.MYSQL_DB_NAME)
+        self._db_conn = mysql.connector.connect(
+            user=Config.MYSQL_DB_USER,
+            password=Config.MYSQL_DB_PASSWD,
+            host=Config.MYSQL_DB_HOST,
+            database=Config.MYSQL_DB_NAME)
 
     def _close(self):
         self._db_conn.close()
@@ -14,7 +18,15 @@ class NecroDB(object):
     def set_prefs(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("""INSERT INTO user_prefs (discord_id, hidespoilerchat, dailyalert, racealert) VALUES (%s,%s,%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), hidespoilerchat=VALUES(hidespoilerchat), dailyalert=VALUES(dailyalert), racealert=VALUES(racealert)""", params)
+        cursor.execute(
+            "INSERT INTO user_prefs "
+            "(discord_id, hidespoilerchat, dailyalert, racealert) "
+            "VALUES (%s,%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE "
+            "discord_id=VALUES(discord_id), "
+            "hidespoilerchat=VALUES(hidespoilerchat), "
+            "dailyalert=VALUES(dailyalert), "
+            "racealert=VALUES(racealert)", params)
         self._db_conn.commit()
         self._close()
 
@@ -44,7 +56,8 @@ class NecroDB(object):
     def record_race(self, race):
         self._connect()
         db_cur = self._db_conn.cursor(buffered=True)
-        db_cur.execute("SELECT race_id FROM race_data ORDER BY race_id DESC LIMIT 1")
+        db_cur.execute(
+            "SELECT race_id FROM race_data ORDER BY race_id DESC LIMIT 1")
         new_raceid = 0
         for row in db_cur:
             new_raceid = row[0] + 1
@@ -56,7 +69,11 @@ class NecroDB(object):
                        race.race_info.descriptor,
                        race.race_info.flags,
                        race.race_info.seed,)
-        db_cur.execute("INSERT INTO race_data (race_id, timestamp, character_name, descriptor, flags, seed) VALUES (%s,%s,%s,%s,%s,%s)", race_params)
+        db_cur.execute(
+            "INSERT INTO race_data "
+            "(race_id, timestamp, character_name, descriptor, flags, seed) "
+            "VALUES (%s,%s,%s,%s,%s,%s)",
+            race_params)
 
         racer_list = []
         max_time = 0
@@ -72,12 +89,23 @@ class NecroDB(object):
         rank = 1
         for racer in racer_list:
             racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
-            db_cur.execute("INSERT INTO racer_data (race_id, discord_id, time, rank, igt, comment, level) VALUES (%s,%s,%s,%s,%s,%s,%s)", racer_params)
+            db_cur.execute(
+                "INSERT INTO racer_data "
+                "(race_id, discord_id, time, rank, igt, comment, level) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                racer_params)
             if racer.is_finished:
                 rank += 1
 
             user_params = (racer.id, racer.name)
-            db_cur.execute('INSERT INTO user_data (discord_id, name) VALUES (%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), name=VALUES(name)', user_params)
+            db_cur.execute(
+                'INSERT INTO user_data '
+                '(discord_id, name) '
+                'VALUES (%s,%s) '
+                'ON DUPLICATE KEY UPDATE '
+                'discord_id=VALUES(discord_id), '
+                'name=VALUES(name)',
+                user_params)
 
         self._db_conn.commit()
         self._close()
@@ -87,7 +115,9 @@ class NecroDB(object):
         db_cur = self._db_conn.cursor()
         for member in members:
             params = (member.id, member.name,)
-            db_cur.execute("INSERT IGNORE INTO user_data (discord_id, name) VALUES (%s,%s)", params)
+            db_cur.execute(
+                "INSERT IGNORE INTO user_data (discord_id, name) VALUES (%s,%s)",
+                params)
         self._db_conn.commit()
         self._close()
 
@@ -95,14 +125,18 @@ class NecroDB(object):
         self._connect()
         params = (member.id, member.name,)
         cursor = self._db_conn.cursor()
-        cursor.execute("INSERT INTO user_data (discord_id, name) VALUES (%s,%s)", params)
-        self.db_conn.commit()
+        cursor.execute(
+            "INSERT INTO user_data (discord_id, name) VALUES (%s,%s)",
+            params)
+        self._db_conn.commit()
         self._close()
 
     def get_daily_seed(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s", params)
+        cursor.execute(
+            "SELECT seed FROM daily_data WHERE daily_id=%s AND type=%s",
+            params)
         seed = cursor.fetchall()
         self._close()
         return seed
@@ -110,10 +144,12 @@ class NecroDB(object):
     def get_daily_times(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("""SELECT user_data.name,daily_races.level,daily_races.time
-                                         FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id
-                                         WHERE daily_races.daily_id=%s AND daily_races.type=%s
-                                         ORDER BY daily_races.level DESC, daily_races.time ASC""", params)
+        cursor.execute(
+            "SELECT user_data.name,daily_races.level,daily_races.time "
+            "FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id "
+            "WHERE daily_races.daily_id=%s AND daily_races.type=%s "
+            "ORDER BY daily_races.level DESC, daily_races.time ASC",
+            params)
         times = cursor.fetchall()
         self._close()
         return times
@@ -121,7 +157,9 @@ class NecroDB(object):
     def has_submitted_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT level FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        cursor.execute(
+            "SELECT level FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s",
+            params)
         for row in cursor:
             if row[0] != -1:
                 self._close()
@@ -132,7 +170,9 @@ class NecroDB(object):
     def has_registered_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        cursor.execute(
+            "SELECT * FROM daily_races WHERE discord_id=%s AND daily_id=%s AND type=%s",
+            params)
         for _ in cursor:
             self._close()
             return True
@@ -142,14 +182,26 @@ class NecroDB(object):
     def register_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("INSERT INTO daily_races (discord_id, daily_id, type, level, time) VALUES (%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE discord_id=VALUES(discord_id), daily_id=VALUES(daily_id), type=VALUES(type), level=VALUES(level), time=VALUES(time)", params)
+        cursor.execute(
+            "INSERT INTO daily_races "
+            "(discord_id, daily_id, type, level, time) "
+            "VALUES (%s,%s,%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE "
+            "discord_id=VALUES(discord_id), "
+            "daily_id=VALUES(daily_id), "
+            "type=VALUES(type), "
+            "level=VALUES(level), "
+            "time=VALUES(time)",
+            params)
         self._db_conn.commit()
         self._close()
 
     def registered_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT daily_id FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
+        cursor.execute(
+            "SELECT daily_id FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC",
+            params)
         dailies = cursor.fetchall()
         self._close()
         return dailies
@@ -157,7 +209,9 @@ class NecroDB(object):
     def submitted_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor(buffered=True)
-        cursor.execute("SELECT daily_id,level FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC", params)
+        cursor.execute(
+            "SELECT daily_id,level FROM daily_races WHERE discord_id=%s AND type=%s ORDER BY daily_id DESC",
+            params)
         dailies = cursor.fetchall()
         self._close()
         return dailies
@@ -165,28 +219,36 @@ class NecroDB(object):
     def delete_from_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("UPDATE daily_races SET level=%s WHERE discord_id=%s AND daily_id=%s AND type=%s", params)
+        cursor.execute(
+            "UPDATE daily_races SET level=%s WHERE discord_id=%s AND daily_id=%s AND type=%s",
+            params)
         self._db_conn.commit()
         self._close()
 
     def create_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)", params)
+        cursor.execute(
+            "INSERT INTO daily_data (daily_id, type, seed, msg_id) VALUES (%s,%s,%s,%s)",
+            params)
         self._db_conn.commit()
         self._close()
 
     def update_daily(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("UPDATE daily_data SET msg_id=%s WHERE daily_id=%s AND type=%s", params)
+        cursor.execute(
+            "UPDATE daily_data SET msg_id=%s WHERE daily_id=%s AND type=%s",
+            params)
         self._db_conn.commit()
         self._close()
 
     def get_daily_message_id(self, params):
         self._connect()
         cursor = self._db_conn.cursor()
-        cursor.execute("SELECT msg_id FROM daily_data WHERE daily_id=%s AND type=%s", params)
+        cursor.execute(
+            "SELECT msg_id FROM daily_data WHERE daily_id=%s AND type=%s",
+            params)
         msg_id = cursor.fetchall()
         self._close()
         return msg_id
