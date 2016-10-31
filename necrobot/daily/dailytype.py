@@ -1,95 +1,75 @@
-import command
+from enum import Enum
 
-class CadenceSpeed(object):
-    class __CadenceSpeed(object):
-        def __init__(self):
-            self.name = 'CadenceSpeed'
-            self.id = 0
 
-        def character(self, daily_number):
-            return 'Cadence'
+# Remark: The value of this enum is used for storing results in the database, and so
+# old values should never be changed or reused.
+class DailyType(Enum):
+    cadence = 0
+    rotating = 1
 
-        def leaderboard_header(self, daily_number):
-            return 'Cadence Speedrun Daily'            
+rotating_daily_chars = ['Eli', 'Bolt', 'Dove', 'Aria', 'Bard', 'Dorian', 'Coda', 'Melody', 'Monk']
 
-    instance = None
-    def __init__(self):
-        if not CadenceSpeed.instance:
-            CadenceSpeed.instance = CadenceSpeed.__CadenceSpeed()
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
-    def __eq__(self, other):
-        return self.instance == other.instance
-    
-class RotatingSpeed(object):
-    class __RotatingSpeed(object):
-        def __init__(self):
-            self.name = 'RotatingSpeed'
-            self.id = 1
-            self.rotating_chars = ['Eli', 'Bolt', 'Dove', 'Aria', 'Bard', 'Dorian', 'Coda', 'Melody', 'Monk']
 
-        def character(self, daily_number):
-            return self.rotating_chars[daily_number % 9]           
+def character(daily_type, daily_number):
+    if daily_type == DailyType.cadence:
+        return 'Cadence'
+    elif daily_type == DailyType.rotating:
+        return rotating_daily_chars[daily_number % 9]
 
-        def leaderboard_header(self, daily_number):
-            return 'Rotating Speedrun Daily ({})'.format(self.character(daily_number))
 
-        def days_until(self, char_name, today_number):
-            for i,name in enumerate(self.rotating_chars):
-                if name == char_name.capitalize():
-                    return (i - today_number) % 9
-            return None
+def leaderboard_header(daily_type, daily_number):
+    if daily_type == DailyType.cadence:
+        return 'Cadence Speedrun Daily'
+    elif daily_type == DailyType.rotating:
+        return 'Rotating Speedrun Daily ({0})'.format(character(daily_type, daily_number))
 
-    instance = None
-    def __init__(self):
-        if not RotatingSpeed.instance:
-            RotatingSpeed.instance = RotatingSpeed.__RotatingSpeed()
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
-    def __eq__(self, other):
-        return self.instance == other.instance
-    
-class CalledType(object):
-    def __init__(self, daily_type, daily_number, explicit_char=True, for_previous=False):
-        self.type = daily_type
-        self.number = daily_number
-        self.explicit_char = explicit_char
-        self.for_previous = for_previous
 
-    @property
-    def character(self):
-        return self.type.character(self.number)
+def days_until(charname, daily_number):
+    days = 0
+    today_char = character(DailyType.rotating, daily_number)
 
-#--------------------------------------
+    found_start = False
+    for char in rotating_daily_chars:
+        if char == today_char:
+            found_start = True
+        elif found_start:
+            days += 1
+            if char == charname:
+                return days
 
-all_types = [CadenceSpeed(), RotatingSpeed()]
+    for char in rotating_daily_chars:
+        days += 1
+        if char == charname:
+            return days
 
-def _parse_dailytype_arg(arg):
-    sarg = arg.lstrip('-').lower()
-    if sarg == 'cadence':
-        return 'cadence'
-    elif sarg == 'rot' or sarg == 'rotating':
-        return 'rotating'
-    else:
-        return None
 
-def parse_out_type(command, daily_number):
+def parse_out_type(command_args, daily_number):
     arg_to_cull = None
     parsed_args = []
-    for i,arg in enumerate(command.args):
-        parg = _parse_dailytype_arg(arg)
+    for i, arg in enumerate(command_args):
+        parg = _parse_dailytype_arg(arg, daily_number)
         if parg:
             arg_to_cull = i
             parsed_args.append(parg)
 
     if not parsed_args:
-        return CalledType(CadenceSpeed(), daily_number, explicit_char=False)
+        return DailyType.cadence
     elif len(parsed_args) == 1:
-        del command.args[arg_to_cull]
+        del command_args[arg_to_cull]
         parg = parsed_args[0]
         if parg == 'cadence':
-            return CalledType(CadenceSpeed(), daily_number, explicit_char=True)
+            return DailyType.cadence
         elif parg == 'rotating':
-            return CalledType(RotatingSpeed(), daily_number, explicit_char=False)
+            return DailyType.rotating
+    else:
+        return None
+
+
+def _parse_dailytype_arg(arg, daily_number):
+    sarg = arg.lstrip('-').lower()
+    if sarg == 'cadence':
+        return 'cadence'
+    elif sarg == 'rot' or sarg == 'rotating' or sarg == character(DailyType.rotating, daily_number).lower():
+        return 'rotating'
     else:
         return None
