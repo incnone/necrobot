@@ -59,8 +59,8 @@ def get_random_colorname(protected_colors):
 
 
 class ColorMe(CommandType):
-    def __init__(self, necrobot):
-        CommandType.__init__(self, necrobot, 'dankify')
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'dankify')
         self.secret_command = True
 
     async def _do_execute(self, command):

@@ -8,6 +8,7 @@ import time
 from enum import IntEnum
 
 from . import racetime
+from .raceinfo import RaceInfo
 from .racer import Racer
 from ..necrodb import NecroDB
 from ..util.config import Config
@@ -60,7 +61,7 @@ class Race(object):
     # NB: Call the coroutine initialize() to set up the room
     def __init__(self, race_room):
         self.room = race_room                     # The RaceRoom object managing this race
-        self.race_info = race_room.race_info.copy()
+        self.race_info = RaceInfo.copy(race_room.race_info)
         self.racers = []                          # A list of Racer
 
         self._status = RaceStatus.uninitialized   # The status of this race
@@ -106,6 +107,11 @@ class Race(object):
     def before_race(self):
         return self._status < RaceStatus.racing
 
+    # True if the race is currently running
+    @property
+    def during_race(self):
+        return self._status == RaceStatus.racing or self._status == RaceStatus.paused
+
     # True if the race is finalized or cancelled
     @property
     def complete(self):
@@ -137,6 +143,11 @@ class Race(object):
     @property
     def any_entrants(self):
         return bool(self.racers)
+
+    # True if the race is paused
+    @property
+    def paused(self):
+        return self._status == RaceStatus.paused
 
 # Racer data
     # Returns true if all racers are ready and there's enough racers

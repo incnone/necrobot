@@ -40,13 +40,17 @@ class Command(object):
 # Abstract base class; a particular command that the bot can interpret, and how to interpret it
 # (For instance, racemodule has a CommandType object called make, for the `.make` command.)
 class CommandType(object):
-    def __init__(self, necrobot, *args):
+    def __init__(self, bot_channel, *args):
         self.command_name_list = args               # the string that calls this command (e.g. 'make')
         self.help_text = 'This command has no help text.'
-        self.admin_only = False                     # If true, only bot Admins can call this command
+        self.admin_only = False                     # If true, only botchannel admins can call this command
         self.secret_command = False                 # If true, never shows up on ".help" calls
-        self.necrobot = necrobot
-        
+        self.bot_channel = bot_channel
+
+    @property
+    def necrobot(self):
+        return self.bot_channel.necrobot
+
     @property
     def mention(self):
         return Config.BOT_COMMAND_PREFIX + str(self.command_name_list[0])
@@ -57,7 +61,7 @@ class CommandType(object):
 
     # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
     async def execute(self, command):
-        if command.command in self.command_name_list and ((not self.admin_only) or self.necrobot.is_admin(command.author)):
+        if command.command in self.command_name_list and ((not self.admin_only) or self.bot_channel.is_admin(command.author)):
             await self._do_execute(command)
 
     # Virtual; determine what this CommandType should do with a given Command

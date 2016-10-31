@@ -6,8 +6,10 @@ import datetime
 from .botchannel import BotChannel
 from ..command import admin
 from ..command import race
+from ..race import raceinfo
 from ..race.race import Race
 from ..util.config import Config
+from ..util import seedgen
 
 
 class RaceRoom(BotChannel):
@@ -48,7 +50,11 @@ class RaceRoom(BotChannel):
                               race.ForceClose(self),
                               race.ForceForfeit(self),
                               race.ForceForfeitAll(self),
-                              race.Kick(self)]
+                              race.Kick(self),
+                              race.Pause(self),
+                              race.Unpause(self),
+                              race.Reseed(self),
+                              race.ChangeRules(self)]
 
 # Properties ------------------------------
     @property
@@ -85,15 +91,6 @@ class RaceRoom(BotChannel):
     def race_info(self):
         return self._race_info
 
-    # True if the user has admin permissions for this race
-    def is_race_admin(self, member):
-        admin_roles = self.necrobot.admin_roles
-        for role in member.roles:
-            if role in admin_roles:
-                return True
-
-        return False
-
 # Methods -------------------------------------------------------------
     # Notifies the given user on a rematch
     def notify(self, user):
@@ -125,6 +122,14 @@ class RaceRoom(BotChannel):
         await self.client.send_message(self._race_manager.results_channel, text)
 
 # Commands ------------------------------------------------------------
+    # Change the RaceInfo for this room
+    async def change_race_info(self, command_args):
+        new_race_info = raceinfo.parse_args_modify(command_args, raceinfo.RaceInfo.copy(self._race_info))
+        if new_race_info:
+            self._race_info = new_race_info
+            await self.write('Changed rules for the next race.')
+            await self.update_leaderboard()
+
     # Close the channel.
     async def close(self):
         await self._race_manager.close_room(self)
@@ -133,6 +138,23 @@ class RaceRoom(BotChannel):
     async def make_rematch(self):
         if self._current_race.complete:
             await self._make_new_race()
+
+    # Pause the race
+    async def pause(self):
+        if self._current_race.during_race:
+            await self._current_race.pause()
+            mention_str = ''
+            for racer in self._current_race.racers:
+                mention_str += '{}, '.format(racer.member.mention)
+            mention_str = mention_str[:-2]
+
+            await self.write('Race paused. (Alerting {0}.)'.format(mention_str))
+
+    # Unpause the race TODO: countdown
+    async def unpause(self):
+        if self._current_race.paused:
+            await self._current_race.unpause()
+            await self.write('Race unpaused. GO!')
 
     # Alerts unready users
     async def poke(self):
@@ -157,6 +179,20 @@ class RaceRoom(BotChannel):
                 alert_string += racer.member.mention + ', '
             await self.write('Poking {0}.'.format(alert_string[:-2]))
             asyncio.ensure_future(self._run_nopoke_delay())
+
+    # Reseed the race
+    async def reseed(self):
+        if not self._current_race.race_info.seeded:
+            await self.write('This is not a seeded race. Use `.newrules` to change this.')
+
+        elif self._current_race.race_info.seed_fixed:
+            await self.write('The seed for this race was fixed by its rules. Use `.newrules` to change this.')
+            return
+
+        else:
+            self._current_race.race_info.seed = seedgen.get_new_seed()
+            await self.write('Changed seed to {0}.'.format(self._current_race.race_info.seed))
+            await self.update_leaderboard()
 
 # Private -----------------------------------------------------------------
     # Makes a new Race, overwriting the old one

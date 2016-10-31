@@ -29,7 +29,5 @@ class PermissionInfo(object):
         for role in member.roles:
             if role in self.admin_roles:
                 return True
-        if member in self.admins:
-            return True
 
-        return False
+        return member in self.admins

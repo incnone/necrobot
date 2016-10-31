@@ -4,7 +4,7 @@ from ..util.config import Config
 
 class Die(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel.necrobot, 'die')
+        CommandType.__init__(self, bot_channel, 'die')
         self.help_text = 'Tell the bot to log out. [Admin only]'
         self.admin_only = True
 
@@ -14,7 +14,7 @@ class Die(CommandType):
 
 class Help(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel.necrobot, 'help')
+        CommandType.__init__(self, bot_channel, 'help')
         self.help_text = 'Help.'
         self.bot_channel = bot_channel
 
@@ -39,7 +39,7 @@ class Help(CommandType):
 
 class Info(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel.necrobot, 'info')
+        CommandType.__init__(self, bot_channel, 'info')
         self.help_text = "Necrobot version information."
         self.bot_channel = bot_channel
 
@@ -52,7 +52,7 @@ class Info(CommandType):
 
 class Register(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel.necrobot, 'register')
+        CommandType.__init__(self, bot_channel, 'register')
         self.help_text = 'Register your current Discord name as the name to use for the bot.'
 
     async def _do_execute(self, cmd):
@@ -62,7 +62,7 @@ class Register(CommandType):
 
 class RegisterAll(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel.necrobot, 'registerall')
+        CommandType.__init__(self, bot_channel, 'registerall')
         self.help_text = 'Register all unregistered users. [Admin only]'
         self.admin_only = True
 

@@ -1,8 +1,8 @@
 # Manages all the racerooms on the necrobot's server
 
 import discord
-from ..channel import raceroom
-from ..race import raceprivateroom
+from ..channel.raceroom import RaceRoom
+from ..channel.privateraceroom import PrivateRaceRoom
 from ..util.config import Config
 
 
@@ -33,15 +33,17 @@ class RaceManager(object):
                     pass
         return '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
-    # Make a race with the given RaceInfo
+    # Make a room with the given RaceInfo
     async def make_room(self, race_info):
-        # Make a channel for the race
+        # Make a channel for the room
         race_channel = await self.necrobot.client.create_channel(
-            self.necrobot.server, self.get_raceroom_name(race_info), type=discord.ChannelType.text)
+            self.necrobot.server,
+            self.get_raceroom_name(race_info),
+            type=discord.ChannelType.text)
 
-        if race_channel:
+        if race_channel is not None:
             # Make the actual RaceRoom and initialize it
-            new_room = raceroom.RaceRoom(self, race_channel, race_info)
+            new_room = RaceRoom(self, race_channel, race_info)
             await new_room.initialize()
 
             self.necrobot.register_bot_channel(race_channel, new_room)
@@ -63,14 +65,17 @@ class RaceManager(object):
         self.necrobot.unregister_bot_channel(race_channel)
         await self.necrobot.client.delete_channel(race_channel)
 
-    # # Make a private race with the given RacePrivateInfo
-    # async def make_private_room(self, race_private_info):
-    #     # Make the new race
-    #     race_channel = await self.necrobot.client.create_channel(
-    #         self.necrobot.server,
-    #         self.get_raceroom_name(race_private_info.race_info),
-    #         type='text')
-    #     new_room = raceprivateroom.RacePrivateRoom(self, race_channel, race_private_info)
-    #     self._racerooms[race_channel] = new_room
-    #     await new_room.initialize()
-    #     return race_channel
+    # Make a private race with the given RacePrivateInfo; give the given discord_member admin status
+    async def make_private_room(self, race_private_info, discord_member):
+        # Make a channel for the room
+        race_channel = await self.necrobot.client.create_channel(
+            self.necrobot.server,
+            self.get_raceroom_name(race_private_info.race_info),
+            type='text')
+
+        if race_channel is not None:
+            new_room = PrivateRaceRoom(self, race_channel, race_private_info, discord_member)
+            await new_room.initialize()
+            self.necrobot.register_bot_channel(race_channel, new_room)
+
+        return race_channel

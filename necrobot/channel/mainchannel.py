@@ -16,6 +16,6 @@ class MainBotChannel(BotChannel):
             admin.RegisterAll(self),
             color.ColorMe(self),
             racemake.Make(self),
-            # racemake.MakePrivate(self),
+            racemake.MakePrivate(self),
             seedgen.RandomSeed(self),
         ]

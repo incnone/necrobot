@@ -139,7 +139,7 @@ class Necrobot(object):
     def find_members(self, username):
         to_return = []
         for member in self.server.members:
-            if member.name == username:
+            if member.display_name.lower() == username.lower():
                 to_return.append(member)
         return to_return
 
