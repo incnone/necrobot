@@ -6,7 +6,6 @@ import datetime
 from .botchannel import BotChannel
 from ..command import admin
 from ..command import race
-from ..necrodb import NecroDB
 from ..race.race import Race
 from ..util.config import Config
 
@@ -14,15 +13,17 @@ from ..util.config import Config
 class RaceRoom(BotChannel):
     def __init__(self, race_manager, race_discord_channel, race_info):
         BotChannel.__init__(self, race_manager.necrobot)
-        self.channel = race_discord_channel     # The channel in which this race is taking place
-        self.race_info = race_info              # The type of races to be run in this room
-        self.race = None                        # The current race
+        self._channel = race_discord_channel    # The channel in which this race is taking place
+        self._race_info = race_info             # The type of races to be run in this room
+
+        self._current_race = None               # The current race
+        self._last_race = None                  # The last race to finish
 
         self._race_manager = race_manager       # The parent managing all race rooms
+        self._race_number = 0                   # The number of races we've done
         self._mention_on_new_race = []          # A list of users that should be @mentioned when a rematch is created
         self._mentioned_users = []              # A list of users that were @mentioned when this race was created
         self._nopoke = False                    # When True, the .poke command fails
-        self._recorded = False                  # True when the current race has been recorded
 
         self.command_types = [admin.Help(self),
                               race.Enter(self),
@@ -47,30 +48,42 @@ class RaceRoom(BotChannel):
                               race.ForceClose(self),
                               race.ForceForfeit(self),
                               race.ForceForfeitAll(self),
-                              race.ForceRecord(self),
                               race.Kick(self)]
+
+# Properties ------------------------------
+    @property
+    def channel(self):
+        return self._channel
 
     @property
     def client(self):
         return self.necrobot.client
+
+    # The currently active race. Is not None.
+    @property
+    def current_race(self):
+        return self._current_race
 
     # A string to add to the race details (used for private races; empty in base class)
     @property
     def format_rider(self):
         return ''
 
+    # The most recent race to begin, or None if no such
+    @property
+    def last_begun_race(self):
+        if not self._current_race.before_race:
+            return self._current_race
+        else:
+            return self._last_race
+
     @property
     def mentioned_users(self):
         return self._mentioned_users
 
-    # Notifies the given user on a rematch
-    def notify(self, user):
-        if user not in self._mention_on_new_race:
-            self._mention_on_new_race.append(user)
-
-    # Removes notifications for the given user on rematch
-    def dont_notify(self, user):
-        self._mention_on_new_race = [u for u in self._mention_on_new_race if u != user]
+    @property
+    def race_info(self):
+        return self._race_info
 
     # True if the user has admin permissions for this race
     def is_race_admin(self, member):
@@ -81,40 +94,54 @@ class RaceRoom(BotChannel):
 
         return False
 
+# Methods -------------------------------------------------------------
+    # Notifies the given user on a rematch
+    def notify(self, user):
+        if user not in self._mention_on_new_race:
+            self._mention_on_new_race.append(user)
+
+    # Removes notifications for the given user on rematch
+    def dont_notify(self, user):
+        self._mention_on_new_race = [u for u in self._mention_on_new_race if u != user]
+
+# Coroutine methods ---------------------------------------------------
     # Set up the leaderboard etc. Should be called after creation; code not put into __init__ b/c coroutine
     async def initialize(self):
         asyncio.ensure_future(self._monitor_for_cleanup())
         await self._make_new_race()
+        await self.write('Enter the race with `.enter`, and type `.ready` when ready. '
+                         'Finish the race with `.done` or `.forfeit`. Use `.help` for a command list.')
 
     # Write text to the raceroom. Return a Message for the text written
     async def write(self, text):
-        await self.client.send_message(self.channel, text)
+        await self.client.send_message(self._channel, text)
 
     # Updates the leaderboard
     async def update_leaderboard(self):
-        await self.client.edit_channel(self.channel, topic=self.race.leaderboard)
+        await self.client.edit_channel(self._channel, topic=self._current_race.leaderboard)
 
+    # Post the race result to the race channel
+    async def post_result(self, text):
+        await self.client.send_message(self._race_manager.results_channel, text)
+
+# Commands ------------------------------------------------------------
     # Close the channel.
     async def close(self):
         await self._race_manager.close_room(self)
 
     # Makes a rematch of this race if the current race is finished
     async def make_rematch(self):
-        if self.race.complete:
+        if self._current_race.complete:
             await self._make_new_race()
-
-    # Post the race result to the race channel
-    async def post_result(self, text):
-        await self.client.send_message(self._race_manager.results_channel, text)
 
     # Alerts unready users
     async def poke(self):
-        if self._nopoke or not self.race or self.race.before_race:
+        if self._nopoke or not self._current_race or self._current_race.before_race:
             return
 
         ready_racers = []
         unready_racers = []
-        for racer in self.race.racers.values():
+        for racer in self._current_race.racers.values():
             if racer.is_ready:
                 ready_racers.append(racer)
             else:
@@ -131,34 +158,14 @@ class RaceRoom(BotChannel):
             await self.write('Poking {0}.'.format(alert_string[:-2]))
             asyncio.ensure_future(self._run_nopoke_delay())
 
-    # Called by the race when it finalizes
-    async def on_finalize_race(self):
-        await self.record_race()
-        await self.write('Results recorded.')
-
-    # Record the race in the database, and post results to the race_results channel
-    async def record_race(self):
-        if not self.race or self._recorded or not self.race.complete:
-            return
-
-        self._recorded = True
-
-        time_str = self.race.start_datetime.strftime("%d %B %Y, UTC %H:%M")
-
-        await self.post_result(
-            'Race begun at {0}:\n```\n{1}{2}\n```'.format(
-                time_str, self.race.leaderboard_header, self.race.leaderboard_text))
-
-        NecroDB().record_race(self.race)
-
-        await self.write('Race recorded.')
-
+# Private -----------------------------------------------------------------
     # Makes a new Race, overwriting the old one
     async def _make_new_race(self):
         # Make the race
-        self.race = Race(self)
-        self._recorded = False
-        await self.race.initialize()
+        self._race_number += 1
+        self._last_race = self._current_race
+        self._current_race = Race(self)
+        await self._current_race.initialize()
         await self.update_leaderboard()
 
         # Send @mention message
@@ -166,39 +173,37 @@ class RaceRoom(BotChannel):
         for user in self._mention_on_new_race:
             mention_text += user.mention + ' '
             self._mentioned_users.append(user)
-        if mention_text:
-            await self.client.send_message(self.channel, mention_text)
+
+        await self.client.send_message(
+            self._channel, '{0}\nRace number {1} has started!'.format(mention_text, self._race_number))
 
         # Print seed in chat
-        if self.race.race_info.seeded:
+        if self.race_info.seeded:
             await self.client.send_message(
-                self.channel, 'The seed for this race is {0}.'.format(self.race.race_info.seed))
+                self._channel, 'The seed for this race is {0}.'.format(self.current_race.race_info.seed))
 
     # Checks to see whether the room should be cleaned.
     async def _monitor_for_cleanup(self):
-        # Pre-race cleanup loop
         while True:
             await asyncio.sleep(30)  # Wait between check times
 
             # No race object
-            if self.race is None:
+            if self._current_race is None:
                 await self.close()
                 return
 
             # Pre-race
-            elif self.race.before_race:
-                if not self.race.any_entrants:
-                    if self.race.passed_no_entrants_cleanup_time:
+            elif self._current_race.before_race:
+                if not self._current_race.any_entrants:
+                    if self._current_race.passed_no_entrants_cleanup_time:
                         await self.close()
                         return
-                    elif self.race.passed_no_entrants_warning_time:
-                        await self.write(
-                            'Warning: Race has had zero entrants for some time and will be closed in {} '
-                            'seconds.'.format(time_remaining))
+                    elif self._current_race.passed_no_entrants_warning_time:
+                        await self.write('Warning: Race has had zero entrants for some time and will be closed soon.')
 
             # Post-race
-            elif self.race.complete:
-                async for msg in self.client.logs_from(self.channel, 1):
+            elif self._current_race.complete:
+                async for msg in self.client.logs_from(self._channel, 1):
                     if (datetime.datetime.utcnow() - msg.timestamp).total_seconds() > Config.CLEANUP_TIME_SEC:
                         await self.close()
                         return

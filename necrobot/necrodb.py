@@ -26,15 +26,16 @@ class NecroDB(object):
         self._close()
         return prefs
 
-    def get_all_matching_prefs(self, type, params):
-        if type == "hidespoilerchat":
+    def get_all_matching_prefs(self, pref_type, params):
+        if pref_type == "hidespoilerchat":
             query = """SELECT discord_id FROM user_prefs WHERE hidespoilerchat=%s"""
-        elif type == "dailyalert":
+        elif pref_type == "dailyalert":
             query = """SELECT discord_id FROM user_prefs WHERE dailyalert=%s OR dailyalert=%s"""
-        elif type == "racealert":
+        elif pref_type == "racealert":
             query = """SELECT discord_id FROM user_prefs WHERE racealert=%s OR racealert=%s"""
         self._connect()
         cursor = self._db_conn.cursor()
+        # noinspection PyUnboundLocalVariable
         cursor.execute(query, params)
         prefs = cursor.fetchall()
         self._close()
@@ -50,7 +51,7 @@ class NecroDB(object):
             break
 
         race_params = (new_raceid,
-                       race._start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                       race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
                        race.race_info.character,
                        race.race_info.descriptor,
                        race.race_info.flags,

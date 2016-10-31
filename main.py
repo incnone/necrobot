@@ -18,6 +18,7 @@ class LoginData(object):
 
 
 # This reconnect code stolen from https://gist.github.com/Hornwitser/93aceb86533ed3538b6f
+# noinspection PyShadowingNames
 async def keep_running(client, token):
     retry = backoff.ExponentialBackoff()
 
@@ -64,6 +65,7 @@ if __name__ == "__main__":
         log_output_filename = '{0}-{1}.log'.format(utc_today_str, filename_rider)
         if not (log_output_filename in filenames_in_dir):
             break
+    # noinspection PyUnboundLocalVariable
     log_output_filename = 'logging/{0}'.format(log_output_filename)
 
     # Set up logger

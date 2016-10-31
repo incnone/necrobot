@@ -1,5 +1,3 @@
-import asyncio
-
 from .channel.mainchannel import MainBotChannel
 from .channel.pmbotchannel import PMBotChannel
 from .daily.dailymanager import DailyManager

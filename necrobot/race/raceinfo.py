@@ -33,7 +33,8 @@ def _parse_seed(args, race_info):
     if args and len(args) >= 2 and args[0] in command_list:
         try:
             race_info.seed = int(args[1])
-            args = args[2:]
+            args.pop(0)
+            args.pop(0)
             return True
         except ValueError:
             return False
@@ -64,13 +65,14 @@ def _parse_char(args, race_info):
             char = character.get_char_from_str(args[1])
             if char is not None:
                 race_info.character = args[1].capitalize()
-                args = args[2:]
+                args.pop(0)
+                args.pop(0)
                 return True
         else:
             char = character.get_char_from_str(args[0])
             if char is not None:
                 race_info.character = args[0].capitalize()
-                args = args[1:]
+                args.pop(0)
                 return True
             
     return False
@@ -179,7 +181,9 @@ class RaceInfo(object):
 
     @property
     def flags(self):
-        return int(self.seeded)*SEEDED_FLAG + int(self.sudden_death)*SUDDEN_DEATH_FLAG + int(self.flagplant)*FLAGPLANT_FLAG
+        return int(self.seeded)*SEEDED_FLAG \
+               + int(self.sudden_death)*SUDDEN_DEATH_FLAG \
+               + int(self.flagplant)*FLAGPLANT_FLAG
 
     # a string "Seed: (int)" if the race is seeded, or the empty string otherwise
     @property

@@ -103,7 +103,7 @@ class Daily(object):
 
     # Returns true if the given daily is still open for submissions.
     def is_open(self, daily_number):
-        today = self.today_number;
+        today = self.today_number
         return today == daily_number or (today == int(daily_number)+1 and self.within_grace_period())
 
     # Returns the header for the daily leaderboard, given the type
@@ -204,8 +204,7 @@ class Daily(object):
     # Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.
     # Returns a string whose content confirms parse, or the empty string if parse fails.
     # DB_acc
-    asyncio.coroutine
-    def parse_submission(self, daily_number, user, args):
+    async def parse_submission(self, daily_number, user, args):
         lv = -1
         time = -1
         ret_str = ''

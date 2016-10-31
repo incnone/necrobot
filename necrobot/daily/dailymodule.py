@@ -301,7 +301,7 @@ class DailyWhen(DailyCommandType):
                     string_to_send = 'The {0} daily is today!'.format(charname)
                 elif days_until == 1:
                     string_to_send = 'The {0} daily is tomorrow!'.format(charname)
-                elif days_until != None:
+                elif days_until is not None:
                     date = datetime.datetime.utcnow().date() + datetime.timedelta(days=days_until)
                     string_to_send = 'The {0} daily is in {1} days ({2}, {3}).'.format(charname, days_until, calendar.day_name[date.weekday()], date.strftime("%B %d"))
                 asyncio.ensure_future(self._dm.client.send_message(command.channel, string_to_send))
@@ -497,9 +497,10 @@ class DailyModule(command.Module):
         for daily_type in [dailytype.CadenceSpeed(), dailytype.RotatingSpeed()]:
             daily = self.daily(daily_type)
             today_daily = daily.today_number
-            if prefs.hide_spoilerchat == True and not daily.has_submitted(today_daily, member.id):
-                read_permit = discord.PermissionOverwrite()
-                read_permit.read_messages = True
-                yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, read_permit)
-            elif prefs.hide_spoilerchat == False:
+            if prefs.hide_spoilerchat:
+                if not daily.has_submitted(today_daily, member.id):
+                    read_permit = discord.PermissionOverwrite()
+                    read_permit.read_messages = True
+                    yield from self.client.edit_channel_permissions(daily.spoilerchat_channel, member, read_permit)
+            else:
                 yield from self.client.delete_channel_permissions(daily.spoilerchat_channel, member)

@@ -20,16 +20,16 @@ class UserPrefs(object):
         self.race_alert = None
 
     def modify_with(self, user_prefs):
-        if user_prefs.hide_spoilerchat != None:
+        if user_prefs.hide_spoilerchat is not None:
             self.hide_spoilerchat = user_prefs.hide_spoilerchat
-        if user_prefs.daily_alert != None:
+        if user_prefs.daily_alert is not None:
             self.daily_alert = user_prefs.daily_alert
-        if user_prefs.race_alert != None:
+        if user_prefs.race_alert is not None:
             self.race_alert = user_prefs.race_alert
 
     @property
     def contains_info(self):
-        return self.hide_spoilerchat != None or self.daily_alert != None or self.race_alert != None
+        return self.hide_spoilerchat is not None or self.daily_alert is not None or self.race_alert is not None
 
     # A list of strings describing preferences set by this object
     @property
@@ -176,7 +176,7 @@ class PrefsModule(command.Module):
         users_matching_racealert = []
         lists_to_use = []
 
-        if user_prefs.hide_spoilerchat != None:
+        if user_prefs.hide_spoilerchat is not None:
             lists_to_use.append(users_matching_spoilerchat)
             params = (user_prefs.hide_spoilerchat,)
             for row in self.necrodb.get_all_matching_prefs("hidespoilerchat", params):
@@ -185,7 +185,7 @@ class PrefsModule(command.Module):
                     if int(member.id) == int(userid):
                         users_matching_spoilerchat.append(member)
 
-        if user_prefs.daily_alert != None:
+        if user_prefs.daily_alert is not None:
             lists_to_use.append(users_matching_dailyalert)
             params = (user_prefs.daily_alert,)
             if user_prefs.daily_alert != DailyAlerts['none'] and user_prefs.daily_alert != DailyAlerts['all']:
@@ -199,7 +199,7 @@ class PrefsModule(command.Module):
                     if int(member.id) == int(userid):
                         users_matching_dailyalert.append(member)
 
-        if user_prefs.race_alert != None:
+        if user_prefs.race_alert is not None:
             lists_to_use.append(users_matching_racealert)
             params = (user_prefs.race_alert,)
             if user_prefs.race_alert == RaceAlerts['some']:
