@@ -92,10 +92,7 @@ def init(config_filename):
     Config.MAIN_CHANNEL_NAME = defaults['channel_main']
     Config.REFERENCE_CHANNEL_NAME = defaults['channel_reference']
     Config.ADMIN_ROLE_NAMES = admin_roles
-    Config.DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_daily_spoilerchat']
     Config.DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
-    Config.ROTATING_DAILY_SPOILERCHAT_CHANNEL_NAME = defaults['channel_rot_daily_spoilerchat']
-    Config.ROTATING_DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_rot_daily_leaderboards']
     Config.RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
     Config.DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
     Config.COUNTDOWN_LENGTH = int(defaults['race_countdown_time_seconds'])
