@@ -10,16 +10,41 @@ Current version: 0.6.0
 
 ## Known bugs
 
+### Urgent
+
+- Races aren't being recorded in the DB
+
+### Fixable/precise but not urgent
+
+- Race rooms aren't being closed after appropriate time
+- Bot does not seem to respond to PMs
+- "Race number X has started" after rematch should be changed to "Race number X is open for entry!"
+- The message "<name> continues to race!" on `.undone` has the wrong "name" string.
+- change `.unpause` to use a countdown.
+- `.poke` is not working.
+- `.changerules` is not working as desired; should change rules for the current race if that race hasn't started.
+- `.viewprefs` doesn't PM you anything
+ 
+### Vague or not urgent
+
+- Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - Daily leaderboards will break due to post length if more than ~45 people participate
 - It's technically possible for the daily seed to be the same as a previous seed
 
+## Unclear sort-of-buggy behavior
+
+- `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
+just finished or the race that people are currently entering.
+- `.notify off` followed by `.e` causes the user to be on the notify list, which may be unintuitive.
+
 ## Features
+
+- add `.forceunready` command
 
 ### Different race modes
 
 - Score
-- Flagplanting
-- Sudden death
+- Time limits, with an auto-ping when the time expires
 
 ### Support for matches
 

@@ -7,7 +7,10 @@ from ..daily import dailytype
 class DailyCommandType(CommandType):
     def __init__(self, bot_channel, *args):
         CommandType.__init__(self, bot_channel, *args)
-        self._daily_manager = bot_channel.necrobot.daily_manager
+
+    @property
+    def _daily_manager(self):
+        return self.necrobot.daily_manager
 
     @property
     def client(self):
@@ -20,7 +23,7 @@ class DailyCommandType(CommandType):
         if daily_type:
             await self._daily_do_execute(command, daily_type)
         else:
-            await self._daily_manager.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "{0}: I couldn't figure out which daily you wanted to call a command for.".format(
                     command.author.mention))

@@ -64,14 +64,14 @@ def _parse_char(args, race_info):
         if len(args) >= 2 and args[0] in command_list:
             char = character.get_char_from_str(args[1])
             if char is not None:
-                race_info.character = args[1].capitalize()
+                race_info.set_char(args[1].capitalize())
                 args.pop(0)
                 args.pop(0)
                 return True
         else:
             char = character.get_char_from_str(args[0])
             if char is not None:
-                race_info.character = args[0].capitalize()
+                race_info.set_char(args[0].capitalize())
                 args.pop(0)
                 return True
             
@@ -165,26 +165,34 @@ class RaceInfo(object):
         the_copy.seed = race_info.seed if race_info.seed_fixed else seedgen.get_new_seed()
         the_copy.seed_fixed = race_info.seed_fixed
         the_copy.seeded = race_info.seeded
-        the_copy.character = race_info.character
         the_copy.descriptor = race_info.descriptor
         the_copy.sudden_death = race_info.sudden_death
         the_copy.flagplant = race_info.flagplant
+        the_copy._character = race_info.character
         return the_copy
 
     def __init__(self):
         self.seed = int(0)                   # the seed for the race
         self.seed_fixed = False              # is this specific seed preserved for rematches
         self.seeded = True                   # whether the race is run in seeded mode
-        self.character = character.NDChar.Cadence      # the character for the race
         self.descriptor = 'All-zones'        # a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
         self.sudden_death = False            # whether the race is sudden-death (cannot restart race after death)
         self.flagplant = False               # whether flagplanting is considered as a victory condition
+        self._character = character.NDChar.Cadence  # the character for the race
+
+    @property
+    def character(self):
+        return self._character
 
     @property
     def flags(self):
         return int(self.seeded)*SEEDED_FLAG \
                + int(self.sudden_death)*SUDDEN_DEATH_FLAG \
                + int(self.flagplant)*FLAGPLANT_FLAG
+
+    @property
+    def character_str(self):
+        return character.get_str_from_char(self._character)
 
     # a string "Seed: (int)" if the race is seeded, or the empty string otherwise
     @property
@@ -225,3 +233,6 @@ class RaceInfo(object):
             tags += 'f'
 
         return '{0}-{1}'.format(main_identifier, tags)
+
+    def set_char(self, char_as_str):
+        self._character = character.get_char_from_str(char_as_str)

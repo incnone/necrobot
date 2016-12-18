@@ -189,10 +189,8 @@ class Necrobot(object):
         if cmd.author == self.client.user:
             return
 
-        # only reply on-server or to PM
-        if not cmd.is_private and cmd.server != self.server:
-            return
-
-        # let each module attempt to handle the command in turn
-        if cmd.channel in self._bot_channels:
+        # handle the command with the appropriate bot channel
+        if cmd.is_private:
+            await self._pm_bot_channel.execute(cmd)
+        elif cmd.channel in self._bot_channels:
             await self._bot_channels[cmd.channel].execute(cmd)

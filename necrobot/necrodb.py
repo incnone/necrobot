@@ -65,7 +65,7 @@ class NecroDB(object):
 
         race_params = (new_raceid,
                        race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                       race.race_info.character,
+                       race.race_info.character_str,
                        race.race_info.descriptor,
                        race.race_info.flags,
                        race.race_info.seed,)
