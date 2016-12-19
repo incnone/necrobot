@@ -393,13 +393,13 @@ class Race(object):
             return
 
         if not racer.is_finished:
-            await self.room.write('{0} is still racing!'.format(racer_member))
+            await self.room.write('{0} is still racing!'.format(racer_member.mention))
 
         # See if we can cancel a (possible) finalization. If cancel_finalization() returns False,
         # then there is a finalization and we failed to cancel it, so racer cannot be made unready.
         success = await self._cancel_finalization()
         if success and racer.unfinish():
-            await self.room.write('{0} continues to race!'.format(racer_member))
+            await self.room.write('{0} continues to race!'.format(racer_member.mention))
             asyncio.ensure_future(self.room.update_leaderboard())
 
     async def forfeit_racer(self, racer):

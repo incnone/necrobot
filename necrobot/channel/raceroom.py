@@ -158,7 +158,7 @@ class RaceRoom(BotChannel):
 
     # Alerts unready users
     async def poke(self):
-        if self._nopoke or not self._current_race or self._current_race.before_race:
+        if self._nopoke or not self._current_race or not self._current_race.before_race:
             return
 
         ready_racers = []
@@ -210,13 +210,15 @@ class RaceRoom(BotChannel):
             mention_text += user.mention + ' '
             self._mentioned_users.append(user)
 
-        await self.client.send_message(
-            self._channel, '{0}\nRace number {1} has started!'.format(mention_text, self._race_number))
-
-        # Print seed in chat
         if self.race_info.seeded:
             await self.client.send_message(
-                self._channel, 'The seed for this race is {0}.'.format(self.current_race.race_info.seed))
+                self._channel,
+                '{0}\nRace number {1} is open for entry. Seed: {2}.'.format(
+                    mention_text, self._race_number, self.current_race.race_info.seed))
+        else:
+            await self.client.send_message(
+                self._channel,
+                '{0}\nRace number {1} is open for entry.'.format(mention_text, self._race_number))
 
     # Checks to see whether the room should be cleaned.
     async def _monitor_for_cleanup(self):

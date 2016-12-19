@@ -17,19 +17,19 @@ class DailyUserStatus(Enum):
     closed = 3
 
 
-def daily_to_date(daily_number):
-    return DATE_ZERO + datetime.timedelta(days=daily_number)
-
-
-def daily_to_datestr(daily_number):
-    return daily_to_date(daily_number).strftime("%d %B %Y")
-
-
-def daily_to_shortstr(daily_number):
-    return daily_to_date(daily_number).strftime("%d %b")
-
-
 class Daily(object):
+    @staticmethod
+    def daily_to_date(daily_number):
+        return DATE_ZERO + datetime.timedelta(days=daily_number)
+
+    @staticmethod
+    def daily_to_datestr(daily_number):
+        return Daily.daily_to_date(daily_number).strftime("%d %B %Y")
+
+    @staticmethod
+    def daily_to_shortstr(daily_number):
+        return Daily.daily_to_date(daily_number).strftime("%d %b")
+
     def __init__(self, daily_manager, daily_type):
         self._daily_manager = daily_manager
         self._daily_type = daily_type

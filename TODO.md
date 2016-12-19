@@ -10,20 +10,13 @@ Current version: 0.6.0
 
 ## Known bugs
 
-### Urgent
-
-- Races aren't being recorded in the DB
-
 ### Fixable/precise but not urgent
 
 - Race rooms aren't being closed after appropriate time
-- Bot does not seem to respond to PMs
-- "Race number X has started" after rematch should be changed to "Race number X is open for entry!"
-- The message "<name> continues to race!" on `.undone` has the wrong "name" string.
-- change `.unpause` to use a countdown.
-- `.poke` is not working.
+
+- `.poke` is not working. [maybe fixed]
 - `.changerules` is not working as desired; should change rules for the current race if that race hasn't started.
-- `.viewprefs` doesn't PM you anything
+- `.viewprefs` doesn't PM you anything if you have default prefs?
  
 ### Vague or not urgent
 
@@ -39,6 +32,7 @@ just finished or the race that people are currently entering.
 
 ## Features
 
+- change `.unpause` to use a countdown.
 - add `.forceunready` command
 
 ### Different race modes
