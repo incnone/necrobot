@@ -156,7 +156,6 @@ class RaceRoom(BotChannel):
     async def unpause(self):
         if self._current_race.paused:
             await self._current_race.unpause()
-            await self.write('Race unpaused. GO!')
 
     # Alerts unready users
     async def poke(self):

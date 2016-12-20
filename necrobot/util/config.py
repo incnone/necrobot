@@ -15,6 +15,7 @@ class Config(object):
 
     # number of seconds between the final .ready and race start
     COUNTDOWN_LENGTH = int(10)
+    UNPAUSE_COUNTDOWN_LENGTH = int(3)
 
     # number of seconds at which to start counting down each second in chat
     INCREMENTAL_COUNTDOWN_START = int(5)

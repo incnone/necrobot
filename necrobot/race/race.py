@@ -262,12 +262,7 @@ class Race(object):
 
     # Unpause the race timer.
     async def unpause(self):
-        if self._status == RaceStatus.paused:
-            self._status = RaceStatus.racing
-            self._adj_start_time += time.monotonic() - self._last_pause_time
-            asyncio.ensure_future(self.room.update_leaderboard())
-            return True
-        return False
+        await self._unpause_countdown()
 
     # Enters the given discord Member in the race
     async def enter_member(self, racer_member):
@@ -550,6 +545,33 @@ class Race(object):
 
         # Begin the race.
         await self._begin_race()
+
+    # Countdown for an unpause
+    async def _unpause_countdown(self):
+        countdown_systemtime_begin = time.monotonic()
+        countdown_timer = Config.UNPAUSE_COUNTDOWN_LENGTH
+        await asyncio.sleep(1)      # Pause before countdown
+
+        while countdown_timer > 0:
+            await self.room.write('{}'.format(countdown_timer))
+            sleep_time = \
+                countdown_systemtime_begin + Config.UNPAUSE_COUNTDOWN_LENGTH - countdown_timer + 1 - time.monotonic()
+            if sleep_time > 0:
+                await asyncio.sleep(sleep_time)         # sleep until the next tick
+            countdown_timer -= 1
+
+        # Begin the race.
+        await self._do_unpause_race()
+
+    # Actually unpause the race
+    async def _do_unpause_race(self):
+        if self._status == RaceStatus.paused:
+            await self.room.write('GO!')
+            self._status = RaceStatus.racing
+            self._adj_start_time += time.monotonic() - self._last_pause_time
+            asyncio.ensure_future(self.room.update_leaderboard())
+            return True
+        return False
 
     # Countdown coroutine to be wrapped in self._finalize_future.
     # Warning: Do not call this -- use end_race instead.

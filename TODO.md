@@ -13,7 +13,6 @@ Current version: 0.6.0
 
 - Race rooms aren't being closed after appropriate time
 - `.poke` is not working. [maybe fixed]
-- `.changerules` is not working as desired; should change rules for the current race if that race hasn't started. [maybe fixed]
 - `.dailywhen` is not working as advertised.
  
 ### Vague or not urgent
@@ -30,7 +29,6 @@ just finished or the race that people are currently entering.
 
 ## Features
 
-- change `.unpause` to use a countdown.
 - add `.forceunready` command
 
 ### Different race modes
