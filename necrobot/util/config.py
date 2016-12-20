@@ -1,13 +1,12 @@
 class Config(object):
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.0.0'
+    BOT_VERSION = '0.6.1'
 
     # admin
-    ADMIN_ROLE_NAMES = []  # list of names of roles to give admin access
+    ADMIN_ROLE_NAMES = ['Admin']  # list of names of roles to give admin access
 
     # channels
     MAIN_CHANNEL_NAME = 'necrobot_main'
-    REFERENCE_CHANNEL_NAME = 'command_list'
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
 
@@ -44,35 +43,21 @@ class Config(object):
     MYSQL_DB_PASSWD = ''
     MYSQL_DB_NAME = 'necrobot'
 
+    # login
+    LOGIN_TOKEN = ''
+    SERVER_ID = ''
+
 
 def init(config_filename):
     defaults = {
-        'bot_command_prefix': '.',
-        'bot_version': '0.0.0',
-        'channel_main': 'necrobot_main',
-        'channel_reference': 'command_list',
-        'channel_daily_spoilerchat': 'cadence_dailyspoilerchat',
-        'channel_daily_leaderboards': 'cadence_daily_leaderboards',
-        'channel_rot_daily_spoilerchat': 'rotating_dailyspoilerchat',
-        'channel_rot_daily_leaderboards': 'rotating_daily_leaderboards',
-        'channel_race_results': 'race_results',
-        'daily_grace_period_length_minutes': '60',
-        'race_countdown_time_seconds': '10',
-        'race_begin_counting_down_at': '5',
-        'race_record_after_seconds': '30',
-        'race_cleanup_after_room_is_silent_for_seconds': '180',
-        'race_cleanup_after_no_entrants_for_seconds': '120',
-        'race_give_cleanup_warning_after_no_entrants_for_seconds': '90',
-        'race_require_at_least_two': '0',
-        'race_poke_delay': '10',
         'mysql_db_host': 'localhost',
         'mysql_db_user': 'root',
         'mysql_db_passwd': '',
-        'mysql_db_name': 'necrobot'
+        'mysql_db_name': 'necrobot',
+        'login_token': '',
+        'server_id': ''
         }
 
-    admin_roles = []
-            
     file = open(config_filename, 'r')
     if file:
         for line in file:
@@ -80,33 +65,17 @@ def init(config_filename):
             if len(args) == 2:
                 if args[0] in defaults:
                     defaults[args[0]] = args[1].rstrip('\n')
-                elif args[0] == 'admin_roles':
-                    arglist = args[1].rstrip('\n').split(',')
-                    for arg in arglist:
-                        admin_roles.append(arg)
                 else:
                     print("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
+            else:
+                print("Error in {0} reading line: \"{1}\".".format(config_filename, line))
 
-    Config.BOT_COMMAND_PREFIX = defaults['bot_command_prefix']
-    Config.BOT_VERSION = defaults['bot_version']
-    Config.MAIN_CHANNEL_NAME = defaults['channel_main']
-    Config.REFERENCE_CHANNEL_NAME = defaults['channel_reference']
-    Config.ADMIN_ROLE_NAMES = admin_roles
-    Config.DAILY_LEADERBOARDS_CHANNEL_NAME = defaults['channel_daily_leaderboards']
-    Config.RACE_RESULTS_CHANNEL_NAME = defaults['channel_race_results']
-    Config.DAILY_GRACE_PERIOD = int(defaults['daily_grace_period_length_minutes'])
-    Config.COUNTDOWN_LENGTH = int(defaults['race_countdown_time_seconds'])
-    Config.INCREMENTAL_COUNTDOWN_START = int(defaults['race_begin_counting_down_at'])
-    Config.FINALIZE_TIME_SEC = int(defaults['race_record_after_seconds'])
-    Config.CLEANUP_TIME_SEC = int(defaults['race_cleanup_after_room_is_silent_for_seconds'])
-    Config.NO_ENTRANTS_CLEANUP_SEC = int(defaults['race_cleanup_after_no_entrants_for_seconds'])
-    Config.NO_ENTRANTS_CLEANUP_WARNING_SEC = int(defaults['race_give_cleanup_warning_after_no_entrants_for_seconds'])
-    Config.REQUIRE_AT_LEAST_TWO_FOR_RACE = bool(int(defaults['race_require_at_least_two']))
-    Config.RACE_POKE_DELAY = int(defaults['race_poke_delay'])
     Config.MYSQL_DB_HOST = defaults['mysql_db_host']
     Config.MYSQL_DB_USER = defaults['mysql_db_user']
     Config.MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
     Config.MYSQL_DB_NAME = defaults['mysql_db_name']
+    Config.LOGIN_TOKEN = defaults['login_token']
+    Config.SERVER_ID = defaults['server_id']
 
 # -Testing-------------------------------------------------------------------------
 

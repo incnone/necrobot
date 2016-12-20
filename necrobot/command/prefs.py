@@ -45,6 +45,15 @@ class RaceAlert(CommandType):
 
         self.necrobot.prefs_manager.set_prefs(user_prefs, command.author)
 
+        if user_prefs.race_alert:
+            await self.necrobot.client.send_message(
+                command.channel,
+                "{0}: You will now receive PM alerts when a new raceroom is made.".format(command.author.mention))
+        else:
+            await self.necrobot.client.send_message(
+                command.channel,
+                "{0}: You will no longer receive PM alerts for races.".format(command.author.mention))
+
 
 class ViewPrefs(CommandType):
     def __init__(self, bot_channel):

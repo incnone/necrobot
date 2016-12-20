@@ -11,10 +11,6 @@ class RaceManager(object):
         self._results_channel = necrobot.find_channel(Config.RACE_RESULTS_CHANNEL_NAME)
 
     @property
-    def necrodb(self):
-        return self.necrobot.necrodb
-
-    @property
     def results_channel(self):
         return self._results_channel
 

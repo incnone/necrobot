@@ -43,10 +43,6 @@ class Daily(object):
     def necrobot(self):
         return self._daily_manager.necrobot
 
-    @property
-    def necrodb(self):
-        return self.necrobot.necrodb
-
     # Return today's daily number
     @property
     def today_number(self):
@@ -118,7 +114,7 @@ class Daily(object):
         params = (daily_number, self.daily_type.value)
 
         if display_seed:
-            for row in self.necrodb.get_daily_seed(params):
+            for row in NecroDB().get_daily_seed(params):
                 text += "Seed: {}\n".format(row[0])
                 break
 
@@ -128,7 +124,7 @@ class Daily(object):
         prior_result = ''   # detect and handle ties
         rank_to_display = int(1)
 
-        for row in self.necrodb.get_daily_times(params):
+        for row in NecroDB().get_daily_times(params):
             name = row[0]
             lv = row[1]
             time = row[2]
@@ -163,13 +159,13 @@ class Daily(object):
     # True if the given user has submitted for the given daily
     def has_submitted(self, daily_number, user_id):
         params = (user_id, daily_number, self.daily_type.value)
-        return self.necrodb.has_submitted_daily(params)
+        return NecroDB().has_submitted_daily(params)
 
     # True if the given user has registered for the given daily
     # DB_acc
     def has_registered(self, daily_number, user_id):
         params = (user_id, daily_number, self.daily_type.value)
-        return self.necrodb.has_registered_daily(params)
+        return NecroDB().has_registered_daily(params)
 
     # Attempts to register the given user for the given daily
     # DB_acc
@@ -178,14 +174,14 @@ class Daily(object):
             return False
         else:
             params = (user_id, daily_number, self.daily_type.value, -1, -1)
-            self.necrodb.register_daily(params)
+            NecroDB().register_daily(params)
             return True
 
     # Returns the most recent daily for which the user is registered (or 0 if no such)
     # DB_acc
     def registered_daily(self, user_id):
         params = (user_id, self.daily_type.value)
-        for row in self.necrodb.registered_daily(params):
+        for row in NecroDB().registered_daily(params):
             return row[0]
         return 0
 
@@ -193,7 +189,7 @@ class Daily(object):
     # DB_acc
     def submitted_daily(self, user_id):
         params = (user_id, self.daily_type.value,)
-        for row in self.necrodb.submitted_daily(params):
+        for row in NecroDB().submitted_daily(params):
             if row[1] != -1:
                 return row[0]
         return 0
@@ -228,44 +224,44 @@ class Daily(object):
     # Submit a run to the given daily number
     def submit_to_daily(self, daily_number, user, lv, time):
         params = (user.id, daily_number, self.daily_type.value, lv, time,)
-        self.necrodb.register_daily(params)
+        NecroDB().register_daily(params)
 
     # Delete a run from the daily
     def delete_from_daily(self, daily_number, user):
         params = (-1, user.id, daily_number, self.daily_type.value)
-        self.necrodb.delete_from_daily(params)
+        NecroDB().delete_from_daily(params)
 
     # Return the seed for the given daily number. Create seed if it doesn't already exist.
     def get_seed(self, daily_number):
         params = (daily_number, self.daily_type.value)
 
-        for row in self.necrodb.get_daily_seed(params):
+        for row in NecroDB().get_daily_seed(params):
             return row[0]
 
         # if we made it here, there was no entry in the table, so make one
         today_seed = seedgen.get_new_seed()
         values = (daily_number, self.daily_type.value, today_seed, 0,)
-        self.necrodb.create_daily(values)
+        NecroDB().create_daily(values)
         return today_seed
 
     # Registers the given Message ID in the database for the given daily number
     def register_message(self, daily_number, message_id):
         params = (daily_number, self.daily_type.value)
-        for _ in self.necrodb.get_daily_seed(params):
+        for _ in NecroDB().get_daily_seed(params):
             # if here, there was an entry in the table, so we will update it
             values = (message_id, daily_number, self.daily_type.value)
-            self.necrodb.update_daily(values)
+            NecroDB().update_daily(values)
             return
 
         # else, there was no entry, so make one
         today_seed = seedgen.get_new_seed()
         values = (daily_number, self.daily_type.value, today_seed, message_id,)
-        self.necrodb.create_daily(values)
+        NecroDB().create_daily(values)
 
     # Returns the Discord Message ID for the leaderboard entry for the given daily number
     def get_message_id(self, daily_number):
         params = (daily_number, self.daily_type.value)
-        for row in self.necrodb.get_daily_message_id(params):
+        for row in NecroDB().get_daily_message_id(params):
             return int(row[0])
         return None
 

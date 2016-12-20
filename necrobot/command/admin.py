@@ -47,8 +47,7 @@ class Info(CommandType):
     async def _do_execute(self, cmd):
         await self.bot_channel.client.send_message(
             cmd.channel,
-            'Necrobot v-{0} (alpha). See {1} for a list of commands.'.format(
-                Config.BOT_VERSION, self.bot_channel.necrobot.ref_channel.mention))
+            'Necrobot v-{0} (alpha). Type `.help` for a list of commands.'.format(Config.BOT_VERSION))
 
 
 class Register(CommandType):

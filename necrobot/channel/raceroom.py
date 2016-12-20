@@ -127,6 +127,8 @@ class RaceRoom(BotChannel):
         new_race_info = raceinfo.parse_args_modify(command_args, raceinfo.RaceInfo.copy(self._race_info))
         if new_race_info:
             self._race_info = new_race_info
+            if self.current_race.before_race:
+                self.current_race.race_info = raceinfo.RaceInfo.copy(self._race_info)
             await self.write('Changed rules for the next race.')
             await self.update_leaderboard()
 

@@ -9,9 +9,13 @@ class UserPrefs(object):
         pref_str = []
         if self.daily_alert:
             pref_str.append('Get seeds (via PM) when new dailies open.')
+        else:
+            pref_str.append('No daily PMs.')
 
         if self.race_alert:
             pref_str.append('Alert (via PM) when a race begins.')
+        else:
+            pref_str.append('No race alert PMs.')
 
         return pref_str
 
@@ -19,6 +23,5 @@ class UserPrefs(object):
     def merge_prefs(self, rhs):
         if rhs.daily_alert is not None:
             self.daily_alert = rhs.daily_alert
-        if __name__ == '__main__':
-            if rhs.race_alert is not None:
-                self.race_alert = rhs.race_alert
+        if rhs.race_alert is not None:
+            self.race_alert = rhs.race_alert

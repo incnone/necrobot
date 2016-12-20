@@ -1,25 +1,24 @@
 from .userprefs import UserPrefs
+from ..necrodb import NecroDB
 
 
 class PrefsManager(object):
     def __init__(self, necrobot):
         self.necrobot = necrobot
 
-    @property
-    def necrodb(self):
-        return self.necrobot.necrodb
-
     def set_prefs(self, user_prefs, user):
         prefs = self.get_prefs(user)
         prefs.merge_prefs(user_prefs)
 
         params = (int(user.id), False, 2 if prefs.daily_alert else 0, 1 if prefs.race_alert else 0,)
-        self.necrodb.set_prefs(params)
+        print(params)
+        NecroDB().set_prefs(params)
 
-    def get_prefs(self, user):
+    @staticmethod
+    def get_prefs(user):
         user_prefs = UserPrefs()
         params = (int(user.id),)
-        for row in self.necrodb.get_prefs(params):
+        for row in NecroDB().get_prefs(params):
             user_prefs.daily_alert = (row[2] != 0)
             user_prefs.race_alert = (row[3] != 0)
         return user_prefs
@@ -34,7 +33,7 @@ class PrefsManager(object):
             lists_to_use.append(users_matching_dailyalert)
             params = (1, 2, 3,) if user_prefs.daily_alert else (0,)
 
-            for row in self.necrodb.get_all_matching_prefs("dailyalert", params):
+            for row in NecroDB().get_all_matching_prefs("dailyalert", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):
@@ -44,7 +43,7 @@ class PrefsManager(object):
             lists_to_use.append(users_matching_racealert)
             params = (1, 2,) if user_prefs.race_alert else (0,)
 
-            for row in self.necrodb.get_all_matching_prefs("racealert", params):
+            for row in NecroDB().get_all_matching_prefs("racealert", params):
                 userid = row[0]
                 for member in self.necrobot.server.members:
                     if int(member.id) == int(userid):

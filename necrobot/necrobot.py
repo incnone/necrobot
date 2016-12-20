@@ -19,8 +19,6 @@ class Necrobot(object):
     def __init__(self, client):
         self.client = client                    # the discord.Client object
         self.server = None                      # the discord.Server on which to read commands
-        self.admin_id = None                    # int (discord user id)
-        self.necrodb = NecroDB()                # NecroDB object
 
         self._main_discord_channel = None       # discord.Channel
 
@@ -33,10 +31,7 @@ class Necrobot(object):
 
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
-    # admin_id: [int]
-    def post_login_init(self, server_id, admin_id=None):
-        self.admin_id = admin_id
-
+    def post_login_init(self, server_id):
         # set up server
         try:
             int(server_id)
@@ -89,15 +84,6 @@ class Necrobot(object):
     @property
     def main_channel(self):
         return self._main_discord_channel
-
-    # Return the #command_list channel
-    # return: [discord.Channel]
-    @property
-    def ref_channel(self):
-        for channel in self.server.channels:
-            if channel.name == Config.REFERENCE_CHANNEL_NAME:
-                return channel
-        return None
 
     # Get a list of all admin roles on the server
     # return: [list<discord.Role>]
@@ -162,12 +148,13 @@ class Necrobot(object):
 
     # Registers all users currently on the server
     def register_all_users(self):
-        self.necrodb.register_all_users(self.server.members)
+        NecroDB().register_all_users(self.server.members)
 
     # Registers a specific user on the server
     # member: [discord.Member]
-    def register_user(self, member):
-        self.necrodb.register_all_users([member])
+    @staticmethod
+    def register_user(member):
+        NecroDB().register_all_users([member])
 
 # Coroutines--------------------
     # Log out of discord

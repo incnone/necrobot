@@ -6,17 +6,15 @@ Current version: 0.6.0
 
 - Remove spoilerchat channels
 - Merge daily leaderboard channels
-- Change config file to reflect the changes in config.Config
 
 ## Known bugs
 
 ### Fixable/precise but not urgent
 
 - Race rooms aren't being closed after appropriate time
-
 - `.poke` is not working. [maybe fixed]
-- `.changerules` is not working as desired; should change rules for the current race if that race hasn't started.
-- `.viewprefs` doesn't PM you anything if you have default prefs?
+- `.changerules` is not working as desired; should change rules for the current race if that race hasn't started. [maybe fixed]
+- `.dailywhen` is not working as advertised.
  
 ### Vague or not urgent
 

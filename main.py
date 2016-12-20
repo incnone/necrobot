@@ -11,12 +11,6 @@ from necrobot.necrobot import Necrobot
 from necrobot.util import backoff, config, seedgen
 
 
-class LoginData(object):
-    token = ''
-    admin_id = None
-    server_id = None
-
-
 # This reconnect code stolen from https://gist.github.com/Hornwitser/93aceb86533ed3538b6f
 # noinspection PyShadowingNames
 async def keep_running(client, token):
@@ -82,17 +76,17 @@ if __name__ == "__main__":
 # Seed the random number generator------------------------
     seedgen.init_seed()
 
-# Make data for logging in to discord---------------------
-    login_data = LoginData()
-    login_info = open('data/login_info', 'r')
-    login_data.token = login_info.readline().rstrip('\n')
-    login_data.admin_id = login_info.readline().rstrip('\n')
-    login_data.server_id = login_info.readline().rstrip('\n')
-    login_info.close()
-
-    # Create the discord.py Client object and the Necrobot----
+# Create the discord.py Client object and the Necrobot----
     client = discord.Client()
     the_necrobot = Necrobot(client)
+
+# Try to get login data from login_info if you didn't find it in bot_config; for back-compatibility
+    if config.Config.LOGIN_TOKEN == '':
+        login_info = open('data/login_info', 'r')
+        config.Config.LOGIN_TOKEN = login_info.readline().rstrip('\n')
+        login_info.readline().rstrip('\n')
+        config.Config.SERVER_ID = login_info.readline().rstrip('\n')
+        login_info.close()
 
 
 # Define client events------------------------------------
@@ -102,7 +96,7 @@ if __name__ == "__main__":
         print('-Logged in---------------')
         print('User name: {0}'.format(client.user.name))
         print('User id  : {0}'.format(client.user.id))
-        the_necrobot.post_login_init(login_data.server_id, login_data.admin_id)
+        the_necrobot.post_login_init(config.Config.SERVER_ID)
         print('-------------------------')
         print(' ')
 
@@ -121,4 +115,4 @@ if __name__ == "__main__":
 
 
 # Run client---------------------------------------------
-    asyncio.get_event_loop().run_until_complete(keep_running(client, login_data.token))
+    asyncio.get_event_loop().run_until_complete(keep_running(client, config.Config.LOGIN_TOKEN))

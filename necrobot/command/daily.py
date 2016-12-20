@@ -335,7 +335,7 @@ class ForceRunNewDaily(DailyCommandType):
         self.secret_command = True
 
     async def _daily_do_execute(self, command, daily_type):
-        if int(command.author.id) == int(self._daily_manager.necrobot.admin_id):
+        if self.necrobot.is_admin(command.author):
             for daily_type in dailytype.DailyType:
                 await self._daily_manager.on_new_daily(self._daily_manager.daily(daily_type))
 
