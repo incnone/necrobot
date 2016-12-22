@@ -6,6 +6,7 @@ from . import dailytype
 from ..race import racetime
 from ..util import level, seedgen
 from ..util.config import Config
+from ..necrodb import NecroDB
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 
@@ -104,7 +105,7 @@ class Daily(object):
     def leaderboard_header(self, daily_number):
         return "{0} -- {1}".format(
             dailytype.leaderboard_header(self.daily_type, daily_number),
-            daily_to_datestr(daily_number))
+            self.daily_to_datestr(daily_number))
 
     # Return the text for the daily with the given daily number
     def leaderboard_text(self, daily_number, display_seed=False):

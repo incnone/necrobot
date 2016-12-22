@@ -1,11 +1,6 @@
 # Necrobot TODO
 
-Current version: 0.6.0
-
-## Necrobot discord server changes
-
-- Remove spoilerchat channels
-- Merge daily leaderboard channels
+Current version: 0.6.1
 
 ## Known bugs
 
@@ -40,10 +35,6 @@ just finished or the race that people are currently entering.
 
 It should be simple to make a "best-of-X" or "repeat-Y" type of "private match" in the bot. This is mostly for CoNDOR purposes.
 
-### Individual run module
-
-Allow a user to store and track individual runs (e.g. for practice), and then later get stats on those runs.
-
 ### Support for voice rooms attached to race rooms
 
 Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
@@ -56,4 +47,4 @@ Allow for users to register their streams and to tag certain races as "streamed"
 
 - A weekly that's intended for optimizing a seed.
 - Make the daily more like an asynchronous race: You're allowed to die, and the bot tracks your time between a
-`.begin` and `.done` sent via PM.
+`.begin` and `.done` sent via PM. (This could be made alongside an "individual run module" for practicing?)
