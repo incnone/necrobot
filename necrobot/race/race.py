@@ -26,7 +26,7 @@ class RaceStatus(IntEnum):
 StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
               RaceStatus.entry_open: 'Entry open!',
               RaceStatus.counting_down: 'Starting!',
-              RaceStatus.racing: 'In progrss!',
+              RaceStatus.racing: 'In progress!',
               RaceStatus.paused: 'Paused!',
               RaceStatus.completed: 'Complete.',
               RaceStatus.finalized: 'Results finalized.',
