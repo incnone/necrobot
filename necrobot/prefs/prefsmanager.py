@@ -31,7 +31,7 @@ class PrefsManager(object):
 
         if user_prefs.daily_alert is not None:
             lists_to_use.append(users_matching_dailyalert)
-            params = (1, 2, 3,) if user_prefs.daily_alert else (0,)
+            params = (2,) if user_prefs.daily_alert else (0,)
 
             for row in NecroDB().get_all_matching_prefs("dailyalert", params):
                 userid = row[0]
@@ -41,7 +41,7 @@ class PrefsManager(object):
 
         if user_prefs.race_alert is not None:
             lists_to_use.append(users_matching_racealert)
-            params = (1, 2,) if user_prefs.race_alert else (0,)
+            params = (1,) if user_prefs.race_alert else (0,)
 
             for row in NecroDB().get_all_matching_prefs("racealert", params):
                 userid = row[0]

@@ -42,9 +42,9 @@ class NecroDB(object):
         if pref_type == "hidespoilerchat":
             query = """SELECT discord_id FROM user_prefs WHERE hidespoilerchat=%s"""
         elif pref_type == "dailyalert":
-            query = """SELECT discord_id FROM user_prefs WHERE dailyalert=%s OR dailyalert=%s"""
+            query = """SELECT discord_id FROM user_prefs WHERE dailyalert=%s"""
         elif pref_type == "racealert":
-            query = """SELECT discord_id FROM user_prefs WHERE racealert=%s OR racealert=%s"""
+            query = """SELECT discord_id FROM user_prefs WHERE racealert=%s"""
         self._connect()
         cursor = self._db_conn.cursor()
         # noinspection PyUnboundLocalVariable

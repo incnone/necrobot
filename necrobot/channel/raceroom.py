@@ -206,10 +206,13 @@ class RaceRoom(BotChannel):
         await self.update_leaderboard()
 
         # Send @mention message
+        self._mentioned_users = []
         mention_text = ''
         for user in self._mention_on_new_race:
             mention_text += user.mention + ' '
             self._mentioned_users.append(user)
+
+        self._mention_on_new_race = []
 
         if self.race_info.seeded:
             await self.client.send_message(

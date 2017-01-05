@@ -6,6 +6,8 @@ Current version: 0.6.1
 
 ### Fixable/precise but not urgent
 
+- `.missing` command appears to be broken; not sure what the conditions for this are.
+- Make `.dailyseed` available in necrobot_main channel
 - Race rooms aren't being closed after appropriate time
 - `.poke` is not working. [maybe fixed]
 - `.dailywhen` is not working as advertised.
