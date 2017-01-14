@@ -4,8 +4,15 @@ Current version: 0.6.1
 
 ## Known bugs
 
+### More urgent
+
+- Daily seed alerts are being sent multiple times. (The number of times they're being sent
+appears to increase by one per daily.)
+
 ### Fixable/precise but not urgent
 
+- The preference-setting commands like `.dailyalert` and `.racealert` should give in-channel
+feedback when used.
 - `.missing` command appears to be broken; not sure what the conditions for this are.
 - Make `.dailyseed` available in necrobot_main channel
 - Race rooms aren't being closed after appropriate time
