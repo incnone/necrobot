@@ -9,6 +9,7 @@ class MainBotChannel(BotChannel):
             admin.Die(self),
             admin.Help(self),
             admin.Info(self),
+            admin.Reboot(self),
             admin.Register(self),
             color.ColorMe(self),
             daily.DailyChar(self),

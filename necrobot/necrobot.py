@@ -29,6 +29,8 @@ class Necrobot(object):
         self._race_manager = None
         self._prefs_manager = None
 
+        self._quitting = False
+
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
     def post_login_init(self, server_id):
@@ -78,6 +80,11 @@ class Necrobot(object):
 
     def unregister_bot_channel(self, discord_channel):
         del self._bot_channels[discord_channel]
+
+    # True if the bot wants to quit (i.e. if logout() has been called)
+    @property
+    def quitting(self):
+        return self._quitting
 
     # Return the #necrobot_main channel
     # return: [discord.Channel]
@@ -159,6 +166,11 @@ class Necrobot(object):
 # Coroutines--------------------
     # Log out of discord
     async def logout(self):
+        self._quitting = True
+        await self.client.logout()
+
+    # Log out of discord, but do not set quitting flag
+    async def reboot(self):
         await self.client.logout()
 
     # Call this when anyone joins the server

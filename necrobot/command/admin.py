@@ -16,7 +16,6 @@ class Help(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'help')
         self.help_text = 'Help.'
-        self.bot_channel = bot_channel
 
     async def _do_execute(self, command):
         if len(command.args) == 0:
@@ -42,12 +41,21 @@ class Info(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'info')
         self.help_text = "Necrobot version information."
-        self.bot_channel = bot_channel
 
     async def _do_execute(self, cmd):
         await self.bot_channel.client.send_message(
             cmd.channel,
             'Necrobot v-{0} (alpha). Type `.help` for a list of commands.'.format(Config.BOT_VERSION))
+
+
+class Reboot(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'reboot')
+        self.help_text = 'Reboot the necrobot. [Admin only]'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        await self.necrobot.reboot()
 
 
 class Register(CommandType):

@@ -9,6 +9,7 @@ class PMBotChannel(BotChannel):
             admin.Die(self),
             admin.Help(self),
             admin.Info(self),
+            admin.Reboot(self),
             admin.Register(self),
             admin.RegisterAll(self),
             daily.DailyChar(self),
