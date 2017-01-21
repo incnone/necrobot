@@ -7,10 +7,6 @@ from .race.racemanager import RaceManager
 from .util import console
 from .util.config import Config
 
-# from util.userprefs import PrefsModule
-#
-# from daily.dailymodule import DailyModule
-
 
 class Necrobot(object):
     # Barebones constructor

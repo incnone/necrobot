@@ -103,6 +103,7 @@ if __name__ == "__main__":
                 client.http.recreate()
 
             try:
+                logger.info('Connecting.')
                 asyncio.get_event_loop().run_until_complete(client.connect())
 
             except (discord.HTTPException,
@@ -118,7 +119,7 @@ if __name__ == "__main__":
                 logger.exception('Exception while running.')
 
             finally:
-                for task in asyncio.Task.all_tasks():
+                for task in asyncio.Task.all_tasks(asyncio.get_event_loop()):
                     task.cancel()
 
                 asyncio.get_event_loop().run_until_complete(asyncio.sleep(retry.delay()))
