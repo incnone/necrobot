@@ -1,6 +1,7 @@
 from enum import Enum
 import asyncio
 import datetime
+import logging
 
 from . import dailytype
 from ..race import racetime
@@ -280,10 +281,15 @@ class Daily(object):
     # Coroutine running in the background; after it becomes a new daily, will automatically PM out the seeds to
     # users that have that preference.
     async def _daily_update(self):
-        while True:
-            await asyncio.sleep(self.time_until_next.total_seconds() + 1)  # sleep until next daily
-            await self._daily_manager.on_new_daily(self)
-            await asyncio.sleep(120)  # buffer b/c i'm worried for some reason about idk
+        try:
+            while True:
+                await asyncio.sleep(self.time_until_next.total_seconds() + 1)  # sleep until next daily
+                await self._daily_manager.on_new_daily(self)
+                await asyncio.sleep(120)  # buffer b/c i'm worried for some reason about idk
+        except asyncio.CancelledError:
+            logging.getLogger('discord').warning('Task Daily._daily_update was cancelled.')
+            print('Task was cancelled.')
+            raise
 
     # Formats the given hours, minutes into a string
     @staticmethod

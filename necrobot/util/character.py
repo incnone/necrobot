@@ -14,6 +14,7 @@ class NDChar(Enum):
     Bard = 9
     Story = 10
     All = 11
+    Nocturna = 12
 
 
 def get_char_from_str(char_name):

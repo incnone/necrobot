@@ -81,7 +81,9 @@ if __name__ == "__main__":
 # Run client---------------------------------------------
     retry = backoff.ExponentialBackoff()
 
+    logger.info('Entering main loop.')
     while True:
+        logger.info('Beginning main loop: creating ')
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
         the_necrobot = Necrobot(client)
