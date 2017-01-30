@@ -10,6 +10,8 @@ from ..race import permissioninfo
 class PrivateRaceRoom(RaceRoom):
     def __init__(self, race_manager, race_discord_channel, race_private_info, admin_as_member):
         RaceRoom.__init__(self, race_manager, race_discord_channel, race_private_info.race_info)
+        self._room_creator = admin_as_member
+
         self.permission_info = permissioninfo.get_permission_info(self.necrobot.server, race_private_info)
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
@@ -50,6 +52,9 @@ class PrivateRaceRoom(RaceRoom):
 
         # Initialize base -----------------------------------------
         await RaceRoom.initialize(self)
+
+        # Automatically enter creator into race
+        await self.current_race.enter_member(self._room_creator)
 
     # Allow the member to see the channel
     async def allow(self, member_or_role):
