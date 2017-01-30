@@ -43,9 +43,18 @@ class MakePrivate(CommandType):
         self.help_text = "Create a new private race room. This takes the same command-line options as `.make`."
 
     async def _do_execute(self, command):
+        try:
+            cmd_idx = command.args.index('-repeat')
+            repeat_index = int(command.args[cmd_idx + 1])
+            del command.args[cmd_idx + 1]
+            del command.args[cmd_idx]
+        except (ValueError, IndexError):
+            repeat_index = 1
+
         private_race_info = privateraceinfo.parse_args(command.args)
         if private_race_info is not None:
-            await self.necrobot.race_manager.make_private_room(private_race_info, command.author)
+            for _ in range(repeat_index):
+                await self.necrobot.race_manager.make_private_room(private_race_info, command.author)
         else:
             await self.necrobot.client.send_message(
                 command.channel, 'Error parsing arguments to `.makeprivate`.')
