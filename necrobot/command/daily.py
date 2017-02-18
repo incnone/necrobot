@@ -71,6 +71,7 @@ class DailyResubmit(DailyCommandType):
         else:
             submission_string = daily.parse_submission(last_submitted, command.author, command.args)
             if submission_string:   # parse succeeded
+                await self._daily_manager.update_leaderboard(last_submitted, daily_type)
                 await self.client.send_message(
                     command.channel,
                     "Reubmitted for {0}, {2}: You {1}.".format(
@@ -231,6 +232,7 @@ class DailySubmit(DailyCommandType):
         else:
             submission_string = daily.parse_submission(daily_number, command.author, command.args)
             if submission_string:       # parse succeeded
+                await self._daily_manager.update_leaderboard(daily_number, daily_type)
                 await self.client.send_message(
                     command.channel,
                     "Submitted for {0}, {2}: You {1}.".format(

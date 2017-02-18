@@ -6,8 +6,9 @@ Current version: 0.7.0
 
 ### More urgent
 
-- Daily seed alerts are being sent multiple times. (The number of times they're being sent
-appears to increase by one per daily.) [should be fixed]
+- ~~Daily runs aren't being recorded.~~
+- ~~Daily seed alerts are being sent multiple times. (The number of times they're being sent
+appears to increase by one per daily.)~~
 
 ### Fixable/precise but not urgent
 

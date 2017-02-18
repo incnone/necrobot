@@ -33,9 +33,13 @@ class Daily(object):
         return Daily.daily_to_date(daily_number).strftime("%d %b")
 
     def __init__(self, daily_manager, daily_type):
+        logging.getLogger('discord').info('Initializing new Daily object.')
         self._daily_manager = daily_manager
         self._daily_type = daily_type
-        asyncio.ensure_future(self._daily_update())
+        self._daily_update_future = asyncio.ensure_future(self._daily_update())
+
+    def close(self):
+        self._daily_update_future.cancel()
 
     @property
     def daily_type(self):
@@ -282,13 +286,13 @@ class Daily(object):
     # users that have that preference.
     async def _daily_update(self):
         try:
+            logging.getLogger('discord').info('Entering daily._daily_update.')
             while True:
                 await asyncio.sleep(self.time_until_next.total_seconds() + 1)  # sleep until next daily
                 await self._daily_manager.on_new_daily(self)
                 await asyncio.sleep(120)  # buffer b/c i'm worried for some reason about idk
         except asyncio.CancelledError:
-            logging.getLogger('discord').warning('Task Daily._daily_update was cancelled.')
-            print('Task was cancelled.')
+            logging.getLogger('discord').info('Task Daily._daily_update was cancelled.')
             raise
 
     # Formats the given hours, minutes into a string

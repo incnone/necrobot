@@ -1,4 +1,5 @@
 import datetime
+import logging
 from . import dailytype
 from .dailytype import DailyType
 from .daily import DATE_ZERO
@@ -9,10 +10,15 @@ from ..util.config import Config
 
 class DailyManager(object):
     def __init__(self, necrobot):
+        logging.getLogger('discord').info('Initializing new DailyManager object.')
         self.necrobot = necrobot
         self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
         self._cadence_daily = Daily(self, DailyType.cadence)
         self._rotating_daily = Daily(self, DailyType.rotating)
+
+    def close(self):
+        self._cadence_daily.close()
+        self._rotating_daily.close()
 
     @property
     def client(self):

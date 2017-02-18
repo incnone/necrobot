@@ -6,6 +6,9 @@ class PrefsManager(object):
     def __init__(self, necrobot):
         self.necrobot = necrobot
 
+    def close(self):
+        pass
+
     def set_prefs(self, user_prefs, user):
         prefs = self.get_prefs(user)
         prefs.merge_prefs(user_prefs)

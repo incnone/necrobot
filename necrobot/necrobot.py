@@ -30,6 +30,9 @@ class Necrobot(object):
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
     def post_login_init(self, server_id):
+        # Cleanup possible old data
+        self.cleanup()
+
         # set up server
         try:
             int(server_id)
@@ -54,11 +57,21 @@ class Necrobot(object):
             console.error('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
             exit(1)
 
+        # Create new data
         self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
         self._pm_bot_channel = PMBotChannel(self)
         self._daily_manager = DailyManager(self)
         self._race_manager = RaceManager(self)
         self._prefs_manager = PrefsManager(self)
+
+    def cleanup(self):
+        if self._daily_manager is not None:
+            self._daily_manager.close()
+        if self._race_manager is not None:
+            self._race_manager.close()
+        if self._prefs_manager is not None:
+            self._prefs_manager.close()
+        self._bot_channels.clear()
 
     # Returns the BotChannel corresponding to the given discord.Channel, if one exists
     # discord_channel: [discord.Channel]
