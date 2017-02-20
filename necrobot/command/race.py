@@ -189,10 +189,14 @@ class Missing(CommandType):
         self.help_text = 'List users that were notified but have not yet entered.'
 
     async def _do_execute(self, command):
+        if not self.bot_channel.current_race.before_race:
+            await self.bot_channel.write("Can't do that now; can only see non-entered racers during race entry.")
+            return
+
         missing_usernames = ''
         for user in self.bot_channel.mentioned_users:
             user_entered = False
-            for racer in self.bot_channel.last_begun_race.racers:
+            for racer in self.bot_channel.current_race.racers:
                 if int(racer.member.id) == int(user.id):
                     user_entered = True
                     break

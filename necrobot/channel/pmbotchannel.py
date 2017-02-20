@@ -26,6 +26,7 @@ class PMBotChannel(BotChannel):
             prefs.DailyAlert(self),
             prefs.RaceAlert(self),
             prefs.ViewPrefs(self),
+            racemake.Make(self),
             racemake.MakePrivate(self),
             seedgen.RandomSeed(self),
         ]

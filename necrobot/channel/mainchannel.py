@@ -15,6 +15,7 @@ class MainBotChannel(BotChannel):
             daily.DailyChar(self),
             daily.DailyRules(self),
             daily.DailySchedule(self),
+            daily.DailySeed(self),
             daily.DailyWhen(self),
             prefs.DailyAlert(self),
             prefs.RaceAlert(self),

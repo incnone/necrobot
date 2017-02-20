@@ -23,6 +23,15 @@ class DailyAlert(CommandType):
 
         self.necrobot.prefs_manager.set_prefs(user_prefs, command.author)
 
+        if user_prefs.daily_alert:
+            await self.necrobot.client.send_message(
+                command.channel,
+                "{0}: You will now receive PM alerts with the new daily seeds.".format(command.author.mention))
+        else:
+            await self.necrobot.client.send_message(
+                command.channel,
+                "{0}: You will no longer receive PM alerts for dailies.".format(command.author.mention))
+
 
 class RaceAlert(CommandType):
     def __init__(self, bot_channel):
