@@ -24,6 +24,16 @@ from ..util import character, seedgen
 SEEDED_FLAG = int(pow(2, 0))
 SUDDEN_DEATH_FLAG = int(pow(2, 1))
 FLAGPLANT_FLAG = int(pow(2, 2))
+AMPLIFIED_FLAG = int(pow(2, 3))
+
+
+def _parse_amplified(args, race_info):
+    command_list = ['nodlc']
+    if args and args[0] in command_list:
+        race_info.amplified = False
+        args.pop(0)
+        return True
+    return False
 
 
 def _parse_seed(args, race_info):
@@ -168,6 +178,7 @@ class RaceInfo(object):
         the_copy.descriptor = race_info.descriptor
         the_copy.sudden_death = race_info.sudden_death
         the_copy.flagplant = race_info.flagplant
+        the_copy.amplified = race_info.amplified
         the_copy._character = race_info.character
         return the_copy
 
@@ -178,6 +189,7 @@ class RaceInfo(object):
         self.descriptor = 'All-zones'        # a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
         self.sudden_death = False            # whether the race is sudden-death (cannot restart race after death)
         self.flagplant = False               # whether flagplanting is considered as a victory condition
+        self.amplified = True                # whether playing with the Amplified DLC
         self._character = character.NDChar.Cadence  # the character for the race
 
     @property
@@ -188,7 +200,8 @@ class RaceInfo(object):
     def flags(self):
         return int(self.seeded)*SEEDED_FLAG \
                + int(self.sudden_death)*SUDDEN_DEATH_FLAG \
-               + int(self.flagplant)*FLAGPLANT_FLAG
+               + int(self.flagplant)*FLAGPLANT_FLAG \
+               + int(self.amplified)*AMPLIFIED_FLAG
 
     @property
     def character_str(self):
@@ -206,6 +219,9 @@ class RaceInfo(object):
     @property
     def format_str(self):
         char_str = character.get_str_from_char(self.character) + ' '
+        if not self.amplified:
+            char_str += '(No DLC) '
+
         desc_str = (self.descriptor + ' ') if not self.descriptor == 'All-zones' else ''
         seeded_str = 'Seeded' if self.seeded else 'Unseeded'
         addon_str = ''

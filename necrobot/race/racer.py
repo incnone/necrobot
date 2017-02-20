@@ -4,6 +4,11 @@ from .race import racetime
 from ..util import level
 
 
+FIELD_UNKNOWN = int(-1)
+LEVEL_UNKNOWN_DEATH = int(0)
+LEVEL_FINISHED = int(-2)
+
+
 class RacerStatus(IntEnum):
     unready = 1
     ready = 2
@@ -29,9 +34,9 @@ class Racer(object):
     def __init__(self, member):
         self.member = member                    # the Discord member who is this racer
         self._state = RacerStatus.unready       # see RacerState notes above
-        self.time = int(-1)                     # hundredths of a second
-        self.igt = int(-1)                      # hundredths of a second
-        self.level = int(-1)                    # level of death (set to 18 for a win, 0 for unknown death)
+        self.time = FIELD_UNKNOWN               # hundredths of a second
+        self.igt = FIELD_UNKNOWN                # hundredths of a second
+        self.level = FIELD_UNKNOWN              # level of death (or LEVEL_FINISHED or LEVEL_UNKNOWN_DEATH)
         self.comment = ''                       # a comment added with .comment
 
     @property
@@ -121,17 +126,17 @@ class Racer(object):
         if self._state == RacerStatus.racing or self._state == RacerStatus.finished:
             self._state = RacerStatus.forfeit
             self.time = time
-            self.level = 0
-            self.igt = int(-1)
+            self.level = LEVEL_UNKNOWN_DEATH
+            self.igt = FIELD_UNKNOWN
             return True
         return False
 
     def unforfeit(self):
         if self._state == RacerStatus.forfeit:
             self._state = RacerStatus.racing
-            self.time = int(-1)
-            self.igt = int(-1)
-            self.level = int(-1)
+            self.time = FIELD_UNKNOWN
+            self.igt = FIELD_UNKNOWN
+            self.level = FIELD_UNKNOWN
             return True
         return False
 
@@ -139,16 +144,16 @@ class Racer(object):
         if self._state == RacerStatus.racing:
             self._state = RacerStatus.finished
             self.time = time
-            self.level = 18
+            self.level = LEVEL_FINISHED
             return True
         return False
             
     def unfinish(self):
         if self._state == RacerStatus.finished:
             self._state = RacerStatus.racing
-            self.time = int(-1)
-            self.igt = int(-1)
-            self.level = int(-1)
+            self.time = FIELD_UNKNOWN
+            self.igt = FIELD_UNKNOWN
+            self.level = FIELD_UNKNOWN
             return True
         return False
 

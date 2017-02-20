@@ -20,12 +20,13 @@ class Make(CommandType):
             "\n" \
             "More options are available using usual command-line syntax:" \
             "```" \
-            ".make [-c char] [-u|-s|-seed number] [-custom desc]" \
+            ".make [-c char] [-u|-s|-seed number] [-custom desc] [-nodlc]" \
             "```" \
             "makes a race with character char, and seeded/unseeded determined by the `-u` or `-s` flag. If instead a " \
             "number is specified, the race will be seeded and forced to use the seed given. The number must be an " \
             "integer (text seeds are not supported). " \
-            "Finally, desc allows you to give any custom one-word description of the race (e.g., '4-shrine')."
+            "desc allows you to give any custom one-word description of the race (e.g., '4-shrine'). " \
+            "The -nodlc flag indicates that the race is run without the Amplified DLC; otherwise, the DLC is assumed."
 
     async def _do_execute(self, command):
         race_info = raceinfo.parse_args(command.args)
