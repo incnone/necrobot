@@ -31,4 +31,4 @@ racer_data
 	rank			-- rank the player finished in (undefined if forfeit)
 	igt			-- in-game time, if racer entered one (total hundredths of a second; -1 if none entered)
 	comment			-- any comment the racer entered
-	level			-- the level the player died on, if applicable, otherwise 18 for win, 0 for unknown forfeit, -1 nos
+	level			-- the level the player died on, if applicable, otherwise -2 for win, 0 for unknown forfeit, -1 nos
