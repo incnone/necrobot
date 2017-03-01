@@ -1,7 +1,7 @@
 import random
 
 MIN_SEED = 1            
-MAX_SEED = 99999999
+MAX_SEED = 16777216     # currently 2^24 as this is the maximum unrounded seed
 
 
 def init_seed():

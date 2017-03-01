@@ -65,7 +65,7 @@ class Racer(object):
             status += StatusStrs[self._state]
             if self._state == RacerStatus.forfeit and not short:
                 status += ' (rta {}'.format(racetime.to_str(self.time))
-                if 0 < self.level < 22:
+                if (self.level > 0) and (self.level < 18):
                     status += ', ' + level.to_str(self.level)
                 if not self.igt == -1:
                     status += ', igt {}'.format(racetime.to_str(self.igt))
