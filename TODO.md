@@ -8,6 +8,7 @@ Current version: 0.6
 
 ### Fixable/precise but not urgent
 
+- Don't post race results for private races
 - `.poke` is not working. [maybe fixed]
 - `.dailywhen` is not working as advertised.
  
