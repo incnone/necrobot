@@ -3,6 +3,7 @@ import aiohttp
 import datetime
 import logging
 import os
+import sys
 import websockets
 
 import discord
@@ -36,9 +37,40 @@ def ready_client_events():
 
 
 if __name__ == "__main__":
+    # Prepend timestamps to stdout and stderr, and send output to logging
+    class StampedOutput(object):
+        def __init__(self, out_str):
+            self._out_str = out_str
+            self._logger = logging.getLogger('discord')
+            self._warning_level = out_str == sys.stderr
+
+        new_line = True
+
+        def _do_logging(self, s):
+            if self._warning_level:
+                self._logger.warning(s)
+            else:
+                self._logger.info(s)
+
+        def write(self, s):
+            if s == '\n':
+                self._out_str.write(s)
+                self.new_line = True
+            elif self.new_line:
+                self._out_str.write(s)
+                self._do_logging('[{0}]: {1}'.format(datetime.datetime.utcnow().strftime("%H-%M-%S"), s))
+                self.new_line = False
+            else:
+                self._out_str.write(s)
+                self._do_logging(s)
+
+
+    sys.stdout = StampedOutput(sys.stdout)
+    sys.stderr = StampedOutput(sys.stderr)
+
     print('Initializing necrobot...')
 
-# Logging--------------------------------------------------
+    # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
     utc_yesterday = utc_today - datetime.timedelta(days=1)
