@@ -21,12 +21,13 @@ Current version: 0.6
 ## Unclear sort-of-buggy behavior
 
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
-just finished or the race that people are currently entering.
+just finished or the race that people are currently entering. It maybe also doesn't work after a race?
 - `.notify off` followed by `.e` causes the user to be on the notify list, which may be unintuitive.
 
 ## Features
 
 - add `.forceunready` command
+- allow self-racing in private channels
 
 ### Different race modes
 

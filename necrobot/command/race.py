@@ -189,23 +189,34 @@ class Missing(CommandType):
         self.help_text = 'List users that were notified but have not yet entered.'
 
     async def _do_execute(self, command):
-        if not self.bot_channel.current_race.before_race:
-            await self.bot_channel.write("Can't do that now; can only see non-entered racers during race entry.")
-            return
-
-        missing_usernames = ''
-        for user in self.bot_channel.mentioned_users:
-            user_entered = False
+        if self.bot_channel.current_race.before_race:
+            unentered_usernames = ''
+            unready_usernames = ''
+            for user in self.bot_channel.mentioned_users:
+                user_entered = False
+                for racer in self.bot_channel.current_race.racers:
+                    if int(racer.member.id) == int(user.id):
+                        user_entered = True
+                        break
+                if not user_entered:
+                    unentered_usernames += user.display_name + ', '
             for racer in self.bot_channel.current_race.racers:
-                if int(racer.member.id) == int(user.id):
-                    user_entered = True
-                    break
-            if not user_entered:
-                missing_usernames += user.display_name + ', '
-        if missing_usernames:
-            await self.bot_channel.write('Missing: {0}.'.format(missing_usernames[:-2]))
-        else:
-            await self.bot_channel.write('No one missing!')
+                if not racer.is_ready:
+                    unready_usernames += racer.member.display_name + ', '
+
+            unentered_usernames = unentered_usernames[:-2] if unentered_usernames else 'Nobody!'
+            unready_usernames = unready_usernames[:-2] if unready_usernames else 'Nobody!'
+
+            await self.bot_channel.write(
+                'Unentered: {0}. \nUnready: {1}.'.format(unentered_usernames, unready_usernames))
+        elif self.bot_channel.current_race.during_race:
+            racing_usernames = ''
+            for racer in self.bot_channel.current_race.racers:
+                if racer.is_racing:
+                    racing_usernames += racer.member.display_name + ', '
+            racing_usernames = racing_usernames[:-2] if racing_usernames else 'Nobody!'
+            await self.bot_channel.write(
+                'Still racing: {0}.'.format(racing_usernames))
 
 
 class Shame(CommandType):
