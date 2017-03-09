@@ -9,3 +9,4 @@ data/bot_config
 *.xml
 .idea/necrobot.iml
 data/bot_config
+data/test_bot_config

@@ -52,6 +52,9 @@ if __name__ == "__main__":
             else:
                 self._logger.info(s)
 
+        def flush(self):
+            pass
+
         def write(self, s):
             if s == '\n':
                 self._out_str.write(s)
