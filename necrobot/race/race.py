@@ -298,23 +298,20 @@ class Race(object):
                 await self._cancel_countdown()
             await self.room.write('{0} is no longer entered.'.format(racer_member.mention))
             await self.begin_if_ready()
-            asyncio.ensure_future(self.room.update_leaderboard())
+            await self.room.update_leaderboard()
         else:
             await self.room.write('{0} is not entered.'.format(racer_member.mention))
 
     # Enters the racer if not entered, and puts that racer in the 'ready' state
     async def enter_and_ready_member(self, racer_member):
-        if self._status == RaceStatus.counting_down:
-            await self._cancel_countdown()
+        already_entered = self.has_racer(racer_member)
 
-        if not self.before_race:
-            await self.room.write('{0}: Cannot enter; the race has already started.'.format(racer_member.mention))
+        if not already_entered and not self.before_race:
+            await self.room.write('{0}: The race has already started!'.format(racer_member.mention))
             return
 
-        had_to_enter = False
-        if not self.has_racer(racer_member):
+        if not already_entered:
             self._do_enter_racer(racer_member)
-            had_to_enter = True
 
         racer = self.get_racer(racer_member)
         if racer is None:
@@ -328,11 +325,13 @@ class Race(object):
             return
 
         racer.ready()
+        if self._status == RaceStatus.counting_down:
+            await self._cancel_countdown()
 
         if len(self.racers) == 1 and Config.REQUIRE_AT_LEAST_TWO_FOR_RACE:
             await self.room.write(
                 'Waiting on at least one other person to join the race.')
-        elif had_to_enter:
+        elif not already_entered:
             await self.room.write(
                 '{0} has entered and is ready! {1} remaining.'.format(racer_member.mention, self.num_not_ready))
         else:
@@ -362,7 +361,7 @@ class Race(object):
 
     # Puts the given Racer in the 'finished' state and gets their time
     async def finish_member(self, racer_member):
-        if not self._status == RaceStatus.racing:
+        if not self._status == RaceStatus.racing or self._status == RaceStatus.completed:
             return
 
         racer = self.get_racer(racer_member)
@@ -370,13 +369,14 @@ class Race(object):
             return
 
         if racer.finish(self.current_time):
+            self._status = RaceStatus.racing
             await self.room.write(
                 '{0} has finished in {1} place with a time of {2}.'.format(
                     racer_member.mention,
                     ordinal(self.num_finished),
                     racer.time_str))
-            asyncio.ensure_future(self._check_for_race_end())
-            asyncio.ensure_future(self.room.update_leaderboard())
+            await self._check_for_race_end()
+            await self.room.update_leaderboard()
 
     # Attempt to put the given Racer in the 'racing' state if they were finished
     async def unfinish_member(self, racer_member):
@@ -395,7 +395,7 @@ class Race(object):
         success = await self._cancel_finalization()
         if success and racer.unfinish():
             await self.room.write('{0} continues to race!'.format(racer_member.mention))
-            asyncio.ensure_future(self.room.update_leaderboard())
+            await self.room.update_leaderboard()
 
     async def forfeit_racer(self, racer):
         if self.before_race or self.final:
@@ -427,7 +427,7 @@ class Race(object):
         success = await self._cancel_finalization()
         if success and racer.unforfeit():
             await self.room.write('{0} is no longer forfeit and continues to race!'.format(racer_member.mention))
-            asyncio.ensure_future(self.room.update_leaderboard())
+            await self.room.update_leaderboard()
 
     # Forfeits all racers that have not yet finished
     async def forfeit_all_remaining(self):
@@ -446,7 +446,7 @@ class Race(object):
             return
 
         racer.add_comment(comment_str[:255])
-        asyncio.ensure_future(self.room.update_leaderboard())
+        await self.room.update_leaderboard()
 
     # Adds a death for the given member at the given level and causes them to forfeit
     async def set_death_for_member(self, racer_member, level):
@@ -473,7 +473,7 @@ class Race(object):
 
         if igt != -1 and racer.is_done_racing:
             racer.igt = igt
-            asyncio.ensure_future(self.room.update_leaderboard())
+            await self.room.update_leaderboard()
 
     # Kicks the specified racers from the race (they can re-enter)
     async def kick_racers(self, names_to_kick):
@@ -487,7 +487,7 @@ class Race(object):
         await self._cancel_countdown()
         await self._cancel_finalization()
         await self.room.write('The race has been cancelled.')
-        asyncio.ensure_future(self.room.update_leaderboard())
+        await self.room.update_leaderboard()
 
 # Private methods (all coroutines)
     # Actually enter the racer
@@ -509,7 +509,7 @@ class Race(object):
         self._adj_start_time = time.monotonic()
         self._start_datetime = datetime.datetime.utcnow()
         await self.room.write('GO!')
-        asyncio.ensure_future(self.room.update_leaderboard())
+        await self.room.update_leaderboard()
 
     # Checks to see if all racers have either finished or forfeited. If so, ends the race.
     # Return True if race was ended.
@@ -627,8 +627,8 @@ class Race(object):
                     return False
         return True
 
-    # Causes the racer to forfeit and prints a message if successful
+    # Causes the racer to forfeit
     async def _do_forfeit_racer(self, racer):
         if racer.forfeit(self.current_time):
-            asyncio.ensure_future(self._check_for_race_end())
-            asyncio.ensure_future(self.room.update_leaderboard())
+            await self._check_for_race_end()
+            await self.room.update_leaderboard()

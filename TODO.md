@@ -1,6 +1,6 @@
 # Necrobot TODO
 
-Current version: 0.6
+Current version: 0.7
 
 ## Known bugs
 

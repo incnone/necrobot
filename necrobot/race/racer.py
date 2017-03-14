@@ -141,7 +141,7 @@ class Racer(object):
         return False
 
     def finish(self, time):
-        if self._state == RacerStatus.racing:
+        if self._state == RacerStatus.racing or self._state == RacerStatus.forfeit:
             self._state = RacerStatus.finished
             self.time = time
             self.level = LEVEL_FINISHED

@@ -7,7 +7,18 @@ class DailyType(Enum):
     cadence = 0
     rotating = 1
 
-rotating_daily_chars = ['Eli', 'Bolt', 'Dove', 'Aria', 'Bard', 'Dorian', 'Coda', 'Melody', 'Monk']
+rotating_daily_chars = [
+    'Eli',
+    'Diamond',
+    'Bolt',
+    'Dove',
+    'Aria',
+    'Bard',
+    'Dorian',
+    'Coda',
+    'Nocturna',
+    'Melody',
+    'Monk']
 
 
 def character(daily_type, daily_number):
