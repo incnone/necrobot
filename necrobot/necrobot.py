@@ -25,13 +25,15 @@ class Necrobot(object):
         self._race_manager = None
         self._prefs_manager = None
 
+        self._initted = False
         self._quitting = False
 
     # Initializes object; call after client has been logged in to discord
     # server_id: [int]
     def post_login_init(self, server_id):
-        # Cleanup possible old data
-        self.cleanup()
+        console.info('-Logged in---------------')
+        console.info('User name: {0}'.format(self.client.user.name))
+        console.info('User id  : {0}'.format(self.client.user.id))
 
         # set up server
         try:
@@ -43,26 +45,48 @@ class Necrobot(object):
         if self.client.servers:
             for s in self.client.servers:
                 if id_is_int and s.id == server_id:
-                    print("Server id: {}".format(s.id))
+                    console.info("Server id: {}".format(s.id))
                     self.server = s
                 elif s.name == server_id:
-                    print("Server id: {}".format(s.id))
+                    console.info("Server id: {}".format(s.id))
                     self.server = s
         else:
             console.error('Could not find the server.')
             exit(1)
+
+        console.info('-------------------------')
+        console.info(' ')
 
         self._main_discord_channel = self.find_channel(Config.MAIN_CHANNEL_NAME)
         if self._main_discord_channel is None:
             console.error('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
             exit(1)
 
-        # Create new data
-        self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
-        self._pm_bot_channel = PMBotChannel(self)
-        self._daily_manager = DailyManager(self)
-        self._race_manager = RaceManager(self)
-        self._prefs_manager = PrefsManager(self)
+        if not self._initted:
+            # Create new data
+            self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
+            self._pm_bot_channel = PMBotChannel(self)
+            self._daily_manager = DailyManager(self)
+            self._race_manager = RaceManager(self)
+            self._prefs_manager = PrefsManager(self)
+            self._initted = True
+        else:
+            self.refresh()
+
+    def refresh(self):
+        channel_pairs = {}
+        for channel, bot_channel in self._bot_channels.items():
+            new_channel = self.find_channel_with_id(channel.id)
+            if new_channel is not None:
+                channel_pairs[new_channel] = bot_channel
+        self._bot_channels = channel_pairs
+
+        if self._daily_manager is not None:
+            self._daily_manager.refresh()
+        if self._race_manager is not None:
+            self._race_manager.refresh()
+        if self._prefs_manager is not None:
+            self._prefs_manager.refresh()
 
     def cleanup(self):
         if self._daily_manager is not None:
@@ -141,6 +165,15 @@ class Necrobot(object):
     def find_channel(self, channel_name):
         for channel in self.server.channels:
             if channel.name == channel_name:
+                return channel
+        return None
+
+    # Returns the channel with the given name on the server, if any
+    # channel_name: [int]
+    # return: [discord.Channel]
+    def find_channel_with_id(self, channel_id):
+        for channel in self.server.channels:
+            if int(channel.id) == int(channel_id):
                 return channel
         return None
 

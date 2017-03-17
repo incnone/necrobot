@@ -10,6 +10,9 @@ class RaceManager(object):
         self.necrobot = necrobot
         self._results_channel = necrobot.find_channel(Config.RACE_RESULTS_CHANNEL_NAME)
 
+    def refresh(self):
+        pass
+
     def close(self):
         pass
 

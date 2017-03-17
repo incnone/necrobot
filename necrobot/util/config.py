@@ -1,6 +1,6 @@
 class Config(object):
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.7.0'
+    BOT_VERSION = '0.8.0'
 
     # admin
     ADMIN_ROLE_NAMES = ['Admin']  # list of names of roles to give admin access

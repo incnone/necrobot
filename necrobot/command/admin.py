@@ -1,3 +1,4 @@
+from discord import DiscordException
 from .command import CommandType
 from ..util.config import Config
 
@@ -75,6 +76,15 @@ class RegisterAll(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        if self.necrobot.is_admin(cmd.author):
-            self.necrobot.register_all_users()
-            await self.necrobot.client.send_message(cmd.channel, 'Registered all unregistered users.')
+        self.necrobot.register_all_users()
+        await self.necrobot.client.send_message(cmd.channel, 'Registered all unregistered users.')
+
+
+class RedoInit(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'redoinit')
+        self.help_text = 'Call Necrobot\'s post_login_init method. [Admin only]'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        self.necrobot.post_login_init(self.necrobot.server.id)

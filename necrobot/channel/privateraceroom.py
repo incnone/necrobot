@@ -20,6 +20,8 @@ class PrivateRaceRoom(RaceRoom):
         self.command_types.append(privaterace.Remove(self))
         self.command_types.append(privaterace.MakeAdmin(self))
         self.command_types.append(privaterace.ShowAdmins(self))
+        self.command_types.append(privaterace.NoPost(self))
+        self.command_types.append(privaterace.Post(self))
 
     # A string to add to the race details ("Private")
     @property

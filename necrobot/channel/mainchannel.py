@@ -11,6 +11,7 @@ class MainBotChannel(BotChannel):
             admin.Info(self),
             admin.Reboot(self),
             admin.Register(self),
+            admin.RedoInit(self),
             color.ColorMe(self),
             daily.DailyChar(self),
             daily.DailyRules(self),

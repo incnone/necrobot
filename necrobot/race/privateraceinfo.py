@@ -8,8 +8,10 @@ from . import raceinfo
 # Warning: destroys information in the list args
 def parse_args(args):
     race_private_info = PrivateRaceInfo()
-    race_private_info.race_info = raceinfo.parse_args(args)
+    race_private_info.race_info = raceinfo.RaceInfo()
     race_private_info.race_info.can_be_solo = True
+    race_private_info.race_info.post_results = False
+    raceinfo.parse_args_modify(args, race_private_info.race_info)
     if race_private_info.race_info is None:
         return None
 

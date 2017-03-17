@@ -17,12 +17,7 @@ def ready_client_events():
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
-        print('-Logged in---------------')
-        print('User name: {0}'.format(client.user.name))
-        print('User id  : {0}'.format(client.user.id))
         the_necrobot.post_login_init(config.Config.SERVER_ID)
-        print('-------------------------')
-        print(' ')
 
     # Called whenever a new message is posted in any channel on any server
     @client.event

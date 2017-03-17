@@ -27,6 +27,15 @@ FLAGPLANT_FLAG = int(pow(2, 2))
 AMPLIFIED_FLAG = int(pow(2, 3))
 
 
+def _parse_post_results(args, race_info):
+    command_list = ['post']
+    if args and args[0] in command_list:
+        race_info.post_results = True
+        args.pop(0)
+        return True
+    return False
+
+
 def _parse_amplified(args, race_info):
     command_list = ['nodlc']
     if args and args[0] in command_list:
@@ -114,8 +123,8 @@ def parse_args_modify(args, race_info):
     set_seeded = False  
     set_char = False
     set_desc = False
-    # set_sd = False
-    # set_fp = False
+    set_amplified = False
+    set_post_results = False
 
     while args:
         next_cmd_args = clparse.pop_command(args)
@@ -138,16 +147,16 @@ def parse_args_modify(args, race_info):
                 return None
             else:
                 set_char = True
-        # elif parse_sudden_death(args, race_info):
-        #     if set_sd:
-        #         return False
-        #     else:
-        #         set_seeded = True
-        # elif parse_flagplant(args, race_info):
-        #     if set_fp:
-        #         return False
-        #     else:
-        #         set_seeded = True
+        elif _parse_amplified(next_cmd_args, race_info):
+            if set_amplified:
+                return None
+            else:
+                set_amplified = True
+        elif _parse_post_results(next_cmd_args, race_info):
+            if set_post_results:
+                return None
+            else:
+                set_post_results = True
         elif _parse_desc(next_cmd_args, race_info):
             if set_desc:
                 return None
@@ -180,6 +189,7 @@ class RaceInfo(object):
         the_copy.flagplant = race_info.flagplant
         the_copy.amplified = race_info.amplified
         the_copy.can_be_solo = race_info.can_be_solo
+        the_copy.post_results = race_info.post_results
         the_copy._character = race_info.character
         return the_copy
 
@@ -192,6 +202,7 @@ class RaceInfo(object):
         self.flagplant = False               # whether flagplanting is considered as a victory condition
         self.amplified = True                # whether playing with the Amplified DLC
         self.can_be_solo = False             # whether the race can be run with only one person
+        self.post_results = True             # whether to post the results in the race_results channel
         self._character = character.NDChar.Cadence  # the character for the race
 
     @property

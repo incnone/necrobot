@@ -16,6 +16,9 @@ class DailyManager(object):
         self._cadence_daily = Daily(self, DailyType.cadence)
         self._rotating_daily = Daily(self, DailyType.rotating)
 
+    def refresh(self):
+        pass
+
     def close(self):
         self._cadence_daily.close()
         self._rotating_daily.close()

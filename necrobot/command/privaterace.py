@@ -15,6 +15,26 @@ class Add(CommandType):
         return True
 
 
+class NoPost(CommandType):
+    def __init__(self, race_room):
+        CommandType.__init__(self, race_room, 'nopost')
+        self.help_text = 'Ask the bot not to post results of this race in the results channel. (On by default.)'
+        self.admin_only = True
+
+    async def _do_execute(self, command):
+        await self.bot_channel.set_post_result(False)
+
+
+class Post(CommandType):
+    def __init__(self, race_room):
+        CommandType.__init__(self, race_room, 'post')
+        self.help_text = 'Ask the bot to post results of this race in the results channel.'
+        self.admin_only = True
+
+    async def _do_execute(self, command):
+        await self.bot_channel.set_post_result(True)
+
+
 class ShowAdmins(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'showadmins', 'admins')

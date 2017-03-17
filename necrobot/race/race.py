@@ -589,11 +589,11 @@ class Race(object):
         # Perform the finalization and record the race. At this point, the finalization cannot be cancelled.
         self._status = RaceStatus.finalized
         time_str = self.start_datetime.strftime("%d %B %Y, UTC %H:%M")
-        await self.room.post_result(
-            'Race begun at {0}:\n```\n{1}{2}\n```'.format(
-                time_str, self.leaderboard_header, self.leaderboard_text))
-
         NecroDB().record_race(self)
+        if self.race_info.post_results:
+            await self.room.post_result(
+                'Race begun at {0}:\n```\n{1}{2}\n```'.format(
+                    time_str, self.leaderboard_header, self.leaderboard_text))
 
     # Attempt to cancel the race countdown -- transition race state from 'counting_down' to 'entry_open'
     # Returns False only if there IS a countdown, AND we failed to cancel it
