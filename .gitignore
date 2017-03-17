@@ -10,3 +10,4 @@ data/bot_config
 .idea/necrobot.iml
 data/bot_config
 data/test_bot_config
+data/real_bot_config

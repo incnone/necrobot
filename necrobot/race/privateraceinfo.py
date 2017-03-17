@@ -9,6 +9,7 @@ from . import raceinfo
 def parse_args(args):
     race_private_info = PrivateRaceInfo()
     race_private_info.race_info = raceinfo.parse_args(args)
+    race_private_info.race_info.can_be_solo = True
     if race_private_info.race_info is None:
         return None
 

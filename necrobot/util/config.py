@@ -32,9 +32,6 @@ class Config(object):
     # give a warning re: cleaning race room if no entrants for this duration of time
     NO_ENTRANTS_CLEANUP_WARNING_SEC = int(90)
 
-    # if True, then races with only one entrant cannot be started
-    REQUIRE_AT_LEAST_TWO_FOR_RACE = True
-
     # number of seconds to wait between allowing pokes
     RACE_POKE_DELAY = int(10)
 

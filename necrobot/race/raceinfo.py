@@ -179,6 +179,7 @@ class RaceInfo(object):
         the_copy.sudden_death = race_info.sudden_death
         the_copy.flagplant = race_info.flagplant
         the_copy.amplified = race_info.amplified
+        the_copy.can_be_solo = race_info.can_be_solo
         the_copy._character = race_info.character
         return the_copy
 
@@ -190,6 +191,7 @@ class RaceInfo(object):
         self.sudden_death = False            # whether the race is sudden-death (cannot restart race after death)
         self.flagplant = False               # whether flagplanting is considered as a victory condition
         self.amplified = True                # whether playing with the Amplified DLC
+        self.can_be_solo = False             # whether the race can be run with only one person
         self._character = character.NDChar.Cadence  # the character for the race
 
     @property

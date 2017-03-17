@@ -141,7 +141,7 @@ class Race(object):
     # Returns true if all racers are ready and there's enough racers
     @property
     def all_racers_ready(self):
-        return self.num_not_ready == 0 and (not Config.REQUIRE_AT_LEAST_TWO_FOR_RACE or len(self.racers) > 1)
+        return self.num_not_ready == 0 and (self.race_info.can_be_solo or len(self.racers) > 1)
 
     # Returns the number of racers not in the 'ready' state
     @property
@@ -294,7 +294,7 @@ class Race(object):
             self.racers = [r for r in self.racers if int(r.member.id) != int(racer_member.id)]
             if not self.racers:
                 self._last_no_entrants_time = time.monotonic()
-            if (len(self.racers) < 2 and Config.REQUIRE_AT_LEAST_TWO_FOR_RACE) or len(self.racers) < 1:
+            if (len(self.racers) < 2 and not self.race_info.can_be_solo) or len(self.racers) < 1:
                 await self._cancel_countdown()
             await self.room.write('{0} is no longer entered.'.format(racer_member.mention))
             await self.begin_if_ready()
@@ -328,7 +328,7 @@ class Race(object):
         if self._status == RaceStatus.counting_down:
             await self._cancel_countdown()
 
-        if len(self.racers) == 1 and Config.REQUIRE_AT_LEAST_TWO_FOR_RACE:
+        if len(self.racers) == 1 and not self.race_info.can_be_solo:
             await self.room.write(
                 'Waiting on at least one other person to join the race.')
         elif not already_entered:
