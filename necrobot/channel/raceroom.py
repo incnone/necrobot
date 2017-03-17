@@ -101,6 +101,9 @@ class RaceRoom(BotChannel):
     def dont_notify(self, user):
         self._mention_on_new_race = [u for u in self._mention_on_new_race if u != user]
 
+    def refresh(self, channel):
+        self._channel = channel
+
 # Coroutine methods ---------------------------------------------------
     # Set up the leaderboard etc. Should be called after creation; code not put into __init__ b/c coroutine
     async def initialize(self):

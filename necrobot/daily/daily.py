@@ -1,7 +1,6 @@
 from enum import Enum
 import asyncio
 import datetime
-import logging
 
 from . import dailytype
 from ..race import racetime

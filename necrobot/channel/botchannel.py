@@ -8,6 +8,9 @@ class BotChannel(object):
         self.necrobot = necrobot
         self.command_types = []     # the list of command.CommandType that can be called on this channel
 
+    def refresh(self, channel):
+        pass
+
     @property
     def client(self):
         return self.necrobot.client

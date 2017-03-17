@@ -79,6 +79,7 @@ class Necrobot(object):
             new_channel = self.find_channel_with_id(channel.id)
             if new_channel is not None:
                 channel_pairs[new_channel] = bot_channel
+            bot_channel.refresh(new_channel)
         self._bot_channels = channel_pairs
 
         if self._daily_manager is not None:

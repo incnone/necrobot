@@ -1,4 +1,3 @@
-from discord import DiscordException
 from .command import CommandType
 from ..util.config import Config
 
