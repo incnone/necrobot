@@ -22,6 +22,7 @@ class MainBotChannel(BotChannel):
             prefs.RaceAlert(self),
             prefs.ViewPrefs(self),
             racemake.Make(self),
+            racemake.MakeCondor(self),
             racemake.MakePrivate(self),
             seedgen.RandomSeed(self),
         ]

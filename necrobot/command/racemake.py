@@ -61,3 +61,32 @@ class MakePrivate(CommandType):
         else:
             await self.necrobot.client.send_message(
                 command.channel, 'Error parsing arguments to `.makeprivate`.')
+
+
+class MakeCondor(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makecondor')
+        self.help_text = "Create a new CoNDOR race room. This takes the same command-line options as `.make`."
+        self.admin_only = True
+
+    async def _do_execute(self, command):
+        try:
+            cmd_idx = command.args.index('-repeat')
+            repeat_index = int(command.args[cmd_idx + 1])
+            del command.args[cmd_idx + 1]
+            del command.args[cmd_idx]
+        except (ValueError, IndexError):
+            repeat_index = 1
+
+        repeat_index = min(20, max(repeat_index, 1))
+
+        private_race_info = privateraceinfo.parse_args(command.args)
+        private_race_info.race_info.can_be_solo = False
+        private_race_info.race_info.post_results = True
+        private_race_info.race_info.condor_race = True
+        if private_race_info is not None:
+            for _ in range(repeat_index):
+                await self.necrobot.race_manager.make_private_room(private_race_info, command.author)
+        else:
+            await self.necrobot.client.send_message(
+                command.channel, 'Error parsing arguments to `.makecondor`.')

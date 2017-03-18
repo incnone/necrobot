@@ -70,6 +70,12 @@ class NecroDB(object):
                        race.race_info.flags,
                        race.race_info.seed,)
 
+        db_cur.execute(
+            "INSERT INTO race_data "
+            "(race_id, timestamp, character_name, descriptor, flags, seed) "
+            "VALUES (%s,%s,%s,%s,%s,%s)",
+            race_params)
+
         racer_list = []
         max_time = 0
         for racer in race.racers:
@@ -79,12 +85,6 @@ class NecroDB(object):
         max_time += 1
 
         racer_list.sort(key=lambda r: r.time if r.is_finished else max_time)
-
-        db_cur.execute(
-            "INSERT INTO race_data "
-            "(race_id, timestamp, character_name, descriptor, flags, seed) "
-            "VALUES (%s,%s,%s,%s,%s,%s)",
-            race_params)
 
         rank = 1
         for racer in racer_list:

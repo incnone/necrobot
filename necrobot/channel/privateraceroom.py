@@ -5,6 +5,7 @@ import discord
 from .raceroom import RaceRoom
 from ..command import privaterace
 from ..race import permissioninfo
+from ..util import writechannel
 
 
 class PrivateRaceRoom(RaceRoom):
@@ -73,3 +74,14 @@ class PrivateRaceRoom(RaceRoom):
     # True if the user has admin permissions for this race
     def _virtual_is_admin(self, member):
         return self.permission_info.is_admin(member)
+
+    # Close the channel.
+    async def close(self):
+        # If this is a CoNDOR race, log the room text before closing
+        if self.race_info.condor_race:
+            outfile_name = ''
+            for racer in self.current_race.racers:
+                outfile_name += '{0}-'.format(racer.member.display_name)
+            outfile_name += str(self.channel.id)
+            await writechannel.write_channel(self.client, self.channel, outfile_name)
+        await self._race_manager.close_room(self)
