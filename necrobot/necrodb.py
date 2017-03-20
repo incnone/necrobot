@@ -68,12 +68,16 @@ class NecroDB(object):
                        race.race_info.character_str,
                        race.race_info.descriptor,
                        race.race_info.flags,
-                       race.race_info.seed,)
+                       race.race_info.seed,
+                       race.race_info.seeded,
+                       race.race_info.amplified,
+                       race.race_info.condor_race,
+                       race.race_info.private_race,)
 
         db_cur.execute(
             "INSERT INTO race_data "
-            "(race_id, timestamp, character_name, descriptor, flags, seed) "
-            "VALUES (%s,%s,%s,%s,%s,%s)",
+            "(race_id, timestamp, character_name, descriptor, flags, seed, seeded, amplified, condor, private) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             race_params)
 
         racer_list = []
