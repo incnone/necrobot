@@ -1,5 +1,5 @@
 from .botchannel import BotChannel
-from ..command import admin, color, daily, prefs, racemake, seedgen
+from ..command import admin, color, daily, prefs, racemake, seedgen, stats
 
 
 class MainBotChannel(BotChannel):
@@ -25,4 +25,8 @@ class MainBotChannel(BotChannel):
             racemake.MakeCondor(self),
             racemake.MakePrivate(self),
             seedgen.RandomSeed(self),
+            # stats.Matchup(self),
+            stats.Fastest(self),
+            stats.MostRaces(self),
+            stats.Stats(self),
         ]
