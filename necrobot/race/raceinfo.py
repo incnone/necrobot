@@ -26,6 +26,7 @@ SUDDEN_DEATH_FLAG = int(pow(2, 1))
 FLAGPLANT_FLAG = int(pow(2, 2))
 AMPLIFIED_FLAG = int(pow(2, 3))
 CONDOR_RACE_FLAG = int(pow(2, 4))
+PRIVATE_RACE_FLAG = int(pow(2, 5))
 
 
 def _parse_post_results(args, race_info):
@@ -192,6 +193,7 @@ class RaceInfo(object):
         the_copy.can_be_solo = race_info.can_be_solo
         the_copy.post_results = race_info.post_results
         the_copy.condor_race = race_info.condor_race
+        the_copy.private_race = race_info.private_race
         the_copy._character = race_info.character
         return the_copy
 
@@ -206,6 +208,7 @@ class RaceInfo(object):
         self.can_be_solo = False             # whether the race can be run with only one person
         self.post_results = True             # whether to post the results in the race_results channel
         self.condor_race = False             # whether this is a condor race
+        self.private_race = False            # whether this is a private race
         self._character = character.NDChar.Cadence  # the character for the race
 
     @property
@@ -218,7 +221,8 @@ class RaceInfo(object):
                + int(self.sudden_death)*SUDDEN_DEATH_FLAG \
                + int(self.flagplant)*FLAGPLANT_FLAG \
                + int(self.amplified)*AMPLIFIED_FLAG \
-               + int(self.condor_race)*CONDOR_RACE_FLAG
+               + int(self.condor_race)*CONDOR_RACE_FLAG \
+               + int(self.private_race)*PRIVATE_RACE_FLAG
 
     @property
     def character_str(self):

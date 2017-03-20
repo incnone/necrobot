@@ -11,3 +11,5 @@ data/bot_config
 data/bot_config
 data/test_bot_config
 data/real_bot_config
+otherscripts/dbupdateprivate.py
+*.sql
