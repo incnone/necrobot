@@ -1,6 +1,6 @@
 # Necrobot TODO
 
-Current version: 0.7
+Current version: 0.9
 
 ## Known bugs
 
@@ -8,8 +8,6 @@ Current version: 0.7
 
 ### Fixable/precise but not urgent
 
-- Don't post race results for private races
-- `.poke` is not working. [maybe fixed]
 - `.dailywhen` is not working as advertised.
  
 ### Vague or not urgent
@@ -27,20 +25,13 @@ just finished or the race that people are currently entering. It maybe also does
 ## Features
 
 - add `.forceunready` command
-- allow self-racing in private channels
+- Add ability to make a "best-of-X" or "repeat-Y" type of "private match" in the bot. This is mostly for CoNDOR purposes.
+- Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
 
 ### Different race modes
 
 - Score
 - Time limits, with an auto-ping when the time expires
-
-### Support for matches
-
-It should be simple to make a "best-of-X" or "repeat-Y" type of "private match" in the bot. This is mostly for CoNDOR purposes.
-
-### Support for voice rooms attached to race rooms
-
-Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
 
 ### Stream support / Twitch integration
 

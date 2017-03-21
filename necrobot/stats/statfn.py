@@ -78,7 +78,8 @@ class StatCache(object):
     class __StatCache(object):
         class CachedStats(object):
             def __init__(self):
-                self.last_race_number = 0       # The number of the last race when this was cached
+                self.last_race_number_amplified = 0      # The number of the last race when amplified was cached
+                self.last_race_number_base = 0           # The number of the last race when base was cached
                 self.amplified_stats = GeneralStats()
                 self.base_stats = GeneralStats()
 
@@ -93,8 +94,12 @@ class StatCache(object):
             cached_data = self.CachedStats()
             if discord_id in self._cache:
                 cached_data = self._cache[discord_id]
-                if cached_data.last_race_number == last_race_number:
-                    return cached_data.amplified_stats if amplified else cached_data.base_stats
+                if amplified:
+                    if cached_data.last_race_number_amplified == last_race_number:
+                        return cached_data.amplified_stats
+                else:
+                    if cached_data.last_race_number_base == last_race_number:
+                        return cached_data.base_stats
 
             # If here, the cache is out-of-date
             general_stats = GeneralStats()
@@ -129,10 +134,11 @@ class StatCache(object):
                 general_stats.insert_charstats(charstats)
 
             # Update the cache
-            cached_data.last_race_number = last_race_number
             if amplified:
+                cached_data.last_race_number_amplified = last_race_number
                 cached_data.amplified_stats = general_stats
             else:
+                cached_data.last_race_number_base = last_race_number
                 cached_data.base_stats = general_stats
             self._cache[discord_id] = cached_data
 
