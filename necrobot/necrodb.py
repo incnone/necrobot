@@ -21,6 +21,22 @@ class NecroDB(object):
         if self._number_of_connections == 0:
             self._db_conn.close()
 
+    def get_user_id(self, user_name):
+        try:
+            self._connect()
+            cursor = self._db_conn.cursor()
+            params = (user_name,)
+            cursor.execute(
+                "SELECT discord_id "
+                "FROM user_data "
+                "WHERE name=%s",
+                params)
+            for row in cursor:
+                return row[0]
+            return None
+        finally:
+            self._close()
+
     def set_prefs(self, params):
         try:
             self._connect()

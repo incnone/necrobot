@@ -1,5 +1,6 @@
 from ..stats import statfn
 from ..util import character
+from ..necrodb import NecroDB
 from .command import CommandType
 
 
@@ -148,7 +149,6 @@ class Stats(CommandType):
         await self.necrobot.client.send_typing(cmd.channel)
 
         amplified = True
-        member_to_find_stats_for = cmd.author
 
         # Parse arguments
         args = cmd.args
@@ -159,21 +159,33 @@ class Stats(CommandType):
         except ValueError:
             pass
 
+        if len(args) > 1:
+            await self.necrobot.client.send_message(
+                cmd.channel,
+                '{0}: Error: wrong number of arguments for `.stats`.'.format(cmd.author.mention))
+            return
+
+        racer_name = cmd.author.display_name
+        racer_id = int(cmd.author.id)
         if len(args) == 1:
-            members = self.necrobot.find_members(args[0])
-            if members:
-                member_to_find_stats_for = members[0]
+            racer_name = args[0]
+            member = self.necrobot.find_member(racer_name)
+            if member is not None:
+                racer_name = member.display_name
+                racer_id = int(member.id)
             else:
-                await self.necrobot.client.send_message(
-                    cmd.channel,
-                    '{0}: Could not find user "{1}".'.format(cmd.author.mention, args[0]))
-                return
+                racer_id = int(NecroDB().get_user_id(racer_name))
+                if racer_id is None:
+                    await self.necrobot.client.send_message(
+                        cmd.channel,
+                        '{0}: Could not find user "{1}".'.format(cmd.author.mention, args[0]))
+                    return
 
         # Show stats
-        general_stats = statfn.get_general_stats(int(member_to_find_stats_for.id), amplified=amplified)
+        general_stats = statfn.get_general_stats(racer_id, amplified=amplified)
         await self.necrobot.client.send_message(
             cmd.channel,
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(
-                member_to_find_stats_for.display_name,
+                racer_name,
                 'Amplified' if amplified else 'Base game',
                 general_stats.infotext))
