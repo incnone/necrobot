@@ -168,6 +168,17 @@ class Notify(CommandType):
                 '{0}: You will be alerted when a rematch begins.'.format(command.author.mention))
 
 
+class Unnotify(CommandType):
+    def __init__(self, race_room):
+        CommandType.__init__(self, race_room, 'unnotify')
+        self.help_text = 'You will not be notified on a race remake.'
+
+    async def _do_execute(self, command):
+        self.bot_channel.dont_notify(command.author)
+        await self.bot_channel.write(
+            '{0}: You will not be alerted when a rematch begins.'.format(command.author.mention))
+
+
 class Time(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'time')

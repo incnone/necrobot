@@ -42,6 +42,7 @@ class RaceRoom(BotChannel):
                               race.Rematch(self),
                               race.DelayRecord(self),
                               race.Notify(self),
+                              race.Unnotify(self),
                               race.Time(self),
                               race.Missing(self),
                               race.Shame(self),

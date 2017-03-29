@@ -52,12 +52,14 @@ class MakePrivate(CommandType):
         except (ValueError, IndexError):
             repeat_index = 1
 
+        author_as_member = self.necrobot.get_as_member(command.author)
+
         repeat_index = min(20, max(repeat_index, 1))
 
         private_race_info = privateraceinfo.parse_args(command.args)
         if private_race_info is not None:
             for _ in range(repeat_index):
-                await self.necrobot.race_manager.make_private_room(private_race_info, command.author)
+                await self.necrobot.race_manager.make_private_room(private_race_info, author_as_member)
         else:
             await self.necrobot.client.send_message(
                 command.channel, 'Error parsing arguments to `.makeprivate`.')

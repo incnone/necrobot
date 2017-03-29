@@ -24,6 +24,7 @@ just finished or the race that people are currently entering. It maybe also does
 
 ## Features
 
+- add more complicated sorts to `.mostraces`
 - add `.forceunready` command
 - Add ability to make a "best-of-X" or "repeat-Y" type of "private match" in the bot. This is mostly for CoNDOR purposes.
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
