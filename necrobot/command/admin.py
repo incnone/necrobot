@@ -22,7 +22,7 @@ class Help(CommandType):
             command_list_text = ''
             for cmd_type in self.bot_channel.command_types:
                 if (not cmd_type.secret_command) \
-                        and (not cmd_type.admin_only or self.necrobot.is_admin(command.author)):
+                        and (not cmd_type.admin_only or self.bot_channel.is_admin(command.author)):
                     command_list_text += '`' + cmd_type.mention + '`, '
             command_list_text = command_list_text[:-2]
             await self.necrobot.client.send_message(

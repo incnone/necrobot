@@ -78,7 +78,7 @@ class MakeAdmin(CommandType):
 
     async def _do_execute(self, command):
         for username in command.args:
-            for member in self.bot_channel.find_members(username):
+            for member in self.necrobot.find_members(username):
                 await self.bot_channel.allow(member)
                 if member not in self.bot_channel.permission_info.admins:
                     self.bot_channel.permission_info.admins.append(member)
