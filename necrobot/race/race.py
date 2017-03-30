@@ -269,14 +269,14 @@ class Race(object):
         if self.has_racer(racer_member):
             await self.room.write('{0} is already entered.'.format(racer_member.mention))
 
-        elif self._status == RaceStatus.counting_down:
-            await self._cancel_countdown()
-
         elif not self.before_race:
             await self.room.write('{0}: Cannot enter; the race has already started.'.format(racer_member.mention))
             return
 
         else:
+            if self._status == RaceStatus.counting_down:
+                await self._cancel_countdown()
+
             self._do_enter_racer(racer_member)
             await self.room.write(
                 '{0} has entered the race. {1} entrants.'.format(racer_member.mention, len(self.racers)))
