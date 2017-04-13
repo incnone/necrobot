@@ -178,7 +178,7 @@ class Necrobot(object):
                 return channel
         return None
 
-    # Returns a some members with a given username (capitalization ignored)
+    # Returns a member with a given username (capitalization ignored)
     # username: [string]
     # return: [list<discord.Member>]
     def find_member(self, username):

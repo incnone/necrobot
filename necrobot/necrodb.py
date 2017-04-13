@@ -438,3 +438,59 @@ class NecroDB(object):
             return 0
         finally:
             self._close()
+
+    def set_timezone(self, discord_id, timezone):
+        try:
+            self._connect()
+            cursor = self._db_conn.cursor()
+            params = (timezone, discord_id,)
+            cursor.execute(
+                "UPDATE user_data "
+                "SET timezone=%s "
+                "WHERE discord_id=%s",
+                params)
+            self._db_conn.commit()
+        finally:
+            self._close()
+
+    def set_rtmp(self, discord_id, rtmp_name):
+        try:
+            self._connect()
+            cursor = self._db_conn.cursor()
+            params = (rtmp_name, discord_id,)
+            cursor.execute(
+                "UPDATE user_data "
+                "SET rtmp_name=%s "
+                "WHERE discord_id=%s",
+                params)
+            self._db_conn.commit()
+        finally:
+            self._close()
+
+    def set_twitch(self, discord_id, twitch_name):
+        try:
+            self._connect()
+            cursor = self._db_conn.cursor()
+            params = (twitch_name, discord_id,)
+            cursor.execute(
+                "UPDATE user_data "
+                "SET twitch_name=%s "
+                "WHERE discord_id=%s",
+                params)
+            self._db_conn.commit()
+        finally:
+            self._close()
+
+    def set_user_info(self, discord_id, user_info):
+        try:
+            self._connect()
+            cursor = self._db_conn.cursor()
+            params = (user_info, discord_id,)
+            cursor.execute(
+                "UPDATE user_data "
+                "SET user_info=%s "
+                "WHERE discord_id=%s",
+                params)
+            self._db_conn.commit()
+        finally:
+            self._close()
