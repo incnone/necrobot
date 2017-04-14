@@ -1,8 +1,6 @@
 # Ladderbot TODO
 
-## Database updates
-
-- Add functionality to set `twitch_name`, `rtmp_name`, `timezone`, `user_info` fields with the Necrobot
+- Fix QOL problems with RTMP registration
 
 # Necrobot TODO
 

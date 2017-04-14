@@ -85,35 +85,6 @@ class ViewPrefs(CommandType):
             'Your current user preferences: {}'.format(prefs_string))
 
 
-class Timezone(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'timezone')
-        self._timezone_loc = 'https://github.com/incnone/condorbot/blob/master/data/tz_list.txt'
-        self.help_text = 'Register a time zone with your account. Usage is `.timezone <zonename>`. See <{0}> for a ' \
-                         'list of recognized time zones; these strings should be input exactly as-is, e.g., ' \
-                         '`.timezone US/Eastern`.'.format(self._timezone_loc)
-
-    async def _do_execute(self, cmd):
-        if len(cmd.args) != 1:
-            await self.necrobot.client.send_message(
-                cmd.channel,
-                '{0}: I was unable to parse your timezone because you gave the wrong number of arguments. '
-                'See <{1}> for a list of timezones.'.format(cmd.author.mention, self._timezone_loc))
-            return
-
-        tz_name = cmd.args[0]
-        if tz_name in pytz.common_timezones:
-            NecroDB().set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
-            await self.necrobot.client.send_message(
-                cmd.channel,
-                '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
-        else:
-            await self.necrobot.client.send_message(
-                cmd.channel,
-                '{0}: I was unable to parse your timezone. See <{1}> for a list of timezones.'.format(
-                    cmd.author.mention, self._timezone_loc))
-
-
 class RTMP(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rtmp')
@@ -124,7 +95,7 @@ class RTMP(CommandType):
         if len(cmd.args) != 2:
             await self.necrobot.client.send_message(
                 cmd.channel,
-                '{0}: I was unable to parse your stream name because you gave the wrong number of arguments. '
+                '{0}: I was unable to parse your request name because you gave the wrong number of arguments. '
                 'Use `.rtmp discord_name rtmp_name`.'.format(cmd.author.mention))
             return
 
@@ -170,6 +141,35 @@ class SetInfo(CommandType):
         await self.necrobot.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))
+
+
+class Timezone(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'timezone')
+        self._timezone_loc = 'https://github.com/incnone/condorbot/blob/master/data/tz_list.txt'
+        self.help_text = 'Register a time zone with your account. Usage is `.timezone <zonename>`. See <{0}> for a ' \
+                         'list of recognized time zones; these strings should be input exactly as-is, e.g., ' \
+                         '`.timezone US/Eastern`.'.format(self._timezone_loc)
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1:
+            await self.necrobot.client.send_message(
+                cmd.channel,
+                '{0}: I was unable to parse your timezone because you gave the wrong number of arguments. '
+                'See <{1}> for a list of timezones.'.format(cmd.author.mention, self._timezone_loc))
+            return
+
+        tz_name = cmd.args[0]
+        if tz_name in pytz.common_timezones:
+            NecroDB().set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
+            await self.necrobot.client.send_message(
+                cmd.channel,
+                '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
+        else:
+            await self.necrobot.client.send_message(
+                cmd.channel,
+                '{0}: I was unable to parse your timezone. See <{1}> for a list of timezones.'.format(
+                    cmd.author.mention, self._timezone_loc))
 
 
 class Twitch(CommandType):
