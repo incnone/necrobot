@@ -5,8 +5,6 @@ from ..util import level
 
 
 FIELD_UNKNOWN = int(-1)
-LEVEL_UNKNOWN_DEATH = int(0)
-LEVEL_FINISHED = int(-2)
 
 
 class RacerStatus(IntEnum):
@@ -36,7 +34,7 @@ class Racer(object):
         self._state = RacerStatus.unready       # see RacerState notes above
         self.time = FIELD_UNKNOWN               # hundredths of a second
         self.igt = FIELD_UNKNOWN                # hundredths of a second
-        self.level = FIELD_UNKNOWN              # level of death (or LEVEL_FINISHED or LEVEL_UNKNOWN_DEATH)
+        self.level = level.LEVEL_NOS            # level of death (or LEVEL_FINISHED or LEVEL_UNKNOWN_DEATH)
         self.comment = ''                       # a comment added with .comment
 
     @property
@@ -126,7 +124,7 @@ class Racer(object):
         if self._state == RacerStatus.racing or self._state == RacerStatus.finished:
             self._state = RacerStatus.forfeit
             self.time = time
-            self.level = LEVEL_UNKNOWN_DEATH
+            self.level = level.LEVEL_UNKNOWN_DEATH
             self.igt = FIELD_UNKNOWN
             return True
         return False
@@ -136,7 +134,7 @@ class Racer(object):
             self._state = RacerStatus.racing
             self.time = FIELD_UNKNOWN
             self.igt = FIELD_UNKNOWN
-            self.level = FIELD_UNKNOWN
+            self.level = level.LEVEL_NOS
             return True
         return False
 
@@ -144,7 +142,7 @@ class Racer(object):
         if self._state == RacerStatus.racing or self._state == RacerStatus.forfeit:
             self._state = RacerStatus.finished
             self.time = time
-            self.level = LEVEL_FINISHED
+            self.level = level.LEVEL_FINISHED
             return True
         return False
             
@@ -153,7 +151,7 @@ class Racer(object):
             self._state = RacerStatus.racing
             self.time = FIELD_UNKNOWN
             self.igt = FIELD_UNKNOWN
-            self.level = FIELD_UNKNOWN
+            self.level = level.LEVEL_NOS
             return True
         return False
 

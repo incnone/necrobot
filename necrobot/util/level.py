@@ -1,3 +1,8 @@
+LEVEL_UNKNOWN_DEATH = int(0)
+LEVEL_NOS = int(-1)
+LEVEL_FINISHED = int(-2)
+
+
 # with level_str in the form x-y, returns the level as a number from 1 to 21, or -1 if invalid
 def from_str(level_str):    
     args = level_str.split('-')
@@ -20,3 +25,11 @@ def to_str(level):
         return '{0}-{1}'.format(world, lvl)
     else:
         return ''
+
+
+# returns an int that will cause this to sort correctly (replaces -2 with 999)
+def level_sortval(level):
+    if level == LEVEL_FINISHED:
+        return 999
+    else:
+        return level
