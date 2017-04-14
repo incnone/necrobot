@@ -127,14 +127,19 @@ class Daily(object):
 
         prior_result = ''   # detect and handle ties
         rank_to_display = int(1)
+        reverse_levelsort = dailytype.character(daily_type=self.daily_type, daily_number=daily_number) == 'Aria'
+        daily_times = sorted(
+                NecroDB().get_daily_times(params),
+                key=lambda x: level.level_sortval(int(x[1]), reverse=reverse_levelsort),
+                reverse=True)
 
-        for row in NecroDB().get_daily_times(params):
+        for row in daily_times:
             name = row[0]
             lv = row[1]
             time = row[2]
-            if lv == 18:
+            if lv == level.LEVEL_FINISHED:
                 result_string = racetime.to_str(time)
-            elif lv == -1:
+            elif lv == level.LEVEL_NOS:
                 continue
             else:
                 result_string = level.to_str(lv)

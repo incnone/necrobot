@@ -25,7 +25,7 @@ def character(daily_type, daily_number):
     if daily_type == DailyType.cadence:
         return 'Cadence'
     elif daily_type == DailyType.rotating:
-        return rotating_daily_chars[daily_number % 9]
+        return rotating_daily_chars[daily_number % len(rotating_daily_chars)]
 
 
 def leaderboard_header(daily_type, daily_number):

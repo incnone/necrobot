@@ -17,6 +17,19 @@ class NDChar(Enum):
     Nocturna = 12
     Diamond = 13
 
+    @staticmethod
+    def fromstr(char_name):
+        for ndchar in NDChar:
+            if ndchar.name == char_name.capitalize():
+                return ndchar
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def levels_reversed(self):
+        return self == NDChar.Aria
+
 
 def get_char_from_str(char_name):
     for ndchar in NDChar:
