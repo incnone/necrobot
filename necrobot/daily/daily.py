@@ -127,9 +127,10 @@ class Daily(object):
 
         prior_result = ''   # detect and handle ties
         rank_to_display = int(1)
+        reverse_levelsort = dailytype.character(daily_type=self.daily_type, daily_number=daily_number) == 'Aria'
         daily_times = sorted(
                 NecroDB().get_daily_times(params),
-                key=lambda x: level.level_sortval(int(x[1])),
+                key=lambda x: level.level_sortval(int(x[1]), reverse=reverse_levelsort),
                 reverse=True)
 
         for row in daily_times:

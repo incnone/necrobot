@@ -1,6 +1,7 @@
 LEVEL_UNKNOWN_DEATH = int(0)
 LEVEL_NOS = int(-1)
 LEVEL_FINISHED = int(-2)
+LEVEL_MAX = 21
 
 
 # with level_str in the form x-y, returns the level as a number from 1 to 21, or -1 if invalid
@@ -28,8 +29,10 @@ def to_str(level):
 
 
 # returns an int that will cause this to sort correctly (replaces -2 with 999)
-def level_sortval(level):
+def level_sortval(level, reverse=False):
     if level == LEVEL_FINISHED:
-        return 999
+        return LEVEL_MAX + 1
+    elif reverse:
+        return LEVEL_MAX - level if level > 0 else level
     else:
         return level
