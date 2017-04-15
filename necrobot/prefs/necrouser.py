@@ -1,6 +1,7 @@
 import pytz
+
+from necrobot.botbase.necrodb import NecroDB
 from .userprefs import UserPrefs
-from ..necrodb import NecroDB
 from ..util import strutil
 
 
@@ -37,7 +38,6 @@ class NecroUser(object):
             user.user_prefs = UserPrefs()
             user.user_prefs.daily_alert = bool(row[6])
             user.user_prefs.race_alert = bool(row[7])
-            # TODO get rating
             return user
 
     def __init__(self):
@@ -48,7 +48,6 @@ class NecroUser(object):
         self.timezone = None
         self.user_info = None
         self.user_prefs = None
-        self.rating = None
 
     def __eq__(self, other):
         return self.discord_id == other.discord_id

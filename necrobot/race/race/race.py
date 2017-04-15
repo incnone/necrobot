@@ -3,13 +3,12 @@ import datetime
 import time
 from enum import IntEnum
 
-from . import racetime
-from .raceinfo import RaceInfo
-from .racer import Racer
-from ..necrodb import NecroDB
-from ..util.config import Config
-from ..util import console
-from ..util.ordinal import ordinal
+from necrobot.botbase.necrodb import NecroDB
+from necrobot.race.race.raceinfo import RaceInfo
+from necrobot.race.race.racer import Racer
+from necrobot.util import console, racetime
+from necrobot.util.config import Config
+from necrobot.util.ordinal import ordinal
 
 
 # RaceStatus enum ---------------------------------------------------------

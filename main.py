@@ -1,13 +1,14 @@
 import asyncio
-import aiohttp
 import datetime
 import logging
 import os
 import sys
+
+import aiohttp
+import discord
 import websockets
 
-import discord
-from necrobot.command.command import Command
+from necrobot.botbase.command import Command
 from necrobot.necrobot import Necrobot
 from necrobot.util import backoff, config, seedgen
 
@@ -19,7 +20,7 @@ def ready_client_events():
     async def on_ready():
         the_necrobot.post_login_init(config.Config.SERVER_ID)
 
-    # Called whenever a new message is posted in any channel on any server
+    # Called whenever a new message is posted in any necrobot on any server
     @client.event
     async def on_message(message):
         cmd = Command(message)

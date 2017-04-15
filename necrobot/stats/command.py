@@ -1,7 +1,7 @@
-from ..stats import statfn
-from ..util import character
-from ..necrodb import NecroDB
-from .command import CommandType
+from necrobot.botbase.command import CommandType
+from necrobot.botbase.necrodb import NecroDB
+from necrobot.stats import statfn
+from necrobot.util import character
 
 
 # class Matchup(CommandType):
@@ -12,7 +12,7 @@ from .command import CommandType
 #                          'otherwise Amplified is used by default.'
 #
 #     async def _do_execute(self, cmd):
-#         await self.necrobot.client.send_typing(cmd.channel)
+#         await self.necrobot.client.send_typing(cmd.necrobot)
 #
 #         amplified = True
 #         args = cmd.args
@@ -25,41 +25,41 @@ from .command import CommandType
 #
 #         if len(args) != 3:
 #             await self.necrobot.client.send_message(
-#                 cmd.channel,
+#                 cmd.necrobot,
 #                 '{0}: Error: Wrong number of arguments for `.matchup`.'.format(cmd.author.mention))
 #             return
 #
 #         ndchar = character.get_char_from_str(args[0])
 #         if ndchar is None:
 #             await self.necrobot.client.send_message(
-#                 cmd.channel,
+#                 cmd.necrobot,
 #                 '{0}: Error: Can\'t parse {1} as a character name.'.format(cmd.author.mention, args[0]))
 #             return
 #
 #         member_1 = self.necrobot.find_member(args[1])
 #         if member_1 is None:
 #             await self.necrobot.client.send_message(
-#                 cmd.channel,
+#                 cmd.necrobot,
 #                 '{0}: Error: Can\'t find user {1}.'.format(cmd.author.mention, args[1]))
 #             return
 #
 #         member_2 = self.necrobot.find_member(args[2])
 #         if member_2 is None:
 #             await self.necrobot.client.send_message(
-#                 cmd.channel,
+#                 cmd.necrobot,
 #                 '{0}: Error: Can\'t find user {1}.'.format(cmd.author.mention, args[2]))
 #             return
 #
 #         win_data = statfn.get_winrates(int(member_1.id), int(member_2.id), ndchar, amplified)
 #         if win_data is None:
 #             await self.necrobot.client.send_message(
-#                 cmd.channel,
+#                 cmd.necrobot,
 #                 '{0}: Error: At least one of these racers doesn\'t have enough wins to do this prediction.'.format(
 #                     cmd.author.mention))
 #             return
 #
 #         await self.necrobot.client.send_message(
-#             cmd.channel,
+#             cmd.necrobot,
 #             'Predicted outcome: **{0}** [{1}% - {2}%] **{3}** ({4}% chance of neither finishing).'.format(
 #                 member_1.display_name,
 #                 int(win_data[0]*100),

@@ -1,12 +1,12 @@
-from enum import Enum
 import asyncio
 import datetime
+from enum import Enum
 
+from necrobot.botbase.necrodb import NecroDB
+from necrobot.util import racetime
 from . import dailytype
-from ..race import racetime
 from ..util import level, seedgen
 from ..util.config import Config
-from ..necrodb import NecroDB
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 

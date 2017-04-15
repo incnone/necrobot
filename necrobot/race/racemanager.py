@@ -1,6 +1,7 @@
 import discord
-from ..channel.raceroom import RaceRoom
-from ..channel.privateraceroom import PrivateRaceRoom
+
+from necrobot.race.privaterace.privateraceroom import PrivateRaceRoom
+from necrobot.race.race.raceroom import RaceRoom
 from ..prefs.userprefs import UserPrefs
 from ..util.config import Config
 
@@ -36,7 +37,7 @@ class RaceManager(object):
 
     # Make a room with the given RaceInfo
     async def make_room(self, race_info):
-        # Make a channel for the room
+        # Make a necrobot for the room
         race_channel = await self.necrobot.client.create_channel(
             self.necrobot.server,
             self.get_raceroom_name(race_info),
@@ -67,7 +68,7 @@ class RaceManager(object):
 
     # Make a private race with the given RacePrivateInfo; give the given discord_member admin status
     async def make_private_room(self, race_private_info, discord_member):
-        # Make a channel for the room
+        # Make a necrobot for the room
         race_channel = await self.necrobot.client.create_channel(
             self.necrobot.server,
             self.get_raceroom_name(race_private_info.race_info),

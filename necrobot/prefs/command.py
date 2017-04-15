@@ -1,9 +1,9 @@
 import pytz
-from necrobot.prefs.userprefs import UserPrefs
-from .command import CommandType
-from ..util.config import Config
-from ..necrodb import NecroDB
 
+from necrobot.botbase.command import CommandType
+from necrobot.botbase.necrodb import NecroDB
+from necrobot.prefs.userprefs import UserPrefs
+from necrobot.util.config import Config
 
 MAX_USERINFO_LEN = 255
 

@@ -1,8 +1,9 @@
 import asyncio
-import discord
 import random
 
-from .command import CommandType
+import discord
+
+from necrobot.botbase.command import CommandType
 
 PROTECTED_ROLENAMES = ['Necrobot']
 ROLES_COLORS = {

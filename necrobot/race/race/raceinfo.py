@@ -18,8 +18,8 @@
 # bolt-sdf
 # 4-shrine-uf
 
-from ..command import clparse
-from ..util import character, seedgen
+from necrobot.botbase import clparse
+from necrobot.util import character, seedgen
 
 SEEDED_FLAG = int(pow(2, 0))
 SUDDEN_DEATH_FLAG = int(pow(2, 1))
@@ -206,7 +206,7 @@ class RaceInfo(object):
         self.flagplant = False               # whether flagplanting is considered as a victory condition
         self.amplified = True                # whether playing with the Amplified DLC
         self.can_be_solo = False             # whether the race can be run with only one person
-        self.post_results = True             # whether to post the results in the race_results channel
+        self.post_results = True             # whether to post the results in the race_results necrobot
         self.condor_race = False             # whether this is a condor race
         self.private_race = False            # whether this is a private race
         self._character = character.NDChar.Cadence  # the character for the race

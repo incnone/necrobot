@@ -3,19 +3,18 @@
 import asyncio
 import datetime
 
-from .botchannel import BotChannel
-from ..command import admin
-from ..command import race
-from ..race import raceinfo
-from ..race.race import Race
-from ..util.config import Config
-from ..util import seedgen
+from necrobot.botbase.botchannel import BotChannel
+from necrobot.necrobot import cmdadmin
+from necrobot.race.race import Race
+from necrobot.race.race import command, raceinfo
+from necrobot.util import seedgen
+from necrobot.util.config import Config
 
 
 class RaceRoom(BotChannel):
     def __init__(self, race_manager, race_discord_channel, race_info):
         BotChannel.__init__(self, race_manager.necrobot)
-        self._channel = race_discord_channel    # The channel in which this race is taking place
+        self._channel = race_discord_channel    # The necrobot in which this race is taking place
         self._race_info = race_info             # The type of races to be run in this room
 
         self._current_race = None               # The current race
@@ -27,35 +26,35 @@ class RaceRoom(BotChannel):
         self._mentioned_users = []              # A list of users that were @mentioned when this race was created
         self._nopoke = False                    # When True, the .poke command fails
 
-        self.command_types = [admin.Help(self),
-                              race.Enter(self),
-                              race.Unenter(self),
-                              race.Ready(self),
-                              race.Unready(self),
-                              race.Done(self),
-                              race.Undone(self),
-                              race.Forfeit(self),
-                              race.Unforfeit(self),
-                              race.Comment(self),
-                              race.Death(self),
-                              race.Igt(self),
-                              race.Rematch(self),
-                              race.DelayRecord(self),
-                              race.Notify(self),
-                              race.Unnotify(self),
-                              race.Time(self),
-                              race.Missing(self),
-                              race.Shame(self),
-                              race.Poke(self),
-                              race.ForceCancel(self),
-                              race.ForceClose(self),
-                              race.ForceForfeit(self),
-                              race.ForceForfeitAll(self),
-                              race.Kick(self),
-                              race.Pause(self),
-                              race.Unpause(self),
-                              race.Reseed(self),
-                              race.ChangeRules(self)]
+        self.command_types = [cmdadmin.Help(self),
+                              command.Enter(self),
+                              command.Unenter(self),
+                              command.Ready(self),
+                              command.Unready(self),
+                              command.Done(self),
+                              command.Undone(self),
+                              command.Forfeit(self),
+                              command.Unforfeit(self),
+                              command.Comment(self),
+                              command.Death(self),
+                              command.Igt(self),
+                              command.Rematch(self),
+                              command.DelayRecord(self),
+                              command.Notify(self),
+                              command.Unnotify(self),
+                              command.Time(self),
+                              command.Missing(self),
+                              command.Shame(self),
+                              command.Poke(self),
+                              command.ForceCancel(self),
+                              command.ForceClose(self),
+                              command.ForceForfeit(self),
+                              command.ForceForfeitAll(self),
+                              command.Kick(self),
+                              command.Pause(self),
+                              command.Unpause(self),
+                              command.Reseed(self),
+                              command.ChangeRules(self)]
 
 # Properties ------------------------------
     @property
@@ -121,7 +120,7 @@ class RaceRoom(BotChannel):
     async def update_leaderboard(self):
         await self.client.edit_channel(self._channel, topic=self._current_race.leaderboard)
 
-    # Post the race result to the race channel
+    # Post the race result to the race necrobot
     async def post_result(self, text):
         await self.client.send_message(self._race_manager.results_channel, text)
 
@@ -131,9 +130,9 @@ class RaceRoom(BotChannel):
         if self.current_race.before_race:
             self.current_race.race_info = raceinfo.RaceInfo.copy(self._race_info)
         if do_post:
-            await self.write('Races in this channel will have their results posted to the results channel.')
+            await self.write('Races in this necrobot will have their results posted to the results necrobot.')
         else:
-            await self.write('Races in this channel will not have their results posted to the results channel.')
+            await self.write('Races in this necrobot will not have their results posted to the results necrobot.')
 
     # Change the RaceInfo for this room
     async def change_race_info(self, command_args):
@@ -145,7 +144,7 @@ class RaceRoom(BotChannel):
             await self.write('Changed rules for the next race.')
             await self.update_leaderboard()
 
-    # Close the channel.
+    # Close the necrobot.
     async def close(self):
         await self._race_manager.close_room(self)
 

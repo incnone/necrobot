@@ -1,7 +1,7 @@
 import shlex
 
-from ..util.config import Config
-from ..util import console
+from necrobot.util.config import Config
+from necrobot.util import console
 
 
 # Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)

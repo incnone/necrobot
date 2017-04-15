@@ -1,11 +1,11 @@
-from .channel.mainchannel import MainBotChannel
-from .channel.pmbotchannel import PMBotChannel
-from .daily.dailymanager import DailyManager
-from .necrodb import NecroDB
-from .prefs.prefsmanager import PrefsManager
-from .race.racemanager import RaceManager
-from .util import console
-from .util.config import Config
+from necrobot.botbase.necrodb import NecroDB
+from necrobot.daily.dailymanager import DailyManager
+from necrobot.necrobot.mainchannel import MainBotChannel
+from necrobot.necrobot.pmbotchannel import PMBotChannel
+from necrobot.prefs.prefsmanager import PrefsManager
+from necrobot.race.racemanager import RaceManager
+from necrobot.util import console
+from necrobot.util.config import Config
 
 
 class Necrobot(object):
@@ -59,7 +59,7 @@ class Necrobot(object):
 
         self._main_discord_channel = self.find_channel(Config.MAIN_CHANNEL_NAME)
         if self._main_discord_channel is None:
-            console.error('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
+            console.error('Could not find the "{0}" necrobot.'.format(Config.MAIN_CHANNEL_NAME))
             exit(1)
 
         if not self._initted:
@@ -120,7 +120,7 @@ class Necrobot(object):
     def quitting(self):
         return self._quitting
 
-    # Return the #necrobot_main channel
+    # Return the #necrobot_main necrobot
     # return: [discord.Channel]
     @property
     def main_channel(self):
@@ -160,7 +160,7 @@ class Necrobot(object):
                 return True
         return False
 
-    # Returns the channel with the given name on the server, if any
+    # Returns the necrobot with the given name on the server, if any
     # channel_name: [string]
     # return: [discord.Channel]
     def find_channel(self, channel_name):
@@ -169,7 +169,7 @@ class Necrobot(object):
                 return channel
         return None
 
-    # Returns the channel with the given name on the server, if any
+    # Returns the necrobot with the given name on the server, if any
     # channel_name: [int]
     # return: [discord.Channel]
     def find_channel_with_id(self, channel_id):
@@ -239,7 +239,7 @@ class Necrobot(object):
         if cmd.author == self.client.user:
             return
 
-        # handle the command with the appropriate bot channel
+        # handle the command with the appropriate bot necrobot
         if cmd.is_private:
             await self._pm_bot_channel.execute(cmd)
         elif cmd.channel in self._bot_channels:

@@ -1,7 +1,8 @@
 import calendar
 import datetime
-from .command import CommandType
-from ..daily import dailytype
+
+from necrobot.botbase.command import CommandType
+from necrobot.daily import dailytype
 
 
 class DailyCommandType(CommandType):

@@ -2,10 +2,9 @@
 
 import discord
 
-from .raceroom import RaceRoom
-from ..command import privaterace
-from ..race import permissioninfo
-from ..util import writechannel
+from necrobot.race.privaterace import permissioninfo, command
+from necrobot.race.race.raceroom import RaceRoom
+from necrobot.util import writechannel
 
 
 class PrivateRaceRoom(RaceRoom):
@@ -17,12 +16,12 @@ class PrivateRaceRoom(RaceRoom):
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
 
-        self.command_types.append(privaterace.Add(self))
-        self.command_types.append(privaterace.Remove(self))
-        self.command_types.append(privaterace.MakeAdmin(self))
-        self.command_types.append(privaterace.ShowAdmins(self))
-        self.command_types.append(privaterace.NoPost(self))
-        self.command_types.append(privaterace.Post(self))
+        self.command_types.append(command.Add(self))
+        self.command_types.append(command.Remove(self))
+        self.command_types.append(command.MakeAdmin(self))
+        self.command_types.append(command.ShowAdmins(self))
+        self.command_types.append(command.NoPost(self))
+        self.command_types.append(command.Post(self))
 
     # A string to add to the race details ("Private")
     @property
@@ -59,13 +58,13 @@ class PrivateRaceRoom(RaceRoom):
         # Automatically enter creator into race
         await self.current_race.enter_member(self._room_creator)
 
-    # Allow the member to see the channel
+    # Allow the member to see the necrobot
     async def allow(self, member_or_role):
         read_permit = discord.PermissionOverwrite()
         read_permit.read_messages = True
         await self.client.edit_channel_permissions(self.channel, member_or_role, read_permit)
 
-    # Restrict the member from seeing the channel
+    # Restrict the member from seeing the necrobot
     async def deny(self, member_or_role):
         read_deny = discord.PermissionOverwrite()
         read_deny.read_messages = False
@@ -75,7 +74,7 @@ class PrivateRaceRoom(RaceRoom):
     def _virtual_is_admin(self, member):
         return self.permission_info.is_admin(member)
 
-    # Close the channel.
+    # Close the necrobot.
     async def close(self):
         # If this is a CoNDOR race, log the room text before closing
         if self.race_info.condor_race:

@@ -1,9 +1,8 @@
 # Commands for within a race room
 
-from ..command.command import CommandType
-from ..race import racetime
-from ..util.config import Config
-from ..util import level
+from necrobot.botbase.command import CommandType
+from necrobot.util import level, racetime
+from necrobot.util.config import Config
 
 
 class Enter(CommandType):
@@ -154,7 +153,7 @@ class DelayRecord(CommandType):
 class Notify(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'notify')
-        self.help_text = 'If a rematch of this race is made, you will be @mentioned at the start of its channel. ' \
+        self.help_text = 'If a rematch of this race is made, you will be @mentioned at the start of its necrobot. ' \
                          'Use `.notify off` to cancel this.'
 
     async def _do_execute(self, command):
@@ -265,7 +264,7 @@ class ForceCancel(CommandType):
 class ForceClose(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'forceclose')
-        self.help_text = 'Cancel the race, and close the channel.'
+        self.help_text = 'Cancel the race, and close the necrobot.'
         self.admin_only = True
 
     async def _do_execute(self, command):

@@ -1,6 +1,6 @@
 import mysql.connector
 
-from .util.config import Config
+from necrobot.util.config import Config
 
 
 class NecroDB(object):

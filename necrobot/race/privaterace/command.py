@@ -1,4 +1,4 @@
-from ..command.command import CommandType
+from necrobot.botbase.command import CommandType
 
 
 class Add(CommandType):
@@ -18,7 +18,7 @@ class Add(CommandType):
 class NoPost(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'nopost')
-        self.help_text = 'Ask the bot not to post results of this race in the results channel. (On by default.)'
+        self.help_text = 'Ask the bot not to post results of this race in the results necrobot. (On by default.)'
         self.admin_only = True
 
     async def _do_execute(self, command):
@@ -28,7 +28,7 @@ class NoPost(CommandType):
 class Post(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'post')
-        self.help_text = 'Ask the bot to post results of this race in the results channel.'
+        self.help_text = 'Ask the bot to post results of this race in the results necrobot.'
         self.admin_only = True
 
     async def _do_execute(self, command):

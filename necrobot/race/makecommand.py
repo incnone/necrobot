@@ -1,8 +1,10 @@
-import discord
 import logging
 
-from .command import CommandType
-from ..race import raceinfo, privateraceinfo
+import discord
+
+from necrobot.botbase.command import CommandType
+from necrobot.race.privaterace import privateraceinfo
+from necrobot.race.race import raceinfo
 
 
 class Make(CommandType):

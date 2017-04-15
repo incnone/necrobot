@@ -1,4 +1,4 @@
-from .command import CommandType
+from necrobot.botbase.command import CommandType
 
 
 # Matchroom commands

@@ -1,5 +1,5 @@
+from necrobot.botbase.necrodb import NecroDB
 from .userprefs import UserPrefs
-from ..necrodb import NecroDB
 
 
 class PrefsManager(object):

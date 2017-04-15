@@ -1,5 +1,5 @@
-from .command import CommandType
-from ..util.config import Config
+from necrobot.botbase.command import CommandType
+from necrobot.util.config import Config
 
 
 class Die(CommandType):
@@ -27,7 +27,7 @@ class Help(CommandType):
             command_list_text = command_list_text[:-2]
             await self.necrobot.client.send_message(
                 command.channel,
-                'Available commands in this channel: {0}\n\nType `{1} <command>` for more info about a particular '
+                'Available commands in this necrobot: {0}\n\nType `{1} <command>` for more info about a particular '
                 'command.'.format(command_list_text, self.mention))
         elif len(command.args) == 1:
             for cmd_type in self.bot_channel.command_types:
