@@ -35,6 +35,11 @@ class Config(object):
     # number of seconds to wait between allowing pokes
     RACE_POKE_DELAY = int(10)
 
+    # vod recording
+    VODRECORD_USERNAME = ''
+    VODRECORD_PASSWD = ''
+    RECORDING_ACTIVATED = False
+
     # database
     MYSQL_DB_HOST = 'localhost'
     MYSQL_DB_USER = 'root'

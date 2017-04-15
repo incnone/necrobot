@@ -1,10 +1,9 @@
-import logging
-
 import discord
 
 from necrobot.botbase.command import CommandType
 from necrobot.race.privaterace import privateraceinfo
 from necrobot.race.race import raceinfo
+from necrobot.util import console
 
 
 class Make(CommandType):
@@ -37,7 +36,7 @@ class Make(CommandType):
                 await self.necrobot.race_manager.make_room(race_info)
             except discord.HTTPException as e:
                 await self.necrobot.client.send_message(command.channel, 'Error making race.')
-                logging.getLogger('discord').warning(e.response)
+                console.error(e.response)
 
 
 class MakePrivate(CommandType):

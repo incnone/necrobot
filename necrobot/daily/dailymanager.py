@@ -1,16 +1,16 @@
 import datetime
-import logging
 from . import dailytype
 from .dailytype import DailyType
 from .daily import DATE_ZERO
 from .daily import Daily
 from ..user.userprefs import UserPrefs
 from ..util.config import Config
+from ..util import console
 
 
 class DailyManager(object):
     def __init__(self, necrobot):
-        logging.getLogger('discord').info('Initializing new DailyManager object.')
+        console.info('Initializing new DailyManager object.')
         self.necrobot = necrobot
         self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
         self._cadence_daily = Daily(self, DailyType.cadence)

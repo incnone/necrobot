@@ -6,9 +6,9 @@ from necrobot.race.match import cmd_match
 
 
 class MatchRoom(BotChannel):
-    def __init__(self, race_manager, race_discord_channel, race_info):
+    def __init__(self, race_manager, match_discord_channel, race_info):
         BotChannel.__init__(self, race_manager.necrobot)
-        self._channel = race_discord_channel    # The necrobot in which this match is taking place
+        self._channel = match_discord_channel   # The necrobot in which this match is taking place
         self._race_info = race_info             # The type of races to be run in this room
 
         self.command_types = [
