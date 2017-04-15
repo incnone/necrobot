@@ -21,6 +21,45 @@ class NecroDB(object):
         if self._number_of_connections == 0:
             self._db_conn.close()
 
+    def get_all_users(self, discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None):
+        try:
+            self._connect()
+            cursor = self._db_conn.cursor()
+
+            params = tuple()
+            if discord_id is not None:
+                params += (int(discord_id),)
+            if discord_name is not None:
+                params += (discord_name,)
+            if twitch_name is not None:
+                params += (twitch_name,)
+            if rtmp_name is not None:
+                params += (rtmp_name,)
+
+            if discord_id is None and discord_name is None and twitch_name is None and rtmp_name is None:
+                where_query = 'TRUE'
+            else:
+                where_query = ''
+                if discord_id is not None:
+                    where_query += ' AND discord_id=%s'
+                if discord_name is not None:
+                    where_query += ' AND name=%s'
+                if twitch_name is not None:
+                    where_query += ' AND twitch_name=%s'
+                if rtmp_name is not None:
+                    where_query += ' AND rtmp_name=%s'
+                where_query = where_query[5:]
+
+            cursor.execute(
+                "SELECT discord_id, name, twitch_name, rtmp_name, timezone, user_info, daily_alert, race_alert "
+                "FROM user_data "
+                "WHERE {0}".format(where_query),
+                params)
+            return cursor.fetchall()
+
+        finally:
+            self._close()
+
     def get_user_id(self, user_name):
         try:
             self._connect()
