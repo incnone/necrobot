@@ -4,9 +4,9 @@ import asyncio
 import datetime
 
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.necrobot import cmdadmin
-from necrobot.race.race import Race
-from necrobot.race.race import command, raceinfo
+from necrobot.necrobot import cmd_admin
+from necrobot.race.race.race import Race
+from necrobot.race.race import cmd_race, raceinfo
 from necrobot.util import seedgen
 from necrobot.util.config import Config
 
@@ -26,35 +26,35 @@ class RaceRoom(BotChannel):
         self._mentioned_users = []              # A list of users that were @mentioned when this race was created
         self._nopoke = False                    # When True, the .poke command fails
 
-        self.command_types = [cmdadmin.Help(self),
-                              command.Enter(self),
-                              command.Unenter(self),
-                              command.Ready(self),
-                              command.Unready(self),
-                              command.Done(self),
-                              command.Undone(self),
-                              command.Forfeit(self),
-                              command.Unforfeit(self),
-                              command.Comment(self),
-                              command.Death(self),
-                              command.Igt(self),
-                              command.Rematch(self),
-                              command.DelayRecord(self),
-                              command.Notify(self),
-                              command.Unnotify(self),
-                              command.Time(self),
-                              command.Missing(self),
-                              command.Shame(self),
-                              command.Poke(self),
-                              command.ForceCancel(self),
-                              command.ForceClose(self),
-                              command.ForceForfeit(self),
-                              command.ForceForfeitAll(self),
-                              command.Kick(self),
-                              command.Pause(self),
-                              command.Unpause(self),
-                              command.Reseed(self),
-                              command.ChangeRules(self)]
+        self.command_types = [cmd_admin.Help(self),
+                              cmd_race.Enter(self),
+                              cmd_race.Unenter(self),
+                              cmd_race.Ready(self),
+                              cmd_race.Unready(self),
+                              cmd_race.Done(self),
+                              cmd_race.Undone(self),
+                              cmd_race.Forfeit(self),
+                              cmd_race.Unforfeit(self),
+                              cmd_race.Comment(self),
+                              cmd_race.Death(self),
+                              cmd_race.Igt(self),
+                              cmd_race.Rematch(self),
+                              cmd_race.DelayRecord(self),
+                              cmd_race.Notify(self),
+                              cmd_race.Unnotify(self),
+                              cmd_race.Time(self),
+                              cmd_race.Missing(self),
+                              cmd_race.Shame(self),
+                              cmd_race.Poke(self),
+                              cmd_race.ForceCancel(self),
+                              cmd_race.ForceClose(self),
+                              cmd_race.ForceForfeit(self),
+                              cmd_race.ForceForfeitAll(self),
+                              cmd_race.Kick(self),
+                              cmd_race.Pause(self),
+                              cmd_race.Unpause(self),
+                              cmd_race.Reseed(self),
+                              cmd_race.ChangeRules(self)]
 
 # Properties ------------------------------
     @property

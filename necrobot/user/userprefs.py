@@ -19,7 +19,7 @@ class UserPrefs(object):
 
         return pref_str
 
-    # Overwrite prefs in this object with any non-None prefs in the passed object
+    # Overwrite user in this object with any non-None user in the passed object
     def merge_prefs(self, rhs):
         if rhs.daily_alert is not None:
             self.daily_alert = rhs.daily_alert

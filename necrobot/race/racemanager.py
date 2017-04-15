@@ -2,7 +2,7 @@ import discord
 
 from necrobot.race.privaterace.privateraceroom import PrivateRaceRoom
 from necrobot.race.race.raceroom import RaceRoom
-from ..prefs.userprefs import UserPrefs
+from ..user.userprefs import UserPrefs
 from ..util.config import Config
 
 

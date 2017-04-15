@@ -29,7 +29,7 @@ class PrefsManager(object):
             user_prefs.race_alert = (row[3] != 0)
         return user_prefs
 
-    # get all user id's matching the given user prefs
+    # get all user id's matching the given user user
     def get_all_matching(self, user_prefs):
         users_matching_dailyalert = []
         users_matching_racealert = []

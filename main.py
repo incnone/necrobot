@@ -9,7 +9,7 @@ import discord
 import websockets
 
 from necrobot.botbase.command import Command
-from necrobot.necrobot import Necrobot
+from necrobot.botbase.necrobot import Necrobot
 from necrobot.util import backoff, config, seedgen
 
 

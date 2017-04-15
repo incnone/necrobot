@@ -2,7 +2,7 @@
 
 import discord
 
-from necrobot.race.privaterace import permissioninfo, command
+from necrobot.race.privaterace import permissioninfo, cmd_privaterace
 from necrobot.race.race.raceroom import RaceRoom
 from necrobot.util import writechannel
 
@@ -16,12 +16,12 @@ class PrivateRaceRoom(RaceRoom):
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
 
-        self.command_types.append(command.Add(self))
-        self.command_types.append(command.Remove(self))
-        self.command_types.append(command.MakeAdmin(self))
-        self.command_types.append(command.ShowAdmins(self))
-        self.command_types.append(command.NoPost(self))
-        self.command_types.append(command.Post(self))
+        self.command_types.append(cmd_privaterace.Add(self))
+        self.command_types.append(cmd_privaterace.Remove(self))
+        self.command_types.append(cmd_privaterace.MakeAdmin(self))
+        self.command_types.append(cmd_privaterace.ShowAdmins(self))
+        self.command_types.append(cmd_privaterace.NoPost(self))
+        self.command_types.append(cmd_privaterace.Post(self))
 
     # A string to add to the race details ("Private")
     @property

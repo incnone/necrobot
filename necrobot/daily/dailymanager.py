@@ -4,7 +4,7 @@ from . import dailytype
 from .dailytype import DailyType
 from .daily import DATE_ZERO
 from .daily import Daily
-from ..prefs.userprefs import UserPrefs
+from ..user.userprefs import UserPrefs
 from ..util.config import Config
 
 

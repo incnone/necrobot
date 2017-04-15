@@ -2,7 +2,7 @@ from necrobot.botbase.necrodb import NecroDB
 from necrobot.daily.dailymanager import DailyManager
 from necrobot.necrobot.mainchannel import MainBotChannel
 from necrobot.necrobot.pmbotchannel import PMBotChannel
-from necrobot.prefs.prefsmanager import PrefsManager
+from necrobot.user.prefsmanager import PrefsManager
 from necrobot.race.racemanager import RaceManager
 from necrobot.util import console
 from necrobot.util.config import Config

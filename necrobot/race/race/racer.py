@@ -1,7 +1,6 @@
 from enum import IntEnum
 
-from necrobot.race.race import racetime
-from necrobot.util import level
+from necrobot.util import level, racetime
 
 
 FIELD_UNKNOWN = int(-1)

@@ -1,8 +1,8 @@
 # Room for scheduling and running a "match", a series of games between a common pool of racers.
 
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.necrobot import cmdadmin
-from necrobot.race.match import command
+from necrobot.necrobot import cmd_admin
+from necrobot.race.match import cmd_match
 
 
 class MatchRoom(BotChannel):
@@ -12,13 +12,13 @@ class MatchRoom(BotChannel):
         self._race_info = race_info             # The type of races to be run in this room
 
         self.command_types = [
-            cmdadmin.Help(self),
-            command.Confirm(self),
-            command.Postpone(self),
-            command.Suggest(self),
-            command.Unconfirm(self),
-            command.ForceBegin(self),
-            command.ForceConfirm(self),
-            command.ForceReschedule(self),
-            command.ForceUnschedule(self),
+            cmd_admin.Help(self),
+            cmd_match.Confirm(self),
+            cmd_match.Postpone(self),
+            cmd_match.Suggest(self),
+            cmd_match.Unconfirm(self),
+            cmd_match.ForceBegin(self),
+            cmd_match.ForceConfirm(self),
+            cmd_match.ForceReschedule(self),
+            cmd_match.ForceUnschedule(self),
         ]
