@@ -206,25 +206,25 @@ class Daily(object):
     # Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.
     # Returns a string whose content confirms parse, or the empty string if parse fails.
     def parse_submission(self, daily_number, user, args):
-        lv = -1
+        lv = level.LEVEL_NOS
         time = -1
         ret_str = ''
         if len(args) > 0:
             if args[0] == 'death':
                 if len(args) == 2:
                     lv = level.from_str(args[1])
-                    if not lv == -1:
+                    if not lv == level.LEVEL_NOS:
                         ret_str = 'died on {}'.format(args[1])
                 else:
-                    lv = 0
+                    lv = level.LEVEL_UNKNOWN_DEATH
                     ret_str = 'died'
             else:
                 time = racetime.from_str(args[0])
                 if not time == -1:
-                    lv = 18
+                    lv = level.LEVEL_FINISHED
                     ret_str = 'finished in {}'.format(racetime.to_str(time))
 
-        if not lv == -1:    # parse succeeded
+        if not lv == level.LEVEL_NOS:    # parse succeeded
             self.submit_to_daily(daily_number, user, lv, time)
             return ret_str
         else:
