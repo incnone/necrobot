@@ -27,7 +27,20 @@ just finished or the race that people are currently entering. It maybe also does
 - add more complicated sorts to `.mostraces`
 - add `.forceunready` command
 - Add ability to make a "best-of-X" or "repeat-Y" type of "private match" in the bot. This is mostly for CoNDOR purposes.
-- Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
+- Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause."). Could maybe be done with TTS?
+
+### Condorbot integration
+
+- Make Condorbot and Necrobot work on the same codebase, so they share common classes like Race.
+- Make some of the twitch/RTMP-style data available to the Necrobot, so it can do things like auto-record vods during
+CoNDOR races.
+
+### Ongoing-league support
+
+- Functionality for a rated ongoing league with some sort of automatchmaking
+- Big weekly event where you get matched up / can watch others / etc
+- Also automatches during week given racer's schedules
+- Required streaming, automated vod recording
 
 ### Different race modes
 
@@ -36,7 +49,9 @@ just finished or the race that people are currently entering. It maybe also does
 
 ### Stream support / Twitch integration
 
-Allow for users to register their streams and to tag certain races as "streamed". For such races, generate a multitwitch or kadgar link upon asking. As an even bigger project, make the bot able to check whether said users are actually streaming. Also, make the bot able to report in your twitch chat when people in your race have finished or forfeit (and who won, etc.)
+- Allow for users to register their streams and to tag certain races as "streamed". For such races, generate a multitwitch or kadgar link upon asking. 
+- As an even bigger project, make the bot able to check whether said users are actually streaming. Also, make the bot able to report in your twitch chat 
+when people in your race have finished or forfeit (and who won, etc.)
 
 ### Daily improvements
 

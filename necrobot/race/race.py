@@ -141,7 +141,10 @@ class Race(object):
     # Returns true if all racers are ready and there's enough racers
     @property
     def all_racers_ready(self):
-        return self.num_not_ready == 0 and (self.race_info.can_be_solo or len(self.racers) > 1)
+        if self.race_info.can_be_solo:
+            return self.num_not_ready == 0 and len(self.racers) > 0
+        else:
+            return self.num_not_ready == 0 and len(self.racers) > 1
 
     # Returns the number of racers not in the 'ready' state
     @property
