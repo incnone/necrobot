@@ -1,3 +1,6 @@
+from necrobot.race.race.raceinfo import RaceInfo
+
+
 class Match(object):
     def __init__(self, match_id, *racers):
         self._match_id = match_id           # int -- the unique ID for this match
@@ -13,8 +16,9 @@ class Match(object):
         self._wishes_to_unconfirm = []      # Sublist of self._racers
 
         # Format data
-        self._number_of_races = None        # Maximum number of races
+        self._number_of_races = 3           # Maximum number of races
         self._is_best_of = False            # If true, end match after one player has clinched the most wins
+        self._race_info = RaceInfo()        # The kind of race the match will have
 
     def __eq__(self, other):
         return self.match_id == other.match_id
@@ -41,3 +45,7 @@ class Match(object):
     @property
     def is_best_of(self):
         return self._is_best_of
+
+    @property
+    def race_info(self):
+        return self._race_info

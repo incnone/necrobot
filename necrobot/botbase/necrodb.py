@@ -29,7 +29,7 @@ class DBConnect(object):
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.commit:
+        if exc_type is not None and self.commit:
             DBConnect.db_connection.commit()
         self.cursor.close()
 

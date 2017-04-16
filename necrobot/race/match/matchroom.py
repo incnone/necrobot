@@ -5,6 +5,10 @@ from necrobot.botbase.botchannel import BotChannel
 from necrobot.race.match import cmd_match
 
 
+def make_match_channel(match):
+    pass
+
+
 class MatchRoom(BotChannel):
     def __init__(self, race_manager, match_discord_channel, race_info):
         BotChannel.__init__(self, race_manager.necrobot)

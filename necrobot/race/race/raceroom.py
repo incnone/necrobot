@@ -2,25 +2,71 @@
 
 import asyncio
 import datetime
+import discord
 
 from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.botbase import necrodb
 from necrobot.race.race import cmd_race, raceinfo
 from necrobot.race.race.race import Race
+from necrobot.user.userprefs import UserPrefs
 from necrobot.util import seedgen
 from necrobot.util.config import Config
 
 
+# Return a new (unique) race room name from the race info
+def get_raceroom_name(server, race_info):
+    name_prefix = race_info.raceroom_name
+    cut_length = len(name_prefix) + 1
+    largest_postfix = 0
+    for channel in server.channels:
+        if channel.name.startswith(name_prefix):
+            try:
+                val = int(channel.name[cut_length:])
+                largest_postfix = max(largest_postfix, val)
+            except ValueError:
+                pass
+    return '{0}-{1}'.format(name_prefix, largest_postfix + 1)
+
+
+# Make a room with the given RaceInfo
+async def make_room(necrobot, race_info):
+    # Make a necrobot for the room
+    race_channel = await necrobot.client.create_channel(
+        necrobot.server,
+        get_raceroom_name(necrobot.server, race_info),
+        type=discord.ChannelType.text)
+
+    if race_channel is not None:
+        # Make the actual RaceRoom and initialize it
+        new_room = RaceRoom(necrobot, race_channel, race_info)
+        await new_room.initialize()
+
+        necrobot.register_bot_channel(race_channel, new_room)
+
+        # Send PM alerts
+        alert_pref = UserPrefs()
+        alert_pref.race_alert = True
+
+        alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
+            race_channel.mention, race_info.format_str)
+        for member_id in necrodb.get_all_ids_matching_prefs(alert_pref):
+            member = necrobot.find_member(discord_id=member_id)
+            if member is not None:
+                await necrobot.client.send_message(member, alert_string)
+
+    return race_channel
+
+
 class RaceRoom(BotChannel):
-    def __init__(self, race_manager, race_discord_channel, race_info):
-        BotChannel.__init__(self, race_manager.necrobot)
+    def __init__(self, necrobot, race_discord_channel, race_info):
+        BotChannel.__init__(self, necrobot)
         self._channel = race_discord_channel    # The necrobot in which this race is taking place
         self._race_info = race_info             # The type of races to be run in this room
 
         self._current_race = None               # The current race
         self._last_race = None                  # The last race to finish
 
-        self._race_manager = race_manager       # The parent managing all race rooms
         self._race_number = 0                   # The number of races we've done
         self._mention_on_new_race = []          # A list of users that should be @mentioned when a rematch is created
         self._mentioned_users = []              # A list of users that were @mentioned when this race was created
@@ -91,6 +137,10 @@ class RaceRoom(BotChannel):
     def race_info(self):
         return self._race_info
 
+    @property
+    def results_channel(self):
+        return self.necrobot.find_channel(Config.RACE_RESULTS_CHANNEL_NAME)
+
 # Methods -------------------------------------------------------------
     # Notifies the given user on a rematch
     def notify(self, user):
@@ -122,7 +172,7 @@ class RaceRoom(BotChannel):
 
     # Post the race result to the race necrobot
     async def post_result(self, text):
-        await self.client.send_message(self._race_manager.results_channel, text)
+        await self.client.send_message(self.results_channel, text)
 
 # Commands ------------------------------------------------------------
     async def set_post_result(self, do_post):
@@ -146,7 +196,8 @@ class RaceRoom(BotChannel):
 
     # Close the necrobot.
     async def close(self):
-        await self._race_manager.close_room(self)
+        self.necrobot.unregister_bot_channel(self._channel)
+        await self.necrobot.client.delete_channel(self._channel)
 
     # Makes a rematch of this race if the current race is finished
     async def make_rematch(self):

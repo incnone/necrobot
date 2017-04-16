@@ -3,13 +3,29 @@
 import discord
 
 from necrobot.race.privaterace import permissioninfo, cmd_privaterace
-from necrobot.race.race.raceroom import RaceRoom
+from necrobot.race.race.raceroom import RaceRoom, get_raceroom_name
 from necrobot.util import writechannel
 
 
+# Make a private race with the given RacePrivateInfo; give the given discord_member admin status
+async def make_private_room(necrobot, race_private_info, discord_member):
+    # Make a necrobot for the room
+    race_channel = await necrobot.client.create_channel(
+        necrobot.server,
+        get_raceroom_name(necrobot.server, race_private_info.race_info),
+        type='text')
+
+    if race_channel is not None:
+        new_room = PrivateRaceRoom(necrobot, race_channel, race_private_info, discord_member)
+        await new_room.initialize()
+        necrobot.register_bot_channel(race_channel, new_room)
+
+    return race_channel
+
+
 class PrivateRaceRoom(RaceRoom):
-    def __init__(self, race_manager, race_discord_channel, race_private_info, admin_as_member):
-        RaceRoom.__init__(self, race_manager, race_discord_channel, race_private_info.race_info)
+    def __init__(self, necrobot, race_discord_channel, race_private_info, admin_as_member):
+        RaceRoom.__init__(self, necrobot, race_discord_channel, race_private_info.race_info)
         self._room_creator = admin_as_member
 
         self.permission_info = permissioninfo.get_permission_info(self.necrobot.server, race_private_info)
@@ -83,4 +99,4 @@ class PrivateRaceRoom(RaceRoom):
                 outfile_name += '{0}-'.format(racer.member.display_name)
             outfile_name += str(self.channel.id)
             await writechannel.write_channel(self.client, self.channel, outfile_name)
-        await self._race_manager.close_room(self)
+        await RaceRoom.close(self)
