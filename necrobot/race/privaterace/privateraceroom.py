@@ -9,10 +9,17 @@ from necrobot.util import writechannel
 
 # Make a private race with the given RacePrivateInfo; give the given discord_member admin status
 async def make_private_room(necrobot, race_private_info, discord_member):
-    # Make a necrobot for the room
+    # Define permissions
+    deny_read = discord.PermissionOverwrite(read_messages=False)
+    permit_read = discord.PermissionOverwrite(read_messages=True)
+
+    # Make a channel for the room
     race_channel = await necrobot.client.create_channel(
         necrobot.server,
         get_raceroom_name(necrobot.server, race_private_info.race_info),
+        discord.ChannelPermissions(target=necrobot.server.default_role, overwrite=deny_read),
+        discord.ChannelPermissions(target=necrobot.server.me, overwrite=permit_read),
+        discord.ChannelPermissions(target=discord_member, overwrite=permit_read),
         type='text')
 
     if race_channel is not None:
@@ -47,15 +54,6 @@ class PrivateRaceRoom(RaceRoom):
     # Sets up the leaderboard for the race
     async def initialize(self):
         # Set permissions -----------------------------------------
-        read_permit = discord.Permissions.none()
-        read_permit.read_messages = True
-
-        # deny access to @everyone
-        await self.deny(self.necrobot.server.default_role)
-
-        # allow access for self
-        await self.allow(self.necrobot.get_as_member(self.client.user))
-
         # give admin roles permission
         for role in self.permission_info.admin_roles:
             await self.allow(role)

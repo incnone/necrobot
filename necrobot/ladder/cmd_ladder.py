@@ -1,4 +1,7 @@
 from necrobot.botbase.command import CommandType
+from necrobot.race.match import matchroom
+from necrobot.race.match.match import Match
+from necrobot.user.necrouser import NecroUser, DuplicateUserException
 
 
 # General commands
@@ -8,7 +11,7 @@ class LadderRegister(CommandType):
         self.help_text = 'Begin registering yourself for the Necrobot ladder.'
 
     async def _do_execute(self, cmd):
-        await self.necrobot.client.write(
+        await self.necrobot.client.send_message(
             cmd.channel,
             '{0}: Registering doesn\'t do anything right now, but if it did, you\'d have done '
             'it.'.format(cmd.author.mention))
@@ -22,7 +25,7 @@ class NextRace(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.necrobot.client.write(
+        await self.necrobot.client.send_message(
             cmd.channel,
             'This command is TODO.')
         pass
@@ -36,10 +39,9 @@ class Ranked(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.necrobot.client.write(
+        await self.necrobot.client.send_message(
             cmd.channel,
             'This command is TODO.')
-        pass
 
 
 class Unranked(CommandType):
@@ -50,10 +52,9 @@ class Unranked(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.necrobot.client.write(
+        await self.necrobot.client.send_message(
             cmd.channel,
             'This command is TODO.')
-        pass
 
 
 # Admin commands
@@ -65,8 +66,41 @@ class ForceRanked(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        # TODO
-        await self.necrobot.client.write(
+        # Parse arguments
+        if len(cmd.args) != 2:
+            await self.necrobot.client.send_message(
+                cmd.channel,
+                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        racer_names = (cmd.args[0], cmd.args[1])
+        racers = []
+
+        # Find the two racers
+        for i in [0,1]:
+            racer_name = racer_names[i]
+            try:
+                racer = NecroUser.get_user(self.necrobot, discord_name=racer_name)
+                if racer is None:
+                    await self.necrobot.client.send_message(
+                        cmd.channel,
+                        'Error: Could not find user with name `{0}`.'.format(racer_name))
+                    return
+                racers.append(racer)
+            except DuplicateUserException:
+                await self.necrobot.client.send_message(
+                    cmd.channel,
+                    'Error: More than one user found with name `{0}`.'.format(racer_name))
+                return
+
+        # Create the Match object
+        new_match = Match(match_id=0, racers=racers)  # TODO: fix match id
+
+        # Create the match room
+        match_room = await matchroom.make_match_room(self.necrobot, new_match)
+
+        # Output success
+        await self.necrobot.client.send_message(
             cmd.channel,
-            'This command is TODO.')
-        pass
+            'Match created in channel {0}.'.format(
+                match_room.channel.mention))

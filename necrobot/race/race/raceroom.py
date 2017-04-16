@@ -31,7 +31,7 @@ def get_raceroom_name(server, race_info):
 
 # Make a room with the given RaceInfo
 async def make_room(necrobot, race_info):
-    # Make a necrobot for the room
+    # Make a channel for the room
     race_channel = await necrobot.client.create_channel(
         necrobot.server,
         get_raceroom_name(necrobot.server, race_info),

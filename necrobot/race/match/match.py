@@ -2,13 +2,11 @@ from necrobot.race.race.raceinfo import RaceInfo
 
 
 class Match(object):
-    def __init__(self, match_id, *racers):
+    def __init__(self, match_id, racers):
         self._match_id = match_id           # int -- the unique ID for this match
 
         # List of all racers in the match
-        self._racers = []                   # List of NecroUser objects
-        for racer in racers:
-            self._racers.append(racer)
+        self._racers = racers               # List of NecroUser objects
 
         # Scheduling data
         self._suggested_time = None         # datetime.datetime with pytz info attached
@@ -49,3 +47,10 @@ class Match(object):
     @property
     def race_info(self):
         return self._race_info
+
+    @property
+    def matchroom_name(self):
+        name = ''
+        for racer in self.racers:
+            name += racer.discord_name + '-'
+        return name[:-1] if name != '' else self.race_info.raceroom_name

@@ -15,11 +15,16 @@ class DuplicateUserException(Exception):
 
 class NecroUser(object):
     @staticmethod
-    def get_user(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None):
+    def get_user(necrobot, discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None):
         if discord_id is None and discord_name is None and twitch_name is None and rtmp_name is None:
             raise RuntimeError('Error: Called NecroUser.get_user with no non-None fields.')
 
-        raw_db_data = necrodb.get_all_users(discord_id, discord_name, twitch_name, rtmp_name)
+        raw_db_data = necrodb.get_all_users(
+            discord_id=discord_id,
+            discord_name=discord_name,
+            twitch_name=twitch_name,
+            rtmp_name=rtmp_name)
+
         if not raw_db_data:
             return None
         elif len(raw_db_data) > 1:
@@ -28,9 +33,11 @@ class NecroUser(object):
                 'rtmp_name={3}.'.format(discord_id, discord_name, twitch_name, rtmp_name))
 
         for row in raw_db_data:
-            user = NecroUser()
-            user.discord_id = int(row[0])
-            user.discord_name = row[1]
+            member = necrobot.find_member(discord_id=int(row[0]))
+            if member is None:
+                return None
+
+            user = NecroUser(member)
             user.twitch_name = row[2]
             user.rtmp_name = row[3]
             user.timezone = pytz.timezone(row[4]) if row[4] is not None else None
@@ -40,9 +47,8 @@ class NecroUser(object):
             user.user_prefs.race_alert = bool(row[7])
             return user
 
-    def __init__(self):
-        self.discord_id = None
-        self.discord_name = None
+    def __init__(self, discord_member):
+        self.member = discord_member
         self.twitch_name = None
         self.rtmp_name = None
         self.timezone = None
@@ -51,6 +57,14 @@ class NecroUser(object):
 
     def __eq__(self, other):
         return self.discord_id == other.discord_id
+
+    @property
+    def discord_id(self):
+        return self.member.id
+
+    @property
+    def discord_name(self):
+        return self.member.display_name
 
     @property
     def infoname(self):
