@@ -27,7 +27,7 @@ class DailyAlert(CommandType):
         else:
             user_prefs.daily_alert = False
 
-        self.necrobot.prefs_manager.set_prefs(user_prefs=user_prefs, user=command.author)
+        NecroDB().set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.daily_alert:
             await self.necrobot.client.send_message(
@@ -58,7 +58,7 @@ class RaceAlert(CommandType):
         else:
             user_prefs.race_alert = False
 
-        self.necrobot.prefs_manager.set_prefs(user_prefs=user_prefs, user=command.author)
+        NecroDB().set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.race_alert:
             await self.necrobot.client.send_message(
@@ -76,7 +76,7 @@ class ViewPrefs(CommandType):
         self.help_text = "See your current user preferences."
 
     async def _do_execute(self, command):
-        prefs = self.necrobot.prefs_manager.get_prefs(command.author)
+        prefs = NecroDB().get_prefs(discord_id=int(command.author.id))
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
@@ -101,7 +101,7 @@ class RTMP(CommandType):
 
         # Find the discord member
         discord_name = cmd.args[0]
-        discord_member = self.necrobot.find_member(discord_name)
+        discord_member = self.necrobot.find_member(discord_name=discord_name)
         if discord_member is None:
             await self.necrobot.client.send_message(
                 cmd.channel,
@@ -197,3 +197,24 @@ class Twitch(CommandType):
                 cmd.channel,
                 '{0}: Registered your twitch as `twitch.tv/{1}`.'.format(
                     cmd.author.mention, twitch_name))
+
+
+class Register(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'register')
+        self.help_text = 'Register your current Discord name as the name to use for the bot.'
+
+    async def _do_execute(self, cmd):
+        self.necrobot.register_user(cmd.author)
+        await self.necrobot.client.send_message(cmd.channel, 'Registered your name as {0}.'.format(cmd.author.mention))
+
+
+class RegisterAll(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'registerall')
+        self.help_text = 'Register all unregistered users. [Admin only]'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        self.necrobot.register_all_users()
+        await self.necrobot.client.send_message(cmd.channel, 'Registered all unregistered users.')

@@ -169,12 +169,12 @@ class Stats(CommandType):
         racer_id = int(cmd.author.id)
         if len(args) == 1:
             racer_name = args[0]
-            member = self.necrobot.find_member(racer_name)
+            member = self.necrobot.find_member(discord_name=racer_name)
             if member is not None:
                 racer_name = member.display_name
                 racer_id = int(member.id)
             else:
-                racer_id = int(NecroDB().get_user_id(racer_name))
+                racer_id = int(NecroDB().get_discord_id(racer_name))
                 if racer_id is None:
                     await self.necrobot.client.send_message(
                         cmd.channel,

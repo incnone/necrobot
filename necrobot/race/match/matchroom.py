@@ -1,7 +1,7 @@
 # Room for scheduling and running a "match", a series of games between a common pool of racers.
 
+from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.necrobot import cmd_admin
 from necrobot.race.match import cmd_match
 
 

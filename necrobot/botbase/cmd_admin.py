@@ -58,27 +58,6 @@ class Reboot(CommandType):
         await self.necrobot.reboot()
 
 
-class Register(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'register')
-        self.help_text = 'Register your current Discord name as the name to use for the bot.'
-
-    async def _do_execute(self, cmd):
-        self.necrobot.register_user(cmd.author)
-        await self.necrobot.client.send_message(cmd.channel, 'Registered your name as {0}.'.format(cmd.author.mention))
-
-
-class RegisterAll(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'registerall')
-        self.help_text = 'Register all unregistered users. [Admin only]'
-        self.admin_only = True
-
-    async def _do_execute(self, cmd):
-        self.necrobot.register_all_users()
-        await self.necrobot.client.send_message(cmd.channel, 'Registered all unregistered users.')
-
-
 class RedoInit(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'redoinit')

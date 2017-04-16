@@ -3,10 +3,10 @@
 import asyncio
 import datetime
 
+from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.necrobot import cmd_admin
-from necrobot.race.race.race import Race
 from necrobot.race.race import cmd_race, raceinfo
+from necrobot.race.race.race import Race
 from necrobot.util import seedgen
 from necrobot.util.config import Config
 

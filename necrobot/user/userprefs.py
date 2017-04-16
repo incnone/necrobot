@@ -3,6 +3,10 @@ class UserPrefs(object):
         self.daily_alert = None
         self.race_alert = None
 
+    @property
+    def is_empty(self):
+        return self.daily_alert is None and self.race_alert is None
+
     # A list of strings describing preferences set by this object
     @property
     def pref_strings(self):

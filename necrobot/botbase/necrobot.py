@@ -2,7 +2,6 @@ from necrobot.botbase.necrodb import NecroDB
 from necrobot.daily.dailymanager import DailyManager
 from necrobot.necrobot.mainchannel import MainBotChannel
 from necrobot.necrobot.pmbotchannel import PMBotChannel
-from necrobot.user.prefsmanager import PrefsManager
 from necrobot.race.racemanager import RaceManager
 from necrobot.util import console
 from necrobot.util.config import Config
@@ -23,7 +22,6 @@ class Necrobot(object):
 
         self._daily_manager = None
         self._race_manager = None
-        self._prefs_manager = None
 
         self._initted = False
         self._quitting = False
@@ -68,7 +66,6 @@ class Necrobot(object):
             self._pm_bot_channel = PMBotChannel(self)
             self._daily_manager = DailyManager(self)
             self._race_manager = RaceManager(self)
-            self._prefs_manager = PrefsManager(self)
             self._initted = True
         else:
             self.refresh()
@@ -86,16 +83,12 @@ class Necrobot(object):
             self._daily_manager.refresh()
         if self._race_manager is not None:
             self._race_manager.refresh()
-        if self._prefs_manager is not None:
-            self._prefs_manager.refresh()
 
     def cleanup(self):
         if self._daily_manager is not None:
             self._daily_manager.close()
         if self._race_manager is not None:
             self._race_manager.close()
-        if self._prefs_manager is not None:
-            self._prefs_manager.close()
         self._bot_channels.clear()
 
     # Returns the BotChannel corresponding to the given discord.Channel, if one exists
@@ -145,10 +138,6 @@ class Necrobot(object):
     def daily_manager(self):
         return self._daily_manager
 
-    @property
-    def prefs_manager(self):
-        return self._prefs_manager
-
     # Returns true if the user is a server admin
     # user: [discord.User]
     # return: [bool]
@@ -181,10 +170,18 @@ class Necrobot(object):
     # Returns a member with a given username (capitalization ignored)
     # username: [string]
     # return: [list<discord.Member>]
-    def find_member(self, username):
-        for member in self.server.members:
-            if member.display_name.lower() == username.lower():
-                return member
+    def find_member(self, discord_name=None, discord_id=None):
+        if discord_name is None and discord_id is None:
+            return None
+
+        if discord_name is not None:
+            for member in self.server.members:
+                if member.display_name.lower() == discord_name.lower():
+                    return member
+        elif discord_id is not None:
+            for member in self.server.members:
+                if int(member.id) == int(discord_id):
+                    return member
 
     # Returns a list of all members with a given username (capitalization ignored)
     # username: [string]

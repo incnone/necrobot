@@ -1,4 +1,5 @@
 import datetime
+from necrobot.botbase.necrodb import NecroDB
 from . import dailytype
 from .dailytype import DailyType
 from .daily import DATE_ZERO
@@ -56,14 +57,16 @@ class DailyManager(object):
         # PM users with the daily_alert preference
         auto_pref = UserPrefs()
         auto_pref.daily_alert = True
-        for member in self.necrobot.prefs_manager.get_all_matching(auto_pref):
-            daily.register(self.today_number, member.id)
-            await self.client.send_message(
-                member,
-                "({0}) Today's {2} speedrun seed: {1}".format(
-                    self.today_date.strftime("%d %b"),
-                    daily.get_seed(self.today_number),
-                    dailytype.character(daily.daily_type, self.today_number)))
+        for member_id in NecroDB().get_all_ids_matching_prefs(auto_pref):
+            member = self.necrobot.find_member(discord_id=member_id)
+            if member is not None:
+                daily.register(self.today_number, member.id)
+                await self.client.send_message(
+                    member,
+                    "({0}) Today's {2} speedrun seed: {1}".format(
+                        self.today_date.strftime("%d %b"),
+                        daily.get_seed(self.today_number),
+                        dailytype.character(daily.daily_type, self.today_number)))
 
     # Update an existing leaderboard message for the given daily number
     async def update_leaderboard(self, daily_number, daily_type, display_seed=False):
