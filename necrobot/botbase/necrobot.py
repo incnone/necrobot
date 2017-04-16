@@ -1,4 +1,4 @@
-from necrobot.botbase.necrodb import NecroDB
+from necrobot.botbase import necrodb
 from necrobot.daily.dailymanager import DailyManager
 from necrobot.necrobot.mainchannel import MainBotChannel
 from necrobot.necrobot.pmbotchannel import PMBotChannel
@@ -203,13 +203,13 @@ class Necrobot(object):
 
     # Registers all users currently on the server
     def register_all_users(self):
-        NecroDB().register_all_users(self.server.members)
+        necrodb.register_all_users(self.server.members)
 
     # Registers a specific user on the server
     # member: [discord.Member]
     @staticmethod
     def register_user(member):
-        NecroDB().register_all_users([member])
+        necrodb.register_all_users([member])
 
 # Coroutines--------------------
     # Log out of discord

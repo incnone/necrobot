@@ -1,6 +1,6 @@
 import pytz
 
-from necrobot.botbase.necrodb import NecroDB
+from necrobot.botbase import necrodb
 from .userprefs import UserPrefs
 from ..util import strutil
 
@@ -19,7 +19,7 @@ class NecroUser(object):
         if discord_id is None and discord_name is None and twitch_name is None and rtmp_name is None:
             raise RuntimeError('Error: Called NecroUser.get_user with no non-None fields.')
 
-        raw_db_data = NecroDB().get_all_users(discord_id, discord_name, twitch_name, rtmp_name)
+        raw_db_data = necrodb.get_all_users(discord_id, discord_name, twitch_name, rtmp_name)
         if not raw_db_data:
             return None
         elif len(raw_db_data) > 1:

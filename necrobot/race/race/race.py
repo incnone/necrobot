@@ -3,7 +3,7 @@ import datetime
 import time
 from enum import IntEnum
 
-from necrobot.botbase.necrodb import NecroDB
+from necrobot.botbase import necrodb
 from necrobot.race.race.raceinfo import RaceInfo
 from necrobot.race.race.racer import Racer
 from necrobot.util import console, racetime
@@ -588,7 +588,7 @@ class Race(object):
         # Perform the finalization and record the race. At this point, the finalization cannot be cancelled.
         self._status = RaceStatus.finalized
         time_str = self.start_datetime.strftime("%d %B %Y, UTC %H:%M")
-        NecroDB().record_race(self)
+        necrodb.record_race(self)
         if self.race_info.post_results:
             await self.room.post_result(
                 'Race begun at {0}:\n```\n{1}{2}\n```'.format(

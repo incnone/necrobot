@@ -1,7 +1,7 @@
 import pytz
 
 from necrobot.botbase.command import CommandType
-from necrobot.botbase.necrodb import NecroDB
+from necrobot.botbase import necrodb
 from necrobot.user.userprefs import UserPrefs
 from necrobot.util.config import Config
 
@@ -27,7 +27,7 @@ class DailyAlert(CommandType):
         else:
             user_prefs.daily_alert = False
 
-        NecroDB().set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
+        necrodb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.daily_alert:
             await self.necrobot.client.send_message(
@@ -58,7 +58,7 @@ class RaceAlert(CommandType):
         else:
             user_prefs.race_alert = False
 
-        NecroDB().set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
+        necrodb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.race_alert:
             await self.necrobot.client.send_message(
@@ -76,7 +76,7 @@ class ViewPrefs(CommandType):
         self.help_text = "See your current user preferences."
 
     async def _do_execute(self, command):
-        prefs = NecroDB().get_prefs(discord_id=int(command.author.id))
+        prefs = necrodb.get_prefs(discord_id=int(command.author.id))
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
@@ -88,7 +88,8 @@ class ViewPrefs(CommandType):
 class RTMP(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rtmp')
-        self.help_text = 'Register an RTMP stream. Usage is `.rtmp discord_name rtmp_name`.'
+        self.help_text = '[Admin only] Register an RTMP stream. Usage is ' \
+                         '`{0} discord_name rtmp_name`.'.format(self.mention)
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -109,7 +110,7 @@ class RTMP(CommandType):
             return
 
         rtmp_name = cmd.args[1]
-        NecroDB().set_rtmp(discord_id=int(discord_member.id), rtmp_name=rtmp_name)
+        necrodb.set_rtmp(discord_id=int(discord_member.id), rtmp_name=rtmp_name)
         await self.necrobot.client.send_message(
             cmd.channel,
             '{0}: Registered the RTMP `{1}` to user `{2}`.'.format(
@@ -119,7 +120,7 @@ class RTMP(CommandType):
 class SetInfo(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setinfo')
-        self.help_text = 'Add additional information to be displayed on `.userinfo`.'
+        self.help_text = 'Add additional information to be displayed on `{0}`.'.format(self.mention)
 
     async def _do_execute(self, cmd):
         cut_length = len(cmd.command) + len(Config.BOT_COMMAND_PREFIX) + 1
@@ -137,7 +138,7 @@ class SetInfo(CommandType):
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
-        NecroDB().set_user_info(discord_id=int(cmd.author.id), user_info=info)
+        necrodb.set_user_info(discord_id=int(cmd.author.id), user_info=info)
         await self.necrobot.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))
@@ -147,9 +148,9 @@ class Timezone(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'timezone')
         self._timezone_loc = 'https://github.com/incnone/condorbot/blob/master/data/tz_list.txt'
-        self.help_text = 'Register a time zone with your account. Usage is `.timezone <zonename>`. See <{0}> for a ' \
+        self.help_text = 'Register a time zone with your account. Usage is `{1} zone_name`. See <{0}> for a ' \
                          'list of recognized time zones; these strings should be input exactly as-is, e.g., ' \
-                         '`.timezone US/Eastern`.'.format(self._timezone_loc)
+                         '`.timezone US/Eastern`.'.format(self._timezone_loc, self.mention)
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 1:
@@ -161,7 +162,7 @@ class Timezone(CommandType):
 
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
-            NecroDB().set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
+            necrodb.set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
             await self.necrobot.client.send_message(
                 cmd.channel,
                 '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
@@ -175,7 +176,7 @@ class Timezone(CommandType):
 class Twitch(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'twitch')
-        self.help_text = 'Register a twitch stream. Usage is `.twitch twitch_name`.'
+        self.help_text = 'Register a twitch stream. Usage is `{0} twitch_name`.'.format(self.mention)
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 1:
@@ -192,7 +193,7 @@ class Twitch(CommandType):
                 '{0}: Error: your twitch name cannot contain the character /. (Maybe you accidentally '
                 'included the "twitch.tv/" part of your stream name?)'.format(cmd.author.mention))
         else:
-            NecroDB().set_twitch(discord_id=int(cmd.author.id), twitch_name=twitch_name)
+            necrodb.set_twitch(discord_id=int(cmd.author.id), twitch_name=twitch_name)
             await self.necrobot.client.send_message(
                 cmd.channel,
                 '{0}: Registered your twitch as `twitch.tv/{1}`.'.format(
@@ -212,7 +213,7 @@ class Register(CommandType):
 class RegisterAll(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'registerall')
-        self.help_text = 'Register all unregistered users. [Admin only]'
+        self.help_text = '[Admin only] Register all unregistered users.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):

@@ -1,6 +1,6 @@
 import math
 
-from necrobot.botbase.necrodb import NecroDB
+from necrobot.botbase import necrodb
 from necrobot.util import racetime
 from ..util import character
 
@@ -88,8 +88,7 @@ class StatCache(object):
             self._cache = {}  # Map from discord ID's to UserStats
 
         def get_general_stats(self, discord_id, amplified):
-            db = NecroDB()
-            last_race_number = db.get_largest_race_number(discord_id)
+            last_race_number = necrodb.get_largest_race_number(discord_id)
 
             # Check whether we have an up-to-date cached version, and if so, return it
             cached_data = self.CachedStats()
@@ -104,7 +103,7 @@ class StatCache(object):
 
             # If here, the cache is out-of-date
             general_stats = GeneralStats()
-            for row in db.get_allzones_race_numbers(discord_id, amplified):
+            for row in necrodb.get_allzones_race_numbers(discord_id, amplified):
                 char = character.get_char_from_str(row[0])
                 charstats = CharacterStats(char)
                 charstats.number_of_races = int(row[1])
@@ -112,7 +111,7 @@ class StatCache(object):
                 total_squared_time = 0
                 number_of_wins = 0
                 number_of_forfeits = 0
-                for stat_row in db.get_all_racedata(discord_id, char.name, amplified):
+                for stat_row in necrodb.get_all_racedata(discord_id, char.name, amplified):
                     if int(stat_row[1]) == -2:  # finish
                         time = int(stat_row[0])
                         total_time += time
@@ -187,7 +186,7 @@ def get_winrates(discord_id_1, discord_id_2, ndchar, amplified):
 
 
 def get_most_races_infotext(ndchar, limit):
-    most_races = NecroDB().get_most_races_leaderboard(character.get_str_from_char(ndchar), limit)
+    most_races = necrodb.get_most_races_leaderboard(character.get_str_from_char(ndchar), limit)
     infotext = '{0:>16} {1:>6} {2:>6}\n'.format('', 'Base', 'Amp')
     for row in most_races:
         infotext += '{0:>16} {1:>6} {2:>6}\n'.format(row[0], row[2], row[3])
@@ -195,7 +194,7 @@ def get_most_races_infotext(ndchar, limit):
 
 
 def get_fastest_times_infotext(ndchar, amplified, limit):
-    fastest_times = NecroDB().get_fastest_times_leaderboard(character.get_str_from_char(ndchar), amplified, limit)
+    fastest_times = necrodb.get_fastest_times_leaderboard(character.get_str_from_char(ndchar), amplified, limit)
     infotext = '{0:>16} {1:<9} {2:<9} {3:<13}\n'.format('', 'Time (rta)', 'Seed', 'Date')
     for row in fastest_times:
         infotext += '{0:>16} {1:>9} {2:>9} {3:>13}\n'.format(

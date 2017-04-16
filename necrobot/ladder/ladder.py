@@ -3,6 +3,7 @@ import datetime
 import pytz
 
 
+DO_AUTOMATCHING = False
 AUTOMATCH_WEEKDAY = 4  # Friday (0=Monday, 6=Sunday)
 AUTOMATCH_HOUR = 12  # Noon UTC
 
@@ -23,6 +24,9 @@ class Ladder(object):
         return self.necrobot.client
 
     async def _wait_and_automatch(self):
+        if not DO_AUTOMATCHING:
+            return
+
         utcnow_dt = datetime.datetime.utcnow()
         today_date = utcnow_dt.date()
         automatch_date = today_date + datetime.timedelta(days=((AUTOMATCH_WEEKDAY - today_date.weekday()) % 7))
