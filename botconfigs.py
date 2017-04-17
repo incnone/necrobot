@@ -2,9 +2,9 @@ from necrobot.util import console
 from necrobot.util.config import Config
 
 from necrobot.daily.dailymanager import DailyManager
-from necrobot.necrobot.mainchannel import MainBotChannel
-from necrobot.necrobot.pmbotchannel import PMBotChannel
-from necrobot.race.match import matchroom
+from necrobot.stdconfig.mainchannel import MainBotChannel
+from necrobot.stdconfig.pmbotchannel import PMBotChannel
+from necrobot.race.match import matchutil
 
 
 def load_standard_config(necrobot):
@@ -17,5 +17,5 @@ def load_standard_config(necrobot):
     necrobot.register_pm_channel(PMBotChannel())
 
     necrobot.register_manager('daily', DailyManager())
-    matchroom.recover_stored_match_rooms()
+    matchutil.recover_stored_match_rooms()
 

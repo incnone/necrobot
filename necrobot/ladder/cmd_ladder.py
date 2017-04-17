@@ -1,7 +1,6 @@
 from necrobot.botbase.command import CommandType
-from necrobot.race.match import matchroom
-from necrobot.race.match.match import make_registered_match
-from necrobot.user.necrouser import NecroUser, DuplicateUserException
+from necrobot.race.match import matchutil
+from necrobot.user import userutil
 
 
 # General commands
@@ -80,24 +79,24 @@ class ForceRanked(CommandType):
         for i in [0, 1]:
             racer_name = racer_names[i]
             try:
-                racer = NecroUser.get_user(self.necrobot, discord_name=racer_name)
+                racer = userutil.get_user(self.necrobot, discord_name=racer_name)
                 if racer is None:
                     await self.client.send_message(
                         cmd.channel,
                         'Error: Could not find user with name `{0}`.'.format(racer_name))
                     return
                 racers.append(racer)
-            except DuplicateUserException:
+            except userutil.DuplicateUserException:
                 await self.client.send_message(
                     cmd.channel,
                     'Error: More than one user found with name `{0}`.'.format(racer_name))
                 return
 
         # Create the Match object
-        new_match = make_registered_match(racer_1_id=racers[0].user_id, racer_2_id=racers[1].user_id)
+        new_match = matchutil.make_registered_match(racer_1_id=racers[0].user_id, racer_2_id=racers[1].user_id)
 
         # Create the match room
-        match_room = await matchroom.make_match_room(self.necrobot, new_match)
+        match_room = await matchutil.make_match_room(new_match)
 
         # Output success
         await self.client.send_message(

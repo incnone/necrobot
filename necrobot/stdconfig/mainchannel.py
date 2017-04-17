@@ -2,7 +2,7 @@ from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.daily import cmd_daily
 from necrobot.ladder import cmd_ladder
-from necrobot.necrobot import cmd_seedgen, cmd_color
+from necrobot.stdconfig import cmd_seedgen, cmd_color
 from necrobot.race import cmd_racemake
 from necrobot.stats import cmd_stats
 from necrobot.user import cmd_user

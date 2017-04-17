@@ -4,8 +4,8 @@ import pytz
 
 from necrobot.botbase.command import CommandType
 from necrobot.database import necrodb
-from necrobot.race.match import matchroom
-from necrobot.user.necrouser import NecroUser
+from necrobot.race.match import matchutil
+from necrobot.user import userutil
 from necrobot.util import timestr
 from necrobot.util.parse import dateparse
 from necrobot.util.parse.exception import ParseException
@@ -25,7 +25,7 @@ class Confirm(CommandType):
                 'Error: A scheduled time for this match has not been suggested. Use `.suggest` to suggest a time.')
             return
 
-        author_as_necrouser = NecroUser.get_user(discord_id=int(cmd.author.id))
+        author_as_necrouser = userutil.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
@@ -74,7 +74,7 @@ class Suggest(CommandType):
             return
 
         # Get the command's author as a NecroUser object
-        author_as_necrouser = NecroUser.get_user(discord_id=cmd.author.id)
+        author_as_necrouser = userutil.get_user(discord_id=cmd.author.id)
         if not author_as_necrouser:
             await self.client.send_message(
                 cmd.channel,
@@ -170,7 +170,7 @@ class Unconfirm(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
 
-        author_as_necrouser = NecroUser.get_user(discord_id=int(cmd.author.id))
+        author_as_necrouser = userutil.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
@@ -343,7 +343,7 @@ class RebootRoom(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await matchroom.make_match_room(match=self.bot_channel.match)
+        await matchutil.make_match_room(match=self.bot_channel.match)
         await self.client.send_message(
             cmd.channel,
             'Room rebooted.')

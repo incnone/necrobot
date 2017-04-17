@@ -1,41 +1,9 @@
 from necrobot.database import necrodb
 from necrobot.race.race.raceinfo import RaceInfo
-from necrobot.user.necrouser import NecroUser
-
-
-def make_registered_match(*args, **kwargs):
-    match = Match(*args, **kwargs)
-    match.commit()
-    return match
+from necrobot.user import userutil
 
 
 class Match(object):
-    @staticmethod
-    def get_from_id(match_id):
-        raw_data = necrodb.get_raw_match_data(match_id)
-        if raw_data is not None:
-            return Match.make_from_raw_db_data(raw_data)
-
-    @staticmethod
-    def make_from_raw_db_data(row):
-        race_info = necrodb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
-        cawmentator = NecroUser.get_user(user_id=int(row[11])) if row[11] is not None else None
-
-        return Match(
-            match_id=int(row[0]),
-            race_info=race_info,
-            racer_1_id=int(row[2]),
-            racer_2_id=int(row[3]),
-            suggested_time=row[4],
-            r1_confirmed=bool(row[5]),
-            r2_confirmed=bool(row[6]),
-            r1_unconfirmed=bool(row[7]),
-            r2_unconfirmed=bool(row[8]),
-            is_best_of=bool(row[9]),
-            max_races=int(row[10]),
-            cawmentator=cawmentator
-        )
-
     def __init__(self, racer_1_id, racer_2_id, max_races=3, is_best_of=False, match_id=None, suggested_time=None,
                  r1_confirmed=False, r2_confirmed=False, r1_unconfirmed=False, r2_unconfirmed=False,
                  race_info=RaceInfo(), cawmentator=None):
@@ -77,11 +45,11 @@ class Match(object):
 
     @property
     def racer_1(self):
-        return NecroUser.get_user(user_id=self._racer_1_id)
+        return userutil.get_user(user_id=self._racer_1_id)
 
     @property
     def racer_2(self):
-        return NecroUser.get_user(user_id=self._racer_2_id)
+        return userutil.get_user(user_id=self._racer_2_id)
 
     @property
     def suggested_time(self):
