@@ -18,7 +18,8 @@
 # bolt-sdf
 # 4-shrine-uf
 
-from necrobot.util import character, seedgen, clparse
+from necrobot.util import character, seedgen
+from necrobot.util.parse import clparse
 
 SEEDED_FLAG = int(pow(2, 0))
 SUDDEN_DEATH_FLAG = int(pow(2, 1))

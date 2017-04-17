@@ -2,6 +2,7 @@ from necrobot.botbase import necrodb
 from necrobot.daily.dailymanager import DailyManager
 from necrobot.necrobot.mainchannel import MainBotChannel
 from necrobot.necrobot.pmbotchannel import PMBotChannel
+from necrobot.race.match import matchroom
 from necrobot.util import console
 from necrobot.util.config import Config
 
@@ -63,6 +64,7 @@ class Necrobot(object):
             self.register_bot_channel(self._main_discord_channel, MainBotChannel(self))
             self._pm_bot_channel = PMBotChannel(self)
             self._daily_manager = DailyManager(self)
+            matchroom.recover_stored_match_rooms(self)
             self._initted = True
         else:
             self.refresh()

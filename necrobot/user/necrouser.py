@@ -1,8 +1,9 @@
 import pytz
 
 from necrobot.botbase import necrodb
-from .userprefs import UserPrefs
-from ..util import strutil
+from necrobot.user.userprefs import UserPrefs
+from necrobot.util import strutil
+from necrobot.util import console
 
 
 class DuplicateUserException(Exception):
@@ -15,15 +16,18 @@ class DuplicateUserException(Exception):
 
 class NecroUser(object):
     @staticmethod
-    def get_user(necrobot, discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None):
-        if discord_id is None and discord_name is None and twitch_name is None and rtmp_name is None:
+    def get_user(necrobot, discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None, user_id=None):
+        if discord_id is None and discord_name is None and twitch_name is None \
+                and rtmp_name is None and user_id is None:
             raise RuntimeError('Error: Called NecroUser.get_user with no non-None fields.')
 
         raw_db_data = necrodb.get_all_users(
             discord_id=discord_id,
             discord_name=discord_name,
             twitch_name=twitch_name,
-            rtmp_name=rtmp_name)
+            rtmp_name=rtmp_name,
+            user_id = user_id
+        )
 
         if not raw_db_data:
             return None
@@ -40,23 +44,29 @@ class NecroUser(object):
             user = NecroUser(member)
             user.twitch_name = row[2]
             user.rtmp_name = row[3]
-            user.timezone = pytz.timezone(row[4]) if row[4] is not None else None
+            user.set_timezone(row[4])
             user.user_info = row[5]
             user.user_prefs = UserPrefs()
             user.user_prefs.daily_alert = bool(row[6])
             user.user_prefs.race_alert = bool(row[7])
+            user.user_id = int(row[8])
             return user
 
     def __init__(self, discord_member):
+        self.user_id = None
         self.member = discord_member
         self.twitch_name = None
         self.rtmp_name = None
-        self.timezone = None
+        self._timezone = None
         self.user_info = None
         self.user_prefs = None
 
     def __eq__(self, other):
         return self.discord_id == other.discord_id
+
+    @property
+    def timezone(self):
+        return self._timezone
 
     @property
     def discord_id(self):
@@ -104,22 +114,11 @@ class NecroUser(object):
     def escaped_rtmp_name(self):
         return strutil.escaped(self.rtmp_name)
 
-    def utc_to_local(self, utc_dt):
-        if self.timezone not in pytz.all_timezones:
-            return None
-        local_tz = pytz.timezone(self.timezone)
-
-        if utc_dt.tzinfo is not None and utc_dt.tzinfo.utcoffset(utc_dt) is not None:
-            return local_tz.normalize(utc_dt.astimezone(local_tz))
+    def set_timezone(self, name):
+        if name is None:
+            return
+        elif name not in pytz.common_timezones:
+            console.error('Tried to set timezone to {0}.'.format(name))
+            self._timezone = None
         else:
-            return local_tz.normalize(pytz.utc.localize(utc_dt))
-
-    def local_to_utc(self, local_dt):
-        if self.timezone not in pytz.all_timezones:
-            return None
-        local_tz = pytz.timezone(self.timezone)
-
-        if local_dt.tzinfo is not None and local_dt.tzinfo.utcoffset(local_dt) is not None:
-            return pytz.utc.normalize(local_dt.astimezone(pytz.utc))
-        else:
-            return pytz.utc.normalize(local_tz.localize(local_dt))
+            self._timezone = pytz.timezone(name)

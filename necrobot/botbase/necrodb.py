@@ -1,6 +1,8 @@
 import mysql.connector
 
 from necrobot.ladder.rating import create_rating
+from necrobot.race.race.raceinfo import RaceInfo
+from necrobot.util import console
 from necrobot.util.config import Config
 from necrobot.user.userprefs import UserPrefs
 
@@ -29,12 +31,13 @@ class DBConnect(object):
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None and self.commit:
+        if exc_type is None and self.commit:
             DBConnect.db_connection.commit()
         self.cursor.close()
 
 
-def get_all_users(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None):
+def get_all_users(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None,
+                  timezone=None, user_id=None):
     with DBConnect(commit=False) as cursor:
         params = tuple()
         if discord_id is not None:
@@ -45,23 +48,37 @@ def get_all_users(discord_id=None, discord_name=None, twitch_name=None, rtmp_nam
             params += (twitch_name,)
         if rtmp_name is not None:
             params += (rtmp_name,)
+        if timezone is not None:
+            params += (timezone,)
+        if user_id is not None:
+            params += (user_id,)
 
-        if discord_id is None and discord_name is None and twitch_name is None and rtmp_name is None:
-            where_query = 'TRUE'
-        else:
-            where_query = ''
-            if discord_id is not None:
-                where_query += ' AND discord_id=%s'
-            if discord_name is not None:
-                where_query += ' AND name=%s'
-            if twitch_name is not None:
-                where_query += ' AND twitch_name=%s'
-            if rtmp_name is not None:
-                where_query += ' AND rtmp_name=%s'
-            where_query = where_query[5:]
+        where_query = ''
+        if discord_id is not None:
+            where_query += ' AND discord_id=%s'
+        if discord_name is not None:
+            where_query += ' AND discord_name=%s'
+        if twitch_name is not None:
+            where_query += ' AND twitch_name=%s'
+        if rtmp_name is not None:
+            where_query += ' AND rtmp_name=%s'
+        if timezone is not None:
+            where_query += ' AND timezone=%s'
+        if user_id is not None:
+            where_query += ' AND user_id=%s'
+        where_query = where_query[5:] if where_query else 'TRUE'
 
         cursor.execute(
-            "SELECT discord_id, name, twitch_name, rtmp_name, timezone, user_info, daily_alert, race_alert "
+            "SELECT "
+            "   discord_id, "
+            "   discord_name, "
+            "   twitch_name, "
+            "   rtmp_name, "
+            "   timezone, "
+            "   user_info, "
+            "   daily_alert, "
+            "   race_alert, "
+            "   user_id "
             "FROM user_data "
             "WHERE {0}".format(where_query),
             params)
@@ -74,7 +91,7 @@ def get_discord_id(discord_name):
         cursor.execute(
             "SELECT discord_id "
             "FROM user_data "
-            "WHERE name=%s",
+            "WHERE discord_name=%s",
             params)
         return int(cursor.fetchone()[0]) if cursor.rowcount else None
 
@@ -133,30 +150,53 @@ def get_all_ids_matching_prefs(user_prefs):
 
 def record_race(race):
     with DBConnect(commit=True) as cursor:
+        # Find the race type
+        racetype_params = (race.race_info.character_str,
+                           race.race_info.descriptor,
+                           race.race_info.seeded,
+                           race.race_info.amplified,
+                           race.race_info.seed_fixed)
+        cursor.execute(
+            "SELECT type_id "
+            "FROM race_types "
+            "WHERE `character`=%s "
+            "   AND descriptor=%s "
+            "   AND seeded = %s "
+            "   AND amplified = %s "
+            "   AND seed_fixed = %s",
+            racetype_params)
+
+        if cursor.rowcount == 0:
+            cursor.execute(
+                "INSERT INTO race_types "
+                "(`character`, descriptor, seeded, amplified, seed_fixed) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                racetype_params)
+            cursor.execute("SELECT LAST_INSERT_ID()")
+            type_id = int(cursor.fetchone()[0])
+        else:
+            type_id = int(cursor.fetchone()[0])
+
+        # Get the new race ID
         cursor.execute(
             "SELECT race_id FROM race_data ORDER BY race_id DESC LIMIT 1")
-        new_raceid = 0
-        for row in cursor:
-            new_raceid = row[0] + 1
-            break
+        new_raceid = int(cursor.fetchone()[0]) + 1 if cursor.rowcount != 0 else 1
 
+        # Record the race
         race_params = (new_raceid,
                        race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                       race.race_info.character_str,
-                       race.race_info.descriptor,
-                       race.race_info.flags,
+                       type_id,
                        race.race_info.seed,
-                       race.race_info.seeded,
-                       race.race_info.amplified,
                        race.race_info.condor_race,
                        race.race_info.private_race,)
 
         cursor.execute(
             "INSERT INTO race_data "
-            "(race_id, timestamp, character_name, descriptor, flags, seed, seeded, amplified, condor, private) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "(race_id, timestamp, type_id, seed, condor, private) "
+            "VALUES (%s,%s,%s,%s,%s,%s)",
             race_params)
 
+        # Sort the list of racers
         racer_list = []
         max_time = 0
         for racer in race.racers:
@@ -167,6 +207,7 @@ def record_race(race):
 
         racer_list.sort(key=lambda r: r.time if r.is_finished else max_time)
 
+        # Record each racer in racer_data
         rank = 1
         for racer in racer_list:
             racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
@@ -178,14 +219,14 @@ def record_race(race):
             if racer.is_finished:
                 rank += 1
 
+            # Update the user's name in the database
             user_params = (racer.id, racer.name)
             cursor.execute(
                 'INSERT INTO user_data '
-                '(discord_id, name) '
+                '(discord_id, discord_name) '
                 'VALUES (%s,%s) '
                 'ON DUPLICATE KEY UPDATE '
-                'discord_id=VALUES(discord_id), '
-                'name=VALUES(name)',
+                'discord_name=VALUES(discord_name)',
                 user_params)
 
 
@@ -195,10 +236,10 @@ def register_all_users(members):
             params = (member.id, member.display_name,)
             cursor.execute(
                 "INSERT INTO user_data "
-                "(discord_id, name) "
+                "(discord_id, discord_name) "
                 "VALUES (%s,%s) "
                 "ON DUPLICATE KEY UPDATE "
-                "name=VALUES(name)",
+                "discord_name=VALUES(discord_name)",
                 params)
 
 
@@ -207,10 +248,10 @@ def register_user(member):
         params = (member.id, member.name,)
         cursor.execute(
             "INSERT INTO user_data "
-            "(discord_id, name) "
+            "(discord_id, discord_name) "
             "VALUES (%s,%s) "
             "ON DUPLICATE KEY UPDATE "
-            "name=VALUES(name)",
+            "discord_name=VALUES(discord_name)",
             params)
 
 
@@ -229,7 +270,7 @@ def get_daily_times(daily_id, daily_type):
     with DBConnect(commit=False) as cursor:
         params = (daily_id, daily_type,)
         cursor.execute(
-            "SELECT user_data.name,daily_races.level,daily_races.time "
+            "SELECT user_data.discord_name,daily_races.level,daily_races.time "
             "FROM daily_races INNER JOIN user_data ON daily_races.discord_id=user_data.discord_id "
             "WHERE daily_races.daily_id=%s AND daily_races.type=%s "
             "ORDER BY daily_races.level DESC, daily_races.time ASC",
@@ -346,14 +387,15 @@ def get_allzones_race_numbers(discord_id, amplified):
     with DBConnect(commit=False) as cursor:
         params = (discord_id,)
         cursor.execute(
-            "SELECT race_data.character_name, COUNT(*) as num "
+            "SELECT race_types.character, COUNT(*) as num "
             "FROM racer_data "
-            "JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "INNER JOIN race_types ON race_data.type_id = race_types.type_id "
             "WHERE racer_data.discord_id = %s "
-            "AND race_data.descriptor = 'All-zones' " +
-            ("AND race_data.amplified " if amplified else "AND NOT race_data.amplified ") +
-            "AND race_data.seeded AND NOT race_data.private "
-            "GROUP BY race_data.character_name, race_data.descriptor, race_data.flags "
+            "AND race_types.descriptor = 'All-zones' " +
+            ("AND race_types.amplified " if amplified else "AND NOT race_types.amplified ") +
+            "AND race_types.seeded AND NOT race_data.private "
+            "GROUP BY race_types.character "
             "ORDER BY num DESC",
             params)
         return cursor.fetchall()
@@ -365,12 +407,13 @@ def get_all_racedata(discord_id, char_name, amplified):
         cursor.execute(
             "SELECT racer_data.time, racer_data.level "
             "FROM racer_data "
-            "JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "INNER JOIN race_types ON race_data.type_id = race_types.type_id "
             "WHERE racer_data.discord_id = %s "
-            "AND race_data.character_name = %s "
-            "AND race_data.descriptor = 'All-zones' " +
-            ("AND race_data.amplified " if amplified else "AND NOT race_data.amplified ") +
-            "AND race_data.seeded AND NOT race_data.private ",
+            "AND race_types.character = %s "
+            "AND race_types.descriptor = 'All-zones' " +
+            ("AND race_types.amplified " if amplified else "AND NOT race_types.amplified ") +
+            "AND race_types.seeded AND NOT race_data.private ",
             params)
         return cursor.fetchall()
 
@@ -379,21 +422,23 @@ def get_fastest_times_leaderboard(character_name, amplified, limit):
     with DBConnect(commit=False) as cursor:
         params = (character_name, limit,)
         cursor.execute(
-            "SELECT user_data.name, racer_data.time, race_data.seed, race_data.timestamp "
+            "SELECT user_data.discord_name, racer_data.time, race_data.seed, race_data.timestamp "
             "FROM racer_data "
             "INNER JOIN "
             "( "
             "    SELECT discord_id, MIN(time) AS min_time "
-            "    FROM racer_data INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "    FROM racer_data "
+            "    INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "    INNER JOIN race_types ON race_types.type_id = race_data.type_id "
             "    WHERE "
-            "        time > 0 "
-            "        AND level = -2 "
-            "        AND race_data.character_name=%s "
-            "        AND race_data.descriptor='All-zones' "
-            "        AND race_data.seeded " +
-            "        AND {0}race_data.amplified ".format('' if amplified else 'NOT ') +
+            "        racer_data.time > 0 "
+            "        AND racer_data.level = -2 "
+            "        AND race_types.character=%s "
+            "        AND race_types.descriptor='All-zones' "
+            "        AND race_types.seeded " +
+            "        AND {0}race_types.amplified ".format('' if amplified else 'NOT ') +
             "        AND NOT race_data.private "
-            "    Group By discord_id "
+            "    GROUP BY discord_id "
             ") rd1 On rd1.discord_id = racer_data.discord_id "
             "INNER JOIN user_data ON user_data.discord_id = racer_data.discord_id "
             "INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
@@ -416,29 +461,30 @@ def get_most_races_leaderboard(character_name, limit):
             "FROM "
             "( "
             "    SELECT "
-            "        user_data.name as user_name, "
+            "        user_data.discord_name as user_name, "
             "        SUM( "
             "                IF( "
-            "                race_data.character_name=%s "
-            "                AND race_data.descriptor='All-zones' "
-            "                AND NOT race_data.amplified "
-            "                AND NOT race_data.private, "
-            "                1, 0 "
+            "                   race_types.character=%s "
+            "                   AND race_types.descriptor='All-zones' "
+            "                   AND NOT race_types.amplified "
+            "                   AND NOT race_data.private, "
+            "                   1, 0 "
             "                ) "
             "        ) as num_predlc, "
             "        SUM( "
             "                IF( "
-            "                race_data.character_name=%s "
-            "                AND race_data.descriptor='All-zones' "
-            "                AND race_data.amplified "
-            "                AND NOT race_data.private, "
-            "                1, 0 "
+            "                   race_types.character=%s "
+            "                   AND race_types.descriptor='All-zones' "
+            "                   AND race_types.amplified "
+            "                   AND NOT race_data.private, "
+            "                   1, 0 "
             "                ) "
             "        ) as num_postdlc "
             "    FROM racer_data "
-            "    JOIN user_data ON user_data.discord_id = racer_data.discord_id "
-            "    JOIN race_data ON race_data.race_id = racer_data.race_id "
-            "    GROUP BY user_data.name "
+            "    INNER JOIN user_data ON user_data.discord_id = racer_data.discord_id "
+            "    INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
+            "    INNER JOIN race_types ON race_types.type_id = race_data.type_id "
+            "    GROUP BY user_data.discord_name "
             ") tbl1 "
             "ORDER BY total DESC "
             "LIMIT %s",
@@ -522,3 +568,200 @@ def get_rating(discord_id):
             params)
         row = cursor.fetchone()
         return create_rating(mu=int(row[0]), sigma=int(row[1])) if row is not None else None
+
+
+def get_race_info_from_type_id(race_type):
+    params = (race_type,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT `character`, `descriptor`, `seeded`, `amplified`, `seed_fixed` "
+            "FROM `race_types` "
+            "WHERE `type_id`=%s",
+            params
+        )
+
+        if cursor.rowcount:
+            row = cursor.fetchone()
+            race_info = RaceInfo()
+            race_info.set_char(row[0])
+            race_info.descriptor = row[1]
+            race_info.seeded = bool(row[2])
+            race_info.amplified = bool(row[3])
+            race_info.seed_fixed = bool(row[4])
+            return race_info
+        else:
+            return None
+
+
+def get_race_type_id(race_info, register=False):
+    params = (
+        race_info.character_str,
+        race_info.descriptor,
+        race_info.seeded,
+        race_info.amplified,
+        race_info.seed_fixed,
+    )
+
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT `type_id` "
+            "FROM `race_types` "
+            "WHERE `character`=%s "
+            "   AND `descriptor`=%s "
+            "   AND `seeded`=%s "
+            "   AND `amplified`=%s "
+            "   AND `seed_fixed`=%s "
+            "LIMIT 1",
+            params
+        )
+
+        if cursor.rowcount:
+            return int(cursor.fetchone()[0])
+
+    # If here, the race type was not found
+    if not register:
+        return None
+
+    # Create the new race type
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "INSERT INTO race_types "
+            "(`character`, descriptor, seeded, amplified, seed_fixed) "
+            "VALUES (%s, %s, %s, %s, %s)",
+            params
+        )
+        cursor.execute("SELECT LAST_INSERT_ID()")
+        return int(cursor.fetchone()[0])
+
+
+def register_match(match):
+    if match.is_registered:
+        console.error('Trying to register a match that already has an id ({0}).'.format(match.match_id))
+        return
+
+    match_racetype_id = get_race_type_id(race_info=match.race_info, register=True)
+
+    params = (
+        match_racetype_id,
+        match.racer_1.user_id,
+        match.racer_2.user_id,
+        match.suggested_time,
+        match.confirmed_by_r1,
+        match.confirmed_by_r2,
+        match.r1_wishes_to_unconfirm,
+        match.r2_wishes_to_unconfirm,
+        match.is_best_of,
+        match.number_of_races,
+        match.cawmentator.user_id if match.cawmentator else None,
+    )
+
+    with DBConnect(commit=True) as cursor:
+        print('a')
+        cursor.execute(
+            "INSERT INTO match_data "
+            "("
+            "   race_type_id, "
+            "   racer_1_id, "
+            "   racer_2_id, "
+            "   suggested_time, "
+            "   r1_confirmed, "
+            "   r2_confirmed, "
+            "   r1_unconfirmed, "
+            "   r2_unconfirmed, "
+            "   is_best_of, "
+            "   number_of_races, "
+            "   cawmentator_id"
+            ")"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            params
+        )
+        cursor.execute("SELECT LAST_INSERT_ID()")
+        match.set_match_id(int(cursor.fetchone()[0]))
+
+
+def write_match(match):
+    match_racetype_id = get_race_type_id(race_info=match.race_info, register=True)
+
+    params = (
+        match_racetype_id,
+        match.racer_1.user_id,
+        match.racer_2.user_id,
+        match.suggested_time,
+        match.confirmed_by_r1,
+        match.confirmed_by_r2,
+        match.r1_wishes_to_unconfirm,
+        match.r2_wishes_to_unconfirm,
+        match.is_best_of,
+        match.number_of_races,
+        match.cawmentator.user_id if match.cawmentator else None,
+        match.match_id,
+    )
+
+    if not match.is_registered:
+        console.error('Trying to write a match that has no id. Params: {0}'.format(params))
+        return
+
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "UPDATE match_data "
+            "SET "
+            "   race_type_id=%s "
+            "   racer_1_id=%s "
+            "   racer_2_id=%s "
+            "   suggested_time=%s "
+            "   r1_confirmed=%s "
+            "   r2_confirmed=%s "
+            "   r1_unconfirmed=%s "
+            "   r2_unconfirmed=%s "
+            "   is_best_of=%s "
+            "   number_of_races=%s "
+            "   cawmentator_id=%s "
+            "WHERE match_id=%s",
+            params
+        )
+
+
+def register_match_channel(match_id, channel_id):
+    params = (channel_id, match_id,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "UPDATE match_data "
+            "SET channel_id=%s "
+            "WHERE match_id=%s",
+            params
+        )
+
+
+def get_match_channel_id(match_id):
+    params = (match_id,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT channel_id "
+            "FROM match_data "
+            "WHERE match_id=%s",
+            params
+        )
+        return int(cursor.fetchone()[0]) if cursor.rowcount else None
+
+
+def get_channeled_matches_raw_data():
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT "
+            "   match_id, "
+            "   race_type_id, "
+            "   racer_1_id, "
+            "   racer_2_id, "
+            "   suggested_time, "
+            "   r1_confirmed, "
+            "   r2_confirmed, "
+            "   r1_unconfirmed, "
+            "   r2_unconfirmed, "
+            "   is_best_of, "
+            "   number_of_races, "
+            "   cawmentator_id, "
+            "   channel_id "
+            "FROM match_data "
+            "WHERE channel_id IS NOT NULL"
+        )
+        return cursor.fetchall()

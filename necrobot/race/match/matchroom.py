@@ -1,8 +1,9 @@
 # Room for scheduling and running a "match", a series of games between a common pool of racers.
 
 import discord
-from necrobot.botbase import cmd_admin
+from necrobot.botbase import cmd_admin, necrodb
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.race.match.match import Match
 from necrobot.race.match import cmd_match
 from necrobot.util import console
 
@@ -11,7 +12,7 @@ from necrobot.util import console
 def get_matchroom_name(server, match):
     name_prefix = match.matchroom_name
     cut_length = len(name_prefix) + 1
-    largest_postfix = 2
+    largest_postfix = 1
 
     found = False
     for channel in server.channels:
@@ -26,8 +27,16 @@ def get_matchroom_name(server, match):
     return name_prefix if not found else '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
 
+def recover_stored_match_rooms(necrobot):
+    for row in necrodb.get_channeled_matches_raw_data():
+        channel = necrobot.find_channel_with_id(int(row[12]))
+        if channel is not None:
+            match = Match.make_from_raw_db_data(necrobot=necrobot, row=row)
+            new_room = MatchRoom(necrobot, channel, match)
+            necrobot.register_bot_channel(channel, new_room)
+
+
 async def make_match_room(necrobot, match):
-    # Define permissions
     deny_read = discord.PermissionOverwrite(read_messages=False)
     permit_read = discord.PermissionOverwrite(read_messages=True)
     racer_permissions = []
@@ -48,11 +57,29 @@ async def make_match_room(necrobot, match):
         return None
 
     # Make the actual RaceRoom and initialize it
+    necrodb.register_match_channel(match_id=match.match_id, channel_id=match_channel.id)
     new_room = MatchRoom(necrobot, match_channel, match)
-    await new_room.initialize()
     necrobot.register_bot_channel(match_channel, new_room)
+    await new_room.initialize()
 
     return new_room
+
+
+async def close_match_room(necrobot, match):
+    if not match.is_registered:
+        console.error('Error: Trying to close the room for an unregistered match.')
+        return
+
+    channel_id = necrodb.get_match_channel_id(match.match_id)
+    channel = necrobot.find_channel_with_id(channel_id)
+    if channel is None:
+        console.error('Error: Coudn\'t find channel with id {0} in close_match_room '
+                      '(match_id={1}).'.format(channel_id, match.match_id))
+        return
+
+    await necrobot.unregister_bot_channel(channel)
+    await necrobot.client.delete_channel(channel)
+    necrodb.register_match_channel(match_id=match.match_id, channel_id=None)
 
 
 class MatchRoom(BotChannel):
@@ -76,6 +103,10 @@ class MatchRoom(BotChannel):
     @property
     def channel(self):
         return self._channel
+
+    @property
+    def match(self):
+        return self._match
 
     async def initialize(self):
         pass

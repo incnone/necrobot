@@ -101,14 +101,6 @@ if __name__ == "__main__":
 # Seed the random number generator------------------------
     seedgen.init_seed()
 
-# Try to get login data from login_info if you didn't find it in bot_config; for back-compatibility
-    if config.Config.LOGIN_TOKEN == '':
-        login_info = open('data/login_info', 'r')
-        config.Config.LOGIN_TOKEN = login_info.readline().rstrip('\n')
-        login_info.readline().rstrip('\n')
-        config.Config.SERVER_ID = login_info.readline().rstrip('\n')
-        login_info.close()
-
 # Run client---------------------------------------------
     retry = backoff.ExponentialBackoff()
 
