@@ -33,9 +33,9 @@ class Make(CommandType):
         race_info = raceinfo.parse_args(command.args)
         if race_info:
             try:
-                await raceroom.make_room(self.necrobot, race_info)
+                await raceroom.make_room(race_info)
             except discord.HTTPException as e:
-                await self.necrobot.client.send_message(command.channel, 'Error making race.')
+                await self.client.send_message(command.channel, 'Error making race.')
                 console.error(e.response)
 
 
@@ -60,9 +60,9 @@ class MakePrivate(CommandType):
         private_race_info = privateraceinfo.parse_args(command.args)
         if private_race_info is not None:
             for _ in range(repeat_index):
-                await privateraceroom.make_private_room(self.necrobot, private_race_info, author_as_member)
+                await privateraceroom.make_private_room(private_race_info, author_as_member)
         else:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel, 'Error parsing arguments to `.makeprivate`.')
 
 
@@ -89,7 +89,7 @@ class MakeCondor(CommandType):
         private_race_info.race_info.condor_race = True
         if private_race_info is not None:
             for _ in range(repeat_index):
-                await privateraceroom.make_private_room(self.necrobot, private_race_info, command.author)
+                await privateraceroom.make_private_room(private_race_info, command.author)
         else:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel, 'Error parsing arguments to `.makecondor`.')

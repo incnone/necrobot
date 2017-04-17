@@ -1,14 +1,17 @@
-# Ladderbot TODO
-
-- Fix QOL problems with RTMP registration
-
 # Necrobot TODO
 
-Current version: 0.9
+Current version: 0.10
 
-## Known bugs
+## Ladderbot
 
-### More urgent
+- Fix QOL problems with RTMP registration
+- Make Necrobot a singleton class, and remove it from function signatures
+- Move Match.make_from_raw_db_data into the necrodb code
+- Make the refresh/init code on matchroom loading neater
+- Add classes for easy addition of major functionalities -- e.g., races, dailies, matches, ladder, condor 
+-- that know where to put commands and what refresh/init/close code needs to be called 
+
+## Bugs
 
 ### Fixable/precise but not urgent
 
@@ -20,7 +23,7 @@ Current version: 0.9
 - Daily leaderboards will break due to post length if more than ~45 people participate
 - It's technically possible for the daily seed to be the same as a previous seed
 
-## Unclear sort-of-buggy behavior
+### Unclear sort-of-buggy behavior
 
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?
@@ -30,7 +33,6 @@ just finished or the race that people are currently entering. It maybe also does
 
 - add more complicated sorts to `.mostraces`
 - add `.forceunready` command
-- Add ability to make a "best-of-X" or "repeat-Y" type of "private match" in the bot. This is mostly for CoNDOR purposes.
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
 
 ### Different race modes

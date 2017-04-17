@@ -25,14 +25,14 @@ class Help(CommandType):
                         and (not cmd_type.admin_only or self.bot_channel.is_admin(command.author)):
                     command_list_text += '`' + cmd_type.mention + '`, '
             command_list_text = command_list_text[:-2]
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 'Available commands in this necrobot: {0}\n\nType `{1} <command>` for more info about a particular '
                 'command.'.format(command_list_text, self.mention))
         elif len(command.args) == 1:
             for cmd_type in self.bot_channel.command_types:
                 if cmd_type.called_by(command.args[0]):
-                    await self.necrobot.client.send_message(
+                    await self.client.send_message(
                         command.channel, '`{0}`: {1}'.format(cmd_type.mention, cmd_type.help_text))
             return None
 

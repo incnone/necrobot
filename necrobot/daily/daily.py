@@ -2,7 +2,7 @@ import asyncio
 import datetime
 from enum import Enum
 
-from necrobot.botbase import necrodb
+from necrobot.database import necrodb
 from necrobot.util import racetime
 from . import dailytype
 from ..util import level, seedgen

@@ -1,30 +1,32 @@
-import datetime
+from necrobot.database import necrodb
 from necrobot.race.race.raceinfo import RaceInfo
-from necrobot.botbase import necrodb
 from necrobot.user.necrouser import NecroUser
 
 
 def make_registered_match(*args, **kwargs):
     match = Match(*args, **kwargs)
-    necrodb.register_match(match)
+    match.commit()
     return match
 
 
 class Match(object):
     @staticmethod
-    def make_from_raw_db_data(necrobot, row):
+    def get_from_id(match_id):
+        raw_data = necrodb.get_raw_match_data(match_id)
+        if raw_data is not None:
+            return Match.make_from_raw_db_data(raw_data)
+
+    @staticmethod
+    def make_from_raw_db_data(row):
         race_info = necrodb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
-        racer_1 = NecroUser.get_user(necrobot, user_id=int(row[2])) if row[2] is not None else None
-        racer_2 = NecroUser.get_user(necrobot, user_id=int(row[3])) if row[3] is not None else None
-        time = datetime.datetime.strptime(row[4], '%Y-%m-%d %H:%M:%S') if row[4] is not None else None
-        cawmentator = NecroUser.get_user(necrobot, user_id=int(row[11])) if row[11] is not None else None
+        cawmentator = NecroUser.get_user(user_id=int(row[11])) if row[11] is not None else None
 
         return Match(
             match_id=int(row[0]),
             race_info=race_info,
-            racer_1=racer_1,
-            racer_2=racer_2,
-            suggested_time=time,
+            racer_1_id=int(row[2]),
+            racer_2_id=int(row[3]),
+            suggested_time=row[4],
             r1_confirmed=bool(row[5]),
             r2_confirmed=bool(row[6]),
             r1_unconfirmed=bool(row[7]),
@@ -34,14 +36,14 @@ class Match(object):
             cawmentator=cawmentator
         )
 
-    def __init__(self, racer_1, racer_2, max_races=3, is_best_of=False, match_id=None, suggested_time=None,
+    def __init__(self, racer_1_id, racer_2_id, max_races=3, is_best_of=False, match_id=None, suggested_time=None,
                  r1_confirmed=False, r2_confirmed=False, r1_unconfirmed=False, r2_unconfirmed=False,
                  race_info=RaceInfo(), cawmentator=None):
         self._match_id = match_id                   # int -- the unique ID for this match
 
         # Racers in the match
-        self._racer_1 = racer_1                     # NecroUser
-        self._racer_2 = racer_2                     # NecroUser
+        self._racer_1_id = racer_1_id               # NecroUser
+        self._racer_2_id = racer_2_id               # NecroUser
 
         # Scheduling data
         self._suggested_time = suggested_time       # datetime.datetime with pytz info attached
@@ -75,11 +77,11 @@ class Match(object):
 
     @property
     def racer_1(self):
-        return self._racer_1
+        return NecroUser.get_user(user_id=self._racer_1_id)
 
     @property
     def racer_2(self):
-        return self._racer_2
+        return NecroUser.get_user(user_id=self._racer_2_id)
 
     @property
     def suggested_time(self):
@@ -100,6 +102,10 @@ class Match(object):
     @property
     def r2_wishes_to_unconfirm(self):
         return self._r2_wishes_to_unconfirm
+
+    @property
+    def has_suggested_time(self):
+        return self.suggested_time is not None
 
     @property
     def is_scheduled(self):
@@ -128,6 +134,10 @@ class Match(object):
             name += racer.discord_name + '-'
         return name[:-1] if name != '' else self.race_info.raceroom_name
 
+    # Writes the match to the database
+    def commit(self):
+        necrodb.write_match(self)
+
     # Called by necrodb to set the match id. Do not call yourself.
     def set_match_id(self, match_id):
         self._match_id = match_id
@@ -141,12 +151,41 @@ class Match(object):
         self.force_unconfirm()
         self._suggested_time = time
 
+    # Whether the match has been confirmed by the racer
+    def is_confirmed_by(self, racer):
+        if racer.user_id == self._racer_1_id:
+            return self._confirmed_by_r1
+        elif racer.user_id == self._racer_2_id:
+            return self._confirmed_by_r2
+        else:
+            return False
+
     # Confirm
     def confirm_time(self, racer):
-        if racer == self._racer_1:
+        if racer.user_id == self._racer_1_id:
             self._confirmed_by_r1 = True
-        elif racer == self._racer_2:
+        elif racer.user_id == self._racer_2_id:
             self._confirmed_by_r2 = True
+
+    # Unconfirm
+    def unconfirm_time(self, racer):
+        if racer.user_id == self._racer_1_id:
+            if (not self._confirmed_by_r2) or self._r2_wishes_to_unconfirm:
+                self.force_unconfirm()
+            else:
+                self._r1_wishes_to_unconfirm = True
+        elif racer.user_id == self._racer_2_id:
+            if (not self._confirmed_by_r1) or self._r1_wishes_to_unconfirm:
+                self.force_unconfirm()
+            else:
+                self._r2_wishes_to_unconfirm = True
+
+    # Force all to confirm
+    def force_confirm(self):
+        self._confirmed_by_r1 = True
+        self._confirmed_by_r2 = True
+        self._r1_wishes_to_unconfirm = False
+        self._r2_wishes_to_unconfirm = False
 
     # Unconfirm (hard)
     def force_unconfirm(self):
@@ -156,15 +195,12 @@ class Match(object):
         self._r2_wishes_to_unconfirm = False
         self._suggested_time = None
 
-    # Unconfirm
-    def unconfirm_time(self, racer):
-        if racer == self._racer_1:
-            if (not self._confirmed_by_r2) or self._r2_wishes_to_unconfirm:
-                self.force_unconfirm()
-            else:
-                self._r1_wishes_to_unconfirm = True
-        elif racer == self._racer_2:
-            if (not self._confirmed_by_r1) or self._r1_wishes_to_unconfirm:
-                self.force_unconfirm()
-            else:
-                self._r2_wishes_to_unconfirm = True
+    # Set the match to be a repeat-N
+    def set_repeat(self, number):
+        self._is_best_of = False
+        self._number_of_races = number
+
+    # Set the match to be a best-of-N
+    def set_best_of(self, number):
+        self._is_best_of = True
+        self._number_of_races = number

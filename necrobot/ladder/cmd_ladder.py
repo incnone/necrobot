@@ -11,7 +11,7 @@ class LadderRegister(CommandType):
         self.help_text = 'Begin registering yourself for the Necrobot ladder.'
 
     async def _do_execute(self, cmd):
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             '{0}: Registering doesn\'t do anything right now, but if it did, you\'d have done '
             'it.'.format(cmd.author.mention))
@@ -25,7 +25,7 @@ class NextRace(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             'This command is TODO.')
         pass
@@ -39,7 +39,7 @@ class Ranked(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             'This command is TODO.')
 
@@ -52,7 +52,7 @@ class Unranked(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             'This command is TODO.')
 
@@ -68,7 +68,7 @@ class ForceRanked(CommandType):
     async def _do_execute(self, cmd):
         # Parse arguments
         if len(cmd.args) != 2:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
@@ -82,25 +82,25 @@ class ForceRanked(CommandType):
             try:
                 racer = NecroUser.get_user(self.necrobot, discord_name=racer_name)
                 if racer is None:
-                    await self.necrobot.client.send_message(
+                    await self.client.send_message(
                         cmd.channel,
                         'Error: Could not find user with name `{0}`.'.format(racer_name))
                     return
                 racers.append(racer)
             except DuplicateUserException:
-                await self.necrobot.client.send_message(
+                await self.client.send_message(
                     cmd.channel,
                     'Error: More than one user found with name `{0}`.'.format(racer_name))
                 return
 
         # Create the Match object
-        new_match = make_registered_match(racer_1=racers[0], racer_2=racers[1])
+        new_match = make_registered_match(racer_1_id=racers[0].user_id, racer_2_id=racers[1].user_id)
 
         # Create the match room
         match_room = await matchroom.make_match_room(self.necrobot, new_match)
 
         # Output success
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             'Match created in channel {0}.'.format(
                 match_room.channel.mention))

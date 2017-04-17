@@ -1,9 +1,8 @@
 import mysql.connector
 
-from necrobot.ladder.rating import create_rating
-from necrobot.race.race.raceinfo import RaceInfo
-from necrobot.util import console
 from necrobot.util.config import Config
+from necrobot.ladder import rating
+from necrobot.race.race.raceinfo import RaceInfo
 from necrobot.user.userprefs import UserPrefs
 
 
@@ -34,6 +33,61 @@ class DBConnect(object):
         if exc_type is None and self.commit:
             DBConnect.db_connection.commit()
         self.cursor.close()
+
+
+def _register_user(necro_user):
+    params = (
+        necro_user.discord_id,
+        necro_user.discord_name,
+        necro_user.twitch_name,
+        necro_user.rtmp_name,
+        necro_user.timezone,
+        necro_user.user_info,
+        necro_user.user_prefs.daily_alert,
+        necro_user.user_prefs.race_alert,
+    )
+
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "INSERT INTO user_data "
+            "(discord_id, discord_name, twitch_name, rtmp_name, timezone, user_info, daily_alert, race_alert) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            params
+        )
+
+
+def write_user(necro_user):
+    if necro_user.user_id is None:
+        _register_user(necro_user)
+        return
+
+    params = (
+        necro_user.discord_id,
+        necro_user.discord_name,
+        necro_user.twitch_name,
+        necro_user.rtmp_name,
+        necro_user.timezone,
+        necro_user.user_info,
+        necro_user.user_prefs.daily_alert,
+        necro_user.user_prefs.race_alert,
+        necro_user.user_id
+    )
+
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "UPDATE user_data "
+            "SET "
+            "   discord_id=%s, "
+            "   discord_name=%s, "
+            "   twitch_name=%s, "
+            "   rtmp_name=%s, "
+            "   timezone=%s, "
+            "   user_info=%s, "
+            "   daily_alert=%s, "
+            "   race_alert=%s "
+            "WHERE user_id=%s",
+            params
+        )
 
 
 def get_all_users(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None,
@@ -545,9 +599,9 @@ def set_user_info(discord_id, user_info):
             params)
 
 
-def set_rating(discord_id, rating):
+def set_rating(discord_id, the_rating):
     with DBConnect(commit=True) as cursor:
-        params = (rating.mu, rating.sigma, discord_id,)
+        params = (the_rating.mu, the_rating.sigma, discord_id,)
         cursor.execute(
             "INSERT INTO ladder_data "
             "(discord_id, trueskill_mu, trueskill_sigma) "
@@ -567,7 +621,7 @@ def get_rating(discord_id):
             "WHERE discord_id=%s",
             params)
         row = cursor.fetchone()
-        return create_rating(mu=int(row[0]), sigma=int(row[1])) if row is not None else None
+        return rating.create_rating(mu=int(row[0]), sigma=int(row[1])) if row is not None else None
 
 
 def get_race_info_from_type_id(race_type):
@@ -634,11 +688,32 @@ def get_race_type_id(race_info, register=False):
         return int(cursor.fetchone()[0])
 
 
-def register_match(match):
-    if match.is_registered:
-        console.error('Trying to register a match that already has an id ({0}).'.format(match.match_id))
-        return
+def get_raw_match_data(match_id):
+    params = (match_id,)
 
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT "
+            "   match_id, "
+            "   race_type_id, "
+            "   racer_1_id, "
+            "   racer_2_id, "
+            "   suggested_time, "
+            "   r1_confirmed, "
+            "   r2_confirmed, "
+            "   r1_unconfirmed, "
+            "   r2_unconfirmed, "
+            "   is_best_of, "
+            "   number_of_races, "
+            "   cawmentator_id "
+            "FROM match_data "
+            "WHERE match_id=%s",
+            params
+        )
+        return cursor.fetchone() if cursor.rowcount else None
+
+
+def _register_match(match):
     match_racetype_id = get_race_type_id(race_info=match.race_info, register=True)
 
     params = (
@@ -680,6 +755,9 @@ def register_match(match):
 
 
 def write_match(match):
+    if not match.is_registered:
+        _register_match(match)
+
     match_racetype_id = get_race_type_id(race_info=match.race_info, register=True)
 
     params = (
@@ -697,24 +775,20 @@ def write_match(match):
         match.match_id,
     )
 
-    if not match.is_registered:
-        console.error('Trying to write a match that has no id. Params: {0}'.format(params))
-        return
-
     with DBConnect(commit=True) as cursor:
         cursor.execute(
             "UPDATE match_data "
             "SET "
-            "   race_type_id=%s "
-            "   racer_1_id=%s "
-            "   racer_2_id=%s "
-            "   suggested_time=%s "
-            "   r1_confirmed=%s "
-            "   r2_confirmed=%s "
-            "   r1_unconfirmed=%s "
-            "   r2_unconfirmed=%s "
-            "   is_best_of=%s "
-            "   number_of_races=%s "
+            "   race_type_id=%s, "
+            "   racer_1_id=%s, "
+            "   racer_2_id=%s, "
+            "   suggested_time=%s, "
+            "   r1_confirmed=%s, "
+            "   r2_confirmed=%s, "
+            "   r1_unconfirmed=%s, "
+            "   r2_unconfirmed=%s, "
+            "   is_best_of=%s, "
+            "   number_of_races=%s, "
             "   cawmentator_id=%s "
             "WHERE match_id=%s",
             params

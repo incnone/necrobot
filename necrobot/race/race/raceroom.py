@@ -2,11 +2,13 @@
 
 import asyncio
 import datetime
+
 import discord
 
+from necrobot.botbase.necrobot import Necrobot
 from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.botbase import necrodb
+from necrobot.database import necrodb
 from necrobot.race.race import cmd_race, raceinfo
 from necrobot.race.race.race import Race
 from necrobot.user.userprefs import UserPrefs
@@ -30,7 +32,9 @@ def get_raceroom_name(server, race_info):
 
 
 # Make a room with the given RaceInfo
-async def make_room(necrobot, race_info):
+async def make_room(race_info):
+    necrobot = Necrobot()
+
     # Make a channel for the room
     race_channel = await necrobot.client.create_channel(
         necrobot.server,
@@ -39,7 +43,7 @@ async def make_room(necrobot, race_info):
 
     if race_channel is not None:
         # Make the actual RaceRoom and initialize it
-        new_room = RaceRoom(necrobot, race_channel, race_info)
+        new_room = RaceRoom(race_discord_channel=race_channel, race_info=race_info)
         await new_room.initialize()
 
         necrobot.register_bot_channel(race_channel, new_room)
@@ -59,8 +63,8 @@ async def make_room(necrobot, race_info):
 
 
 class RaceRoom(BotChannel):
-    def __init__(self, necrobot, race_discord_channel, race_info):
-        BotChannel.__init__(self, necrobot)
+    def __init__(self, race_discord_channel, race_info):
+        BotChannel.__init__(self)
         self._channel = race_discord_channel    # The necrobot in which this race is taking place
         self._race_info = race_info             # The type of races to be run in this room
 

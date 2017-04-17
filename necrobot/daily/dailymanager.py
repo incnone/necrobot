@@ -1,18 +1,19 @@
 import datetime
-from necrobot.botbase import necrodb
+
+from necrobot.botbase.necrobot import Necrobot
+from necrobot.database import necrodb
 from . import dailytype
-from .dailytype import DailyType
 from .daily import DATE_ZERO
 from .daily import Daily
+from .dailytype import DailyType
 from ..user.userprefs import UserPrefs
-from ..util.config import Config
 from ..util import console
+from ..util.config import Config
 
 
 class DailyManager(object):
-    def __init__(self, necrobot):
+    def __init__(self):
         console.info('Initializing new DailyManager object.')
-        self.necrobot = necrobot
         self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
         self._cadence_daily = Daily(self, DailyType.cadence)
         self._rotating_daily = Daily(self, DailyType.rotating)
@@ -27,6 +28,10 @@ class DailyManager(object):
     @property
     def client(self):
         return self.necrobot.client
+
+    @property
+    def necrobot(self):
+        return Necrobot()
 
     # Return the number for today's daily (days since DATE_ZERO)
     @property

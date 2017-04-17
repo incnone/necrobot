@@ -53,6 +53,10 @@ class CommandType(object):
         self.bot_channel = bot_channel
 
     @property
+    def client(self):
+        return self.necrobot.client
+
+    @property
     def necrobot(self):
         return self.bot_channel.necrobot
 

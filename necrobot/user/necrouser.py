@@ -1,9 +1,10 @@
 import pytz
 
-from necrobot.botbase import necrodb
+from necrobot.botbase.necrobot import Necrobot
+from necrobot.database import necrodb
 from necrobot.user.userprefs import UserPrefs
-from necrobot.util import strutil
 from necrobot.util import console
+from necrobot.util import strutil
 
 
 class DuplicateUserException(Exception):
@@ -14,9 +15,21 @@ class DuplicateUserException(Exception):
         return self._err_str
 
 
+class MemberToNecroUserCM(object):
+    def __init__(self, discord_member):
+        self.user = NecroUser.get_user(discord_id=discord_member.id)
+
+    def __enter__(self):
+        return self.user
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self.user.commit()
+
+
 class NecroUser(object):
     @staticmethod
-    def get_user(necrobot, discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None, user_id=None):
+    def get_user(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None, user_id=None):
         if discord_id is None and discord_name is None and twitch_name is None \
                 and rtmp_name is None and user_id is None:
             raise RuntimeError('Error: Called NecroUser.get_user with no non-None fields.')
@@ -26,7 +39,7 @@ class NecroUser(object):
             discord_name=discord_name,
             twitch_name=twitch_name,
             rtmp_name=rtmp_name,
-            user_id = user_id
+            user_id=user_id
         )
 
         if not raw_db_data:
@@ -37,7 +50,7 @@ class NecroUser(object):
                 'rtmp_name={3}.'.format(discord_id, discord_name, twitch_name, rtmp_name))
 
         for row in raw_db_data:
-            member = necrobot.find_member(discord_id=int(row[0]))
+            member = Necrobot().find_member(discord_id=int(row[0]))
             if member is None:
                 return None
 
@@ -63,6 +76,9 @@ class NecroUser(object):
 
     def __eq__(self, other):
         return self.discord_id == other.discord_id
+
+    def commit(self):
+        necrodb.write_user(self)
 
     @property
     def timezone(self):

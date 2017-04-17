@@ -1,6 +1,6 @@
 import math
 
-from necrobot.botbase import necrodb
+from necrobot.database import necrodb
 from necrobot.util import racetime
 from ..util import character
 

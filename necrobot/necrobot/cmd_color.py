@@ -69,5 +69,5 @@ class ColorMe(CommandType):
         self.secret_command = True
 
     async def _do_execute(self, command):
-        asyncio.ensure_future(color_user(command.author, self.necrobot.client, self.necrobot.server))
-        asyncio.ensure_future(self.necrobot.client.delete_message(command.message))
+        asyncio.ensure_future(color_user(command.author, self.client, self.necrobot.server))
+        asyncio.ensure_future(self.client.delete_message(command.message))

@@ -11,11 +11,11 @@ class DailyCommandType(CommandType):
 
     @property
     def _daily_manager(self):
-        return self.necrobot.daily_manager
+        return self.necrobot.get_manager('daily')
 
     @property
     def client(self):
-        return self._daily_manager.necrobot.client
+        return self._daily_manager.client
 
     async def _do_execute(self, command):
         today_number = self._daily_manager.today_number

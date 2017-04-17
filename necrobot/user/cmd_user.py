@@ -1,7 +1,7 @@
 import pytz
 
 from necrobot.botbase.command import CommandType
-from necrobot.botbase import necrodb
+from necrobot.database import necrodb
 from necrobot.user.userprefs import UserPrefs
 from necrobot.util.config import Config
 
@@ -16,7 +16,7 @@ class DailyAlert(CommandType):
 
     async def _do_execute(self, command):
         if len(command.args) != 1 or command.args[0].lower() not in ['on', 'off']:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "Couldn't parse command. Call `{0} on` or `{0} off`.".format(self.mention))
             return
@@ -30,11 +30,11 @@ class DailyAlert(CommandType):
         necrodb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.daily_alert:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "{0}: You will now receive PM alerts with the new daily seeds.".format(command.author.mention))
         else:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "{0}: You will no longer receive PM alerts for dailies.".format(command.author.mention))
 
@@ -47,7 +47,7 @@ class RaceAlert(CommandType):
 
     async def _do_execute(self, command):
         if len(command.args) != 1 or command.args[0].lower() not in ['on', 'off']:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "Couldn't parse command. Call `{0} on` or `{0} off`.".format(self.mention))
             return
@@ -61,11 +61,11 @@ class RaceAlert(CommandType):
         necrodb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.race_alert:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "{0}: You will now receive PM alerts when a new raceroom is made.".format(command.author.mention))
         else:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 command.channel,
                 "{0}: You will no longer receive PM alerts for races.".format(command.author.mention))
 
@@ -80,7 +80,7 @@ class ViewPrefs(CommandType):
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             command.author,
             'Your current user preferences: {}'.format(prefs_string))
 
@@ -94,7 +94,7 @@ class RTMP(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 2:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: I was unable to parse your request name because you gave the wrong number of arguments. '
                 'Use `.rtmp discord_name rtmp_name`.'.format(cmd.author.mention))
@@ -104,14 +104,14 @@ class RTMP(CommandType):
         discord_name = cmd.args[0]
         discord_member = self.necrobot.find_member(discord_name=discord_name)
         if discord_member is None:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 'Error: Unable to find the discord user `{0}`.'.format(discord_name))
             return
 
         rtmp_name = cmd.args[1]
         necrodb.set_rtmp(discord_id=int(discord_member.id), rtmp_name=rtmp_name)
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             '{0}: Registered the RTMP `{1}` to user `{2}`.'.format(
                 cmd.author.mention, rtmp_name, discord_member.display_name))
@@ -127,19 +127,19 @@ class SetInfo(CommandType):
         info = cmd.message.content[cut_length:]
 
         if len(info) > MAX_USERINFO_LEN:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: `.setinfo` is limited to {1} characters.'.format(cmd.author.mention, MAX_USERINFO_LEN))
             return
 
         if '\n' in info or '`' in info:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
         necrodb.set_user_info(discord_id=int(cmd.author.id), user_info=info)
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))
 
@@ -154,7 +154,7 @@ class Timezone(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 1:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: I was unable to parse your timezone because you gave the wrong number of arguments. '
                 'See <{1}> for a list of timezones.'.format(cmd.author.mention, self._timezone_loc))
@@ -163,11 +163,11 @@ class Timezone(CommandType):
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
             necrodb.set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
         else:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: I was unable to parse your timezone. See <{1}> for a list of timezones.'.format(
                     cmd.author.mention, self._timezone_loc))
@@ -180,7 +180,7 @@ class Twitch(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 1:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: I was unable to parse your stream name because you gave the wrong number of arguments. '
                 'Use `.twitch twitch_name`.'.format(cmd.author.mention))
@@ -188,13 +188,13 @@ class Twitch(CommandType):
 
         twitch_name = cmd.args[0]
         if '/' in twitch_name:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: your twitch name cannot contain the character /. (Maybe you accidentally '
                 'included the "twitch.tv/" part of your stream name?)'.format(cmd.author.mention))
         else:
             necrodb.set_twitch(discord_id=int(cmd.author.id), twitch_name=twitch_name)
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Registered your twitch as `twitch.tv/{1}`.'.format(
                     cmd.author.mention, twitch_name))
@@ -207,7 +207,7 @@ class Register(CommandType):
 
     async def _do_execute(self, cmd):
         self.necrobot.register_user(cmd.author)
-        await self.necrobot.client.send_message(cmd.channel, 'Registered your name as {0}.'.format(cmd.author.mention))
+        await self.client.send_message(cmd.channel, 'Registered your name as {0}.'.format(cmd.author.mention))
 
 
 class RegisterAll(CommandType):
@@ -218,4 +218,4 @@ class RegisterAll(CommandType):
 
     async def _do_execute(self, cmd):
         self.necrobot.register_all_users()
-        await self.necrobot.client.send_message(cmd.channel, 'Registered all unregistered users.')
+        await self.client.send_message(cmd.channel, 'Registered all unregistered users.')

@@ -1,12 +1,13 @@
+import aiohttp
 import asyncio
 import datetime
+import discord
 import logging
 import os
 import sys
-
-import aiohttp
-import discord
 import websockets
+
+import botconfigs
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.necrobot import Necrobot
@@ -18,7 +19,7 @@ def ready_client_events():
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
-        the_necrobot.post_login_init(config.Config.SERVER_ID)
+        the_necrobot.post_login_init(client, config.Config.SERVER_ID, botconfigs.load_standard_config)
 
     # Called whenever a new message is posted in any necrobot on any server
     @client.event
@@ -109,7 +110,7 @@ if __name__ == "__main__":
         logger.info('Beginning main loop: creating ')
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
-        the_necrobot = Necrobot(client)
+        the_necrobot = Necrobot()
         ready_client_events()
 
         while not client.is_logged_in:

@@ -1,5 +1,5 @@
 from necrobot.botbase.command import CommandType
-from necrobot.botbase import necrodb
+from necrobot.database import necrodb
 from necrobot.stats import statfn
 from necrobot.util import character
 
@@ -24,41 +24,41 @@ from necrobot.util import character
 #             pass
 #
 #         if len(args) != 3:
-#             await self.necrobot.client.send_message(
+#             await self.client.send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: Wrong number of arguments for `.matchup`.'.format(cmd.author.mention))
 #             return
 #
 #         ndchar = character.get_char_from_str(args[0])
 #         if ndchar is None:
-#             await self.necrobot.client.send_message(
+#             await self.client.send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: Can\'t parse {1} as a character name.'.format(cmd.author.mention, args[0]))
 #             return
 #
 #         member_1 = self.necrobot.find_member(args[1])
 #         if member_1 is None:
-#             await self.necrobot.client.send_message(
+#             await self.client.send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: Can\'t find user {1}.'.format(cmd.author.mention, args[1]))
 #             return
 #
 #         member_2 = self.necrobot.find_member(args[2])
 #         if member_2 is None:
-#             await self.necrobot.client.send_message(
+#             await self.client.send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: Can\'t find user {1}.'.format(cmd.author.mention, args[2]))
 #             return
 #
 #         win_data = statfn.get_winrates(int(member_1.id), int(member_2.id), ndchar, amplified)
 #         if win_data is None:
-#             await self.necrobot.client.send_message(
+#             await self.client.send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: At least one of these racers doesn\'t have enough wins to do this prediction.'.format(
 #                     cmd.author.mention))
 #             return
 #
-#         await self.necrobot.client.send_message(
+#         await self.client.send_message(
 #             cmd.necrobot,
 #             'Predicted outcome: **{0}** [{1}% - {2}%] **{3}** ({4}% chance of neither finishing).'.format(
 #                 member_1.display_name,
@@ -88,14 +88,14 @@ class Fastest(CommandType):
             pass
 
         if len(cmd.args) != 1:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Wrong number of arguments for `.fastest`.'.format(cmd.author.mention))
             return
 
         ndchar = character.get_char_from_str(args[0])
         if ndchar is None:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, args[0]))
             return
@@ -104,7 +104,7 @@ class Fastest(CommandType):
             ndchar.name,
             statfn.get_fastest_times_infotext(ndchar, amplified, 20),
             'Amplified' if amplified else 'base-game')
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             infobox)
 
@@ -118,14 +118,14 @@ class MostRaces(CommandType):
     async def _do_execute(self, cmd):
         await self.necrobot.client.send_typing(cmd.channel)
         if len(cmd.args) != 1:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Wrong number of arguments for `.mostraces`.'.format(cmd.author.mention))
             return
 
         ndchar = character.get_char_from_str(cmd.args[0])
         if ndchar is None:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, cmd.args[0]))
             return
@@ -133,7 +133,7 @@ class MostRaces(CommandType):
         infobox = 'Most completed public all-zones {0} races:\n```\n{1}```'.format(
             ndchar.name,
             statfn.get_most_races_infotext(ndchar, 20))
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             infobox)
 
@@ -160,7 +160,7 @@ class Stats(CommandType):
             pass
 
         if len(args) > 1:
-            await self.necrobot.client.send_message(
+            await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: wrong number of arguments for `.stats`.'.format(cmd.author.mention))
             return
@@ -176,14 +176,14 @@ class Stats(CommandType):
             else:
                 racer_id = int(necrodb.get_discord_id(racer_name))
                 if racer_id is None:
-                    await self.necrobot.client.send_message(
+                    await self.client.send_message(
                         cmd.channel,
                         '{0}: Could not find user "{1}".'.format(cmd.author.mention, args[0]))
                     return
 
         # Show stats
         general_stats = statfn.get_general_stats(racer_id, amplified=amplified)
-        await self.necrobot.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(
                 racer_name,

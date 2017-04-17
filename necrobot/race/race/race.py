@@ -3,7 +3,7 @@ import datetime
 import time
 from enum import IntEnum
 
-from necrobot.botbase import necrodb
+from necrobot.database import necrodb
 from necrobot.race.race.raceinfo import RaceInfo
 from necrobot.race.race.racer import Racer
 from necrobot.util import console, racetime

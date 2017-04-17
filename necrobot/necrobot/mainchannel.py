@@ -9,8 +9,8 @@ from necrobot.user import cmd_user
 
 
 class MainBotChannel(BotChannel):
-    def __init__(self, necrobot):
-        BotChannel.__init__(self, necrobot)
+    def __init__(self):
+        BotChannel.__init__(self)
         self.command_types = [
             cmd_admin.Die(self),
             cmd_admin.Help(self),
@@ -41,5 +41,9 @@ class MainBotChannel(BotChannel):
             cmd_user.DailyAlert(self),
             cmd_user.RaceAlert(self),
             cmd_user.Register(self),
+            cmd_user.RTMP(self),
+            cmd_user.SetInfo(self),
+            cmd_user.Timezone(self),
+            cmd_user.Twitch(self),
             cmd_user.ViewPrefs(self),
         ]

@@ -8,8 +8,8 @@ from necrobot.user import cmd_user
 
 
 class PMBotChannel(BotChannel):
-    def __init__(self, necrobot):
-        BotChannel.__init__(self, necrobot)
+    def __init__(self):
+        BotChannel.__init__(self)
         self.command_types = [
             cmd_admin.Die(self),
             cmd_admin.Help(self),
