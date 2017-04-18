@@ -424,4 +424,3 @@ class Update(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.update()
-        # TODO: Record match if necessary

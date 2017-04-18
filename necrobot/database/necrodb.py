@@ -202,6 +202,30 @@ def get_all_ids_matching_prefs(user_prefs):
         return to_return
 
 
+def record_match_race(match, race_number, race_id, winner, canceled, contested):
+    with DBConnect(commit=True) as cursor:
+        params = (
+            match.match_id,
+            race_number,
+            race_id,
+            winner,
+            canceled,
+            contested
+        )
+
+        cursor.execute(
+            "INSERT INTO match_races "
+            "(match_id, race_number, race_id, winner, canceled, contested) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE "
+            "   race_id=VALUES(race_id), "
+            "   winner=VALUES(winner), "
+            "   canceled=VALUES(canceled), "
+            "   contested=VALUES(contested)",
+            params
+        )
+
+
 def record_race(race):
     with DBConnect(commit=True) as cursor:
         # Find the race type
@@ -231,40 +255,29 @@ def record_race(race):
         else:
             type_id = int(cursor.fetchone()[0])
 
-        # Get the new race ID
-        cursor.execute(
-            "SELECT race_id FROM race_data ORDER BY race_id DESC LIMIT 1")
-        new_raceid = int(cursor.fetchone()[0]) + 1 if cursor.rowcount != 0 else 1
-
         # Record the race
-        race_params = (new_raceid,
-                       race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                       type_id,
-                       race.race_info.seed,
-                       race.race_info.condor_race,
-                       race.race_info.private_race,)
+        race_params = (
+            race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+            type_id,
+            race.race_info.seed,
+            race.race_info.condor_race,
+            race.race_info.private_race,
+        )
 
         cursor.execute(
             "INSERT INTO race_data "
-            "(race_id, timestamp, type_id, seed, condor, private) "
-            "VALUES (%s,%s,%s,%s,%s,%s)",
+            "(timestamp, type_id, seed, condor, private) "
+            "VALUES (%s,%s,%s,%s,%s)",
             race_params)
 
-        # Sort the list of racers
-        racer_list = []
-        max_time = 0
-        for racer in race.racers:
-            racer_list.append(racer)
-            if racer.is_finished:
-                max_time = max(racer.time, max_time)
-        max_time += 1
-
-        racer_list.sort(key=lambda r: r.time if r.is_finished else max_time)
+        # Store the new race ID in the Race object
+        cursor.execute("SELECT LAST_INSERT_ID()")
+        race.race_id = int(cursor.fetchone()[0])
 
         # Record each racer in racer_data
         rank = 1
-        for racer in racer_list:
-            racer_params = (new_raceid, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
+        for racer in race.racers:
+            racer_params = (race.race_id, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
             cursor.execute(
                 "INSERT INTO racer_data "
                 "(race_id, discord_id, time, rank, igt, comment, level) "

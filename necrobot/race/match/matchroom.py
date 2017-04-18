@@ -1,7 +1,8 @@
-# Room for scheduling and running a "match", a series of games between a common pool of racers.
+# Room for scheduling and running a "match", a series of games between a pair of racers.
 
 import asyncio
 import datetime
+import discord
 
 from necrobot.botbase import cmd_admin
 from necrobot.database import necrodb
@@ -11,6 +12,7 @@ from necrobot.race.match import cmd_match
 from necrobot.util import ordinal
 
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.race.match.match import Match
 from necrobot.race.race import Race
 from necrobot.race.raceevent import RaceEvent
 
@@ -20,17 +22,18 @@ FINAL_MATCH_WARNING = datetime.timedelta(minutes=5)
 
 
 class MatchRoom(BotChannel):
-    def __init__(self, match_discord_channel, match):
+    def __init__(self, match_discord_channel: discord.Channel, match: Match):
         BotChannel.__init__(self)
         self._channel = match_discord_channel   # The necrobot in which this match is taking place
         self._match = match                     # The match for this room
 
         self._current_race = None               # The current race
-        self._last_race = None                  # The last race to finish
+        self._last_begun_race = None            # The last race to begin
 
         self._countdown_to_match_future = None  # Future that waits until the match start, then begins match
 
         self._current_race_number = None
+        self._current_race_contested = False
 
         self._prematch_command_types = [
             cmd_admin.Help(self),
@@ -75,12 +78,13 @@ class MatchRoom(BotChannel):
 
         self.command_types = self._prematch_command_types
 
+# Properties
     @property
-    def channel(self):
+    def channel(self) -> discord.Channel:
         return self._channel
 
     @property
-    def match(self):
+    def match(self) -> Match:
         return self._match
 
     @property
@@ -88,8 +92,8 @@ class MatchRoom(BotChannel):
         return self._current_race
 
     @property
-    def last_begun_race(self) -> Race:
-        return self._last_race
+    def last_begun_race(self) -> Race or None:
+        return self._last_begun_race
 
     @property
     def played_all_races(self) -> bool:
@@ -104,6 +108,7 @@ class MatchRoom(BotChannel):
     def before_races(self) -> bool:
         return self.current_race is None and self.last_begun_race is None
 
+# Public coroutine methods
     async def initialize(self):
         if self._countdown_to_match_future is not None:
             self._countdown_to_match_future.cancel()
@@ -116,7 +121,7 @@ class MatchRoom(BotChannel):
             self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start())
 
     # Change the RaceInfo for this room
-    async def change_race_info(self, command_args):
+    async def change_race_info(self, command_args: str):
         new_race_info = raceinfo.parse_args_modify(
             command_args,
             raceinfo.RaceInfo.copy(self.match.race_info)
@@ -130,12 +135,44 @@ class MatchRoom(BotChannel):
 
     # Process a RaceEvent
     async def process(self, event: RaceEvent):
-        pass
+        if event == RaceEvent.RACE_BEGIN:
+            self._last_begun_race = self._current_race
+        elif event == RaceEvent.RACE_FINALIZE:
+            await self._record_match_race()
+            if self.played_all_races:
+                await self._end_match()
+            else:
+                await self._begin_new_race()
 
     # Write to the channel
-    async def write(self, text):
+    async def write(self, text: str):
         await self.client.send_message(self.channel, text)
 
+    # Post an alert pinging all racers in the match
+    async def alert_racers(self):
+        member_1 = self.match.racer_1.member
+        member_2 = self.match.racer_2.member
+
+        alert_str = ''
+        if member_1 is not None:
+            alert_str += member_1.mention + ', '
+        if member_2 is not None:
+            alert_str += member_2.mention + ', '
+
+        if alert_str:
+            minutes_until_match = int((self.match.time_until_match.total_seconds() + 30) // 60)
+            await self.write('{0}: The match is scheduled to begin in {1} minutes.'.format(
+                alert_str[:-2], minutes_until_match))
+
+    # PM an alert to the match cawmentator, if any
+    async def alert_cawmentator(self):
+        pass  # TODO
+
+    # Post a match alert in the main channel
+    async def post_match_alert(self):
+        pass  # TODO
+
+# Private coroutine methods
     # Countdown to the start of the match, then begin
     async def _countdown_to_match_start(self):
         if not self.match.is_scheduled:
@@ -175,14 +212,13 @@ class MatchRoom(BotChannel):
         # Make the race
         match_race_data = necrodb.get_match_race_data(self.match.match_id)
         finished_races = match_race_data[0]
-        self._last_race = self._current_race
         self._current_race = Race(self, self.match.race_info)
         self._current_race_number = finished_races + match_race_data[1] + 1
         await self._current_race.initialize()
 
         # Enter the racers automatically
         for racer in self.match.racers:
-            await self.current_race.enter_member(racer.member)  # TODO: get rid of text
+            await self.current_race.enter_member(racer.member, mute=True)
 
         # Output text
         await self.write(
@@ -194,26 +230,23 @@ class MatchRoom(BotChannel):
         if self._countdown_to_match_future is not None:
             self._countdown_to_match_future.cancel()
 
-    # Post an alert pinging all racers in the match
-    async def alert_racers(self):
-        member_1 = self.match.racer_1.member
-        member_2 = self.match.racer_2.member
+    async def _end_match(self):
+        await self.write('Match complete.')
 
-        alert_str = ''
-        if member_1 is not None:
-            alert_str += member_1.mention + ', '
-        if member_2 is not None:
-            alert_str += member_2.mention + ', '
+    async def _record_match_race(self):
+        race_winner_id = int(self.current_race.winner.member.id)
+        if race_winner_id == int(self.match.racer_1.member.id):
+            race_winner = 1
+        elif race_winner_id == int(self.match.racer_2.member.id):
+            race_winner = 2
+        else:
+            race_winner = 0
 
-        if alert_str:
-            minutes_until_match = int((self.match.time_until_match.total_seconds() + 30) // 60)
-            await self.write('{0}: The match is scheduled to begin in {1} minutes.'.format(
-                alert_str[:-2], minutes_until_match))
-
-    # PM an alert to the match cawmentator, if any
-    async def alert_cawmentator(self):
-        pass  # TODO
-
-    # Post a match alert in the main channel
-    async def post_match_alert(self):
-        pass  # TODO
+        necrodb.record_match_race(
+            match=self.match,
+            race_number=self._current_race_number,
+            race_id=self.current_race.race_id,
+            winner=race_winner,
+            contested=self._current_race_contested,
+            canceled=False
+        )

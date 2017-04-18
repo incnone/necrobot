@@ -13,8 +13,8 @@ class Match(object):
         self._match_id = match_id                   # int -- the unique ID for this match
 
         # Racers in the match
-        self._racer_1_id = racer_1_id               # NecroUser
-        self._racer_2_id = racer_2_id               # NecroUser
+        self._racer_1_id = int(racer_1_id)          # NecroUser
+        self._racer_2_id = int(racer_2_id)          # NecroUser
 
         # Scheduling data
         self._suggested_time = suggested_time       # datetime.datetime with pytz.utc tzinfo attached

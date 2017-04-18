@@ -5,8 +5,8 @@ Current version: 0.10
 ## Ladderbot
 
 - Fix QOL problems with RTMP registration
-- Remove mandatory written text from Race class; restructure to work with both public races and matches
-- Change race_data.race_id to auto_increment
+- Allow for customizeable Race-class parameters (the ones currently drawn from Config) that can differ Match/RaceRoom
+- Add auto-forfeit option to Race (since this is useful for matches)
 
 ## Bugs
 
