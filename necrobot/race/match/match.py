@@ -1,3 +1,6 @@
+import datetime
+import pytz
+
 from necrobot.database import necrodb
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user import userutil
@@ -14,7 +17,7 @@ class Match(object):
         self._racer_2_id = racer_2_id               # NecroUser
 
         # Scheduling data
-        self._suggested_time = suggested_time       # datetime.datetime with pytz info attached
+        self._suggested_time = suggested_time       # datetime.datetime with pytz.utc tzinfo attached
         self._confirmed_by_r1 = r1_confirmed
         self._confirmed_by_r2 = r2_confirmed
         self._r1_wishes_to_unconfirm = r1_unconfirmed
@@ -32,11 +35,11 @@ class Match(object):
         return self.match_id == other.match_id
 
     @property
-    def is_registered(self):
+    def is_registered(self) -> bool:
         return self._match_id is not None
 
     @property
-    def match_id(self):
+    def match_id(self) -> int:
         return self._match_id
 
     @property
@@ -52,43 +55,43 @@ class Match(object):
         return userutil.get_user(user_id=self._racer_2_id)
 
     @property
-    def suggested_time(self):
+    def suggested_time(self) -> datetime.datetime:
         return self._suggested_time
 
     @property
-    def confirmed_by_r1(self):
+    def confirmed_by_r1(self) -> bool:
         return self._confirmed_by_r1
 
     @property
-    def confirmed_by_r2(self):
+    def confirmed_by_r2(self) -> bool:
         return self._confirmed_by_r2
 
     @property
-    def r1_wishes_to_unconfirm(self):
+    def r1_wishes_to_unconfirm(self) -> bool:
         return self._r1_wishes_to_unconfirm
 
     @property
-    def r2_wishes_to_unconfirm(self):
+    def r2_wishes_to_unconfirm(self) -> bool:
         return self._r2_wishes_to_unconfirm
 
     @property
-    def has_suggested_time(self):
+    def has_suggested_time(self) -> bool:
         return self.suggested_time is not None
 
     @property
-    def is_scheduled(self):
+    def is_scheduled(self) -> bool:
         return self.confirmed_by_r1 and self.confirmed_by_r2
 
     @property
-    def is_best_of(self):
+    def is_best_of(self) -> int:
         return self._is_best_of
 
     @property
-    def number_of_races(self):
+    def number_of_races(self) -> int:
         return self._number_of_races
 
     @property
-    def race_info(self):
+    def race_info(self) -> RaceInfo:
         return self._race_info
 
     @property
@@ -96,11 +99,15 @@ class Match(object):
         return self._cawmentator
 
     @property
-    def matchroom_name(self):
+    def matchroom_name(self) -> str:
         name = ''
         for racer in self.racers:
             name += racer.discord_name + '-'
         return name[:-1] if name != '' else self.race_info.raceroom_name
+
+    @property
+    def time_until_match(self) -> datetime.datetime or None:
+        return self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow()) if self.is_scheduled else None
 
     # Writes the match to the database
     def commit(self):
@@ -172,3 +179,7 @@ class Match(object):
     def set_best_of(self, number):
         self._is_best_of = True
         self._number_of_races = number
+
+    # Change the RaceInfo for the match
+    def set_race_info(self, race_info: RaceInfo):
+        self._race_info = race_info
