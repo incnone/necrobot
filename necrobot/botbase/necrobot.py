@@ -32,7 +32,7 @@ class Necrobot(object):
             self._quitting = False
 
         # Initializes object; call after client has been logged in to discord
-        def post_login_init(self, client, server_id, load_config_fn):
+        async def post_login_init(self, client, server_id, load_config_fn):
             self.client = client
 
             # Find the correct server
@@ -53,7 +53,7 @@ class Necrobot(object):
                 exit(1)
 
             if not self._initted:
-                load_config_fn(self)
+                await load_config_fn(self)
                 self._initted = True
             else:
                 self.refresh()
@@ -197,6 +197,10 @@ class Necrobot(object):
 
         # Executes a command
         async def execute(self, cmd):
+            # Don't execute before init
+            if not self._initted:
+                return
+
             # Don't care about bad commands
             if cmd.command is None:
                 return

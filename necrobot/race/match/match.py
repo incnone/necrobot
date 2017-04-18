@@ -17,7 +17,8 @@ class Match(object):
         self._racer_2_id = int(racer_2_id)          # NecroUser
 
         # Scheduling data
-        self._suggested_time = suggested_time       # datetime.datetime with pytz.utc tzinfo attached
+        self._suggested_time = None                 # datetime.datetime with pytz.utc tzinfo
+        self._set_suggested_time(suggested_time)
         self._confirmed_by_r1 = r1_confirmed
         self._confirmed_by_r2 = r2_confirmed
         self._r1_wishes_to_unconfirm = r1_unconfirmed
@@ -80,7 +81,7 @@ class Match(object):
 
     @property
     def is_scheduled(self) -> bool:
-        return self.confirmed_by_r1 and self.confirmed_by_r2
+        return self.has_suggested_time and self.confirmed_by_r1 and self.confirmed_by_r2
 
     @property
     def is_best_of(self) -> int:
@@ -123,10 +124,8 @@ class Match(object):
 
     # Suggest a time for the match
     def suggest_time(self, time):
-        if time.tzinfo is None:
-            time = pytz.utc.localize(time)
         self.force_unconfirm()
-        self._suggested_time = time.astimezone(pytz.utc)
+        self._set_suggested_time(time)
 
     # Whether the match has been confirmed by the racer
     def is_confirmed_by(self, racer):
@@ -185,3 +184,10 @@ class Match(object):
     # Change the RaceInfo for the match
     def set_race_info(self, race_info: RaceInfo):
         self._race_info = race_info
+
+    def _set_suggested_time(self, time: datetime.datetime or None):
+        if time is None:
+            return
+        if time.tzinfo is None:
+            time = pytz.utc.localize(time)
+        self._suggested_time = time.astimezone(pytz.utc)

@@ -1,6 +1,7 @@
 import mysql.connector
 
 from necrobot.ladder import rating
+from necrobot.race.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.userprefs import UserPrefs
 from necrobot.util.config import Config
@@ -876,4 +877,4 @@ def get_match_race_data(match_id):
                     r1_wins += 1
                 elif int(row[1]) == 2:
                     r2_wins += 1
-        return finished, canceled, r1_wins, r2_wins
+        return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)

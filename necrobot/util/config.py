@@ -2,17 +2,19 @@ class Config(object):
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
 
-    # admin
+# Admin
     ADMIN_ROLE_NAMES = ['Admin']  # list of names of roles to give admin access
 
-    # channels
+# Channels
     MAIN_CHANNEL_NAME = 'necrobot_main'
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
 
+# Daily
     # minutes to allow for submissions on old dailies after new ones are rolled out
     DAILY_GRACE_PERIOD = int(60)
 
+# Races
     # number of seconds between the final .ready and race start
     COUNTDOWN_LENGTH = int(10)
     UNPAUSE_COUNTDOWN_LENGTH = int(3)
@@ -23,6 +25,7 @@ class Config(object):
     # seconds after race end to finalize+record race
     FINALIZE_TIME_SEC = int(30)
 
+# RaceRooms
     # minutes of no chatting until the room may be cleaned (only applies if race has been finalized)
     CLEANUP_TIME_SEC = int(180)
 
@@ -35,18 +38,18 @@ class Config(object):
     # number of seconds to wait between allowing pokes
     RACE_POKE_DELAY = int(10)
 
-    # vod recording
+# Vod recording
     VODRECORD_USERNAME = ''
     VODRECORD_PASSWD = ''
     RECORDING_ACTIVATED = False
 
-    # database
+# Database
     MYSQL_DB_HOST = 'localhost'
     MYSQL_DB_USER = 'root'
     MYSQL_DB_PASSWD = ''
     MYSQL_DB_NAME = 'necrobot'
 
-    # login
+# Login
     LOGIN_TOKEN = ''
     SERVER_ID = ''
 

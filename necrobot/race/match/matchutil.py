@@ -74,13 +74,20 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
     return name_prefix if not found else '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
 
-def recover_stored_match_rooms():
+async def recover_stored_match_rooms():
+    console.info('\nRecovering stored match rooms------------')
     for row in necrodb.get_channeled_matches_raw_data():
-        channel = Necrobot().find_channel_with_id(int(row[12]))
+        channel_id = int(row[12])
+        channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
             match = make_match_from_raw_db_data(row=row)
             new_room = MatchRoom(match_discord_channel=channel, match=match)
             Necrobot().register_bot_channel(channel, new_room)
+            await new_room.initialize()
+            console.info('  Channel ID: {0}  Match: {1}'.format(channel_id, match.matchroom_name))
+        else:
+            console.info('  Couldn\'t find channel with ID {0}.'.format(channel_id))
+    console.info('-----------------------------------------\n')
 
 
 async def make_match_room(match: Match, register=False) -> MatchRoom or None:

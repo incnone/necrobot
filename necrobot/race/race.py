@@ -14,6 +14,7 @@ from necrobot.util import seedgen
 from necrobot.util.ordinal import ordinal
 
 from necrobot.race.raceevent import RaceEvent
+from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.race.racer import Racer
 from necrobot.util.config import Config
@@ -54,13 +55,14 @@ StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
 # Race class --------------------------------------------------------------
 class Race(object):
     # NB: Call the coroutine initialize() to set up the room
-    def __init__(self, parent, race_info):
+    def __init__(self, parent, race_info: RaceInfo, config=RaceConfig()):
         self.race_id = None                       # After recording, the ID of the race in the DB
         self.parent = parent                      # The parent managing this race. Must implement write() and process().
         self.race_info = RaceInfo.copy(race_info)
         self.racers = []                          # A list of Racer
 
         self._status = RaceStatus.uninitialized   # The status of this race
+        self._config = config                     # The RaceConfig to use (determines some race behavior)
 
         self._countdown = int(0)                  # The current countdown
         self._start_datetime = None               # UTC time for the beginning of the race
@@ -69,7 +71,7 @@ class Race(object):
 
         self._last_no_entrants_time = None        # System clock time for the last time the race had zero entrants
 
-        self._delay_record = False                # If true, delay an extra Config.FINALIZE_TIME_SEC before recording
+        self._delay_record = False                # If true, delay an extra config.FINALIZE_TIME_SEC before recording
         self._countdown_future = None             # The Future object for the race countdown
         self._finalize_future = None              # The Future object for the finalization countdown
 
@@ -84,7 +86,7 @@ class Race(object):
     def current_time(self):
         if self._status == RaceStatus.paused:
             return int(100 * (self._last_pause_time - self._adj_start_time))
-        elif self._status == RaceStatus.racing:
+        elif self._status == RaceStatus.racing or self._status == RaceStatus.completed:
             return int(100 * (time.monotonic() - self._adj_start_time))
         else:
             return None
@@ -372,7 +374,7 @@ class Race(object):
 
     # Puts the given Racer in the 'finished' state and gets their time
     async def finish_member(self, racer_member, mute=False):
-        if not self._status == RaceStatus.racing or self._status == RaceStatus.completed:
+        if not (self._status == RaceStatus.racing or self._status == RaceStatus.completed):
             return
 
         racer = self.get_racer(racer_member)
@@ -564,12 +566,13 @@ class Race(object):
     # Checks to see if all racers have either finished or forfeited. If so, ends the race.
     # Return True if race was ended.
     async def _check_for_race_end(self):
+        num_still_racing = 0
         for racer in self.racers:
             if not racer.is_done_racing:
-                return False
+                num_still_racing += 1
 
-        await self._end_race()
-        return True
+        if num_still_racing <= self._config.auto_forfeit:
+            await self._end_race()
 
     # Ends the race, and begins a countdown until the results are 'finalized'
     async def _end_race(self):
@@ -582,14 +585,15 @@ class Race(object):
     # Warning: Do not call this -- use begin_countdown instead.
     async def _race_countdown(self, mute=False):
         countdown_systemtime_begin = time.monotonic()
-        countdown_timer = Config.COUNTDOWN_LENGTH
+        countdown_timer = self._config.countdown_length
         await asyncio.sleep(1)      # Pause before countdown
 
         await self._write(mute=mute, text='The race will begin in {0} seconds.'.format(countdown_timer))
         while countdown_timer > 0:
-            if countdown_timer <= Config.INCREMENTAL_COUNTDOWN_START:
+            if countdown_timer <= self._config.incremental_countdown_start:
                 await self._write(mute=mute, text='{}'.format(countdown_timer))
-            sleep_time = countdown_systemtime_begin + Config.COUNTDOWN_LENGTH - countdown_timer + 1 - time.monotonic()
+            sleep_time = \
+                countdown_systemtime_begin + self._config.countdown_length - countdown_timer + 1 - time.monotonic()
             if sleep_time > 0:
                 await asyncio.sleep(sleep_time)         # sleep until the next tick
             countdown_timer -= 1
@@ -600,13 +604,14 @@ class Race(object):
     # Countdown for an unpause
     async def _unpause_countdown(self, mute=False):
         countdown_systemtime_begin = time.monotonic()
-        countdown_timer = Config.UNPAUSE_COUNTDOWN_LENGTH
+        countdown_timer = self._config.unpause_countdown_length
         await asyncio.sleep(1)      # Pause before countdown
 
         while countdown_timer > 0:
             await self._write(mute=mute, text='{}'.format(countdown_timer))
             sleep_time = \
-                countdown_systemtime_begin + Config.UNPAUSE_COUNTDOWN_LENGTH - countdown_timer + 1 - time.monotonic()
+                countdown_systemtime_begin + self._config.unpause_countdown_length \
+                - countdown_timer + 1 - time.monotonic()
             if sleep_time > 0:
                 await asyncio.sleep(sleep_time)         # sleep until the next tick
             countdown_timer -= 1
@@ -631,15 +636,16 @@ class Race(object):
         await self._write(
             mute=mute,
             text='The race is over. Results will be recorded in {} seconds. Until then, you may comment with `.comment '
-            '[text]` or add an in-game-time with `.igt [time]`.'.format(Config.FINALIZE_TIME_SEC))
+            '[text]` or add an in-game-time with `.igt [time]`.'.format(self._config.finalize_time_sec))
 
         self.delay_record = True
         while self.delay_record:
             self.delay_record = False
-            await asyncio.sleep(Config.FINALIZE_TIME_SEC)
+            await asyncio.sleep(self._config.finalize_time_sec)
 
         # Perform the finalization and record the race. At this point, the finalization cannot be canceled.
         self._status = RaceStatus.finalized
+        await self.forfeit_all_remaining(mute=True)
         self._sort_racers()
         necrodb.record_race(self)
         await self._process(RaceEvent.RACE_FINALIZE)
@@ -682,4 +688,4 @@ class Race(object):
     # Write text
     async def _write(self, text, mute=False):
         if not mute:
-            await self._write(mute=mute, text=text)
+            await self.parent.write(text)

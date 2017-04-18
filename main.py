@@ -19,7 +19,7 @@ def ready_client_events():
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
-        the_necrobot.post_login_init(
+        await the_necrobot.post_login_init(
             client=client,
             server_id=config.Config.SERVER_ID,
             load_config_fn=botconfigs.load_standard_config

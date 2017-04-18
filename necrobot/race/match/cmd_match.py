@@ -52,6 +52,41 @@ class Confirm(CommandType):
                 cmd.channel,
                 'The match has been officially scheduled.')
 
+        await self.bot_channel.update()
+
+
+class MatchInfo(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'matchinfo')
+        self.help_text = 'Get the current match status.'
+
+    async def _do_execute(self, cmd):
+        match = self.bot_channel.match
+        if not match.is_registered:
+            await self.client.write(
+                cmd.channel,
+                'Unexpected error (match not registered).'
+            )
+            return
+
+        match_race_data = necrodb.get_match_race_data(match.match_id)
+        if match.is_best_of:
+             match_format_info = 'best-of-{0}'.format(match.number_of_races)
+        else:
+            match_format_info = '{0} races'.format(match.number_of_races)
+
+        await self.client.send_message(
+            cmd.channel,
+            '**{0}** [{2} - {3}] **{1}** ({4}, {5})'.format(
+                match.racer_1.discord_name,
+                match.racer_2.discord_name,
+                match_race_data.r1_wins,
+                match_race_data.r2_wins,
+                match.race_info.format_str,
+                match_format_info
+            )
+        )
+
 
 class Suggest(CommandType):
     def __init__(self, bot_channel):
@@ -218,7 +253,7 @@ class CancelRace(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        pass
+        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ChangeWinner(CommandType):
@@ -228,7 +263,7 @@ class ChangeWinner(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        pass
+        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ForceBegin(CommandType):
@@ -277,7 +312,7 @@ class ForceNewRace(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        pass
+        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ForceRecordRace(CommandType):
@@ -287,7 +322,7 @@ class ForceRecordRace(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        pass
+        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ForceReschedule(CommandType):
@@ -386,34 +421,34 @@ class SetMatchType(CommandType):
 
         try:
             num = int(cmd.args[1])
-            matchtype = cmd.args[0].lstrip('-')
-
-            match = self.bot_channel.match
-
-            if matchtype.lower() == 'repeat':
-                match.set_repeat(num)
-                necrodb.write_match(match)
-                await self.client.send_message(
-                    cmd.channel,
-                    'This match has been set to be a repeat-{0}.'.format(num))
-            elif matchtype.lower() == 'bestof':
-                match.set_best_of(num)
-                necrodb.write_match(match)
-                await self.client.send_message(
-                    cmd.channel,
-                    'This match has been set to be a best-of-{0}.'.format(num))
-            else:
-                await self.client.send_message(
-                    cmd.channel,
-                    'Error: I don\'t recognize the argument {0}.'.format(type))
-                return
-
-            await self.bot_channel.update()
-
         except ValueError:
             await self.client.send_message(
                 cmd.channel,
                 'Error: Couldn\'t parse {0} as a number.'.format(cmd.args[1]))
+            return
+
+        matchtype = cmd.args[0].lstrip('-')
+        match = self.bot_channel.match
+
+        if matchtype.lower() == 'repeat':
+            match.set_repeat(num)
+            necrodb.write_match(match)
+            await self.client.send_message(
+                cmd.channel,
+                'This match has been set to be a repeat-{0}.'.format(num))
+        elif matchtype.lower() == 'bestof':
+            match.set_best_of(num)
+            necrodb.write_match(match)
+            await self.client.send_message(
+                cmd.channel,
+                'This match has been set to be a best-of-{0}.'.format(num))
+        else:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: I don\'t recognize the argument {0}.'.format(type))
+            return
+
+        await self.bot_channel.update()
 
 
 class Update(CommandType):
