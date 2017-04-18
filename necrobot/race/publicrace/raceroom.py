@@ -1,14 +1,17 @@
+# A necrobot "casual" race room.
+
 import asyncio
 import datetime
 
-import necrobot.race.publicrace.cmd_publicrace
 from necrobot.botbase import cmd_admin
-from necrobot.botbase.botchannel import BotChannel
-from necrobot.race import raceinfo, cmd_race
-from necrobot.race.race import Race
+from necrobot.race import cmd_race
+from necrobot.race import raceinfo
 from necrobot.race.publicrace import cmd_publicrace
-from necrobot.util import seedgen
+
+from necrobot.botbase.botchannel import BotChannel
 from necrobot.util.config import Config
+from necrobot.race.race import Race
+from necrobot.race.raceevent import RaceEvent
 
 
 class RaceRoom(BotChannel):
@@ -39,7 +42,6 @@ class RaceRoom(BotChannel):
             cmd_race.Comment(self),
             cmd_race.Death(self),
             cmd_race.Igt(self),
-            necrobot.race.publicrace.cmd_publicrace.Rematch(self),
             cmd_race.Time(self),
 
             cmd_race.ForceForfeit(self),
@@ -49,6 +51,7 @@ class RaceRoom(BotChannel):
             cmd_race.Reseed(self),
             cmd_race.ChangeRules(self),
 
+            cmd_publicrace.Rematch(self),
             cmd_publicrace.Kick(self),
             cmd_publicrace.DelayRecord(self),
             cmd_publicrace.Notify(self),
@@ -99,6 +102,28 @@ class RaceRoom(BotChannel):
     def results_channel(self):
         return self.necrobot.find_channel(Config.RACE_RESULTS_CHANNEL_NAME)
 
+    # Returns the string to go in the topic for the leaderboard
+    @property
+    def leaderboard(self):
+        new_leaderboard = '``` \n' + self.leaderboard_header + self.current_race.status_str + '\n'
+        new_leaderboard += 'Entrants:\n'
+        new_leaderboard += self.current_race.leaderboard_text
+        new_leaderboard += '```'
+        return new_leaderboard
+
+    # Returns 'header' text for the race, giving info about the rules etc.
+    @property
+    def leaderboard_header(self):
+        room_rider = self.format_rider
+        if room_rider:
+            room_rider = ' ' + room_rider
+
+        seed_str = self.race_info.seed_str
+        if seed_str:
+            seed_str = '\n' + seed_str
+
+        return self.race_info.format_str + room_rider + seed_str + '\n'
+
 # Methods -------------------------------------------------------------
     # Notifies the given user on a rematch
     def notify(self, user):
@@ -121,16 +146,31 @@ class RaceRoom(BotChannel):
                          'Finish the race with `.done` or `.forfeit`. Use `.help` for a command list.')
 
     # Write text to the raceroom. Return a Message for the text written
-    async def write(self, text):
+    async def write(self, text: str):
         await self.client.send_message(self._channel, text)
 
+    # Processes a race event
+    async def process(self, event: RaceEvent):
+        if event == RaceEvent.RACE_FINALIZE:
+            if self.race_info.post_results:
+                await self.post_result()
+        else:
+            await self.update()
+
     # Updates the leaderboard
-    async def update_leaderboard(self):
+    async def update(self):
         await self.client.edit_channel(self._channel, topic=self._current_race.leaderboard)
 
     # Post the race result to the race necrobot
-    async def post_result(self, text):
-        await self.client.send_message(self.results_channel, text)
+    async def post_result(self):
+        await self.client.send_message(
+            self.results_channel,
+            'Race begun at {0}:\n```\n{1}{2}\n```'.format(
+                self.current_race.start_datetime.strftime("%d %B %Y, UTC %H:%M"),
+                self.current_race.leaderboard_header,
+                self.current_race.leaderboard_text
+            )
+        )
 
 # Commands ------------------------------------------------------------
     async def set_post_result(self, do_post):
@@ -150,7 +190,7 @@ class RaceRoom(BotChannel):
             if self.current_race.before_race:
                 self.current_race.race_info = raceinfo.RaceInfo.copy(self._race_info)
             await self.write('Changed rules for the next race.')
-            await self.update_leaderboard()
+            await self.update()
 
     # Close the necrobot.
     async def close(self):
@@ -161,22 +201,6 @@ class RaceRoom(BotChannel):
     async def make_rematch(self):
         if self._current_race.complete:
             await self._make_new_race()
-
-    # Pause the race
-    async def pause(self):
-        if self._current_race.during_race:
-            await self._current_race.pause()
-            mention_str = ''
-            for racer in self._current_race.racers:
-                mention_str += '{}, '.format(racer.member.mention)
-            mention_str = mention_str[:-2]
-
-            await self.write('Race paused. (Alerting {0}.)'.format(mention_str))
-
-    # Unpause the race
-    async def unpause(self):
-        if self._current_race.paused:
-            await self._current_race.unpause()
 
     # Alerts unready users
     async def poke(self):
@@ -202,29 +226,15 @@ class RaceRoom(BotChannel):
             await self.write('Poking {0}.'.format(alert_string[:-2]))
             asyncio.ensure_future(self._run_nopoke_delay())
 
-    # Reseed the race
-    async def reseed(self):
-        if not self._current_race.race_info.seeded:
-            await self.write('This is not a seeded race. Use `.newrules` to change this.')
-
-        elif self._current_race.race_info.seed_fixed:
-            await self.write('The seed for this race was fixed by its rules. Use `.newrules` to change this.')
-            return
-
-        else:
-            self._current_race.race_info.seed = seedgen.get_new_seed()
-            await self.write('Changed seed to {0}.'.format(self._current_race.race_info.seed))
-            await self.update_leaderboard()
-
 # Private -----------------------------------------------------------------
     # Makes a new Race, overwriting the old one
     async def _make_new_race(self):
         # Make the race
         self._race_number += 1
         self._last_race = self._current_race
-        self._current_race = Race(self)
+        self._current_race = Race(self, self.race_info)
         await self._current_race.initialize()
-        await self.update_leaderboard()
+        await self.update()
 
         # Send @mention message
         self._mentioned_users = []

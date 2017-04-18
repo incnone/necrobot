@@ -1,9 +1,11 @@
 # General commands for any BotChannel that runs races. The BotChannel should implement:
-#     current_race -> Race      : Gets the "current" race (for Enter/Ready)
-#     last_begun_race -> Race   : Gets the race that most recently started (GO!), or None if no such
-#     write(str)                : Writes a message to the BotChannel
-
-# TODO: Fix reseed, pause, unpause, change_race_info
+#     current_race -> Race       : Gets the "current" race (for Enter/Ready)
+#     last_begun_race -> Race    : Gets the race that most recently started (GO!), or None if no such
+#     change_race_info(RaceInfo) : Changes the type of races run in the BotChannel
+#     write(str)                 : Writes a message to the BotChannel
+# Remarks:
+#     - change_race_info is only required for ChangeRace
+#     - write is only required for Time
 
 from necrobot.botbase.command import CommandType
 from necrobot.race import racetime
@@ -179,7 +181,7 @@ class Reseed(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, command):
-        await self.bot_channel.reseed()
+        await self.bot_channel.current_race.reseed()
 
 
 class Pause(CommandType):
@@ -189,9 +191,7 @@ class Pause(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, command):
-        success = await self.bot_channel.pause()
-        if success:
-            await self.bot_channel.write('Race paused by {}!'.format(command.author.mention))
+        await self.bot_channel.current_race.pause()
 
 
 class Unpause(CommandType):
@@ -201,7 +201,7 @@ class Unpause(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, command):
-        await self.bot_channel.unpause()
+        await self.bot_channel.current_race.unpause()
 
 
 class ChangeRules(CommandType):
