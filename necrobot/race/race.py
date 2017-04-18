@@ -4,9 +4,10 @@ import time
 from enum import IntEnum
 
 from necrobot.database import necrodb
-from necrobot.race.race.raceinfo import RaceInfo
-from necrobot.race.race.racer import Racer
-from necrobot.util import console, racetime
+from necrobot.race.raceinfo import RaceInfo
+from necrobot.race import racetime
+from necrobot.race.racer import Racer
+from necrobot.util import console
 from necrobot.util.config import Config
 from necrobot.util.ordinal import ordinal
 
@@ -471,7 +472,7 @@ class Race(object):
             return
 
         if igt != -1 and racer.is_done_racing:
-            racer.igt = igt
+            racer.igt = int(igt)
             await self.room.update_leaderboard()
 
     # Kicks the specified racers from the race (they can re-enter)

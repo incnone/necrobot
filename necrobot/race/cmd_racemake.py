@@ -1,8 +1,9 @@
 import discord
 
+import necrobot.race.raceutil
 from necrobot.botbase.command import CommandType
+from necrobot.race import raceinfo
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
-from necrobot.race.race import raceinfo, raceroom
 from necrobot.util import console
 
 
@@ -33,7 +34,7 @@ class Make(CommandType):
         race_info = raceinfo.parse_args(command.args)
         if race_info:
             try:
-                await raceroom.make_room(race_info)
+                await necrobot.race.raceutil.make_room(race_info)
             except discord.HTTPException as e:
                 await self.client.send_message(command.channel, 'Error making race.')
                 console.error(e.response)

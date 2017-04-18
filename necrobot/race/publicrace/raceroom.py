@@ -1,65 +1,14 @@
-# A room where racing is happening
-
 import asyncio
 import datetime
 
-import discord
-
-from necrobot.botbase.necrobot import Necrobot
+import necrobot.race.publicrace.cmd_publicrace
 from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.database import necrodb
-from necrobot.race.race import cmd_race, raceinfo
-from necrobot.race.race.race import Race
-from necrobot.user.userprefs import UserPrefs
+from necrobot.race import raceinfo, cmd_race
+from necrobot.race.race import Race
+from necrobot.race.publicrace import cmd_publicrace
 from necrobot.util import seedgen
 from necrobot.util.config import Config
-
-
-# Return a new (unique) race room name from the race info
-def get_raceroom_name(server, race_info):
-    name_prefix = race_info.raceroom_name
-    cut_length = len(name_prefix) + 1
-    largest_postfix = 0
-    for channel in server.channels:
-        if channel.name.startswith(name_prefix):
-            try:
-                val = int(channel.name[cut_length:])
-                largest_postfix = max(largest_postfix, val)
-            except ValueError:
-                pass
-    return '{0}-{1}'.format(name_prefix, largest_postfix + 1)
-
-
-# Make a room with the given RaceInfo
-async def make_room(race_info):
-    necrobot = Necrobot()
-
-    # Make a channel for the room
-    race_channel = await necrobot.client.create_channel(
-        necrobot.server,
-        get_raceroom_name(necrobot.server, race_info),
-        type=discord.ChannelType.text)
-
-    if race_channel is not None:
-        # Make the actual RaceRoom and initialize it
-        new_room = RaceRoom(race_discord_channel=race_channel, race_info=race_info)
-        await new_room.initialize()
-
-        necrobot.register_bot_channel(race_channel, new_room)
-
-        # Send PM alerts
-        alert_pref = UserPrefs()
-        alert_pref.race_alert = True
-
-        alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
-            race_channel.mention, race_info.format_str)
-        for member_id in necrodb.get_all_ids_matching_prefs(alert_pref):
-            member = necrobot.find_member(discord_id=member_id)
-            if member is not None:
-                await necrobot.client.send_message(member, alert_string)
-
-    return race_channel
 
 
 class RaceRoom(BotChannel):
@@ -76,35 +25,40 @@ class RaceRoom(BotChannel):
         self._mentioned_users = []              # A list of users that were @mentioned when this race was created
         self._nopoke = False                    # When True, the .poke command fails
 
-        self.command_types = [cmd_admin.Help(self),
-                              cmd_race.Enter(self),
-                              cmd_race.Unenter(self),
-                              cmd_race.Ready(self),
-                              cmd_race.Unready(self),
-                              cmd_race.Done(self),
-                              cmd_race.Undone(self),
-                              cmd_race.Forfeit(self),
-                              cmd_race.Unforfeit(self),
-                              cmd_race.Comment(self),
-                              cmd_race.Death(self),
-                              cmd_race.Igt(self),
-                              cmd_race.Rematch(self),
-                              cmd_race.DelayRecord(self),
-                              cmd_race.Notify(self),
-                              cmd_race.Unnotify(self),
-                              cmd_race.Time(self),
-                              cmd_race.Missing(self),
-                              cmd_race.Shame(self),
-                              cmd_race.Poke(self),
-                              cmd_race.ForceCancel(self),
-                              cmd_race.ForceClose(self),
-                              cmd_race.ForceForfeit(self),
-                              cmd_race.ForceForfeitAll(self),
-                              cmd_race.Kick(self),
-                              cmd_race.Pause(self),
-                              cmd_race.Unpause(self),
-                              cmd_race.Reseed(self),
-                              cmd_race.ChangeRules(self)]
+        self.command_types = [
+            cmd_admin.Help(self),
+
+            cmd_race.Enter(self),
+            cmd_race.Unenter(self),
+            cmd_race.Ready(self),
+            cmd_race.Unready(self),
+            cmd_race.Done(self),
+            cmd_race.Undone(self),
+            cmd_race.Forfeit(self),
+            cmd_race.Unforfeit(self),
+            cmd_race.Comment(self),
+            cmd_race.Death(self),
+            cmd_race.Igt(self),
+            necrobot.race.publicrace.cmd_publicrace.Rematch(self),
+            cmd_race.Time(self),
+
+            cmd_race.ForceForfeit(self),
+            cmd_race.ForceForfeitAll(self),
+            cmd_race.Pause(self),
+            cmd_race.Unpause(self),
+            cmd_race.Reseed(self),
+            cmd_race.ChangeRules(self),
+
+            cmd_publicrace.Kick(self),
+            cmd_publicrace.DelayRecord(self),
+            cmd_publicrace.Notify(self),
+            cmd_publicrace.Unnotify(self),
+            cmd_publicrace.Missing(self),
+            cmd_publicrace.Shame(self),
+            cmd_publicrace.Poke(self),
+            cmd_publicrace.ForceCancel(self),
+            cmd_publicrace.ForceClose(self),
+        ]
 
 # Properties ------------------------------
     @property

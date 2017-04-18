@@ -31,7 +31,7 @@ def from_str(time_str):
                 t_min = int(args[0])
                 t_sec = int(args_2[0])
                 t_hun = int(args_2[1])
-                return 6000*t_min + 100*t_sec + t_hun        
+                return 6000*t_min + 100*t_sec + t_hun
             except ValueError:
                 return -1
     elif len(args) == 3 and len(args[1]) == 2 and len(args[2]) == 2:
@@ -49,4 +49,4 @@ def to_str(time_hund):          # time_hund in total hundredths of second; retur
     minutes = int(int(time_hund) // int(6000))
     seconds = int(int(time_hund) // int(100) - int(60)*minutes)
     hundredths = int(int(time_hund) - 100*seconds - 6000*minutes)
-    return str(minutes) + ':' + str(seconds).zfill(2) + '.' + str(hundredths).zfill(2)   
+    return str(minutes) + ':' + str(seconds).zfill(2) + '.' + str(hundredths).zfill(2)

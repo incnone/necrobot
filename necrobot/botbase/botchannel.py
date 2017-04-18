@@ -10,9 +10,6 @@ class BotChannel(object):
     def __init__(self):
         self.command_types = []     # the list of command.CommandType that can be called on this necrobot
 
-    def refresh(self, channel):
-        pass
-
     @property
     def client(self) -> discord.Client:
         return Necrobot().client
@@ -20,6 +17,9 @@ class BotChannel(object):
     @property
     def necrobot(self) -> Necrobot:
         return Necrobot()
+
+    def refresh(self, channel):
+        pass
 
     # Returns whether the user has access to admin commands for this necrobot
     def is_admin(self, discord_member) -> bool:

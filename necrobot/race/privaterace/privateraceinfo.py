@@ -1,6 +1,6 @@
 # Class holding info data for a private race.
 
-from necrobot.race.race import raceinfo
+from necrobot.race import raceinfo
 
 
 # Attempts to parse the given command-line args into a race-info

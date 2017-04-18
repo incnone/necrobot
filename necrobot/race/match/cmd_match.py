@@ -211,6 +211,26 @@ class Unconfirm(CommandType):
 
 
 # Admin matchroom commands
+class CancelRace(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'cancelrace')
+        self.help_text = '[Admin only] Change the winner for a specified race.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        pass
+
+
+class ChangeWinner(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'changewinner')
+        self.help_text = '[Admin only] Change the winner for a specified race.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        pass
+
+
 class ForceBegin(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-begin')
@@ -248,6 +268,26 @@ class ForceConfirm(CommandType):
             '{0} has forced confirmation of match time: {1}.'.format(
                 cmd.author.mention, timestr.str_full_12h(match.time)))
         await self.bot_channel.update()
+
+
+class ForceNewRace(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'f-newrace')
+        self.help_text = '[Admin only] Force the bot to make a new race (the current race will be cancelled).'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        pass
+
+
+class ForceRecordRace(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'f-recordrace')
+        self.help_text = '[Admin only] Manually record the result of a race.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        pass
 
 
 class ForceReschedule(CommandType):
@@ -291,24 +331,6 @@ class ForceReschedule(CommandType):
                         '{0}: A match time has been suggested; please confirm with `.confirm`. I also suggest '
                         'you register a timezone (use `.timezone`), so I can convert to your local time.'.format(
                             racer.member.mention))
-
-        await self.bot_channel.update()
-
-
-class ForceUnschedule(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-unschedule')
-        self.help_text = '[Admin only] Forces the race to be unscheduled.'
-        self.admin_only = True
-
-    async def _do_execute(self, cmd):
-        match = self.bot_channel.match
-        match.force_unconfirm()
-        necrodb.write_match(match)
-
-        await self.client.send_message(
-            cmd.channel,
-            'The match has been unscheduled. Please `.suggest` a new time.')
 
         await self.bot_channel.update()
 
@@ -402,3 +424,4 @@ class Update(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.update()
+        # TODO: Record match if necessary

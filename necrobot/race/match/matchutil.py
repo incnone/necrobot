@@ -4,7 +4,7 @@ from necrobot.botbase.necrobot import Necrobot
 from necrobot.database import necrodb
 from necrobot.race.match.match import Match
 from necrobot.race.match.matchroom import MatchRoom
-from necrobot.race.race.raceinfo import RaceInfo
+from necrobot.race.raceinfo import RaceInfo
 from necrobot.user import userutil
 from necrobot.util import console
 

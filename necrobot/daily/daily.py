@@ -3,7 +3,7 @@ import datetime
 from enum import Enum
 
 from necrobot.database import necrodb
-from necrobot.util import racetime
+from necrobot.race import racetime
 from . import dailytype
 from ..util import level, seedgen
 from ..util.config import Config
@@ -18,6 +18,7 @@ class DailyUserStatus(Enum):
     closed = 3
 
 
+# noinspection PyTypeChecker
 class Daily(object):
     @staticmethod
     def daily_to_date(daily_number):
@@ -219,7 +220,7 @@ class Daily(object):
                 time = racetime.from_str(args[0])
                 if not time == -1:
                     lv = level.LEVEL_FINISHED
-                    ret_str = 'finished in {}'.format(racetime.to_str(time))
+                    ret_str = 'finished in {}'.format(racetime)
 
         if not lv == level.LEVEL_NOS:    # parse succeeded
             self.submit_to_daily(daily_number, user, lv, time)

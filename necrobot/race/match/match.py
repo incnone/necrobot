@@ -1,5 +1,5 @@
 from necrobot.database import necrodb
-from necrobot.race.race.raceinfo import RaceInfo
+from necrobot.race.raceinfo import RaceInfo
 from necrobot.user import userutil
 
 

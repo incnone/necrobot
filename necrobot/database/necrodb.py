@@ -1,9 +1,9 @@
 import mysql.connector
 
-from necrobot.util.config import Config
 from necrobot.ladder import rating
-from necrobot.race.race.raceinfo import RaceInfo
+from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.userprefs import UserPrefs
+from necrobot.util.config import Config
 
 
 class DBConnect(object):

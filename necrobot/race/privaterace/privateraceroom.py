@@ -4,7 +4,8 @@ import discord
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.race.privaterace import permissioninfo, cmd_privaterace
-from necrobot.race.race.raceroom import RaceRoom, get_raceroom_name
+from necrobot.race.publicrace.raceroom import RaceRoom
+from necrobot.race.raceutil import get_raceroom_name
 from necrobot.util import writechannel
 
 
