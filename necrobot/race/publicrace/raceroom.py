@@ -151,7 +151,12 @@ class RaceRoom(BotChannel):
 
     # Processes a race event
     async def process(self, event: RaceEvent):
-        if event == RaceEvent.RACE_FINALIZE:
+        if event == RaceEvent.RACE_END:
+            await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
+            await self.write(
+                'The race is over. Results will be recorded in {} seconds. Until then, you may comment with '
+                '`.comment` or add an in-game-time with `.igt`.'.format(self.current_race.config.finalize_time_sec))
+        elif event == RaceEvent.RACE_FINALIZE:
             if self.race_info.post_results:
                 await self.post_result()
         else:

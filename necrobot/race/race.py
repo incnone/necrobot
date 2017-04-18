@@ -152,6 +152,10 @@ class Race(object):
     def paused(self):
         return self._status == RaceStatus.paused
 
+    @property
+    def config(self):
+        return self._config
+
 # Racer data
     # Returns true if all racers are ready and there's enough racers
     @property
@@ -382,14 +386,14 @@ class Race(object):
             return
 
         if racer.finish(self.current_time):
-            self._status = RaceStatus.racing
             await self._write(
                 mute=mute,
                 text='{0} has finished in {1} place with a time of {2}.'.format(
                     racer_member.mention,
                     ordinal(self.num_finished),
                     racer.time_str))
-            await self._check_for_race_end()
+            if self._status == RaceStatus.racing:
+                await self._check_for_race_end()
             await self._process(RaceEvent.RACER_FINISH)
 
     # Attempt to put the given Racer in the 'racing' state if they were finished
@@ -632,12 +636,6 @@ class Race(object):
     # Countdown coroutine to be wrapped in self._finalize_future.
     # Warning: Do not call this -- use end_race instead.
     async def _finalization_countdown(self, mute=False):
-        await asyncio.sleep(1)      # Waiting for a short time feels good UI-wise
-        await self._write(
-            mute=mute,
-            text='The race is over. Results will be recorded in {} seconds. Until then, you may comment with `.comment '
-            '[text]` or add an in-game-time with `.igt [time]`.'.format(self._config.finalize_time_sec))
-
         self.delay_record = True
         while self.delay_record:
             self.delay_record = False

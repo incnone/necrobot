@@ -1,7 +1,11 @@
 import pytz
 
-from necrobot.botbase.command import CommandType
+from mysql.connector import IntegrityError
+
 from necrobot.database import necrodb
+from necrobot.user import userutil
+
+from necrobot.botbase.command import CommandType
 from necrobot.user.userprefs import UserPrefs
 from necrobot.util.config import Config
 
@@ -100,21 +104,39 @@ class RTMP(CommandType):
                 'Use `.rtmp discord_name rtmp_name`.'.format(cmd.author.mention))
             return
 
-        # Find the discord member
+        # Get the user
         discord_name = cmd.args[0]
-        discord_member = self.necrobot.find_member(discord_name=discord_name)
-        if discord_member is None:
+        author_as_necrouser = userutil.get_user(discord_name=discord_name)
+        if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
-                'Error: Unable to find the discord user `{0}`.'.format(discord_name))
+                'Error: Unable to find the user `{0}`.'.format(discord_name))
             return
 
         rtmp_name = cmd.args[1]
-        necrodb.set_rtmp(discord_id=int(discord_member.id), rtmp_name=rtmp_name)
+        author_as_necrouser.rtmp_name = rtmp_name
+        try:
+            necrodb.write_user(author_as_necrouser)
+        except IntegrityError:
+            duplicate_user = userutil.get_user(rtmp_name=rtmp_name)
+            if duplicate_user is None:
+                await self.client.send_message(
+                    cmd.channel,
+                    'Unexpected error: Query raised a mysql.connector.IntegrityError, but couldn\'t find a racer '
+                    'with rtmp name `{0}`.'.format(rtmp_name)
+                )
+            else:
+                await self.client.send_message(
+                    cmd.channel,
+                    'Error: This RTMP is already registered to the discord user `{0}`.'.format(
+                        duplicate_user.discord_name)
+                )
+            return
+
         await self.client.send_message(
             cmd.channel,
             '{0}: Registered the RTMP `{1}` to user `{2}`.'.format(
-                cmd.author.mention, rtmp_name, discord_member.display_name))
+                cmd.author.mention, rtmp_name, author_as_necrouser.discord_name))
 
 
 class SetInfo(CommandType):

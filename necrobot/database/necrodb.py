@@ -1,6 +1,8 @@
 import mysql.connector
 
 from necrobot.ladder import rating
+from necrobot.util import console
+
 from necrobot.race.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.userprefs import UserPrefs
@@ -36,31 +38,102 @@ class DBConnect(object):
         self.cursor.close()
 
 
+# Returns the user_id of any entry in the DB with the same rtmp_name as necro_user, a NULL discord_id,
+# and a different user_id, or None if no such entry exists.
+def _get_resolvable_rtmp_clash_user_id(necro_user) -> int or None:
+    if necro_user.rtmp_name is None:
+        return None
+
+    rtmp_params = (necro_user.rtmp_name,)
+
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT user_id, discord_id "
+            "FROM user_data "
+            "WHERE rtmp_name=%s",
+            rtmp_params
+        )
+        if cursor.rowcount == 0:
+            return False
+
+        data = cursor.fetchone()
+        user_id = int(data[0]) if data[0] is not None else None
+        discord_id = int(data[1]) if data[1] is not None else None
+        if discord_id is None and discord_id != necro_user.discord_id and user_id != necro_user.user_id:
+            return user_id
+        else:
+            return None
+
+
+# Transfers all records referencing the "from" user_id to the "to" user_id.
+# WARNING: Possible severe loss of information. Cannot be undone. Use with caution!
+def _transfer_user_id(from_user_id, to_user_id):
+    params = (to_user_id, from_user_id,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "UPDATE match_data "
+            "SET racer_1_id=%s "
+            "WHERE racer_1_id=%s",
+            params
+        )
+        cursor.execute(
+            "UPDATE match_data "
+            "SET racer_2_id=%s "
+            "WHERE racer_2_id=%s",
+            params
+        )
+
+
 def _register_user(necro_user):
+    rtmp_clash_user_id = _get_resolvable_rtmp_clash_user_id(necro_user)
+
     params = (
         necro_user.discord_id,
         necro_user.discord_name,
         necro_user.twitch_name,
-        necro_user.rtmp_name,
         necro_user.timezone,
         necro_user.user_info,
         necro_user.user_prefs.daily_alert,
         necro_user.user_prefs.race_alert,
+        necro_user.rtmp_name,
     )
 
     with DBConnect(commit=True) as cursor:
-        cursor.execute(
-            "INSERT INTO user_data "
-            "(discord_id, discord_name, twitch_name, rtmp_name, timezone, user_info, daily_alert, race_alert) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            params
-        )
+        if rtmp_clash_user_id is None:
+            try:
+                cursor.execute(
+                    "INSERT INTO user_data "
+                    "(discord_id, discord_name, twitch_name, timezone, user_info, daily_alert, race_alert, rtmp_name) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ",
+                    params
+                )
+            except mysql.connector.IntegrityError:
+                console.error('Tried to insert a duplicate racer entry. Params: {0}'.format(params))
+                raise
+        else:
+            cursor.execute(
+                "UPDATE user_data "
+                "SET "
+                "   discord_id=%s, "
+                "   discord_name=%s, "
+                "   twitch_name=%s, "
+                "   timezone=%s, "
+                "   user_info=%s, "
+                "   daily_alert=%s, "
+                "   race_alert=%s "
+                "WHERE rtmp_name=%s",
+                params
+            )
 
 
 def write_user(necro_user):
     if necro_user.user_id is None:
         _register_user(necro_user)
         return
+
+    rtmp_clash_user_id = _get_resolvable_rtmp_clash_user_id(necro_user)
+    if rtmp_clash_user_id is not None:
+        _transfer_user_id(from_user_id=rtmp_clash_user_id, to_user_id=necro_user.user_id)
 
     params = (
         necro_user.discord_id,
@@ -75,6 +148,14 @@ def write_user(necro_user):
     )
 
     with DBConnect(commit=True) as cursor:
+        if rtmp_clash_user_id is not None:
+            rtmp_clash_params = (rtmp_clash_user_id,)
+            cursor.execute(
+                "DELETE FROM user_data "
+                "WHERE user_id=%s",
+                rtmp_clash_params
+            )
+
         cursor.execute(
             "UPDATE user_data "
             "SET "

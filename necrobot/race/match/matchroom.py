@@ -140,8 +140,12 @@ class MatchRoom(BotChannel):
     async def process(self, event: RaceEvent):
         if event == RaceEvent.RACE_BEGIN:
             self._last_begun_race = self._current_race
+        elif event == RaceEvent.RACE_END:
+            await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
+            await self.write('The race will end in {} seconds.'.format(self.current_race.config.finalize_time_sec))
         elif event == RaceEvent.RACE_FINALIZE:
             await self._record_match_race()
+            await self.write('The race has ended.'.format(self.current_race.config.finalize_time_sec))
             if self.played_all_races:
                 await self._end_match()
             else:
