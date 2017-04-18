@@ -239,7 +239,7 @@ class ForceBegin(CommandType):
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
-        match.suggest_time(datetime.datetime.utcnow())
+        match.suggest_time(pytz.utc.localize(datetime.datetime.utcnow()))
         match.force_confirm()
         necrodb.write_match(match)
         await self.bot_channel.update()
@@ -273,7 +273,7 @@ class ForceConfirm(CommandType):
 class ForceNewRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-newrace')
-        self.help_text = '[Admin only] Force the bot to make a new race (the current race will be cancelled).'
+        self.help_text = '[Admin only] Force the bot to make a new race (the current race will be canceled).'
         self.admin_only = True
 
     async def _do_execute(self, cmd):

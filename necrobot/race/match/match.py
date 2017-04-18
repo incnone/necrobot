@@ -107,7 +107,7 @@ class Match(object):
 
     @property
     def time_until_match(self) -> datetime.datetime or None:
-        return self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow()) if self.is_scheduled else None
+        return (self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow())) if self.is_scheduled else None
 
     # Writes the match to the database
     def commit(self):
@@ -123,8 +123,10 @@ class Match(object):
 
     # Suggest a time for the match
     def suggest_time(self, time):
+        if time.tzinfo is None:
+            time = pytz.utc.localize(time)
         self.force_unconfirm()
-        self._suggested_time = time
+        self._suggested_time = time.astimezone(pytz.utc)
 
     # Whether the match has been confirmed by the racer
     def is_confirmed_by(self, racer):

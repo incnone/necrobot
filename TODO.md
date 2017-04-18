@@ -5,13 +5,12 @@ Current version: 0.10
 ## Ladderbot
 
 - Fix QOL problems with RTMP registration
-- Make Necrobot a singleton class, and remove it from function signatures
-- Move Match.make_from_raw_db_data into the necrodb code
-- Make the refresh/init code on matchroom loading neater
-- Add classes for easy addition of major functionalities -- e.g., races, dailies, matches, ladder, condor 
--- that know where to put commands and what refresh/init/close code needs to be called 
+- Remove mandatory written text from Race class; restructure to work with both public races and matches
+- Change race_data.race_id to auto_increment
 
 ## Bugs
+
+- If you're the last racer to finish, `.f` doesn't unfinish you, nor does `.undone`.
 
 ### Fixable/precise but not urgent
 
@@ -31,6 +30,7 @@ just finished or the race that people are currently entering. It maybe also does
 
 ## Features
 
+- add comment possibility to `.death`
 - add more complicated sorts to `.mostraces`
 - add `.forceunready` command
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").

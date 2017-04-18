@@ -839,3 +839,28 @@ def get_channeled_matches_raw_data():
             "WHERE channel_id IS NOT NULL"
         )
         return cursor.fetchall()
+
+
+def get_match_race_data(match_id):
+    params = (match_id,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT canceled, winner "
+            "FROM `match_races` "
+            "WHERE match_id=%s",
+            params
+        )
+        finished = 0
+        canceled = 0
+        r1_wins = 0
+        r2_wins = 0
+        for row in cursor:
+            if bool(row[0]):
+                canceled += 1
+            else:
+                finished += 1
+                if int(row[1]) == 1:
+                    r1_wins += 1
+                elif int(row[1]) == 2:
+                    r2_wins += 1
+        return finished, canceled, r1_wins, r2_wins

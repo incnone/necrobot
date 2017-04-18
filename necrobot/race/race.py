@@ -30,7 +30,7 @@ class RaceStatus(IntEnum):
     paused = 4
     completed = 5
     finalized = 6
-    cancelled = 7
+    canceled = 7
 
 StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
               RaceStatus.entry_open: 'Entry open!',
@@ -39,7 +39,7 @@ StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
               RaceStatus.paused: 'Paused!',
               RaceStatus.completed: 'Complete.',
               RaceStatus.finalized: 'Results finalized.',
-              RaceStatus.cancelled: 'Race cancelled.'}
+              RaceStatus.canceled: 'Race canceled.'}
 
 #    uninitialized   --  initialize() should be called on this object (not called in __init__ because coroutine)
 #    entry_open      --  the race is open to new entrants
@@ -50,7 +50,7 @@ StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
 #                        if players .undone during this time, race reverts to the racing state
 #    race_finalized  --  all players have finished or forfeited, and the race results are marked as final and can be
 #                        recorded. no further changes possible.
-#    cancelled       --  the race has been cancelled. no further changes possible.
+#    canceled       --  the race has been canceled. no further changes possible.
 
 
 # Race class --------------------------------------------------------------
@@ -114,7 +114,7 @@ class Race(object):
     def during_race(self):
         return self._status == RaceStatus.racing or self._status == RaceStatus.paused
 
-    # True if the race is finalized or cancelled
+    # True if the race is finalized or canceled
     @property
     def complete(self):
         return self._status >= RaceStatus.completed
@@ -124,7 +124,7 @@ class Race(object):
     def entry_open(self):
         return self._status == RaceStatus.entry_open
 
-    # True if the race can no longer be modified (finalized or cancelled)
+    # True if the race can no longer be modified (finalized or canceled)
     @property
     def final(self):
         return self._status >= RaceStatus.finalized
@@ -485,10 +485,10 @@ class Race(object):
 
     # Cancel the race.
     async def cancel(self):
-        self._status = RaceStatus.cancelled
+        self._status = RaceStatus.canceled
         await self._cancel_countdown()
         await self._cancel_finalization()
-        await self.parent.write('The race has been cancelled.')
+        await self.parent.write('The race has been canceled.')
         await self._process(RaceEvent.RACE_CANCEL)
 
     # Reseed the race
@@ -508,7 +508,7 @@ class Race(object):
 # Private methods
     # Process an event
     async def _process(self, event: RaceEvent):
-        await self._process(event)
+        await self.parent.process(event)
 
     # Actually enter the racer
     def _do_enter_racer(self, racer_member):
@@ -606,7 +606,7 @@ class Race(object):
             self.delay_record = False
             await asyncio.sleep(Config.FINALIZE_TIME_SEC)
 
-        # Perform the finalization and record the race. At this point, the finalization cannot be cancelled.
+        # Perform the finalization and record the race. At this point, the finalization cannot be canceled.
         self._status = RaceStatus.finalized
         necrodb.record_race(self)
         await self._process(RaceEvent.RACE_FINALIZE)
@@ -621,7 +621,7 @@ class Race(object):
                     self._status = RaceStatus.entry_open
                     await self._process(RaceEvent.RACE_CANCEL_COUNTDOWN)
                     if display_msgs:
-                        await self.parent.write('Countdown cancelled.')
+                        await self.parent.write('Countdown canceled.')
                     return True
                 else:
                     return False
@@ -637,7 +637,7 @@ class Race(object):
                     self._status = RaceStatus.racing
                     await self._process(RaceEvent.RACE_CANCEL_FINALIZE)
                     if display_msgs:
-                        await self.parent.write('Race end cancelled -- unfinished racers may continue!')
+                        await self.parent.write('Race end canceled -- unfinished racers may continue!')
                     return True
                 else:
                     return False
