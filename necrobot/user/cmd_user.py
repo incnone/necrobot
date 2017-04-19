@@ -222,6 +222,37 @@ class Twitch(CommandType):
                     cmd.author.mention, twitch_name))
 
 
+class UserInfo(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'userinfo')
+        self.help_text = 'Get stream and timezone info for the given user (or yourself, if no user provided). ' \
+                         'Usage is `.userinfo name`.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) > 1:
+            await self.client.send_message(
+                cmd.channel, 'Error: Too many arguments for `{0}`.'.format(self.mention))
+            return
+
+        # find the user's discord id
+        if len(cmd.args) == 0:
+            racer = userutil.get_user(discord_id=cmd.author.id)
+            if racer is None:
+                await self.client.send_message(
+                    cmd.channel,
+                    '{0}: You haven\'t registered; please call `.register`.'.format(
+                        cmd.author.mention))
+                return
+        else:
+            racer = userutil.get_user(any_name=cmd.args[0])
+            if racer is None:
+                await self.client.send_message(
+                    cmd.channel, 'Couldn\'t find a user by the name `{0}`.'.format(cmd.args[0]))
+                return
+
+        await self.client.send_message(cmd.channel, racer.infobox)
+
+
 class Register(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'register')

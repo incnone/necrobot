@@ -21,10 +21,6 @@ from necrobot.race.raceevent import RaceEvent
 from necrobot.util.config import Config
 
 
-FIRST_MATCH_WARNING = datetime.timedelta(minutes=15)
-FINAL_MATCH_WARNING = datetime.timedelta(minutes=5)
-
-
 class MatchRoom(BotChannel):
     def __init__(self, match_discord_channel: discord.Channel, match: Match):
         BotChannel.__init__(self)
@@ -215,15 +211,15 @@ class MatchRoom(BotChannel):
                 return
 
             # Wait until the first warning
-            if time_until_match > FIRST_MATCH_WARNING:
-                await asyncio.sleep((time_until_match - FIRST_MATCH_WARNING).total_seconds())
+            if time_until_match > Config.MATCH_FIRST_WARNING:
+                await asyncio.sleep((time_until_match - Config.MATCH_FIRST_WARNING).total_seconds())
                 await self.alert_racers()
                 await self.alert_cawmentator()
 
             # Wait until the final warning
             time_until_match = self.match.time_until_match
-            if time_until_match > FINAL_MATCH_WARNING:
-                await asyncio.sleep((time_until_match - FINAL_MATCH_WARNING).total_seconds())
+            if time_until_match > Config.MATCH_FINAL_WARNING:
+                await asyncio.sleep((time_until_match - Config.MATCH_FINAL_WARNING).total_seconds())
 
             # At this time, we've either just passed the FINAL_MATCH_WARNING or the function was just called
             # (happens if the call comes sometime after the FINAL_MATCH_WARNING but before the match).

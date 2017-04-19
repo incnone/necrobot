@@ -133,14 +133,14 @@ class Race(object):
     # True if we've passed the "no entrants" warning
     @property
     def passed_no_entrants_warning_time(self):
-        return self._status != RaceStatus.uninitialized \
-               and time.monotonic() - self._last_no_entrants_time > Config.NO_ENTRANTS_CLEANUP_WARNING_SEC
+        time_since = datetime.timedelta(seconds=(time.monotonic() - self._last_no_entrants_time))
+        return self._status != RaceStatus.uninitialized and time_since > Config.NO_ENTRANTS_CLEANUP_WARNING
 
     # True if we've passed the "no entrants" clear time
     @property
     def passed_no_entrants_cleanup_time(self):
-        return self._status != RaceStatus.uninitialized \
-               and time.monotonic() - self._last_no_entrants_time > Config.NO_ENTRANTS_CLEANUP_SEC
+        time_since = datetime.timedelta(seconds=(time.monotonic() - self._last_no_entrants_time))
+        return self._status != RaceStatus.uninitialized and time_since > Config.NO_ENTRANTS_CLEANUP
 
     # True if the race has any entrants
     @property

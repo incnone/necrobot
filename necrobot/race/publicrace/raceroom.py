@@ -282,7 +282,7 @@ class RaceRoom(BotChannel):
             # Post-race
             elif self._current_race.complete:
                 async for msg in self.client.logs_from(self._channel, 1):
-                    if (datetime.datetime.utcnow() - msg.timestamp).total_seconds() > Config.CLEANUP_TIME_SEC:
+                    if (datetime.datetime.utcnow() - msg.timestamp)> Config.CLEANUP_TIME:
                         await self.close()
                         return
 

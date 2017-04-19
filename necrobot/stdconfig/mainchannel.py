@@ -49,4 +49,5 @@ class MainBotChannel(BotChannel):
             cmd_user.Timezone(self),
             cmd_user.Twitch(self),
             cmd_user.ViewPrefs(self),
+            cmd_user.UserInfo(self),
         ]

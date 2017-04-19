@@ -1,3 +1,6 @@
+import datetime
+
+
 class Config(object):
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
@@ -8,14 +11,19 @@ class Config(object):
 # Channels
     MAIN_CHANNEL_NAME = 'necrobot_main'
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
+    LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
 
 # Daily
     # minutes to allow for submissions on old dailies after new ones are rolled out
-    DAILY_GRACE_PERIOD = int(60)
+    DAILY_GRACE_PERIOD = datetime.timedelta(minutes=60)
 
 # Ladder
     RATINGS_IN_NICKNAMES = True
+
+# Matches
+    MATCH_FIRST_WARNING = datetime.timedelta(minutes=15)
+    MATCH_FINAL_WARNING = datetime.timedelta(minutes=5)
 
 # Races
     # number of seconds between the final .ready and race start
@@ -29,14 +37,14 @@ class Config(object):
     FINALIZE_TIME_SEC = int(30)
 
 # RaceRooms
-    # minutes of no chatting until the room may be cleaned (only applies if race has been finalized)
-    CLEANUP_TIME_SEC = int(180)
+    # amount of no chatting until the room may be cleaned (only applies if race has been finalized)
+    CLEANUP_TIME = datetime.timedelta(minutes=3)
 
     # room is cleaned if there are no race entrants for this duration of time
-    NO_ENTRANTS_CLEANUP_SEC = int(120)
+    NO_ENTRANTS_CLEANUP = datetime.timedelta(minutes=2)
 
     # give a warning re: cleaning race room if no entrants for this duration of time
-    NO_ENTRANTS_CLEANUP_WARNING_SEC = int(90)
+    NO_ENTRANTS_CLEANUP_WARNING = datetime.timedelta(minutes=1, seconds=30)
 
     # number of seconds to wait between allowing pokes
     RACE_POKE_DELAY = int(10)
@@ -64,7 +72,9 @@ def init(config_filename):
         'mysql_db_passwd': '',
         'mysql_db_name': 'necrobot',
         'login_token': '',
-        'server_id': ''
+        'server_id': '',
+        'vodrecord_username': '',
+        'vodrecord_passwd': ''
         }
 
     file = open(config_filename, 'r')
@@ -85,6 +95,8 @@ def init(config_filename):
     Config.MYSQL_DB_NAME = defaults['mysql_db_name']
     Config.LOGIN_TOKEN = defaults['login_token']
     Config.SERVER_ID = defaults['server_id']
+    Config.VODRECORD_USERNAME = defaults['vodrecord_username']
+    Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
 
 # -Testing-------------------------------------------------------------------------
 

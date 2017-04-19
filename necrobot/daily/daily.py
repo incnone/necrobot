@@ -69,25 +69,27 @@ class Daily(object):
     @property
     def within_grace_period(self):
         utc_now = datetime.datetime.utcnow()
-        return (utc_now.time().hour * 60) + utc_now.time().minute <= Config.DAILY_GRACE_PERIOD
+        utc_rollover = utc_now.replace(hour=0, minute=0, second=0)
+        return utc_now - utc_rollover <= Config.DAILY_GRACE_PERIOD
 
     # Returns a string giving the remaining time in the grace period
     @property
     def daily_grace_timestr(self):
         utc_now = datetime.datetime.utcnow()
-        return self._format_as_timestr(0, Config.DAILY_GRACE_PERIOD - utc_now.hour * 60 - utc_now.minute)
+        utc_grace_end = utc_now.replace(hour=0, minute=0, second=0) + Config.DAILY_GRACE_PERIOD
+        return self._format_as_timestr(utc_grace_end - utc_now)
 
     # Returns a string giving the time until the next daily
     @property
     def next_daily_timestr(self):
-        utc_now = datetime.datetime.utcnow()
-        return self._format_as_timestr(23 - utc_now.hour, 60 - utc_now.minute)
+        return self._format_as_timestr(self.time_until_next)
 
     # Returns a string giving the time until the current daily closes
     @property
     def daily_close_timestr(self):
         utc_now = datetime.datetime.utcnow()
-        return self._format_as_timestr(24 - utc_now.hour, 60 - utc_now.minute)
+        utc_tomorrow = (utc_now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0)
+        return self._format_as_timestr(utc_tomorrow - utc_now)
 
     # Returns a string with the current daily's date and time until the next daily.
     @property
@@ -298,16 +300,19 @@ class Daily(object):
             await self._daily_manager.on_new_daily(self)
             await asyncio.sleep(120)  # buffer b/c i'm worried for some reason about idk
 
-    # Formats the given hours, minutes into a string
+    # Formats the given timedelta into a string
     @staticmethod
-    def _format_as_timestr(hours, minutes):
-        while minutes >= 60:
-            minutes -= 60
-            hours += 1
+    def _format_as_timestr(td: datetime.timedelta):
+        seconds = td.total_seconds()
+        hours, rem = divmod(seconds, 3600)
+        minutes, seconds = divmod(rem, 60)
 
         if minutes == 0 and hours == 0:
             return 'under a minute'
         else:
             min_str = 'minute' if minutes == 1 else 'minutes'
             hr_str = 'hour' if hours == 1 else 'hours'
-            return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)
+            if hours == 0:
+                return '{0} {1}'.format(minutes, min_str)
+            else:
+                return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)

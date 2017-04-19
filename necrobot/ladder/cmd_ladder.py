@@ -16,6 +16,7 @@ class LadderDropMyMatches(CommandType):
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
+
 class LadderFastest(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'ladder-fastest')
