@@ -30,7 +30,7 @@ def get_user(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=Non
         raise RuntimeError('Error: Called NecroUser.get_user with no non-None fields.')
 
     raw_db_data = necrodb.get_all_users(
-        discord_id=int(discord_id),
+        discord_id=discord_id,
         discord_name=discord_name,
         twitch_name=twitch_name,
         rtmp_name=rtmp_name,

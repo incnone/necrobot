@@ -70,20 +70,15 @@ class MatchInfo(CommandType):
             return
 
         match_race_data = necrodb.get_match_race_data(match.match_id)
-        if match.is_best_of:
-             match_format_info = 'best-of-{0}'.format(match.number_of_races)
-        else:
-            match_format_info = '{0} races'.format(match.number_of_races)
 
         await self.client.send_message(
             cmd.channel,
-            '**{0}** [{2} - {3}] **{1}** ({4}, {5})'.format(
+            '**{0}** [{2} - {3}] **{1}** ({4})'.format(
                 match.racer_1.discord_name,
                 match.racer_2.discord_name,
                 match_race_data.r1_wins,
                 match_race_data.r2_wins,
-                match.race_info.format_str,
-                match_format_info
+                match.format_str
             )
         )
 

@@ -8,8 +8,6 @@ Current version: 0.10
 
 ## Bugs
 
-- If you're the last racer to finish, `.f` doesn't unfinish you, nor does `.undone`.
-
 ### Fixable/precise but not urgent
 
 - `.dailywhen` is not working as advertised.

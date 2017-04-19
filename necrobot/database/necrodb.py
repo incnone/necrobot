@@ -1,8 +1,9 @@
 import mysql.connector
 
-from necrobot.ladder import rating
+from necrobot.ladder import ratingutil
 from necrobot.util import console
 
+from necrobot.ladder.rating import Rating
 from necrobot.race.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.userprefs import UserPrefs
@@ -53,10 +54,11 @@ def _get_resolvable_rtmp_clash_user_id(necro_user) -> int or None:
             "WHERE rtmp_name=%s",
             rtmp_params
         )
-        if cursor.rowcount == 0:
-            return False
 
         data = cursor.fetchone()
+        if data is None:
+            return None
+
         user_id = int(data[0]) if data[0] is not None else None
         discord_id = int(data[1]) if data[1] is not None else None
         if discord_id is None and discord_id != necro_user.discord_id and user_id != necro_user.user_id:
@@ -229,7 +231,8 @@ def get_discord_id(discord_name):
             "FROM user_data "
             "WHERE discord_name=%s",
             params)
-        return int(cursor.fetchone()[0]) if cursor.rowcount else None
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else None
 
 
 def set_prefs(discord_id, user_prefs):
@@ -326,16 +329,16 @@ def record_race(race):
             "   AND seed_fixed = %s",
             racetype_params)
 
-        if cursor.rowcount == 0:
+        row = cursor.fetchone()
+        if row is None:
             cursor.execute(
                 "INSERT INTO race_types "
                 "(`character`, descriptor, seeded, amplified, seed_fixed) "
                 "VALUES (%s, %s, %s, %s, %s)",
                 racetype_params)
             cursor.execute("SELECT LAST_INSERT_ID()")
-            type_id = int(cursor.fetchone()[0])
-        else:
-            type_id = int(cursor.fetchone()[0])
+
+        type_id = int(row[0])
 
         # Record the race
         race_params = (
@@ -435,7 +438,7 @@ def has_submitted_daily(discord_id, daily_id, daily_type):
             "FROM daily_races "
             "WHERE discord_id=%s AND daily_id=%s AND type=%s AND level != -1",
             params)
-        return cursor.rowcount > 0
+        return cursor.fetchone() is not None
 
 
 def has_registered_daily(discord_id, daily_id, daily_type):
@@ -446,7 +449,7 @@ def has_registered_daily(discord_id, daily_id, daily_type):
             "FROM daily_races "
             "WHERE discord_id=%s AND daily_id=%s AND type=%s",
             params)
-        return cursor.rowcount > 0
+        return cursor.fetchone() is not None
 
 
 def register_daily(discord_id, daily_id, daily_type, level=-1, time=-1):
@@ -475,7 +478,8 @@ def registered_daily(discord_id, daily_type):
             "ORDER BY daily_id DESC "
             "LIMIT 1",
             params)
-        return int(cursor.fetchone()[0]) if cursor.rowcount else 0
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else 0
 
 
 def submitted_daily(discord_id, daily_type):
@@ -488,7 +492,8 @@ def submitted_daily(discord_id, daily_type):
             "ORDER BY daily_id DESC "
             "LIMIT 1",
             params)
-        return int(cursor.fetchone()[0]) if cursor.rowcount else 0
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else 0
 
 
 def delete_from_daily(discord_id, daily_id, daily_type):
@@ -529,7 +534,8 @@ def get_daily_message_id(daily_id, daily_type):
             "FROM daily_data "
             "WHERE daily_id=%s AND type=%s",
             params)
-        return int(cursor.fetchone()[0]) if cursor.rowcount else 0
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else 0
 
 
 def get_allzones_race_numbers(discord_id, amplified):
@@ -651,7 +657,8 @@ def get_largest_race_number(discord_id):
             "ORDER BY race_id DESC "
             "LIMIT 1",
             params)
-        return int(cursor.fetchone()[0]) if cursor.rowcount else 0
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else 0
 
 
 def set_timezone(discord_id, timezone):
@@ -694,31 +701,6 @@ def set_user_info(discord_id, user_info):
             params)
 
 
-def set_rating(discord_id, the_rating):
-    with DBConnect(commit=True) as cursor:
-        params = (the_rating.mu, the_rating.sigma, discord_id,)
-        cursor.execute(
-            "INSERT INTO ladder_data "
-            "(discord_id, trueskill_mu, trueskill_sigma) "
-            "VALUES (%s,%s,%s) "
-            "ON DUPLICATE KEY UPDATE "
-            "trueskill_mu=VALUES(trueskill_mu), "
-            "trueskill_sigma=VALUES(trueskill_sigma)",
-            params)
-
-
-def get_rating(discord_id):
-    with DBConnect(commit=False) as cursor:
-        params = (discord_id,)
-        cursor.execute(
-            "SELECT trueskill_mu, trueskill_sigma "
-            "FROM ladder_data "
-            "WHERE discord_id=%s",
-            params)
-        row = cursor.fetchone()
-        return rating.create_rating(mu=int(row[0]), sigma=int(row[1])) if row is not None else None
-
-
 def get_race_info_from_type_id(race_type):
     params = (race_type,)
     with DBConnect(commit=False) as cursor:
@@ -729,8 +711,8 @@ def get_race_info_from_type_id(race_type):
             params
         )
 
-        if cursor.rowcount:
-            row = cursor.fetchone()
+        row = cursor.fetchone()
+        if row is not None:
             race_info = RaceInfo()
             race_info.set_char(row[0])
             race_info.descriptor = row[1]
@@ -764,8 +746,9 @@ def get_race_type_id(race_info, register=False):
             params
         )
 
-        if cursor.rowcount:
-            return int(cursor.fetchone()[0])
+        row = cursor.fetchone()
+        if row is not None:
+            return int(row[0])
 
     # If here, the race type was not found
     if not register:
@@ -798,6 +781,7 @@ def get_raw_match_data(match_id):
             "   r2_confirmed, "
             "   r1_unconfirmed, "
             "   r2_unconfirmed, "
+            "   ranked, "
             "   is_best_of, "
             "   number_of_races, "
             "   cawmentator_id "
@@ -805,7 +789,7 @@ def get_raw_match_data(match_id):
             "WHERE match_id=%s",
             params
         )
-        return cursor.fetchone() if cursor.rowcount else None
+        return cursor.fetchone()
 
 
 def _register_match(match):
@@ -820,6 +804,7 @@ def _register_match(match):
         match.confirmed_by_r2,
         match.r1_wishes_to_unconfirm,
         match.r2_wishes_to_unconfirm,
+        match.ranked,
         match.is_best_of,
         match.number_of_races,
         match.cawmentator.user_id if match.cawmentator else None,
@@ -838,11 +823,12 @@ def _register_match(match):
             "   r2_confirmed, "
             "   r1_unconfirmed, "
             "   r2_unconfirmed, "
+            "   ranked, "
             "   is_best_of, "
             "   number_of_races, "
             "   cawmentator_id"
             ")"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             params
         )
         cursor.execute("SELECT LAST_INSERT_ID()")
@@ -864,6 +850,7 @@ def write_match(match):
         match.confirmed_by_r2,
         match.r1_wishes_to_unconfirm,
         match.r2_wishes_to_unconfirm,
+        match.ranked,
         match.is_best_of,
         match.number_of_races,
         match.cawmentator.user_id if match.cawmentator else None,
@@ -882,6 +869,7 @@ def write_match(match):
             "   r2_confirmed=%s, "
             "   r1_unconfirmed=%s, "
             "   r2_unconfirmed=%s, "
+            "   ranked=%s, "
             "   is_best_of=%s, "
             "   number_of_races=%s, "
             "   cawmentator_id=%s "
@@ -890,7 +878,7 @@ def write_match(match):
         )
 
 
-def register_match_channel(match_id, channel_id):
+def register_match_channel(match_id: int, channel_id: int or None):
     params = (channel_id, match_id,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
@@ -901,7 +889,7 @@ def register_match_channel(match_id, channel_id):
         )
 
 
-def get_match_channel_id(match_id):
+def get_match_channel_id(match_id: int) -> int:
     params = (match_id,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
@@ -910,7 +898,8 @@ def get_match_channel_id(match_id):
             "WHERE match_id=%s",
             params
         )
-        return int(cursor.fetchone()[0]) if cursor.rowcount else None
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else None
 
 
 def get_channeled_matches_raw_data():
@@ -926,6 +915,7 @@ def get_channeled_matches_raw_data():
             "   r2_confirmed, "
             "   r1_unconfirmed, "
             "   r2_unconfirmed, "
+            "   ranked, "
             "   is_best_of, "
             "   number_of_races, "
             "   cawmentator_id, "
@@ -936,7 +926,7 @@ def get_channeled_matches_raw_data():
         return cursor.fetchall()
 
 
-def get_match_race_data(match_id):
+def get_match_race_data(match_id: int) -> MatchRaceData:
     params = (match_id,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
@@ -959,3 +949,43 @@ def get_match_race_data(match_id):
                 elif int(row[1]) == 2:
                     r2_wins += 1
         return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)
+
+
+def get_rating(discord_id) -> Rating:
+    with DBConnect(commit=False) as cursor:
+        params = (discord_id,)
+        cursor.execute(
+            "SELECT trueskill_mu, trueskill_sigma "
+            "FROM ladder_data "
+            "WHERE discord_id=%s",
+            params
+        )
+
+        row = cursor.fetchone()
+        if row is not None:
+            return ratingutil.create_rating(mu=row[0], sigma=row[1])
+
+    # If here, there was no rating
+    with DBConnect(commit=True) as cursor:
+        rating = ratingutil.create_rating()
+        params = (discord_id, rating.mu, rating.sigma,)
+        cursor.execute(
+            "INSERT INTO ladder_data "
+            "(discord_id, trueskill_mu, trueskill_sigma) "
+            "VALUES (%s, %s, %s)",
+            params
+        )
+        return rating
+
+
+def set_rating(discord_id: int, rating: Rating):
+    with DBConnect(commit=True) as cursor:
+        params = (discord_id, rating.mu, rating.sigma,)
+        cursor.execute(
+            "INSERT INTO ladder_data "
+            "(discord_id, trueskill_mu, trueskill_sigma) "
+            "VALUES (%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE "
+            "trueskill_mu=VALUES(trueskill_mu), "
+            "trueskill_sigma=VALUES(trueskill_sigma)",
+            params)

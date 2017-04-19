@@ -9,7 +9,7 @@ from necrobot.user import userutil
 class Match(object):
     def __init__(self, racer_1_id, racer_2_id, max_races=3, is_best_of=False, match_id=None, suggested_time=None,
                  r1_confirmed=False, r2_confirmed=False, r1_unconfirmed=False, r2_unconfirmed=False,
-                 race_info=RaceInfo(), cawmentator=None):
+                 ranked=True, race_info=RaceInfo(), cawmentator=None):
         self._match_id = match_id                   # int -- the unique ID for this match
 
         # Racers in the match
@@ -25,6 +25,7 @@ class Match(object):
         self._r2_wishes_to_unconfirm = r2_unconfirmed
 
         # Format data
+        self.ranked = ranked                        # Whether this is a ranked match
         self._number_of_races = max_races           # Maximum number of races
         self._is_best_of = is_best_of               # If true, end match after one player has clinched the most wins
         self._race_info = race_info                 # The kind of race the match will have
@@ -34,6 +35,17 @@ class Match(object):
 
     def __eq__(self, other):
         return self.match_id == other.match_id
+
+    @property
+    def format_str(self) -> str:
+        if self.is_best_of:
+            match_format_info = 'best-of-{0}'.format(self.number_of_races)
+        else:
+            match_format_info = '{0} races'.format(self.number_of_races)
+
+        ranked_str = 'ranked' if self.ranked else 'unranked'
+
+        return '{0}, {1}, {2}'.format(self.race_info.format_str, match_format_info, ranked_str)
 
     @property
     def is_registered(self) -> bool:

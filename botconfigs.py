@@ -1,10 +1,11 @@
 from necrobot.util import console
-from necrobot.util.config import Config
+from necrobot.race.match import matchutil
+from necrobot.ladder import ratingutil
 
+from necrobot.util.config import Config
 from necrobot.daily.dailymanager import DailyManager
 from necrobot.stdconfig.mainchannel import MainBotChannel
 from necrobot.stdconfig.pmbotchannel import PMBotChannel
-from necrobot.race.match import matchutil
 
 
 async def load_standard_config(necrobot):
@@ -18,4 +19,6 @@ async def load_standard_config(necrobot):
 
     necrobot.register_manager('daily', DailyManager())
     await matchutil.recover_stored_match_rooms()
+
+    ratingutil.init()
 

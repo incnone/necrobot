@@ -37,7 +37,7 @@ def get_match_from_id(match_id):
 
 def make_match_from_raw_db_data(row):
     race_info = necrodb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
-    cawmentator = userutil.get_user(user_id=int(row[11])) if row[11] is not None else None
+    cawmentator = userutil.get_user(user_id=int(row[12])) if row[12] is not None else None
 
     return Match(
         match_id=int(row[0]),
@@ -49,8 +49,9 @@ def make_match_from_raw_db_data(row):
         r2_confirmed=bool(row[6]),
         r1_unconfirmed=bool(row[7]),
         r2_unconfirmed=bool(row[8]),
-        is_best_of=bool(row[9]),
-        max_races=int(row[10]),
+        ranked=bool(row[9]),
+        is_best_of=bool(row[10]),
+        max_races=int(row[11]),
         cawmentator=cawmentator
     )
 
@@ -77,7 +78,7 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
 async def recover_stored_match_rooms():
     console.info('\nRecovering stored match rooms------------')
     for row in necrodb.get_channeled_matches_raw_data():
-        channel_id = int(row[12])
+        channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
             match = make_match_from_raw_db_data(row=row)

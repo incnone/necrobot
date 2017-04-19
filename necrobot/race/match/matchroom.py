@@ -6,6 +6,7 @@ import discord
 
 from necrobot.botbase import cmd_admin
 from necrobot.database import necrodb
+from necrobot.ladder import ratingutil
 from necrobot.race import cmd_race
 from necrobot.race import raceinfo
 from necrobot.race.match import cmd_match
@@ -17,6 +18,7 @@ from necrobot.race.match.match import Match
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.race import Race
 from necrobot.race.raceevent import RaceEvent
+from necrobot.util.config import Config
 
 
 FIRST_MATCH_WARNING = datetime.timedelta(minutes=15)
@@ -111,6 +113,16 @@ class MatchRoom(BotChannel):
     def before_races(self) -> bool:
         return self.current_race is None and self.last_begun_race is None
 
+    @property
+    def _race_winner(self) -> int:
+        race_winner_id = int(self.current_race.winner.member.id)
+        if race_winner_id == int(self.match.racer_1.member.id):
+            return 1
+        elif race_winner_id == int(self.match.racer_2.member.id):
+            return 2
+        else:
+            return 0
+
 # Public coroutine methods
     async def initialize(self):
         if self._countdown_to_match_future is not None:
@@ -144,7 +156,9 @@ class MatchRoom(BotChannel):
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write('The race will end in {} seconds.'.format(self.current_race.config.finalize_time_sec))
         elif event == RaceEvent.RACE_FINALIZE:
-            await self._record_match_race()
+            race_winner = self._race_winner
+            self._record_match_race(race_winner)
+            await self._record_new_ratings(race_winner)
             await self.write('The race has ended.'.format(self.current_race.config.finalize_time_sec))
             if self.played_all_races:
                 await self._end_match()
@@ -251,15 +265,7 @@ class MatchRoom(BotChannel):
     async def _end_match(self):
         await self.write('Match complete.')
 
-    async def _record_match_race(self):
-        race_winner_id = int(self.current_race.winner.member.id)
-        if race_winner_id == int(self.match.racer_1.member.id):
-            race_winner = 1
-        elif race_winner_id == int(self.match.racer_2.member.id):
-            race_winner = 2
-        else:
-            race_winner = 0
-
+    def _record_match_race(self, race_winner):
         necrodb.record_match_race(
             match=self.match,
             race_number=self._current_race_number,
@@ -268,3 +274,21 @@ class MatchRoom(BotChannel):
             contested=self._current_race_contested,
             canceled=False
         )
+
+    async def _record_new_ratings(self, race_winner):
+        racer_1 = self.match.racer_1
+        racer_2 = self.match.racer_2
+        rating_1 = necrodb.get_rating(racer_1.discord_id)
+        rating_2 = necrodb.get_rating(racer_2.discord_id)
+
+        new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
+
+        necrodb.set_rating(racer_1.discord_id, new_ratings[0])
+        necrodb.set_rating(racer_2.discord_id, new_ratings[1])
+
+        # TODO: this isn't working
+        # if Config.RATINGS_IN_NICKNAMES:
+        #     for pair in [(racer_1, rating_1,), (racer_2, rating_2,)]:
+        #         member = pair[0].member
+        #         nick = '{0} ({1})'.format(pair[0].member.name, pair[1].displayed_rating)
+        #         await self.client.change_nickname(member=member, nickname=nick)

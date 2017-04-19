@@ -14,6 +14,9 @@ class Config(object):
     # minutes to allow for submissions on old dailies after new ones are rolled out
     DAILY_GRACE_PERIOD = int(60)
 
+# Ladder
+    RATINGS_IN_NICKNAMES = True
+
 # Races
     # number of seconds between the final .ready and race start
     COUNTDOWN_LENGTH = int(10)

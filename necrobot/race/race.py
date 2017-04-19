@@ -635,7 +635,7 @@ class Race(object):
 
     # Countdown coroutine to be wrapped in self._finalize_future.
     # Warning: Do not call this -- use end_race instead.
-    async def _finalization_countdown(self, mute=False):
+    async def _finalization_countdown(self):
         self.delay_record = True
         while self.delay_record:
             self.delay_record = False
