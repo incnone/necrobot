@@ -174,37 +174,49 @@ def write_user(necro_user):
         )
 
 
-def get_all_users(discord_id=None, discord_name=None, twitch_name=None, rtmp_name=None,
-                  timezone=None, user_id=None):
+def _get_users_helpfn(
+        discord_id,
+        discord_name,
+        twitch_name,
+        rtmp_name,
+        timezone,
+        user_id,
+        case_sensitive,
+        do_any
+):
     with DBConnect(commit=False) as cursor:
         params = tuple()
         if discord_id is not None:
             params += (int(discord_id),)
         if discord_name is not None:
-            params += (discord_name,)
+            params += (discord_name,) if case_sensitive else (discord_name.lower(),)
         if twitch_name is not None:
-            params += (twitch_name,)
+            params += (twitch_name,) if case_sensitive else (twitch_name.lower(),)
         if rtmp_name is not None:
-            params += (rtmp_name,)
+            params += (rtmp_name,) if case_sensitive else (rtmp_name.lower(),)
         if timezone is not None:
             params += (timezone,)
         if user_id is not None:
             params += (user_id,)
 
+        connector = ' OR ' if do_any else ' AND '
         where_query = ''
         if discord_id is not None:
-            where_query += ' AND discord_id=%s'
+            where_query += ' {0} discord_id=%s'.format(connector)
         if discord_name is not None:
-            where_query += ' AND discord_name=%s'
+            where_query += ' {0} discord_name=%s'.format(connector) if case_sensitive \
+                else ' {0} LOWER(discord_name)=%s'.format(connector)
         if twitch_name is not None:
-            where_query += ' AND twitch_name=%s'
+            where_query += ' {0} twitch_name=%s'.format(connector) if case_sensitive \
+                else ' {0} LOWER(twitch_name)=%s'.format(connector)
         if rtmp_name is not None:
-            where_query += ' AND rtmp_name=%s'
+            where_query += ' {0} rtmp_name=%s'.format(connector) if case_sensitive \
+                else ' {0} LOWER(rtmp_name)=%s'.format(connector)
         if timezone is not None:
-            where_query += ' AND timezone=%s'
+            where_query += ' {0} timezone=%s'.format(connector)
         if user_id is not None:
-            where_query += ' AND user_id=%s'
-        where_query = where_query[5:] if where_query else 'TRUE'
+            where_query += ' {0} user_id=%s'.format(connector)
+        where_query = where_query[len(connector):] if where_query else 'TRUE'
 
         cursor.execute(
             "SELECT "
@@ -221,6 +233,48 @@ def get_all_users(discord_id=None, discord_name=None, twitch_name=None, rtmp_nam
             "WHERE {0}".format(where_query),
             params)
         return cursor.fetchall()
+
+
+def get_users_with_any(
+        discord_id=None,
+        discord_name=None,
+        twitch_name=None,
+        rtmp_name=None,
+        timezone=None,
+        user_id=None,
+        case_sensitive=False
+):
+    return _get_users_helpfn(
+        discord_id=discord_id,
+        discord_name=discord_name,
+        twitch_name=twitch_name,
+        rtmp_name=rtmp_name,
+        timezone=timezone,
+        user_id=user_id,
+        case_sensitive=case_sensitive,
+        do_any=True
+    )
+
+
+def get_users_with_all(
+        discord_id=None,
+        discord_name=None,
+        twitch_name=None,
+        rtmp_name=None,
+        timezone=None,
+        user_id=None,
+        case_sensitive=False
+):
+    return _get_users_helpfn(
+        discord_id=discord_id,
+        discord_name=discord_name,
+        twitch_name=twitch_name,
+        rtmp_name=rtmp_name,
+        timezone=timezone,
+        user_id=user_id,
+        case_sensitive=case_sensitive,
+        do_any=False
+    )
 
 
 def get_discord_id(discord_name):
@@ -951,7 +1005,44 @@ def get_match_race_data(match_id: int) -> MatchRaceData:
         return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)
 
 
-def get_rating(discord_id) -> Rating:
+def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int) -> int or None:
+    params = (racer_1_id, racer_2_id, racer_2_id, racer_1_id)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT match_id "
+            "FROM match_data "
+            "WHERE (racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s)",
+            params
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else None
+
+
+def add_cawmentary(match_id: int, cawmentator_id: int or None):
+    params = (cawmentator_id, match_id,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "UPDATE match_data "
+            "SET cawmentator_id=%s "
+            "WHERE match_id=%s",
+            params
+        )
+
+
+def get_cawmentary(match_id: int) -> int or None:
+    params = (match_id,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "SELECT cawmentator_id "
+            "FROM match_data "
+            "WHERE match_id=%s",
+            params
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else None
+
+
+def get_rating(discord_id: int) -> Rating:
     with DBConnect(commit=False) as cursor:
         params = (discord_id,)
         cursor.execute(

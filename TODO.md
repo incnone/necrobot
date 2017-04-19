@@ -4,7 +4,13 @@ Current version: 0.10
 
 ## Ladderbot
 
-- ?
+- Think more about better QOL with RTMP registration (and related errors)
+- Automatch feature
+- Better rankings display
+
+## Condorbot
+
+- Import all condorbot functionality
 
 ## Bugs
 

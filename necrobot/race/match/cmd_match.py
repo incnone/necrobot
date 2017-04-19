@@ -2,13 +2,48 @@ import datetime
 
 import pytz
 
-from necrobot.botbase.command import CommandType
+from necrobot.util import console
 from necrobot.database import necrodb
 from necrobot.race.match import matchutil
 from necrobot.user import userutil
 from necrobot.util import timestr
 from necrobot.util.parse import dateparse
+
+from necrobot.botbase.command import Command, CommandType
 from necrobot.util.parse.exception import ParseException
+
+
+# Match-related main-channel commands
+class Cawmentate(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'cawmentate', 'commentate', 'cawmmentate')
+        self.help_text = 'Register yourself for cawmentary for a given match. Usage is `{0} rtmp1 ' \
+                         'rtmn2`, where `rtmp1` and `rtmn2` are the RTMP names of the racers in the match. ' \
+                         '(Call `.userinfo` for RTMP names.)'.format(self.mention)
+
+    async def _do_execute(self, cmd):
+        await _do_cawmentary_command(cmd, self, add=True)
+
+
+class Vod(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'vod')
+        self.help_text = 'Add a link to a vod for a given match. Usage is `{0} rtmp1 rtmp2 URL`.'.format(self.mention)
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+
+class Uncawmentate(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
+        self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} rtmp1 rtmp2`.'.format(self.mention)
+
+    async def _do_execute(self, cmd):
+        await _do_cawmentary_command(cmd=cmd, cmd_type=self, add=False)
 
 
 # Matchroom commands
@@ -87,10 +122,10 @@ class Suggest(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'suggest')
         self.help_text = 'Suggest a time to schedule a match (your local time). Examples:\n' \
-                         '   `.suggest Feb 18 17:30`' \
-                         '   `.suggest Thursday 8p`' \
-                         '   `.suggest today 9:15pm`' \
-                         '   `.suggest now'
+                         '   `{0} Feb 18 17:30`' \
+                         '   `{0} Thursday 8p`' \
+                         '   `{0} today 9:15pm`' \
+                         '   `{0} now'.format(self.mention)
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
@@ -454,3 +489,90 @@ class Update(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.update()
+
+
+async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
+    # Parse arguments
+    if len(cmd.args) != 2:
+        await cmd_type.client.send_message(
+            cmd.channel,
+            'Error: Exactly two RTMP names required for `{0}` (you provided {1}).'.format(
+                cmd_type.mention, len(cmd.args)
+            )
+        )
+        return
+
+    rtmp_names = [cmd.args[0], cmd.args[1]]
+
+    # Find the racers as NecroUsers
+    racers = []
+    for name in rtmp_names:
+        racer = userutil.get_user(any_name=name)
+        if racer is None:
+            await cmd_type.client.send_message(
+                cmd.channel,
+                'Couldn\'t find user {0}.'.format(name)
+            )
+            return
+        racers.append(racer)
+
+    # Find the match ID
+    match_id = necrodb.get_most_recent_scheduled_match_id_between(racers[0].user_id, racers[1].user_id)
+    if match_id is None:
+        await cmd_type.client.send_message(
+            cmd.channel,
+            'Couldn\'t find a match between {0} and {1}.'.format(rtmp_names[0], rtmp_names[1])
+        )
+        return
+
+    # Check if the match already has cawmentary
+    cawmentator_id = necrodb.get_cawmentary(match_id)
+    if add and cawmentator_id is not None:
+        cawmentator_user = userutil.get_user(discord_id=cawmentator_id)
+        if cawmentator_user is not None:
+            await cmd_type.client.send_message(
+                cmd.channel,
+                'This match already has a cawmentator ({0}).'.format(cawmentator_user.discord_name)
+            )
+            return
+        else:
+            console.error(
+                'Unexpected error in Cawmentate._do_execute(): Couldn\'t find NecroUser for '
+                'cawmentator ID {0}'.format(cawmentator_id)
+            )
+            # No return here; we'll just write over this mystery ID
+    elif not add:
+        if cawmentator_id is None:
+            await cmd_type.client.send_message(
+                cmd.channel,
+                'No one is registered for cawmentary for the match {0}-{1}.'.format(
+                    racers[0].rtmp_name, racers[1].rtmp_name
+                )
+            )
+            return
+        elif cawmentator_id != int(cmd.author.id):
+            await cmd_type.client.send_message(
+                cmd.channel,
+                'Error: {0}: You are not the registered cawmentator for {1}-{2}.'.format(
+                    cmd.author.mention, racers[0].rtmp_name, racers[1].rtmp_name
+                )
+            )
+            return
+
+    # Add/delete the cawmentary
+    if add:
+        necrodb.add_cawmentary(match_id, cmd.author.id)
+        await cmd_type.client.send_message(
+            cmd.channel,
+            'Added {0} as cawmentary for the match {1}-{2}.'.format(
+                cmd.author.mention, racers[0].rtmp_name, racers[1].rtmp_name
+            )
+        )
+    else:
+        necrodb.add_cawmentary(match_id, None)
+        await cmd_type.client.send_message(
+            cmd.channel,
+            'Removed {0} as cawmentary for the match {1}-{2}.'.format(
+                cmd.author.mention, racers[0].rtmp_name, racers[1].rtmp_name
+            )
+        )

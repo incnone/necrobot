@@ -5,17 +5,54 @@ from necrobot.user import userutil
 
 
 # General commands
+class LadderDropMyMatches(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'ladder-drop-my-matches')
+        self.help_text = 'Drop out of all currently scheduled ladder matches.'
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+class LadderFastest(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'ladder-fastest')
+        self.help_text = 'Get a list of the fastest ranked ladder clears.'
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+
 class LadderRegister(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladderregister')
+        CommandType.__init__(self, bot_channel, 'ladder-register')
         self.help_text = 'Begin registering yourself for the Necrobot ladder.'
 
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
             cmd.channel,
-            '{0}: Registering doesn\'t do anything right now, but if it did, you\'d have done '
-            'it.'.format(cmd.author.mention))
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+
+class LadderStats(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'ladder-stats')
+        self.help_text = 'Display racer stats. Usage is `.stats rtmp_name`. If no racer is given, will display ' \
+                         'stats for the command caller.'
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            cmd.channel,
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
 
 
 class NextRace(CommandType):
@@ -26,8 +63,8 @@ class NextRace(CommandType):
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
-            cmd.channel,
-            'This command is TODO.')
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
 
 
 class Ranked(CommandType):
@@ -64,7 +101,7 @@ class Rating(CommandType):
             user_name = cmd.author.display_name
             discord_id = int(cmd.author.id)
         elif len(cmd.args) == 1:
-            necro_user = userutil.get_user(discord_name=cmd.args[0])
+            necro_user = userutil.get_user(any_name=cmd.args[0])
             if necro_user is None:
                 await self.client.send_message(
                     cmd.channel,
@@ -111,6 +148,46 @@ class Unranked(CommandType):
 
 
 # Admin commands
+class Automatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'automatch')
+        self.help_text = '[Admin only] Make the automated ladder matches.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+
+class CloseFinished(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'closefinished')
+        self.help_text = '[Admin only] Close all finished match rooms.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+
+class DropRacer(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'dropracer')
+        self.help_text = '[Admin only] Drop a racer from all their current matches. ' \
+                         'Usage is `{0} rtmp_name`.'.format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        # TODO
+        await self.client.send_message(
+            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+        )
+
+
 class ForceRanked(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-ranked')
@@ -157,13 +234,7 @@ async def _create_match(
 
     # Add the racers from names
     for name in racer_names:
-        try:
-            racer_as_necrouser = userutil.get_user(discord_name=name)
-        except userutil.DuplicateUserException:
-            await cmd_type.client.send_message(
-                cmd.channel,
-                'Error: More than one user found with name `{0}`.'.format(name))
-            return
+        racer_as_necrouser = userutil.get_user(any_name=name)
 
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)

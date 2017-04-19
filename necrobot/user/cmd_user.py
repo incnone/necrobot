@@ -101,7 +101,7 @@ class RTMP(CommandType):
             await self.client.send_message(
                 cmd.channel,
                 '{0}: I was unable to parse your request name because you gave the wrong number of arguments. '
-                'Use `.rtmp discord_name rtmp_name`.'.format(cmd.author.mention))
+                'Use `{1} discord_name rtmp_name`.'.format(cmd.author.mention, self.mention))
             return
 
         # Get the user
@@ -123,7 +123,7 @@ class RTMP(CommandType):
                 await self.client.send_message(
                     cmd.channel,
                     'Unexpected error: Query raised a mysql.connector.IntegrityError, but couldn\'t find a racer '
-                    'with rtmp name `{0}`.'.format(rtmp_name)
+                    'with RTMP name `{0}`.'.format(rtmp_name)
                 )
             else:
                 await self.client.send_message(
