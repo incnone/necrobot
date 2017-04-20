@@ -6,7 +6,7 @@ class Config(object):
     BOT_VERSION = '0.10.0'
 
 # Admin
-    ADMIN_ROLE_NAMES = ['Admin']  # list of names of roles to give admin access
+    ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff']  # list of names of roles to give admin access
 
 # Channels
     MAIN_CHANNEL_NAME = 'necrobot_main'
@@ -57,7 +57,6 @@ class Config(object):
 # GSheet
     GSHEET_ID = ''
     OAUTH_CREDENTIALS_JSON = 'data/necrobot-service-acct.json'
-
 
 # Database
     MYSQL_DB_HOST = 'localhost'

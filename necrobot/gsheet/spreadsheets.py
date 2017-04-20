@@ -4,6 +4,7 @@ Tools for interacting with a GSheet, typically for a CoNDOR Event.
 
 import asyncio
 import httplib2
+import unittest
 
 from apiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
@@ -32,6 +33,7 @@ class Spreadsheets(object):
         if not Spreadsheets.initted:
             self._get_credentials()
             self._build_service()
+            Spreadsheets.initted = True
 
     def __enter__(self):
         return Spreadsheets.sheet_service.spreadsheets()
@@ -54,7 +56,7 @@ class Spreadsheets(object):
             'sheets', 'v4', http=http, discoveryServiceUrl=DISCOVERY_URL)
 
 
-def _locked(func):
+def sheet_locked(func):
     """
     Decorator; obtains the _sheet_lock Lock before running the function
     """
@@ -64,6 +66,7 @@ def _locked(func):
     return func_wrapper
 
 
-@_locked
-def get_matches(worksheet):
-    pass
+class TestSpreadsheets(unittest.TestCase):
+    def test_get(self):
+        with Spreadsheets():
+            pass
