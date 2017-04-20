@@ -54,6 +54,11 @@ class Config(object):
     VODRECORD_PASSWD = ''
     RECORDING_ACTIVATED = False
 
+# GSheet
+    GSHEET_ID = ''
+    OAUTH_CREDENTIALS_JSON = 'data/necrobot-service-acct.json'
+
+
 # Database
     MYSQL_DB_HOST = 'localhost'
     MYSQL_DB_USER = 'root'
