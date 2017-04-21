@@ -2,7 +2,7 @@ import datetime
 
 import pytz
 
-import necrobot.database.matchdb
+from necrobot.database import matchdb
 from necrobot.util import console
 from necrobot.database import dbconnect
 from necrobot.race.match import matchutil
@@ -76,7 +76,7 @@ class Confirm(CommandType):
             return
 
         match.confirm_time(author_as_necrouser)
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
         await self.client.send_message(
             cmd.channel,
             '{0}: Confirmed acceptance of match time {1}.'.format(
@@ -105,7 +105,7 @@ class MatchInfo(CommandType):
             )
             return
 
-        match_race_data = necrobot.database.matchdb.get_match_race_data(match.match_id)
+        match_race_data = matchdb.get_match_race_data(match.match_id)
 
         await self.client.send_message(
             cmd.channel,
@@ -197,7 +197,7 @@ class Suggest(CommandType):
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)
         match.confirm_time(author_as_necrouser)
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
 
         # Output what we did
         for racer in match.racers:
@@ -252,7 +252,7 @@ class Unconfirm(CommandType):
 
         match_was_scheduled = match.is_scheduled
         match.unconfirm_time(author_as_necrouser)
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
 
         # if match was scheduled...
         if match_was_scheduled:
@@ -307,7 +307,7 @@ class ForceBegin(CommandType):
         match = self.bot_channel.match
         match.suggest_time(pytz.utc.localize(datetime.datetime.utcnow()))
         match.force_confirm()
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
         await self.bot_channel.update()
 
 
@@ -327,7 +327,7 @@ class ForceConfirm(CommandType):
             return
 
         match.force_confirm()
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
 
         await self.client.send_message(
             cmd.channel,
@@ -379,7 +379,7 @@ class ForceReschedule(CommandType):
 
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
 
         # Output what we did
         for racer in match.racers:
@@ -416,7 +416,7 @@ class Postpone(CommandType):
             return
 
         match.force_unconfirm()
-        necrobot.database.matchdb.write_match(match)
+        matchdb.write_match(match)
         await self.client.send_message(
             cmd.channel,
             'The match has been postponed. An admin can resume with `.forcebeginmatch`, or the racers can '
@@ -463,13 +463,13 @@ class SetMatchType(CommandType):
 
         if matchtype.lower() == 'repeat':
             match.set_repeat(num)
-            necrobot.database.matchdb.write_match(match)
+            matchdb.write_match(match)
             await self.client.send_message(
                 cmd.channel,
                 'This match has been set to be a repeat-{0}.'.format(num))
         elif matchtype.lower() == 'bestof':
             match.set_best_of(num)
-            necrobot.database.matchdb.write_match(match)
+            matchdb.write_match(match)
             await self.client.send_message(
                 cmd.channel,
                 'This match has been set to be a best-of-{0}.'.format(num))
@@ -517,9 +517,11 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
             return
         racers.append(racer)
 
-    # Find the match ID
-    match_id = necrobot.database.matchdb.get_most_recent_scheduled_match_id_between(racers[0].user_id, racers[1].user_id)
-    if match_id is None:
+    # Find the match
+    match = matchutil.get_match_from_id(
+        match_id=matchdb.get_most_recent_scheduled_match_id_between(racers[0].user_id, racers[1].user_id)
+    )
+    if match is None:
         await cmd_type.client.send_message(
             cmd.channel,
             'Couldn\'t find a match between {0} and {1}.'.format(rtmp_names[0], rtmp_names[1])
@@ -527,8 +529,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         return
 
     # Check if the match already has cawmentary
-    cawmentator_id = necrobot.database.matchdb.get_cawmentary(match_id)
-    if add and cawmentator_id is not None:
+    if add and match.cawmentator_id is not None:
         cawmentator_user = userutil.get_user(discord_id=cawmentator_id)
         if cawmentator_user is not None:
             await cmd_type.client.send_message(
@@ -543,7 +544,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
             )
             # No return here; we'll just write over this mystery ID
     elif not add:
-        if cawmentator_id is None:
+        if match.cawmentator_id is None:
             await cmd_type.client.send_message(
                 cmd.channel,
                 'No one is registered for cawmentary for the match {0}-{1}.'.format(
@@ -551,7 +552,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
                 )
             )
             return
-        elif cawmentator_id != int(cmd.author.id):
+        elif match.cawmentator_id != int(cmd.author.id):
             await cmd_type.client.send_message(
                 cmd.channel,
                 'Error: {0}: You are not the registered cawmentator for {1}-{2}.'.format(
@@ -562,7 +563,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Add/delete the cawmentary
     if add:
-        necrobot.database.matchdb.add_cawmentary(match_id, cmd.author.id)
+        match.set(cawmentator_id=int(cmd.author.id), commit=True)
         await cmd_type.client.send_message(
             cmd.channel,
             'Added {0} as cawmentary for the match {1}-{2}.'.format(
@@ -570,7 +571,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
             )
         )
     else:
-        necrobot.database.matchdb.add_cawmentary(match_id, None)
+        match.set(cawmentator_id=None, commit=True)
         await cmd_type.client.send_message(
             cmd.channel,
             'Removed {0} as cawmentary for the match {1}-{2}.'.format(

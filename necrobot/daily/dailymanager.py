@@ -1,15 +1,14 @@
 import datetime
 
-import necrobot.database.userdb
+from necrobot.util import console
+from necrobot.database import userdb
+from necrobot.daily import dailytype
+
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.database import dbconnect
-from . import dailytype
-from .daily import DATE_ZERO
-from .daily import Daily
-from .dailytype import DailyType
-from ..user.userprefs import UserPrefs
-from ..util import console
-from ..util.config import Config
+from necrobot.daily.daily import DATE_ZERO, Daily
+from necrobot.daily.dailytype import DailyType
+from necrobot.user.userprefs import UserPrefs
+from necrobot.util.config import Config
 
 
 class DailyManager(object):
@@ -63,7 +62,7 @@ class DailyManager(object):
         # PM users with the daily_alert preference
         auto_pref = UserPrefs()
         auto_pref.daily_alert = True
-        for member_id in necrobot.database.userdb.get_all_ids_matching_prefs(auto_pref):
+        for member_id in userdb.get_all_ids_matching_prefs(auto_pref):
             member = self.necrobot.find_member(discord_id=member_id)
             if member is not None:
                 daily.register(self.today_number, member.id)

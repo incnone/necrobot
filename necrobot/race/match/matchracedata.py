@@ -1,4 +1,7 @@
 class MatchRaceData(object):
+    """
+    Data about all races within a match. Corresponds to a collection of entries in `match_races` in the database.
+    """
     def __init__(self, finished=0, canceled=0, r1_wins=0, r2_wins=0):
         self.num_finished = finished
         self.num_canceled = canceled

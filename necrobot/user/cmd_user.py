@@ -2,8 +2,7 @@ import pytz
 
 from mysql.connector import IntegrityError
 
-import necrobot.database.userdb
-from necrobot.database import dbconnect
+from necrobot.database import userdb
 from necrobot.user import userutil
 
 from necrobot.botbase.command import CommandType
@@ -19,29 +18,29 @@ class DailyAlert(CommandType):
         self.help_text = "Set daily alerts on or off for your account. " \
                          "Use `{0} on` or `{0} off`.".format(self.mention)
 
-    async def _do_execute(self, command):
-        if len(command.args) != 1 or command.args[0].lower() not in ['on', 'off']:
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1 or cmd.args[0].lower() not in ['on', 'off']:
             await self.client.send_message(
-                command.channel,
-                "Couldn't parse command. Call `{0} on` or `{0} off`.".format(self.mention))
+                cmd.channel,
+                "Couldn't parse cmd. Call `{0} on` or `{0} off`.".format(self.mention))
             return
 
         user_prefs = UserPrefs()
-        if command.args[0] == 'on':
+        if cmd.args[0] == 'on':
             user_prefs.daily_alert = True
         else:
             user_prefs.daily_alert = False
 
-        necrobot.database.userdb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
+        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_prefs=user_prefs, commit=True)
 
         if user_prefs.daily_alert:
             await self.client.send_message(
-                command.channel,
-                "{0}: You will now receive PM alerts with the new daily seeds.".format(command.author.mention))
+                cmd.channel,
+                "{0}: You will now receive PM alerts with the new daily seeds.".format(cmd.author.mention))
         else:
             await self.client.send_message(
-                command.channel,
-                "{0}: You will no longer receive PM alerts for dailies.".format(command.author.mention))
+                cmd.channel,
+                "{0}: You will no longer receive PM alerts for dailies.".format(cmd.author.mention))
 
 
 class RaceAlert(CommandType):
@@ -50,29 +49,29 @@ class RaceAlert(CommandType):
         self.help_text = "Set race alerts on or off for your account. " \
                          "Use `{0} on` or `{0} off`.".format(self.mention)
 
-    async def _do_execute(self, command):
-        if len(command.args) != 1 or command.args[0].lower() not in ['on', 'off']:
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1 or cmd.args[0].lower() not in ['on', 'off']:
             await self.client.send_message(
-                command.channel,
-                "Couldn't parse command. Call `{0} on` or `{0} off`.".format(self.mention))
+                cmd.channel,
+                "Couldn't parse cmd. Call `{0} on` or `{0} off`.".format(self.mention))
             return
 
         user_prefs = UserPrefs()
-        if command.args[0] == 'on':
+        if cmd.args[0] == 'on':
             user_prefs.race_alert = True
         else:
             user_prefs.race_alert = False
 
-        necrobot.database.userdb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
+        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_prefs=user_prefs, commit=True)
 
         if user_prefs.race_alert:
             await self.client.send_message(
-                command.channel,
-                "{0}: You will now receive PM alerts when a new raceroom is made.".format(command.author.mention))
+                cmd.channel,
+                "{0}: You will now receive PM alerts when a new raceroom is made.".format(cmd.author.mention))
         else:
             await self.client.send_message(
-                command.channel,
-                "{0}: You will no longer receive PM alerts for races.".format(command.author.mention))
+                cmd.channel,
+                "{0}: You will no longer receive PM alerts for races.".format(cmd.author.mention))
 
 
 class ViewPrefs(CommandType):
@@ -80,13 +79,13 @@ class ViewPrefs(CommandType):
         CommandType.__init__(self, bot_channel, 'viewprefs', 'getprefs')
         self.help_text = "See your current user preferences."
 
-    async def _do_execute(self, command):
-        prefs = necrobot.database.userdb.get_prefs(discord_id=int(command.author.id))
+    async def _do_execute(self, cmd):
+        prefs = userutil.get_user(discord_id=int(cmd.author.id)).user_prefs
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
         await self.client.send_message(
-            command.author,
+            cmd.author,
             'Your current user preferences: {}'.format(prefs_string))
 
 
@@ -107,17 +106,17 @@ class RTMP(CommandType):
 
         # Get the user
         discord_name = cmd.args[0]
-        author_as_necrouser = userutil.get_user(discord_name=discord_name)
-        if author_as_necrouser is None:
+        user = userutil.get_user(discord_name=discord_name)
+        if user is None:
             await self.client.send_message(
                 cmd.channel,
                 'Error: Unable to find the user `{0}`.'.format(discord_name))
             return
 
         rtmp_name = cmd.args[1]
-        author_as_necrouser.rtmp_name = rtmp_name
+        user.rtmp_name = rtmp_name
         try:
-            necrobot.database.userdb.write_user(author_as_necrouser)
+            userdb.write_user(user)
         except IntegrityError:
             duplicate_user = userutil.get_user(rtmp_name=rtmp_name)
             if duplicate_user is None:
@@ -137,7 +136,7 @@ class RTMP(CommandType):
         await self.client.send_message(
             cmd.channel,
             '{0}: Registered the RTMP `{1}` to user `{2}`.'.format(
-                cmd.author.mention, rtmp_name, author_as_necrouser.discord_name))
+                cmd.author.mention, rtmp_name, user.discord_name))
 
 
 class SetInfo(CommandType):
@@ -161,7 +160,7 @@ class SetInfo(CommandType):
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
-        necrobot.database.userdb.set_user_info(discord_id=int(cmd.author.id), user_info=info)
+        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_info=info, commit=True)
         await self.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))
@@ -185,7 +184,7 @@ class Timezone(CommandType):
 
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
-            necrobot.database.userdb.set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
+            userutil.get_user(discord_id=int(cmd.author.id), register=True).set(timezone=tz_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
@@ -216,7 +215,7 @@ class Twitch(CommandType):
                 '{0}: Error: your twitch name cannot contain the character /. (Maybe you accidentally '
                 'included the "twitch.tv/" part of your stream name?)'.format(cmd.author.mention))
         else:
-            necrobot.database.userdb.set_twitch(discord_id=int(cmd.author.id), twitch_name=twitch_name)
+            userutil.get_user(discord_id=int(cmd.author.id), register=True).set(twitch_name=twitch_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Registered your twitch as `twitch.tv/{1}`.'.format(
@@ -237,13 +236,7 @@ class UserInfo(CommandType):
 
         # find the user's discord id
         if len(cmd.args) == 0:
-            racer = userutil.get_user(discord_id=cmd.author.id)
-            if racer is None:
-                await self.client.send_message(
-                    cmd.channel,
-                    '{0}: You haven\'t registered; please call `.register`.'.format(
-                        cmd.author.mention))
-                return
+            racer = userutil.get_user(discord_id=cmd.author.id, register=True)
         else:
             racer = userutil.get_user(any_name=cmd.args[0])
             if racer is None:

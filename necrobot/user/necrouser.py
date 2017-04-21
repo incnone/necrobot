@@ -1,3 +1,4 @@
+import discord
 import pytz
 
 from necrobot.util import console

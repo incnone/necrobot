@@ -2,13 +2,29 @@ import datetime
 import pytz
 
 from necrobot.user import userutil
+from necrobot.util.commitdec import commits
+
 from necrobot.race.raceinfo import RaceInfo
+from necrobot.user.necrouser import NecroUser
 
 
 class Match(object):
-    def __init__(self, commit_fn, racer_1_id, racer_2_id, max_races=3, is_best_of=False, match_id=None,
-                 suggested_time=None, r1_confirmed=False, r2_confirmed=False, r1_unconfirmed=False,
-                 r2_unconfirmed=False, ranked=True, race_info=RaceInfo(), cawmentator_id=None):
+    def __init__(self,
+                 commit_fn,
+                 racer_1_id,
+                 racer_2_id,
+                 max_races=3,
+                 is_best_of=False,
+                 match_id=None,
+                 suggested_time=None,
+                 r1_confirmed=False,
+                 r2_confirmed=False,
+                 r1_unconfirmed=False,
+                 r2_unconfirmed=False,
+                 ranked=True,
+                 race_info=RaceInfo(),
+                 cawmentator_id=None
+                 ):
         """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
         since this needs to interact with the database.
         
@@ -75,6 +91,7 @@ class Match(object):
 
     @property
     def format_str(self) -> str:
+        """Get a string describing the match format."""
         if self.is_best_of:
             match_format_info = 'best-of-{0}'.format(self.number_of_races)
         else:
@@ -145,11 +162,12 @@ class Match(object):
         return self._race_info
 
     @property
-    def cawmentator(self):
-        return self._cawmentator
+    def cawmentator_id(self):
+        return self._cawmentator_id
 
     @property
     def matchroom_name(self) -> str:
+        """Get a name for a channel for this match."""
         name = ''
         racer_names_ok = True
         for racer in self.racers:
@@ -163,25 +181,35 @@ class Match(object):
     def time_until_match(self) -> datetime.datetime or None:
         return (self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow())) if self.is_scheduled else None
 
-    # Writes the match to the database
     def commit(self):
+        """Write the match to the database."""
         self._commit(self)
 
-    # Called by necrodb to set the match id. Do not call yourself.
-    def set_match_id(self, match_id):
-        self._match_id = match_id
+    def racing_in_match(self, user) -> bool:
+        """        
+        Parameters
+        ----------
+        user: NecroUser
 
-    # Check whether the given user is in the match
-    def racing_in_match(self, user):
+        Returns
+        -------
+        bool
+            True if the user is in the match.
+        """
         return user == self.racer_1 or user == self.racer_2
 
-    # Suggest a time for the match
-    def suggest_time(self, time):
-        self.force_unconfirm()
-        self._set_suggested_time(time)
-
     # Whether the match has been confirmed by the racer
-    def is_confirmed_by(self, racer):
+    def is_confirmed_by(self, racer: NecroUser) -> bool:
+        """
+        Parameters
+        ----------
+        racer: NecroUser
+
+        Returns
+        -------
+        bool
+            Whether the Match has been confirmed by racer.
+        """
         if racer.user_id == self._racer_1_id:
             return self._confirmed_by_r1
         elif racer.user_id == self._racer_2_id:
@@ -189,15 +217,47 @@ class Match(object):
         else:
             return False
 
-    # Confirm
-    def confirm_time(self, racer):
+    def set_match_id(self, match_id: int):
+        """Sets the match ID. There should be no need to call this yourself."""
+        self._match_id = match_id
+
+    @commits
+    def suggest_time(self, time: datetime.datetime):
+        """Unconfirms all previous times and suggests a new time for the match.
+        
+        Parameters
+        ----------
+        time: datetime.datetime
+            The time to suggest for the match.
+        """
+        self.force_unconfirm()
+        self._set_suggested_time(time)
+
+    @commits
+    def confirm_time(self, racer: NecroUser):
+        """Confirms the current suggested time by the given racer. (The match is scheduled after
+        both racers have confirmed.)
+        
+        Parameters
+        ----------
+        racer: NecroUser
+        """
         if racer.user_id == self._racer_1_id:
             self._confirmed_by_r1 = True
         elif racer.user_id == self._racer_2_id:
             self._confirmed_by_r2 = True
 
     # Unconfirm
-    def unconfirm_time(self, racer):
+    @commits
+    def unconfirm_time(self, racer: NecroUser):
+        """Attempts to unconfirm the current suggested time by the given racer. This deletes the 
+        suggested time if either the match is not already scheduled or the other racer has also 
+        indicated a desire to unconfirm.
+        
+        Parameters
+        ----------
+        racer: NecroUser
+        """
         if racer.user_id == self._racer_1_id:
             if (not self._confirmed_by_r2) or self._r2_wishes_to_unconfirm:
                 self.force_unconfirm()
@@ -209,34 +269,73 @@ class Match(object):
             else:
                 self._r2_wishes_to_unconfirm = True
 
-    # Force all to confirm
+    @commits
     def force_confirm(self):
+        """Forces all racers to confirm the suggested time."""
+        if self._suggested_time is None:
+            console.error('Tried to force_confirm a Match with no suggested time.')
+            return
         self._confirmed_by_r1 = True
         self._confirmed_by_r2 = True
         self._r1_wishes_to_unconfirm = False
         self._r2_wishes_to_unconfirm = False
 
-    # Unconfirm (hard)
+    @commits
     def force_unconfirm(self):
+        """Unconfirms and deletes any current suggested time."""
         self._confirmed_by_r1 = False
         self._confirmed_by_r2 = False
         self._r1_wishes_to_unconfirm = False
         self._r2_wishes_to_unconfirm = False
         self._suggested_time = None
 
-    # Set the match to be a repeat-N
-    def set_repeat(self, number):
+    @commits
+    def set_repeat(self, number: int):
+        """Sets the match type to be a repeat-X.
+        
+        Parameters
+        ----------
+        number: int
+            The number of races to be played in the match.
+        """
         self._is_best_of = False
         self._number_of_races = number
+        if commit:
+            self.commit()
 
-    # Set the match to be a best-of-N
-    def set_best_of(self, number):
+    @commits
+    def set_best_of(self, number: int):
+        """Sets the match type to be a best-of-X.
+        
+        Parameters
+        ----------
+        number: int
+            The maximum number of races to be played (the match will be a best-of-number).
+        """
         self._is_best_of = True
         self._number_of_races = number
 
-    # Change the RaceInfo for the match
+    @commits
     def set_race_info(self, race_info: RaceInfo):
+        """Sets the type of races to be done in the match.
+        
+        Parameters
+        ----------
+        race_info: RaceInfo
+            The new match RaceInfo.
+        """
         self._race_info = race_info
+
+    @commits
+    def set_cawmentator_id(self, cawmentator_id: int or None):
+        """Sets a cawmentator for the match. Using cawmentator_id = None will remove cawmentary.
+        
+        Parameters
+        ----------
+        cawmentator_id: int
+            The discord ID of the cawmentator.
+        """
+        self._cawmentator_id = cawmentator_id
 
     def _set_suggested_time(self, time: datetime.datetime or None):
         if time is None:

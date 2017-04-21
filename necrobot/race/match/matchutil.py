@@ -1,42 +1,111 @@
 import discord
 
-import necrobot.database.matchdb
+from necrobot.database import matchdb
+from necrobot.util import console
+from necrobot.user import userutil
+
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.database import dbconnect
 from necrobot.race.match.match import Match
 from necrobot.race.match.matchroom import MatchRoom
 from necrobot.race.raceinfo import RaceInfo
-from necrobot.user import userutil
-from necrobot.util import console
 
 
 match_library = {}
 
 
-def make_match(*args, register=False, **kwargs):
+# noinspection PyIncorrectDocstring
+def make_match(*args, register=False, **kwargs) -> Match:
+    """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
+    since this needs to interact with the database.
+
+    Parameters
+    ----------
+    racer_1_id: int
+        The DB user ID of the first racer.
+    racer_2_id: int
+        The DB user ID of the second racer.
+    max_races: int
+        The maximum number of races this match can be. (If is_best_of is True, then the match is a best of
+        max_races; otherwise, the match is just repeating max_races.)
+    is_best_of: bool
+        Whether the match is a best-of-X (if True) or a repeat-X (if False); X is max_races.
+    match_id: int
+        The DB unique ID of this match.
+    suggested_time: datetime.datetime
+        The time the match is suggested for. If no tzinfo, UTC is assumed.
+    r1_confirmed: bool
+        Whether the first racer has confirmed the match time.
+    r2_confirmed: bool
+        Whether the second racer has confirmed the match time.
+    r1_unconfirmed: bool
+        Whether the first racer wishes to unconfirm the match time.
+    r2_unconfirmed: bool
+        Whether the second racer wishes to unconfirm the match time.
+    ranked: bool
+        Whether the results of this match should be used to update ladder rankings.
+    race_info: RaceInfo
+        The types of races to be run in this match.
+    cawmentator_id: int
+        The DB unique ID of the cawmentator for this match.
+    register: bool
+        Whether to register the match in the database. 
+        
+    Returns
+    ---------
+    Match
+        The created match.
+    """
     if match_id in kwargs and kwargs[match_id] in match_library:
         return match_library[kwargs[match_id]]
 
-    match = Match(*args, commit_fn=necrobot.database.matchdb.write_match, **kwargs)
+    match = Match(*args, commit_fn=matchdb.write_match, **kwargs)
     if register:
         match.commit()
         match_library[match.match_id] = match
     return match
 
 
-def get_match_from_id(match_id):
+def get_match_from_id(match_id: int) -> Match or None:
+    """Get a match object from its DB unique ID.
+    
+    Parameters
+    ----------
+    match_id: int
+        The databse ID of the match.
+
+    Returns
+    -------
+    Optional[Match]
+        The match found, if any.
+    """
+    if match_id is None:
+        return None
+
     if match_id in match_library:
         return match_library[match_id]
 
-    raw_data = necrobot.database.matchdb.get_raw_match_data(match_id)
+    raw_data = matchdb.get_raw_match_data(match_id)
     if raw_data is not None:
         return _make_match_from_raw_db_data(raw_data)
     else:
         return None
 
 
-# Return a new (unique) race room name from the race info
 def get_matchroom_name(server: discord.Server, match: Match) -> str:
+    """Get a new unique channel name corresponding to the match.
+    
+    Parameters
+    ----------
+    server: discord.Server
+        The server on which the channel name should be unique.
+    match: Match
+        The match whose info determines the name.
+        
+    Returns
+    -------
+    str
+        The name of the channel.
+    """
     name_prefix = match.matchroom_name
     cut_length = len(name_prefix) + 1
     largest_postfix = 1
@@ -54,9 +123,12 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
     return name_prefix if not found else '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
 
-async def recover_stored_match_rooms():
+async def recover_stored_match_rooms() -> None:
+    """Create MatchRoom objects for matches in the database with stored channels that exist on the
+    discord server.
+    """
     console.info('Recovering stored match rooms------------')
-    for row in necrobot.database.matchdb.get_channeled_matches_raw_data():
+    for row in matchdb.get_channeled_matches_raw_data():
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
@@ -71,6 +143,20 @@ async def recover_stored_match_rooms():
 
 
 async def make_match_room(match: Match, register=False) -> MatchRoom or None:
+    """Create a discord.Channel and a corresponding MatchRoom for the given Match. 
+    
+    Parameters
+    ----------
+    match: Match
+        The Match to create a room for.
+    register: bool
+        If True, will register the Match in the database.
+
+    Returns
+    -------
+    Optional[MatchRoom]
+        The created room object.
+    """
     necrobot = Necrobot()
 
     # Check to see the match is registered
@@ -81,7 +167,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             return None
 
     # Check to see if we already have the match channel
-    channel_id = necrobot.database.matchdb.get_match_channel_id(match.match_id)
+    channel_id = matchdb.get_match_channel_id(match.match_id)
     match_channel = necrobot.find_channel_with_id(channel_id) if channel_id is not None else None
 
     # If we couldn't find the channel or it didn't exist, make a new one
@@ -107,7 +193,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             return None
 
     # Make the actual RaceRoom and initialize it
-    necrobot.database.matchdb.register_match_channel(match_id=match.match_id, channel_id=match_channel.id)
+    matchdb.register_match_channel(match_id=match.match_id, channel_id=match_channel.id)
     new_room = MatchRoom(match_discord_channel=match_channel, match=match)
     necrobot.register_bot_channel(match_channel, new_room)
     await new_room.initialize()
@@ -115,12 +201,19 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
     return new_room
 
 
-async def close_match_room(match):
+async def close_match_room(match: Match) -> None:
+    """Close the discord.Channel corresponding to the Match, if any.
+    
+    Parameters
+    ----------
+    match: Match
+        The Match to close the channel for.
+    """
     if not match.is_registered:
         console.error('Trying to close the room for an unregistered match.')
         return
 
-    channel_id = necrobot.database.matchdb.get_match_channel_id(match.match_id)
+    channel_id = matchdb.get_match_channel_id(match.match_id)
     channel = Necrobot().find_channel_with_id(channel_id)
     if channel is None:
         console.error('Coudn\'t find channel with id {0} in close_match_room '
@@ -129,14 +222,14 @@ async def close_match_room(match):
 
     await Necrobot().unregister_bot_channel(channel)
     await Necrobot().client.delete_channel(channel)
-    necrobot.database.matchdb.register_match_channel(match_id=match.match_id, channel_id=None)
+    matchdb.register_match_channel(match_id=match.match_id, channel_id=None)
 
 
 def _make_match_from_raw_db_data(row):
-    race_info = necrobot.database.matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
-    cawmentator = userutil.get_user(user_id=int(row[12])) if row[12] is not None else None
+    race_info = matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
 
     return Match(
+        commit_fn=matchdb.write_match,
         match_id=int(row[0]),
         race_info=race_info,
         racer_1_id=int(row[2]),
@@ -149,5 +242,5 @@ def _make_match_from_raw_db_data(row):
         ranked=bool(row[9]),
         is_best_of=bool(row[10]),
         max_races=int(row[11]),
-        cawmentator=cawmentator
+        cawmentator_id=int(row[12])
     )

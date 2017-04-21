@@ -98,68 +98,6 @@ def get_users_with_all(
     )
 
 
-# Simple setters
-def set_timezone(discord_id, timezone):
-    with DBConnect(commit=True) as cursor:
-        params = (timezone, discord_id,)
-        cursor.execute(
-            "UPDATE user_data "
-            "SET timezone=%s "
-            "WHERE discord_id=%s",
-            params)
-
-
-def set_twitch(discord_id, twitch_name):
-    with DBConnect(commit=True) as cursor:
-        params = (twitch_name, discord_id,)
-        cursor.execute(
-            "UPDATE user_data "
-            "SET twitch_name=%s "
-            "WHERE discord_id=%s",
-            params)
-
-
-def set_user_info(discord_id, user_info):
-    with DBConnect(commit=True) as cursor:
-        params = (user_info, discord_id,)
-        cursor.execute(
-            "UPDATE user_data "
-            "SET user_info=%s "
-            "WHERE discord_id=%s",
-            params)
-
-
-# UserPrefs
-def set_prefs(discord_id, user_prefs):
-    new_user_prefs = get_prefs(discord_id=discord_id).merge_prefs(user_prefs)
-
-    with DBConnect(commit=True) as cursor:
-        params = (discord_id, new_user_prefs.daily_alert, new_user_prefs.race_alert)
-        cursor.execute(
-            "INSERT INTO user_data "
-            "(discord_id, daily_alert, race_alert) "
-            "VALUES (%s,%s,%s) "
-            "ON DUPLICATE KEY UPDATE "
-            "daily_alert=VALUES(daily_alert), "
-            "race_alert=VALUES(race_alert)", params)
-
-
-def get_prefs(discord_id):
-    with DBConnect(commit=False) as cursor:
-        params = (discord_id,)
-        cursor.execute(
-            "SELECT daily_alert, race_alert "
-            "FROM user_data "
-            "WHERE discord_id=%s",
-            params)
-        prefs_row = cursor.fetchone()
-        cursor.close()
-        user_prefs = UserPrefs()
-        user_prefs.daily_alert = bool(prefs_row[0])
-        user_prefs.race_alert = bool(prefs_row[1])
-        return user_prefs
-
-
 # TODO These have code smell
 def get_discord_id(discord_name):
     with DBConnect(commit=False) as cursor:

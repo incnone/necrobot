@@ -195,30 +195,6 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int)
         return int(row[0]) if row is not None else None
 
 
-def add_cawmentary(match_id: int, cawmentator_id: int or None):
-    params = (cawmentator_id, match_id,)
-    with DBConnect(commit=True) as cursor:
-        cursor.execute(
-            "UPDATE match_data "
-            "SET cawmentator_id=%s "
-            "WHERE match_id=%s",
-            params
-        )
-
-
-def get_cawmentary(match_id: int) -> int or None:
-    params = (match_id,)
-    with DBConnect(commit=True) as cursor:
-        cursor.execute(
-            "SELECT cawmentator_id "
-            "FROM match_data "
-            "WHERE match_id=%s",
-            params
-        )
-        row = cursor.fetchone()
-        return int(row[0]) if row is not None else None
-
-
 def get_raw_match_data(match_id):
     params = (match_id,)
 

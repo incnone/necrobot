@@ -4,27 +4,36 @@ import asyncio
 import datetime
 import discord
 
-import necrobot.database.ladderdb
-import necrobot.database.matchdb
-from necrobot.botbase import cmd_admin
-from necrobot.database import dbconnect
-from necrobot.ladder import ratingutil
-from necrobot.race import cmd_race
-from necrobot.race import raceinfo
-from necrobot.race.match import cmd_match
 from necrobot.util import console
 from necrobot.util import ordinal
+from necrobot.util.config import Config
+
+from necrobot.botbase import cmd_admin
+from necrobot.race import cmd_race
+from necrobot.race.match import cmd_match
+
+from necrobot.database import ladderdb, matchdb
+from necrobot.ladder import ratingutil
+from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.race.match.match import Match
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.race import Race
 from necrobot.race.raceevent import RaceEvent
-from necrobot.util.config import Config
 
 
 class MatchRoom(BotChannel):
     def __init__(self, match_discord_channel: discord.Channel, match: Match):
+        """BotChannel where a match is taking place.
+        
+        Parameters
+        ----------
+        match_discord_channel: discord.Channel
+            The discord channel corresponding to this BotChannel.
+        match: Match
+            The Match object for the match.
+        """
         BotChannel.__init__(self)
         self._channel = match_discord_channel   # The necrobot in which this match is taking place
         self._match = match                     # The match for this room
@@ -93,15 +102,28 @@ class MatchRoom(BotChannel):
 
     @property
     def current_race(self) -> Race:
+        """
+        Returns
+        -------
+        Race
+            The "main" Race; the one that most commands should apply to. Not None if self.before_races is False.
+        """
         return self._current_race
 
     @property
     def last_begun_race(self) -> Race or None:
+        """
+        Returns
+        -------
+        Race
+            The last race to begin (sent a RaceEvent.RACE_BEGIN to this room). Useful for allowing commands to apply
+            to a finished race during the ready-up phase of the subsequent race.
+        """
         return self._last_begun_race
 
     @property
     def played_all_races(self) -> bool:
-        match_race_data = necrobot.database.matchdb.get_match_race_data(self.match.match_id)
+        match_race_data = matchdb.get_match_race_data(self.match.match_id)
         if self.match.is_best_of:
             return match_race_data.leader_wins > self.match.number_of_races // 2
         else:
@@ -191,8 +213,7 @@ class MatchRoom(BotChannel):
     async def post_match_alert(self):
         pass  # TODO
 
-# Private coroutine methods
-    # Countdown to the start of the match, then begin
+# Race start/end
     async def _countdown_to_match_start(self, warn=False):
         try:
             if not self.match.is_scheduled:
@@ -240,7 +261,7 @@ class MatchRoom(BotChannel):
         self.command_types = self._during_match_command_types
 
         # Make the race
-        match_race_data = necrobot.database.matchdb.get_match_race_data(self.match.match_id)
+        match_race_data = matchdb.get_match_race_data(self.match.match_id)
         self._current_race = Race(self, self.match.race_info,
                                   config=RaceConfig(finalize_time_sec=15, auto_forfeit=1))
         self._current_race_number = match_race_data.num_races + 1
@@ -263,8 +284,10 @@ class MatchRoom(BotChannel):
     async def _end_match(self):
         await self.write('Match complete.')
 
+
+# Database recording
     def _record_match_race(self, race_winner):
-        necrobot.database.matchdb.record_match_race(
+        matchdb.record_match_race(
             match=self.match,
             race_number=self._current_race_number,
             race_id=self.current_race.race_id,
@@ -276,13 +299,13 @@ class MatchRoom(BotChannel):
     async def _record_new_ratings(self, race_winner):
         racer_1 = self.match.racer_1
         racer_2 = self.match.racer_2
-        rating_1 = necrobot.database.ladderdb.get_rating(racer_1.discord_id)
-        rating_2 = necrobot.database.ladderdb.get_rating(racer_2.discord_id)
+        rating_1 = ladderdb.get_rating(racer_1.discord_id)
+        rating_2 = ladderdb.get_rating(racer_2.discord_id)
 
         new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
 
-        necrobot.database.ladderdb.set_rating(racer_1.discord_id, new_ratings[0])
-        necrobot.database.ladderdb.set_rating(racer_2.discord_id, new_ratings[1])
+        ladderdb.set_rating(racer_1.discord_id, new_ratings[0])
+        ladderdb.set_rating(racer_2.discord_id, new_ratings[1])
 
         # TODO: this isn't working
         # if Config.RATINGS_IN_NICKNAMES:
