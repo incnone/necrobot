@@ -1,9 +1,7 @@
-from necrobot.database import ladderdb
-from necrobot.database import dbconnect
-from necrobot.race.match import matchutil
-from necrobot.user import userutil
-
 from necrobot.botbase.command import Command, CommandType
+from necrobot.database import ladderdb
+from necrobot.match import matchutil
+from necrobot.user import userutil
 
 
 # General commands

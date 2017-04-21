@@ -1,8 +1,7 @@
 from necrobot.botbase import cmd_admin
-from necrobot.race.match import cmd_match
-from necrobot.stdconfig import cmd_seedgen
-from necrobot.user import cmd_user
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.match import cmd_match
+from necrobot.user import cmd_user
 
 
 class CondorMainChannel(BotChannel):

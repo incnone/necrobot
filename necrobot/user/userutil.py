@@ -28,7 +28,7 @@ def get_user(
         user_id: int = None,
         any_name: str = None,
         register: bool = False
-    ) -> NecroUser or None:
+        ) -> NecroUser or None:
     """Search for a NecroUser satisfying all of the non-None parameters.
 
     Parameters

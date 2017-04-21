@@ -1,12 +1,13 @@
 import datetime
 import unittest
 
-from necrobot.gsheet.sheetutil import SheetCell, SheetRange
-from necrobot.util import console
+from necrobot.match import matchutil
 from necrobot.user import userutil
+from necrobot.util import console
 
+from necrobot.gsheet.sheetutil import SheetCell, SheetRange
 from necrobot.gsheet.spreadsheets import Spreadsheets
-from necrobot.race.match import matchutil
+from necrobot.match.match import Match
 
 
 class MatchupSheetIndexData(object):
@@ -15,7 +16,7 @@ class MatchupSheetIndexData(object):
     Call init() to read these indicies automatically from searching the sheet.
     """
 
-    def __init__(self, gsheet_id, wks_name=None):
+    def __init__(self, gsheet_id: str, wks_name: str = None):
         self.gsheet_id = gsheet_id
         self.wks_name = wks_name
 
@@ -200,16 +201,20 @@ class MatchupSheet(object):
     Represents a single worksheet with matchup & scheduling data.
     """
 
-    def __init__(self, gsheet_id, wks_name=None):
+    def __init__(self, gsheet_id: str, wks_name: str = None):
         self.gsheet_id = gsheet_id
         self.wks_name = wks_name
         self.column_data = MatchupSheetIndexData(self.gsheet_id, self.wks_name)
 
     def get_matches(self):
+        """Read racer names and match types from the GSheet; create and register (with the DB) corresponding matches.
+         
+        Returns
+        -------
+        list(Match)
+            The list of created Matches.
         """
-        Reads racer names and match types from the GSheet and create corresponding Match objects.
-        :return: A list of Match objects.
-        """
+
         matches = []
         with Spreadsheets() as spreadsheets:
             value_range = self.column_data.get_values(spreadsheets)
@@ -240,10 +245,13 @@ class MatchupSheet(object):
                 matches.append(new_match)
         return matches
 
-    def schedule_match(self, match):
-        """
-        Write scheduling data for a match into the GSheet.
-        :param match: The Match object to schedule.
+    def schedule_match(self, match: Match):
+        """Write scheduling data for the match into the GSheet.
+        
+        Parameters
+        ----------
+        match: Match
+
         """
         row = self._get_match_row(match)
         if row is None:
@@ -261,11 +269,15 @@ class MatchupSheet(object):
             raw_input=False
         )
 
-    def add_vod(self, match, vod_link):
-        """
-        Add a vod link to the GSheet.
-        :param match: The Match object to schedule.
-        :param vod_link: The full URL of the vod.
+    def add_vod(self, match: Match, vod_link: str):
+        """Add a vod link to the GSheet.
+        
+        Parameters
+        ----------
+        match: Match
+            The match to add a link for.
+        vod_link: str
+            The full URL of the VOD.
         """
         row = self._get_match_row(match)
         if row is None:
@@ -281,34 +293,37 @@ class MatchupSheet(object):
             raw_input=False
         )
 
-    def add_cawmentary(self, match):
-        console.error('matchupsheet.add_cawmentary doesn\'t do anything yet.')
-        pass  # TODO
-        # """
-        # Add a cawmentator to the GSheet.
-        # :param match: The Match object to write the cawmentator for.
-        # """
-        # row = self._get_match_row(match)
-        # if row is None:
-        #     return
-        # if self.column_data.vod is None:
-        #     console.error('No Vod column on GSheet.')
-        #     return
-        #
-        # self._update_cell(
-        #     row=row,
-        #     col=self.column_data.vod,
-        #     value= # TODO,
-        #     raw_input=False
-        # )
-
-    def record_score(self, match, winner, winner_wins, loser_wins):
+    def add_cawmentary(self, match: Match):
+        """Add a cawmentator to the GSheet.
+        
+        Parameters
+        ----------
+        match: Match
+            The match to add cawmentary for.
         """
-        Record the winner and final score of the match.
-        :param match: The Match object to record.
-        :param winner: Name of the winner.
-        :param winner_wins: Number of wins of the winner.
-        :param loser_wins: Number of wins of the loser.
+        row = self._get_match_row(match)
+        if row is None:
+            return
+        if self.column_data.vod is None:
+            console.error('No Vod column on GSheet.')
+            return
+
+        self._update_cell(
+            row=row,
+            col=self.column_data.vod,
+            value=match.cawmentator.twitch_name,
+            raw_input=False
+        )
+
+    def record_score(self, match: Match, winner: str, winner_wins: int, loser_wins: int):
+        """Record the winner and final score of the match.
+        
+        Parameters
+        ----------
+        match: Match
+        winner: str
+        winner_wins: int
+        loser_wins: int
         """
         row = self._get_match_row(match)
         if row is None:
@@ -334,11 +349,17 @@ class MatchupSheet(object):
             raw_input=False
         )
 
-    def _get_match_row(self, match) -> int or None:
-        """
-        Get the index for the row containing the match.
-        :param match: The Match to find the row for.
-        :return: The index of the Match, or None if nothing found.
+    def _get_match_row(self, match: Match) -> int or None:
+        """Get the index of the row containing the Match.
+        
+        Parameters
+        ----------
+        match: Match
+
+        Returns
+        -------
+        Optional[int]
+            The row index (from 0) of the Match, or None if nothing found.
         """
         with Spreadsheets() as spreadsheets:
             value_range = self.column_data.get_values(spreadsheets)
@@ -361,7 +382,25 @@ class MatchupSheet(object):
             ))
             return None
 
-    def _update_cell(self, row, col, value, raw_input=True) -> bool:
+    def _update_cell(self, row: int, col: int, value: str, raw_input: bool = True) -> bool:
+        """Update a single cell.
+        
+        Parameters
+        ----------
+        row: int
+            The row index (begins at 0).
+        col: int
+            The column index (begins at 0).
+        value: str
+            The cell value.
+        raw_input: bool
+            If False, GSheets will auto-format the input.
+
+        Returns
+        -------
+        bool
+            True if the update was successful.
+        """
         if not self.column_data.valid:
             raise RuntimeError('Trying to update a cell on an invalid MatchupSheet.')
 
@@ -380,7 +419,23 @@ class MatchupSheet(object):
             response = request.execute()
             return response is not None
 
-    def _update_cells(self, sheet_range: SheetRange, values, raw_input=True) -> bool:
+    def _update_cells(self, sheet_range: SheetRange, values: list[list[str]], raw_input=True) -> bool:
+        """Update all cells in a range.
+        
+        Parameters
+        ----------
+        sheet_range: SheetRange
+            The range to update.
+        values: list[list[str]]
+            An array of values; one of the inner lists is a row, so values[i][j] is the ith row, jth column value.
+        raw_input
+            If False, GSheets will auto-format the input.
+            
+        Returns
+        -------
+        bool
+            True if the update was successful.
+        """
         if not self.column_data.valid:
             raise RuntimeError('Trying to update cells on an invalid MatchupSheet.')
 
@@ -408,12 +463,14 @@ class TestMatchupSheet(unittest.TestCase):
         self.match_1 = self._get_match(
             r1_name='yjalexis',
             r2_name='macnd',
-            time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20)
+            time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20),
+            cawmentator_name='incnone'
         )
         self.match_2 = self._get_match(
             r1_name='elad',
             r2_name='wilarseny',
-            time=None
+            time=None,
+            cawmentator_name=None
         )
 
     def test_init(self):
@@ -449,19 +506,28 @@ class TestMatchupSheet(unittest.TestCase):
         self.sheet_1.record_score(self.match_2, 'elad', 3, 1)
 
     def test_update_cawmentary_and_vod(self):
-        # self.sheet_1.add_cawmentary(self.match_1)  # TODO
+        self.sheet_1.add_cawmentary(self.match_1)
         self.sheet_1.add_vod(self.match_1, 'http://www.youtube.com/')
 
-    def _get_match(self, r1_name, r2_name, time):
+    def _get_match(self,
+                   r1_name: str,
+                   r2_name: str,
+                   time: datetime.datetime or None,
+                   cawmentator_name: str or None
+                   ) -> Match:
         racer_1 = userutil.get_user(any_name=r1_name, register=False)
         racer_2 = userutil.get_user(any_name=r2_name, register=False)
+        cawmentator = userutil.get_user(rtmp_name=cawmentator_name)
         self.assertIsNotNone(racer_1)
         self.assertIsNotNone(racer_2)
+        if cawmentator_name is not None:
+            self.assertIsNotNone(cawmentator)
 
         return matchutil.make_match(
             racer_1_id=racer_1.user_id,
             racer_2_id=racer_2.user_id,
             ranked=True,
             suggested_time=time,
+            cawmentator_id=cawmentator.discord_id,
             register=False
         )

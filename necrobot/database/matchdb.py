@@ -1,7 +1,6 @@
-from necrobot.database.racedb import get_race_type_id
-
 from necrobot.database.dbconnect import DBConnect
-from necrobot.race.match.matchracedata import MatchRaceData
+from necrobot.database.racedb import get_race_type_id
+from necrobot.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
 
 
