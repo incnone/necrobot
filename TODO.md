@@ -7,10 +7,8 @@ Current version: 0.10
 - Think more about better QOL with RTMP registration (and related errors)
 - Automatch feature
 - Better rankings display
-
-## Condorbot
-
 - Import all condorbot functionality
+- Deal with HTTP errors (service down) when making requests to the GSheet API
 
 ## Bugs
 

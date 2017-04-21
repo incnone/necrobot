@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 import botconfigs
@@ -6,9 +7,9 @@ import main
 from necrobot.util import config
 from necrobot.botbase.command import Command
 
-from necrobot.gsheet.spreadsheets import TestSpreadsheets
-from necrobot.gsheet.matchupsheet import TestMatchupSheet
-from necrobot.gsheet.sheetutil import TestSheetUtil
+# from necrobot.gsheet.spreadsheets import TestSpreadsheets
+# from necrobot.gsheet.matchupsheet import TestMatchupSheet
+# from necrobot.gsheet.sheetutil import TestSheetUtil
 
 
 # Define client events
@@ -22,13 +23,15 @@ def ready_client_events(client, the_necrobot):
             load_config_fn=botconfigs.load_standard_config
         )
 
+        sys.stdout.flush()
+        await asyncio.sleep(1)
+
         try:
             unittest.main(verbosity=2)
-        except SystemExit as e:
-            if e.code == 0:
-                await the_necrobot.logout()
-            else:
-                raise
+        except SystemExit:
+            pass
+        finally:
+            await the_necrobot.logout()
 
     # Called whenever a new message is posted in any necrobot on any server
     @client.event

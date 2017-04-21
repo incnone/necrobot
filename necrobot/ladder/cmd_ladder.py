@@ -255,10 +255,11 @@ async def _create_match(
         return
 
     # Create the Match object
-    new_match = matchutil.make_registered_match(
+    new_match = matchutil.make_match(
         racer_1_id=racers[0].user_id,
         racer_2_id=racers[1].user_id,
-        ranked=ranked
+        ranked=ranked,
+        register=True
     )
 
     # Create the match room

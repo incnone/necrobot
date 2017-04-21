@@ -4,7 +4,6 @@ import datetime
 import discord
 import logging
 import os
-import sys
 import websockets
 
 import botconfigs

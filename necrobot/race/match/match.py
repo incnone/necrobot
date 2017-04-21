@@ -203,6 +203,7 @@ class Match(object):
 
     def _set_suggested_time(self, time: datetime.datetime or None):
         if time is None:
+            self._suggested_time = None
             return
         if time.tzinfo is None:
             time = pytz.utc.localize(time)

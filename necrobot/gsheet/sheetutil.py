@@ -28,7 +28,7 @@ class SheetRange(object):
         if range_name is not None:
             self._init_from_range_name(range_name)
         else:
-            self.range_name = get_range_name(ul_cell=ul_cell, lr_cell=lr_cell, wks_name=wks_name)
+            self._update_range_name()
 
     def __str__(self):
         return self.range_name
@@ -52,6 +52,11 @@ class SheetRange(object):
     def barf(self):
         return '{2}:{0}:{1} -- {3}'.format(self.ul_cell, self.lr_cell, self.wks_name, self.range_name)
 
+    def get_offset_by(self, row, col):
+        new_ul = (self.ul_cell[0] + row, self.ul_cell[1] + col,)
+        new_lr = (self.lr_cell[0] + row, self.lr_cell[1] + col,)
+        return SheetRange(ul_cell=new_ul, lr_cell=new_lr, wks_name=self.wks_name)
+
     def _init_from_range_name(self, range_name):
         args = range_name.split('!')
         if len(args) == 2:
@@ -61,6 +66,9 @@ class SheetRange(object):
         range_args = args[0].split(':')
         self.ul_cell = self._get_cell_as_int_pair(range_args[0])
         self.lr_cell = self._get_cell_as_int_pair(range_args[1])
+
+    def _update_range_name(self):
+        self.range_name = get_range_name(ul_cell=self.ul_cell, lr_cell=self.lr_cell, wks_name=self.wks_name)
 
     @staticmethod
     def _get_cell_as_int_pair(cell_str):
@@ -75,7 +83,7 @@ class SheetRange(object):
         col_str = col_str[::-1]  # Reverse this string
         col_num = 0
         for idx, char in enumerate(col_str):
-            col_num += pow(26,idx)*(string.ascii_uppercase.index(char) + 1)
+            col_num += pow(26, idx)*(string.ascii_uppercase.index(char) + 1)
 
         return int(row_str), col_num
 

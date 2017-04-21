@@ -21,9 +21,10 @@ class MatchCM(object):
             self.match.commit()
 
 
-def make_registered_match(*args, **kwargs):
+def make_match(*args, register=False, **kwargs):
     match = Match(*args, **kwargs)
-    match.commit()
+    if register:
+        match.commit()
     return match
 
 
