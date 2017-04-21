@@ -4,6 +4,7 @@ Current version: 0.10
 
 ## Ladderbot
 
+- Make managing Library objects for the classes that mirror DB data
 - Think more about better QOL with RTMP registration (and related errors)
 - Automatch feature
 - Better rankings display

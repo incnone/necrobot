@@ -1,5 +1,5 @@
-import necrobot.database.necrouserdb
-from necrobot.database import necrodb
+import necrobot.database.userdb
+from necrobot.database import dbconnect
 from necrobot.util import console
 from necrobot.util.config import Config
 
@@ -18,7 +18,7 @@ class Necrobot(object):
         # Registers a specific user on the server
         @staticmethod
         def register_user(member):
-            necrobot.database.necrouserdb.register_all_users([member])
+            necrobot.database.userdb.register_all_users([member])
 
         # Ctor
         def __init__(self):
@@ -180,7 +180,7 @@ class Necrobot(object):
 
         # Registers all users currently on the server
         def register_all_users(self):
-            necrobot.database.necrouserdb.register_all_users(self.server.members)
+            necrobot.database.userdb.register_all_users(self.server.members)
 
     # Coroutines--------------------
         # Log out of discord

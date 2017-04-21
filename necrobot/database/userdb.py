@@ -1,34 +1,15 @@
 import mysql.connector
 from necrobot.util import console
 
-from necrobot.database.necrodb import DBConnect
+from necrobot.database.dbconnect import DBConnect
 from necrobot.user.necrouser import NecroUser
 from necrobot.user.userprefs import UserPrefs
-
-
-valid_user_ids = {}
-
-
-# Validate function
-def validate_user(necro_user: NecroUser):
-    if necro_user.user_id is None:
-        raise RuntimeError('Tried to validate a NecroUser with user_id None.')
-
-    if necro_user.user_id in valid_user_ids and valid_user_ids[necro_user.user_id]:
-        return
-    else:
-        user_raw = get_users_with_all(user_id=necro_user.user_id)
-        for row in user_raw:
-            _set_user_from_db_row(necro_user, row)
-            valid_user_ids[necro_user.user_id] = True
-            return
 
 
 # Commit function
 def write_user(necro_user: NecroUser):
     if necro_user.user_id is None:
         _register_user(necro_user)
-        valid_user_ids[necro_user.user_id] = False
         return
 
     rtmp_clash_user_id = _get_resolvable_rtmp_clash_user_id(necro_user)
@@ -393,16 +374,3 @@ def _transfer_user_id(from_user_id: int, to_user_id: int):
             "WHERE racer_2_id=%s",
             params
         )
-
-
-def _set_user_from_db_row(user: NecroUser, row):
-    user.set(
-        discord_member=Necrobot().find_member(discord_id=int(row[0])),
-        twitch_name=row[2],
-        rtmp_name=row[3],
-        timezone=row[4],
-        user_info=row[5],
-        user_prefs=UserPrefs(daily_alert=bool(row[6]), race_alert=bool(row[7])),
-        commit=False
-    )
-    user.set_user_id(int(row[8]))

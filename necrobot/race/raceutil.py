@@ -1,8 +1,8 @@
 import discord
 
-import necrobot.database.necrouserdb
+import necrobot.database.userdb
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.database import necrodb
+from necrobot.database import dbconnect
 from necrobot.race.publicrace.raceroom import RaceRoom
 from necrobot.user.userprefs import UserPrefs
 

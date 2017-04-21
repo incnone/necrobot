@@ -7,7 +7,7 @@ from necrobot.user.userprefs import UserPrefs
 
 
 class NecroUser(object):
-    def __init__(self, commit_fn, validate_fn):
+    def __init__(self, commit_fn):
         """Initialization. There should be no reason to directly create NecroUser objects; use userutil.get_user 
         instead.
         
@@ -25,13 +25,12 @@ class NecroUser(object):
         self._user_prefs = None
 
         self._commit = commit_fn
-        self._validate = validate_fn
 
     def __eq__(self, other):
         return self.user_id == other.user_id
 
     def commit(self):
-        commit_fn(self)
+        self._commit(self)
 
     @property
     def user_id(self):
@@ -43,7 +42,6 @@ class NecroUser(object):
 
     @property
     def discord_member(self):
-        self._validate(self)
         return self._discord_member
 
     @property
@@ -52,27 +50,22 @@ class NecroUser(object):
 
     @property
     def rtmp_name(self):
-        self._validate(self)
         return self._rtmp_name
 
     @property
     def timezone(self):
-        self._validate(self)
         return self._timezone
 
     @property
     def twitch_name(self):
-        self._validate(self)
         return self._twitch_name
 
     @property
     def user_info(self):
-        self._validate(self)
         return self._user_info
 
     @property
     def user_prefs(self):
-        self._validate(self)
         return self._user_prefs
 
     @property

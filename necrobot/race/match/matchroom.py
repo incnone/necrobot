@@ -4,8 +4,10 @@ import asyncio
 import datetime
 import discord
 
+import necrobot.database.ladderdb
+import necrobot.database.matchdb
 from necrobot.botbase import cmd_admin
-from necrobot.database import necrodb
+from necrobot.database import dbconnect
 from necrobot.ladder import ratingutil
 from necrobot.race import cmd_race
 from necrobot.race import raceinfo
@@ -99,7 +101,7 @@ class MatchRoom(BotChannel):
 
     @property
     def played_all_races(self) -> bool:
-        match_race_data = necrodb.get_match_race_data(self.match.match_id)
+        match_race_data = necrobot.database.matchdb.get_match_race_data(self.match.match_id)
         if self.match.is_best_of:
             return match_race_data.leader_wins > self.match.number_of_races // 2
         else:
@@ -238,7 +240,7 @@ class MatchRoom(BotChannel):
         self.command_types = self._during_match_command_types
 
         # Make the race
-        match_race_data = necrodb.get_match_race_data(self.match.match_id)
+        match_race_data = necrobot.database.matchdb.get_match_race_data(self.match.match_id)
         self._current_race = Race(self, self.match.race_info,
                                   config=RaceConfig(finalize_time_sec=15, auto_forfeit=1))
         self._current_race_number = match_race_data.num_races + 1
@@ -262,7 +264,7 @@ class MatchRoom(BotChannel):
         await self.write('Match complete.')
 
     def _record_match_race(self, race_winner):
-        necrodb.record_match_race(
+        necrobot.database.matchdb.record_match_race(
             match=self.match,
             race_number=self._current_race_number,
             race_id=self.current_race.race_id,
@@ -274,13 +276,13 @@ class MatchRoom(BotChannel):
     async def _record_new_ratings(self, race_winner):
         racer_1 = self.match.racer_1
         racer_2 = self.match.racer_2
-        rating_1 = necrodb.get_rating(racer_1.discord_id)
-        rating_2 = necrodb.get_rating(racer_2.discord_id)
+        rating_1 = necrobot.database.ladderdb.get_rating(racer_1.discord_id)
+        rating_2 = necrobot.database.ladderdb.get_rating(racer_2.discord_id)
 
         new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
 
-        necrodb.set_rating(racer_1.discord_id, new_ratings[0])
-        necrodb.set_rating(racer_2.discord_id, new_ratings[1])
+        necrobot.database.ladderdb.set_rating(racer_1.discord_id, new_ratings[0])
+        necrobot.database.ladderdb.set_rating(racer_2.discord_id, new_ratings[1])
 
         # TODO: this isn't working
         # if Config.RATINGS_IN_NICKNAMES:

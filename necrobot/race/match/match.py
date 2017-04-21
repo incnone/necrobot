@@ -1,23 +1,57 @@
 import datetime
 import pytz
 
-from necrobot.database import necrodb
-from necrobot.race.raceinfo import RaceInfo
 from necrobot.user import userutil
+from necrobot.race.raceinfo import RaceInfo
 
 
 class Match(object):
-    def __init__(self, racer_1_id, racer_2_id, max_races=3, is_best_of=False, match_id=None, suggested_time=None,
-                 r1_confirmed=False, r2_confirmed=False, r1_unconfirmed=False, r2_unconfirmed=False,
-                 ranked=True, race_info=RaceInfo(), cawmentator=None):
-        self._match_id = match_id                   # int -- the unique ID for this match
+    def __init__(self, commit_fn, racer_1_id, racer_2_id, max_races=3, is_best_of=False, match_id=None,
+                 suggested_time=None, r1_confirmed=False, r2_confirmed=False, r1_unconfirmed=False,
+                 r2_unconfirmed=False, ranked=True, race_info=RaceInfo(), cawmentator_id=None):
+        """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
+        since this needs to interact with the database.
+        
+        Parameters
+        ----------
+        commit_fn: Callable
+            Function for commiting to the database.
+        racer_1_id: int
+            The DB user ID of the first racer.
+        racer_2_id: int
+            The DB user ID of the second racer.
+        max_races: int
+            The maximum number of races this match can be. (If is_best_of is True, then the match is a best of
+            max_races; otherwise, the match is just repeating max_races.)
+        is_best_of: bool
+            Whether the match is a best-of-X (if True) or a repeat-X (if False); X is max_races.
+        match_id: int
+            The DB unique ID of this match.
+        suggested_time: datetime.datetime
+            The time the match is suggested for. If no tzinfo, UTC is assumed.
+        r1_confirmed: bool
+            Whether the first racer has confirmed the match time.
+        r2_confirmed: bool
+            Whether the second racer has confirmed the match time.
+        r1_unconfirmed: bool
+            Whether the first racer wishes to unconfirm the match time.
+        r2_unconfirmed: bool
+            Whether the second racer wishes to unconfirm the match time.
+        ranked: bool
+            Whether the results of this match should be used to update ladder rankings.
+        race_info: RaceInfo
+            The types of races to be run in this match.
+        cawmentator_id: int
+            The DB unique ID of the cawmentator for this match.
+        """
+        self._match_id = match_id
 
         # Racers in the match
-        self._racer_1_id = int(racer_1_id)          # NecroUser
-        self._racer_2_id = int(racer_2_id)          # NecroUser
+        self._racer_1_id = int(racer_1_id)
+        self._racer_2_id = int(racer_2_id)
 
         # Scheduling data
-        self._suggested_time = None                 # datetime.datetime with pytz.utc tzinfo
+        self._suggested_time = None
         self._set_suggested_time(suggested_time)
         self._confirmed_by_r1 = r1_confirmed
         self._confirmed_by_r2 = r2_confirmed
@@ -25,13 +59,16 @@ class Match(object):
         self._r2_wishes_to_unconfirm = r2_unconfirmed
 
         # Format data
-        self.ranked = ranked                        # Whether this is a ranked match
-        self._number_of_races = max_races           # Maximum number of races
-        self._is_best_of = is_best_of               # If true, end match after one player has clinched the most wins
-        self._race_info = race_info                 # The kind of race the match will have
+        self.ranked = ranked
+        self._number_of_races = max_races
+        self._is_best_of = is_best_of
+        self._race_info = race_info
 
         # Viewer data
-        self._cawmentator = cawmentator             # NecroUser
+        self._cawmentator_id = int(cawmentator_id)
+
+        # Commit function
+        self._commit = commit_fn
 
     def __eq__(self, other):
         return self.match_id == other.match_id
@@ -128,7 +165,7 @@ class Match(object):
 
     # Writes the match to the database
     def commit(self):
-        necrodb.write_match(self)
+        self._commit(self)
 
     # Called by necrodb to set the match id. Do not call yourself.
     def set_match_id(self, match_id):

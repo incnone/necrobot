@@ -1,5 +1,6 @@
+import necrobot.database.ladderdb
 from necrobot.botbase.command import Command, CommandType
-from necrobot.database import necrodb
+from necrobot.database import dbconnect
 from necrobot.race.match import matchutil
 from necrobot.user import userutil
 
@@ -118,7 +119,7 @@ class Rating(CommandType):
             )
             return
 
-        rating = necrodb.get_rating(discord_id=discord_id)
+        rating = necrobot.database.ladderdb.get_rating(discord_id=discord_id)
         await self.client.send_message(
             cmd.channel,
             '**{0}**: {1}'.format(user_name, rating.displayed_rating))

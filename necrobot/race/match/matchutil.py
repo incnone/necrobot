@@ -1,7 +1,8 @@
 import discord
 
+import necrobot.database.matchdb
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.database import necrodb
+from necrobot.database import dbconnect
 from necrobot.race.match.match import Match
 from necrobot.race.match.matchroom import MatchRoom
 from necrobot.race.raceinfo import RaceInfo
@@ -9,52 +10,29 @@ from necrobot.user import userutil
 from necrobot.util import console
 
 
-class MatchCM(object):
-    def __init__(self, match_id):
-        self.match = get_match_from_id(match_id)
-
-    def __enter__(self):
-        return self.match
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.match.commit()
+match_library = {}
 
 
 def make_match(*args, register=False, **kwargs):
-    match = Match(*args, **kwargs)
+    if match_id in kwargs and kwargs[match_id] in match_library:
+        return match_library[kwargs[match_id]]
+
+    match = Match(*args, commit_fn=necrobot.database.matchdb.write_match, **kwargs)
     if register:
         match.commit()
+        match_library[match.match_id] = match
     return match
 
 
 def get_match_from_id(match_id):
-    raw_data = necrodb.get_raw_match_data(match_id)
+    if match_id in match_library:
+        return match_library[match_id]
+
+    raw_data = necrobot.database.matchdb.get_raw_match_data(match_id)
     if raw_data is not None:
-        return make_match_from_raw_db_data(raw_data)
+        return _make_match_from_raw_db_data(raw_data)
     else:
         return None
-
-
-def make_match_from_raw_db_data(row):
-    race_info = necrodb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
-    cawmentator = userutil.get_user(user_id=int(row[12])) if row[12] is not None else None
-
-    return Match(
-        match_id=int(row[0]),
-        race_info=race_info,
-        racer_1_id=int(row[2]),
-        racer_2_id=int(row[3]),
-        suggested_time=row[4],
-        r1_confirmed=bool(row[5]),
-        r2_confirmed=bool(row[6]),
-        r1_unconfirmed=bool(row[7]),
-        r2_unconfirmed=bool(row[8]),
-        ranked=bool(row[9]),
-        is_best_of=bool(row[10]),
-        max_races=int(row[11]),
-        cawmentator=cawmentator
-    )
 
 
 # Return a new (unique) race room name from the race info
@@ -78,11 +56,11 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
 
 async def recover_stored_match_rooms():
     console.info('Recovering stored match rooms------------')
-    for row in necrodb.get_channeled_matches_raw_data():
+    for row in necrobot.database.matchdb.get_channeled_matches_raw_data():
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
-            match = make_match_from_raw_db_data(row=row)
+            match = _make_match_from_raw_db_data(row=row)
             new_room = MatchRoom(match_discord_channel=channel, match=match)
             Necrobot().register_bot_channel(channel, new_room)
             await new_room.initialize()
@@ -103,7 +81,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             return None
 
     # Check to see if we already have the match channel
-    channel_id = necrodb.get_match_channel_id(match.match_id)
+    channel_id = necrobot.database.matchdb.get_match_channel_id(match.match_id)
     match_channel = necrobot.find_channel_with_id(channel_id) if channel_id is not None else None
 
     # If we couldn't find the channel or it didn't exist, make a new one
@@ -129,7 +107,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             return None
 
     # Make the actual RaceRoom and initialize it
-    necrodb.register_match_channel(match_id=match.match_id, channel_id=match_channel.id)
+    necrobot.database.matchdb.register_match_channel(match_id=match.match_id, channel_id=match_channel.id)
     new_room = MatchRoom(match_discord_channel=match_channel, match=match)
     necrobot.register_bot_channel(match_channel, new_room)
     await new_room.initialize()
@@ -142,7 +120,7 @@ async def close_match_room(match):
         console.error('Trying to close the room for an unregistered match.')
         return
 
-    channel_id = necrodb.get_match_channel_id(match.match_id)
+    channel_id = necrobot.database.matchdb.get_match_channel_id(match.match_id)
     channel = Necrobot().find_channel_with_id(channel_id)
     if channel is None:
         console.error('Coudn\'t find channel with id {0} in close_match_room '
@@ -151,4 +129,25 @@ async def close_match_room(match):
 
     await Necrobot().unregister_bot_channel(channel)
     await Necrobot().client.delete_channel(channel)
-    necrodb.register_match_channel(match_id=match.match_id, channel_id=None)
+    necrobot.database.matchdb.register_match_channel(match_id=match.match_id, channel_id=None)
+
+
+def _make_match_from_raw_db_data(row):
+    race_info = necrobot.database.matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
+    cawmentator = userutil.get_user(user_id=int(row[12])) if row[12] is not None else None
+
+    return Match(
+        match_id=int(row[0]),
+        race_info=race_info,
+        racer_1_id=int(row[2]),
+        racer_2_id=int(row[3]),
+        suggested_time=row[4],
+        r1_confirmed=bool(row[5]),
+        r2_confirmed=bool(row[6]),
+        r1_unconfirmed=bool(row[7]),
+        r2_unconfirmed=bool(row[8]),
+        ranked=bool(row[9]),
+        is_best_of=bool(row[10]),
+        max_races=int(row[11]),
+        cawmentator=cawmentator
+    )

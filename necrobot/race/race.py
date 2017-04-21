@@ -7,7 +7,8 @@ import datetime
 import time
 from enum import IntEnum
 
-from necrobot.database import necrodb
+import necrobot.database.racedb
+from necrobot.database import dbconnect
 from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util import seedgen
@@ -645,7 +646,7 @@ class Race(object):
         self._status = RaceStatus.finalized
         await self.forfeit_all_remaining(mute=True)
         self._sort_racers()
-        necrodb.record_race(self)
+        necrobot.database.racedb.record_race(self)
         await self._process(RaceEvent.RACE_FINALIZE)
 
     # Attempt to cancel the race countdown -- transition race state from 'counting_down' to 'entry_open'
