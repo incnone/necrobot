@@ -5,8 +5,8 @@ from necrobot.util import console
 from necrobot.user import userutil
 
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.race.match.match import Match
-from necrobot.race.match.matchroom import MatchRoom
+from necrobot.match.match import Match
+from necrobot.match.matchroom import MatchRoom
 from necrobot.race.raceinfo import RaceInfo
 
 
@@ -55,8 +55,8 @@ def make_match(*args, register=False, **kwargs) -> Match:
     Match
         The created match.
     """
-    if match_id in kwargs and kwargs[match_id] in match_library:
-        return match_library[kwargs[match_id]]
+    if 'match_id' in kwargs and kwargs['match_id'] in match_library:
+        return match_library[kwargs['match_id']]
 
     match = Match(*args, commit_fn=matchdb.write_match, **kwargs)
     if register:
@@ -242,5 +242,5 @@ def _make_match_from_raw_db_data(row):
         ranked=bool(row[9]),
         is_best_of=bool(row[10]),
         max_races=int(row[11]),
-        cawmentator_id=int(row[12])
+        cawmentator_id=row[12]
     )

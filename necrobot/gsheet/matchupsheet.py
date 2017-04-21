@@ -304,13 +304,13 @@ class MatchupSheet(object):
         row = self._get_match_row(match)
         if row is None:
             return
-        if self.column_data.vod is None:
-            console.error('No Vod column on GSheet.')
+        if self.column_data.cawmentary is None:
+            console.error('No Cawmentary column on GSheet.')
             return
 
         self._update_cell(
             row=row,
-            col=self.column_data.vod,
+            col=self.column_data.cawmentary,
             value=match.cawmentator.twitch_name,
             raw_input=False
         )
@@ -419,7 +419,7 @@ class MatchupSheet(object):
             response = request.execute()
             return response is not None
 
-    def _update_cells(self, sheet_range: SheetRange, values: list[list[str]], raw_input=True) -> bool:
+    def _update_cells(self, sheet_range: SheetRange, values: list, raw_input=True) -> bool:
         """Update all cells in a range.
         
         Parameters
@@ -473,6 +473,8 @@ class TestMatchupSheet(unittest.TestCase):
             cawmentator_name=None
         )
 
+        self.assertEqual(self.match_1.cawmentator.rtmp_name, 'incnone')
+
     def test_init(self):
         col_data = self.sheet_1.column_data
         self.assertEqual(col_data.tier, 1)
@@ -489,6 +491,7 @@ class TestMatchupSheet(unittest.TestCase):
         bad_col_data = self.sheet_2.column_data
         self.assertIsNone(bad_col_data.header_row)
 
+    @unittest.skip('slow')
     def test_get_matches(self):
         matches = self.sheet_1.get_matches()
         self.assertEqual(len(matches), 2)
@@ -522,12 +525,13 @@ class TestMatchupSheet(unittest.TestCase):
         self.assertIsNotNone(racer_2)
         if cawmentator_name is not None:
             self.assertIsNotNone(cawmentator)
+        cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
 
         return matchutil.make_match(
             racer_1_id=racer_1.user_id,
             racer_2_id=racer_2.user_id,
             ranked=True,
             suggested_time=time,
-            cawmentator_id=cawmentator.discord_id,
+            cawmentator_id=cawmentator_id,
             register=False
         )

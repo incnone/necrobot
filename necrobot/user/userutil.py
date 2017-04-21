@@ -61,7 +61,7 @@ def get_user(
 
     if discord_id is None and discord_name is None and twitch_name is None \
             and rtmp_name is None and user_id is None:
-        raise RuntimeError('Error: Called NecroUser.get_user with no non-None fields.')
+        return None
 
     cached_user = _get_cached_user(user_id=user_id, discord_id=discord_id, rtmp_name=rtmp_name)
     if cached_user is not None:
@@ -114,7 +114,7 @@ def commit_all_checked_out_users():
 
 
 def _get_user_from_db_row(user_row):
-    user = NecroUser(commit_fn=write_user)
+    user = NecroUser(commit_fn=userdb.write_user)
     _set_user_from_db_row(user, user_row)
     _cache_user(user)
     return user

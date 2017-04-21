@@ -5,7 +5,7 @@ import pytz
 from necrobot.database import matchdb
 from necrobot.util import console
 from necrobot.database import dbconnect
-from necrobot.race.match import matchutil
+from necrobot.match import matchutil
 from necrobot.user import userutil
 from necrobot.util import timestr
 from necrobot.util.parse import dateparse

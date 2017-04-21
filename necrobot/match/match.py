@@ -81,7 +81,7 @@ class Match(object):
         self._race_info = race_info
 
         # Viewer data
-        self._cawmentator_id = int(cawmentator_id)
+        self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None
 
         # Commit function
         self._commit = commit_fn
@@ -160,6 +160,10 @@ class Match(object):
     @property
     def race_info(self) -> RaceInfo:
         return self._race_info
+
+    @property
+    def cawmentator(self):
+        return userutil.get_user(discord_id=self._cawmentator_id)
 
     @property
     def cawmentator_id(self):

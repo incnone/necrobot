@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import unittest
 
@@ -7,9 +8,9 @@ import main
 from necrobot.util import config
 from necrobot.botbase.command import Command
 
-# from necrobot.gsheet.spreadsheets import TestSpreadsheets
-# from necrobot.gsheet.matchupsheet import TestMatchupSheet
-# from necrobot.gsheet.sheetutil import TestSheetUtil
+from necrobot.gsheet.spreadsheets import TestSpreadsheets
+from necrobot.gsheet.matchupsheet import TestMatchupSheet
+from necrobot.gsheet.sheetutil import TestSheetUtil
 
 
 # Define client events

@@ -4,6 +4,8 @@ class UserPrefs(object):
         self.race_alert = race_alert
 
     def __eq__(self, other):
+        if self is None or other is None:
+            return False
         return self.daily_alert == other.daily_alert and self.race_alert == other.race_alert
 
     @property

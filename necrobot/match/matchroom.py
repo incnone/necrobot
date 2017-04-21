@@ -10,14 +10,14 @@ from necrobot.util.config import Config
 
 from necrobot.botbase import cmd_admin
 from necrobot.race import cmd_race
-from necrobot.race.match import cmd_match
+from necrobot.match import cmd_match
 
 from necrobot.database import ladderdb, matchdb
 from necrobot.ladder import ratingutil
 from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.race.match.match import Match
+from necrobot.match.match import Match
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.race import Race
 from necrobot.race.raceevent import RaceEvent
