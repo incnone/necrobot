@@ -1,4 +1,5 @@
 import datetime
+from necrobot.util import console
 
 
 class Config(object):
@@ -89,9 +90,9 @@ def init(config_filename):
                 if args[0] in defaults:
                     defaults[args[0]] = args[1].rstrip('\n')
                 else:
-                    print("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
+                    console.error("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
             else:
-                print("Error in {0} reading line: \"{1}\".".format(config_filename, line))
+                console.error("Error in {0} reading line: \"{1}\".".format(config_filename, line))
 
     Config.MYSQL_DB_HOST = defaults['mysql_db_host']
     Config.MYSQL_DB_USER = defaults['mysql_db_user']

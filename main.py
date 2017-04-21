@@ -11,7 +11,7 @@ import botconfigs
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.util import backoff, config, seedgen
+from necrobot.util import backoff, config, console, seedgen
 
 
 # Define client events
@@ -38,41 +38,6 @@ def ready_client_events(client, the_necrobot):
 
 
 def main(def_client_events):
-    # Prepend timestamps to stdout and stderr, and send output to logging
-    class StampedOutput(object):
-        def __init__(self, out_str):
-            self._out_str = out_str
-            self._logger = logging.getLogger('discord')
-            self._warning_level = out_str == sys.stderr
-
-        new_line = True
-
-        def _do_logging(self, s):
-            if self._warning_level:
-                self._logger.warning(s)
-            else:
-                self._logger.info(s)
-
-        def flush(self):
-            pass
-
-        def write(self, s):
-            if s == '\n':
-                self._out_str.write(s)
-                self.new_line = True
-            elif self.new_line:
-                self._out_str.write(s)
-                self._do_logging('[{0}]: {1}'.format(datetime.datetime.utcnow().strftime("%H-%M-%S"), s))
-                self.new_line = False
-            else:
-                self._out_str.write(s)
-                self._do_logging(s)
-
-    sys.stdout = StampedOutput(sys.stdout)
-    sys.stderr = StampedOutput(sys.stderr)
-
-    print('Initializing necrobot...')
-
     # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
@@ -98,6 +63,7 @@ def main(def_client_events):
     logger.addHandler(handler)
 
     # Initialize config file----------------------------------
+    console.info('Initializing necrobot...')
     config.init('data/bot_config')
 
     # Seed the random number generator------------------------

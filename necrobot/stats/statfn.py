@@ -2,7 +2,8 @@ import math
 
 from necrobot.database import necrodb
 from necrobot.race import racetime
-from ..util import character
+from necrobot.util import character
+from necrobot.util import console
 
 
 class CharacterStats(object):
@@ -41,7 +42,7 @@ class CharacterStats(object):
             return '--'
 
     def barf(self):
-        print('{0:>10}   {1:>5}   {2:>9}  {3:>9}  {4:>6}\n'.format(
+        console.info('{0:>10}   {1:>5}   {2:>9}  {3:>9}  {4:>6}\n'.format(
             self.charname,
             self.number_of_races,
             self.mean_str,

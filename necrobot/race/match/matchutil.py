@@ -76,7 +76,7 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
 
 
 async def recover_stored_match_rooms():
-    console.info('\nRecovering stored match rooms------------')
+    console.info('Recovering stored match rooms------------')
     for row in necrodb.get_channeled_matches_raw_data():
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
@@ -88,7 +88,7 @@ async def recover_stored_match_rooms():
             console.info('  Channel ID: {0}  Match: {1}'.format(channel_id, match.matchroom_name))
         else:
             console.info('  Couldn\'t find channel with ID {0}.'.format(channel_id))
-    console.info('-----------------------------------------\n')
+    console.info('-----------------------------------------')
 
 
 async def make_match_room(match: Match, register=False) -> MatchRoom or None:
@@ -124,7 +124,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             type=discord.ChannelType.text)
 
         if match_channel is None:
-            console.error('Error: Failed to make a match channel.')
+            console.error('Failed to make a match channel.')
             return None
 
     # Make the actual RaceRoom and initialize it
@@ -138,13 +138,13 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
 
 async def close_match_room(match):
     if not match.is_registered:
-        console.error('Error: Trying to close the room for an unregistered match.')
+        console.error('Trying to close the room for an unregistered match.')
         return
 
     channel_id = necrodb.get_match_channel_id(match.match_id)
     channel = Necrobot().find_channel_with_id(channel_id)
     if channel is None:
-        console.error('Error: Coudn\'t find channel with id {0} in close_match_room '
+        console.error('Coudn\'t find channel with id {0} in close_match_room '
                       '(match_id={1}).'.format(channel_id, match.match_id))
         return
 
