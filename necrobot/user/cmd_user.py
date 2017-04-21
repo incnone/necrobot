@@ -2,6 +2,7 @@ import pytz
 
 from mysql.connector import IntegrityError
 
+import necrobot.database.necrouserdb
 from necrobot.database import necrodb
 from necrobot.user import userutil
 
@@ -31,7 +32,7 @@ class DailyAlert(CommandType):
         else:
             user_prefs.daily_alert = False
 
-        necrodb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
+        necrobot.database.necrouserdb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.daily_alert:
             await self.client.send_message(
@@ -62,7 +63,7 @@ class RaceAlert(CommandType):
         else:
             user_prefs.race_alert = False
 
-        necrodb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
+        necrobot.database.necrouserdb.set_prefs(user_prefs=user_prefs, discord_id=int(command.author.id))
 
         if user_prefs.race_alert:
             await self.client.send_message(
@@ -80,7 +81,7 @@ class ViewPrefs(CommandType):
         self.help_text = "See your current user preferences."
 
     async def _do_execute(self, command):
-        prefs = necrodb.get_prefs(discord_id=int(command.author.id))
+        prefs = necrobot.database.necrouserdb.get_prefs(discord_id=int(command.author.id))
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
@@ -116,7 +117,7 @@ class RTMP(CommandType):
         rtmp_name = cmd.args[1]
         author_as_necrouser.rtmp_name = rtmp_name
         try:
-            necrodb.write_user(author_as_necrouser)
+            necrobot.database.necrouserdb.write_user(author_as_necrouser)
         except IntegrityError:
             duplicate_user = userutil.get_user(rtmp_name=rtmp_name)
             if duplicate_user is None:
@@ -160,7 +161,7 @@ class SetInfo(CommandType):
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
-        necrodb.set_user_info(discord_id=int(cmd.author.id), user_info=info)
+        necrobot.database.necrouserdb.set_user_info(discord_id=int(cmd.author.id), user_info=info)
         await self.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))
@@ -184,7 +185,7 @@ class Timezone(CommandType):
 
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
-            necrodb.set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
+            necrobot.database.necrouserdb.set_timezone(discord_id=int(cmd.author.id), timezone=tz_name)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
@@ -215,7 +216,7 @@ class Twitch(CommandType):
                 '{0}: Error: your twitch name cannot contain the character /. (Maybe you accidentally '
                 'included the "twitch.tv/" part of your stream name?)'.format(cmd.author.mention))
         else:
-            necrodb.set_twitch(discord_id=int(cmd.author.id), twitch_name=twitch_name)
+            necrobot.database.necrouserdb.set_twitch(discord_id=int(cmd.author.id), twitch_name=twitch_name)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Registered your twitch as `twitch.tv/{1}`.'.format(

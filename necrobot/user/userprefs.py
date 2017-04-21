@@ -1,7 +1,10 @@
 class UserPrefs(object):
-    def __init__(self):
-        self.daily_alert = None
-        self.race_alert = None
+    def __init__(self, daily_alert: bool = None, race_alert: bool = None):
+        self.daily_alert = daily_alert
+        self.race_alert = race_alert
+
+    def __eq__(self, other):
+        return self.daily_alert == other.daily_alert and self.race_alert == other.race_alert
 
     @property
     def is_empty(self):

@@ -1,5 +1,6 @@
 import discord
 
+import necrobot.database.necrouserdb
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.database import necrodb
 from necrobot.race.publicrace.raceroom import RaceRoom
@@ -29,7 +30,7 @@ async def make_room(race_info):
 
         alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
             race_channel.mention, race_info.format_str)
-        for member_id in necrodb.get_all_ids_matching_prefs(alert_pref):
+        for member_id in necrobot.database.necrouserdb.get_all_ids_matching_prefs(alert_pref):
             member = necrobot.find_member(discord_id=member_id)
             if member is not None:
                 await necrobot.client.send_message(member, alert_string)

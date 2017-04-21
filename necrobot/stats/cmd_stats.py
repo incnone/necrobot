@@ -1,3 +1,4 @@
+import necrobot.database.necrouserdb
 from necrobot.botbase.command import CommandType
 from necrobot.database import necrodb
 from necrobot.stats import statfn
@@ -174,7 +175,7 @@ class Stats(CommandType):
                 racer_name = member.display_name
                 racer_id = int(member.id)
             else:
-                racer_id = int(necrodb.get_discord_id(racer_name))
+                racer_id = int(necrobot.database.necrouserdb.get_discord_id(racer_name))
                 if racer_id is None:
                     await self.client.send_message(
                         cmd.channel,

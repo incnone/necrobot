@@ -1,37 +1,79 @@
 import pytz
 
-from necrobot.database import necrodb
 from necrobot.util import console
 from necrobot.util import strutil
 
+from necrobot.user.userprefs import UserPrefs
+
 
 class NecroUser(object):
-    def __init__(self, discord_member=None, rtmp_name=None):
-        self.user_id = None
-        self.member = discord_member
-        self.twitch_name = None
-        self.rtmp_name = rtmp_name
+    def __init__(self, commit_fn, validate_fn):
+        """Initialization. There should be no reason to directly create NecroUser objects; use userutil.get_user 
+        instead.
+        
+        Parameters
+        ----------
+        commit_fn: function(NecroUser) -> None
+            This should write the NecroUser to the database.
+        """
+        self._user_id = None
+        self._discord_member = None
+        self._twitch_name = None
+        self._rtmp_name = None
         self._timezone = None
-        self.user_info = None
-        self.user_prefs = None
+        self._user_info = None
+        self._user_prefs = None
+
+        self._commit = commit_fn
+        self._validate = validate_fn
 
     def __eq__(self, other):
-        return self.discord_id == other.discord_id
+        return self.user_id == other.user_id
 
     def commit(self):
-        necrodb.write_user(self)
+        commit_fn(self)
 
     @property
-    def timezone(self):
-        return self._timezone
+    def user_id(self):
+        return self._user_id
 
     @property
     def discord_id(self):
-        return self.member.id if self.member else None
+        return self.discord_member.id if self.discord_member is not None else None
+
+    @property
+    def discord_member(self):
+        self._validate(self)
+        return self._discord_member
 
     @property
     def discord_name(self):
-        return self.member.display_name if self.member else None
+        return self.discord_member.display_name if self.discord_member is not None else None
+
+    @property
+    def rtmp_name(self):
+        self._validate(self)
+        return self._rtmp_name
+
+    @property
+    def timezone(self):
+        self._validate(self)
+        return self._timezone
+
+    @property
+    def twitch_name(self):
+        self._validate(self)
+        return self._twitch_name
+
+    @property
+    def user_info(self):
+        self._validate(self)
+        return self._user_info
+
+    @property
+    def user_prefs(self):
+        self._validate(self)
+        return self._user_prefs
 
     @property
     def infoname(self):
@@ -71,11 +113,66 @@ class NecroUser(object):
     def escaped_rtmp_name(self):
         return strutil.escaped(self.rtmp_name)
 
-    def set_timezone(self, name):
-        if name is None:
-            return
-        elif name not in pytz.common_timezones:
-            console.error('Tried to set timezone to {0}.'.format(name))
-            self._timezone = None
-        else:
-            self._timezone = pytz.timezone(name)
+    def set_user_id(self, user_id):
+        """
+        Parameters
+        ----------
+        user_id: int
+            The user's database ID. Called by userutil during creation.
+        """
+        self._user_id = user_id
+
+    def set(self,
+            discord_member: discord.Member = None,
+            twitch_name: str = None,
+            rtmp_name: str = None,
+            timezone: str = None,
+            user_info: str = None,
+            user_prefs: UserPrefs = None,
+            commit: bool = True
+            ) -> None:
+        """Set all non-None values and optionally commit the change to the database.
+        
+        Parameters
+        ----------
+        discord_member: discord.Member
+            The discord.Member corresponding to this necrobot user.
+        twitch_name: str
+            This user's twitch name. Case-insensitive.
+        rtmp_name: str
+            This user's RTMP name. Case-insensitive.
+        timezone: str
+            The user's timezone as a string, e.g., 'Asia/Tokyo'.
+        user_info: str
+            The user's custom info (shown on .userinfo).
+        user_prefs: UserPrefs  
+            The user's preferences.
+        commit: bool
+            If False, will not commit changes to the database.
+        """
+
+        changed_any = False
+        if discord_member is not None and discord_member != self._discord_member:
+            self._discord_member = discord_member
+            changed_any = True
+        if twitch_name is not None and twitch_name != self._twitch_name:
+            self._twitch_name = twitch_name
+            changed_any = True
+        if rtmp_name is not None and rtmp_name != self._rtmp_name:
+            self._rtmp_name = rtmp_name
+            changed_any = True
+        if timezone is not None:
+            if timezone not in pytz.common_timezones:
+                console.error('Tried to set timezone to {0}.'.format(timezone))
+            elif str(self.timezone) != timezone:
+                self._timezone = pytz.timezone(timezone)
+                changed_any = True
+        if user_info is not None and user_info != self._user_info:
+            self._user_info = user_info
+            changed_any = True
+        if user_prefs is not None and user_prefs != self._user_prefs:
+            self._user_prefs = user_prefs
+            changed_any = True
+
+        if changed_any and commit:
+            self.commit()
