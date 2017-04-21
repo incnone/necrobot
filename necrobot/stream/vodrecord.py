@@ -3,8 +3,9 @@ import certifi
 import datetime
 import pycurl
 from io import BytesIO
-from ..util import console
-from ..util.config import Config
+
+from necrobot.util import console
+from necrobot.util.config import Config
 
 
 class VodRecorder(object):

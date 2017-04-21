@@ -7,9 +7,10 @@
 #     - change_race_info is only required for ChangeRace
 #     - write is only required for Time
 
-from necrobot.botbase.command import CommandType
 from necrobot.race import racetime
 from necrobot.util import level
+
+from necrobot.botbase.command import CommandType
 from necrobot.util.config import Config
 
 
