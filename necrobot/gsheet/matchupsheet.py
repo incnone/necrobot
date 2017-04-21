@@ -172,10 +172,10 @@ class MatchupSheet(object):
             for row_values in value_range['values']:
                 racer_1_name = row_values[racer_1_idx]
                 racer_2_name = row_values[racer_2_idx]
-                racer_1 = userutil.get_user(any_name=racer_1_name)
-                racer_2 = userutil.get_user(any_name=racer_2_name)
+                racer_1 = userutil.get_user(any_name=racer_1_name, register=True)
+                racer_2 = userutil.get_user(any_name=racer_2_name, register=True)
                 if racer_1 is None or racer_2 is None:
-                    console.error('Error finding racers for match {0}-{1}.'.format(
+                    console.error('Couldn\'t find racers for match {0}-{1}.'.format(
                         racer_1_name, racer_2_name
                     ))
                     continue
@@ -210,8 +210,9 @@ class TestMatchupSheet(unittest.TestCase):
         self.assertIsNone(bad_col_data.header_row)
 
     def test_get_matches(self):
-        # sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet1')
-        # matches = sheet_1.get_matches()
-        # for match in matches:
-        #     print(match.matchroom_name)
-        pass  # TODO
+        sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet1')
+        matches = sheet_1.get_matches()
+        self.assertEqual(len(matches), 2)
+        match = matches[0]
+        self.assertEqual(match.racer_1.rtmp_name, 'yjalexis')
+        self.assertEqual(match.racer_2.rtmp_name, 'macnd')

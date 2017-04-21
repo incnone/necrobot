@@ -114,9 +114,13 @@ class Match(object):
     @property
     def matchroom_name(self) -> str:
         name = ''
+        racer_names_ok = True
         for racer in self.racers:
-            name += racer.discord_name + '-'
-        return name[:-1] if name != '' else self.race_info.raceroom_name
+            if racer.discord_name is None:
+                racer_names_ok = False
+            else:
+                name += racer.discord_name + '-'
+        return name[:-1] if racer_names_ok else self.race_info.raceroom_name
 
     @property
     def time_until_match(self) -> datetime.datetime or None:

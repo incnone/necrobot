@@ -15,7 +15,7 @@ from necrobot.util import backoff, config, seedgen
 
 
 # Define client events
-def ready_client_events():
+def ready_client_events(client, the_necrobot):
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
@@ -37,7 +37,7 @@ def ready_client_events():
         await the_necrobot.on_member_join(member)
 
 
-if __name__ == "__main__":
+def main(def_client_events):
     # Prepend timestamps to stdout and stderr, and send output to logging
     class StampedOutput(object):
         def __init__(self, out_str):
@@ -68,7 +68,6 @@ if __name__ == "__main__":
                 self._out_str.write(s)
                 self._do_logging(s)
 
-
     sys.stdout = StampedOutput(sys.stdout)
     sys.stderr = StampedOutput(sys.stderr)
 
@@ -77,9 +76,7 @@ if __name__ == "__main__":
     # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
-    utc_yesterday = utc_today - datetime.timedelta(days=1)
     utc_today_str = utc_today.strftime(file_format_str)
-    utc_yesterday_str = utc_yesterday.strftime(file_format_str)
 
     filenames_in_dir = os.listdir('logging')
 
@@ -100,13 +97,13 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 
-# Initialize config file----------------------------------
+    # Initialize config file----------------------------------
     config.init('data/bot_config')
 
-# Seed the random number generator------------------------
+    # Seed the random number generator------------------------
     seedgen.init_seed()
 
-# Run client---------------------------------------------
+    # Run client---------------------------------------------
     retry = backoff.ExponentialBackoff()
 
     logger.info('Entering main loop.')
@@ -115,7 +112,7 @@ if __name__ == "__main__":
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
         the_necrobot = Necrobot()
-        ready_client_events()
+        def_client_events(client, the_necrobot)
 
         while not client.is_logged_in:
             try:
@@ -144,7 +141,7 @@ if __name__ == "__main__":
                     websockets.WebSocketProtocolError) as e:
 
                 if isinstance(e, discord.ConnectionClosed) and e.code == 4004:
-                    raise       # Do not reconnect on authentication failure
+                    raise  # Do not reconnect on authentication failure
 
                 logger.exception('Exception while running.')
 
@@ -156,3 +153,7 @@ if __name__ == "__main__":
 
         if the_necrobot.quitting:
             break
+
+
+if __name__ == "__main__":
+    main(ready_client_events)

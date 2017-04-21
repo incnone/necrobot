@@ -109,6 +109,8 @@ def _register_user(necro_user):
                     "VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ",
                     params
                 )
+                cursor.execute("SELECT LAST_INSERT_ID()")
+                necro_user.user_id = int(cursor.fetchone()[0])
             except mysql.connector.IntegrityError:
                 console.error('Tried to insert a duplicate racer entry. Params: {0}'.format(params))
                 raise
@@ -126,6 +128,7 @@ def _register_user(necro_user):
                 "WHERE rtmp_name=%s",
                 params
             )
+            necro_user.user_id = rtmp_clash_user_id
 
 
 def write_user(necro_user):
@@ -865,7 +868,6 @@ def _register_match(match):
     )
 
     with DBConnect(commit=True) as cursor:
-        print('a')
         cursor.execute(
             "INSERT INTO match_data "
             "("

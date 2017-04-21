@@ -6,11 +6,11 @@ from necrobot.util import strutil
 
 
 class NecroUser(object):
-    def __init__(self, discord_member):
+    def __init__(self, discord_member=None, rtmp_name=None):
         self.user_id = None
         self.member = discord_member
         self.twitch_name = None
-        self.rtmp_name = None
+        self.rtmp_name = rtmp_name
         self._timezone = None
         self.user_info = None
         self.user_prefs = None
@@ -27,11 +27,11 @@ class NecroUser(object):
 
     @property
     def discord_id(self):
-        return self.member.id
+        return self.member.id if self.member else None
 
     @property
     def discord_name(self):
-        return self.member.display_name
+        return self.member.display_name if self.member else None
 
     @property
     def infoname(self):
