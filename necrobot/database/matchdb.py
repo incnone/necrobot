@@ -129,7 +129,7 @@ def get_match_channel_id(match_id: int) -> int:
             params
         )
         row = cursor.fetchone()
-        return int(row[0]) if row is not None else None
+        return int(row[0]) if row[0] is not None else None
 
 
 def get_channeled_matches_raw_data():

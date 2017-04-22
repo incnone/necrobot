@@ -16,6 +16,7 @@ class NDChar(Enum):
     All = 11
     Nocturna = 12
     Diamond = 13
+    Multichar = 14
 
     @staticmethod
     def fromstr(char_name):

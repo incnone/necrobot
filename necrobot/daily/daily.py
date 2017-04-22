@@ -3,7 +3,6 @@ import datetime
 from enum import Enum
 
 from necrobot.database import dailydb
-from necrobot.database import dbconnect
 from necrobot.race import racetime
 from necrobot.daily import dailytype
 from necrobot.util import level, seedgen

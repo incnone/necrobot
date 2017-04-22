@@ -1,8 +1,30 @@
 import datetime
+import unittest
+
 from necrobot.util import console
 
 
 class Config(object):
+    @staticmethod
+    def write():
+        vals = [
+            ['mysql_db_host', Config.MYSQL_DB_HOST],
+            ['mysql_db_user', Config.MYSQL_DB_USER],
+            ['mysql_db_passwd', Config.MYSQL_DB_PASSWD],
+            ['mysql_db_name', Config.MYSQL_DB_NAME],
+            ['login_token', Config.LOGIN_TOKEN],
+            ['server_id', Config.SERVER_ID],
+            ['vodrecord_username', Config.VODRECORD_USERNAME],
+            ['vodrecord_passwd', Config.VODRECORD_PASSWD],
+            ['gsheet_id', Config.GSHEET_ID],
+        ]
+
+        with open(Config.CONFIG_FILE, 'w') as file:
+            for row in vals:
+                file.write('{0}={1}\n'.format(row[0], row[1]))
+
+# Info
+    CONFIG_FILE = 'data/bot_config'
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
 
@@ -14,6 +36,9 @@ class Config(object):
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
+
+# Condor
+    LOG_DIRECTORY = 'logs'
 
 # Daily
     # minutes to allow for submissions on old dailies after new ones are rolled out
@@ -79,11 +104,11 @@ def init(config_filename):
         'login_token': '',
         'server_id': '',
         'vodrecord_username': '',
-        'vodrecord_passwd': ''
+        'vodrecord_passwd': '',
+        'gsheet_id': '',
         }
 
-    file = open(config_filename, 'r')
-    if file:
+    with open(config_filename, 'r') as file:
         for line in file:
             args = line.split('=')
             if len(args) == 2:
@@ -102,8 +127,15 @@ def init(config_filename):
     Config.SERVER_ID = defaults['server_id']
     Config.VODRECORD_USERNAME = defaults['vodrecord_username']
     Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
+    Config.GSHEET_ID = defaults['gsheet_id']
+
+    Config.CONFIG_FILE = config_filename
+
 
 # -Testing-------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    init('data/bot_config')
+class TestConfig(unittest.TestCase):
+    def test_init_and_write(self):
+        init('data/bot_config')
+        Config.CONFIG_FILE = 'data/config_write_test'
+        Config.write()

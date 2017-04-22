@@ -1,7 +1,6 @@
 import math
 
 from necrobot.database import matchdb, racedb
-from necrobot.database import dbconnect
 from necrobot.race import racetime
 from necrobot.util import character
 from necrobot.util import console

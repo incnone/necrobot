@@ -1,7 +1,8 @@
 import datetime
-from dateutil import parser
 import pytz
-from .exception import ParseException
+
+from dateutil import parser
+from necrobot.util.parse.exception import ParseException
 
 
 class CustomParserInfo(parser.parserinfo):
@@ -16,7 +17,7 @@ class CustomParserInfo(parser.parserinfo):
     ]
 
 
-def parse_datetime(parse_str, timezone=pytz.utc):
+def parse_datetime(parse_str: str, timezone: pytz.timezone = pytz.utc) -> datetime.datetime:
     if parse_str.lower() == 'now':
         return pytz.utc.localize(datetime.datetime.utcnow() + datetime.timedelta(minutes=1))
 

@@ -1,4 +1,4 @@
-from necrobot.database import dbconnect, userdb
+from necrobot.database import userdb
 from necrobot.util import console
 
 from necrobot.botbase.necrobot import Necrobot

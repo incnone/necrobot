@@ -8,9 +8,22 @@ import main
 from necrobot.util import config
 from necrobot.botbase.command import Command
 
-from necrobot.gsheet.spreadsheets import TestSpreadsheets
-from necrobot.gsheet.matchupsheet import TestMatchupSheet
-from necrobot.gsheet.sheetutil import TestSheetUtil
+TEST_CONFIG = False
+TEST_SHEETS = True
+
+if TEST_CONFIG:
+    # noinspection PyUnresolvedReferences
+    from necrobot.util.config import TestConfig
+
+if TEST_SHEETS:
+    # noinspection PyUnresolvedReferences
+    # from necrobot.gsheet.spreadsheets import TestSpreadsheets
+    # noinspection PyUnresolvedReferences
+    # from necrobot.gsheet.matchupsheet import TestMatchupSheet
+    # noinspection PyUnresolvedReferences
+    # from necrobot.gsheet.sheetrange import TestSheetRange
+    # noinspection PyUnresolvedReferences
+    from necrobot.gsheet.sheetutil import TestSheetUtil
 
 
 # Define client events

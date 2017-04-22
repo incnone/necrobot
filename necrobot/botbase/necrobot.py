@@ -1,5 +1,6 @@
-from necrobot.database import userdb
-from necrobot.database import dbconnect
+import discord
+
+from necrobot.database import dbutil
 from necrobot.util import console
 from necrobot.util.config import Config
 
@@ -15,11 +16,6 @@ class Necrobot(object):
         return getattr(Necrobot.instance, name)
 
     class __Necrobot(object):
-        # Registers a specific user on the server
-        @staticmethod
-        def register_user(member):
-            userdb.register_all_users([member])
-
         # Ctor
         def __init__(self):
             self.client = None                      # the discord.Client object
@@ -178,10 +174,6 @@ class Necrobot(object):
                 if int(member.id) == int(user.id):
                     return member
 
-        # Registers all users currently on the server
-        def register_all_users(self):
-            userdb.register_all_users(self.server.members)
-
     # Coroutines--------------------
         # Log out of discord
         async def logout(self):
@@ -193,8 +185,9 @@ class Necrobot(object):
             await self.client.logout()
 
         # Called when anyone joins the server
-        async def on_member_join(self, member):
-            self.register_user(member)
+        @staticmethod
+        async def on_member_join(user: discord.User):
+            dbutil.register_discord_user(user)
 
         # Executes a command
         async def execute(self, cmd):

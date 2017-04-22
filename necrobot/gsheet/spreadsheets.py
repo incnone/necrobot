@@ -10,7 +10,6 @@ from apiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 
 from necrobot.util.config import Config
-# from necrobot.util import console
 
 
 DISCOVERY_URL = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
@@ -23,7 +22,8 @@ _sheet_lock = asyncio.Lock()
 class Spreadsheets(object):
     """
     Context manager; Returns a spreadsheets() majig 
-    (https://developers.google.com/resources/api-libraries/documentation/sheets/v4/python/latest/sheets_v4.spreadsheets.html)
+    (https://developers.google.com/resources/api-libraries/documentation/sheets/v4/python/latest/
+    sheets_v4.spreadsheets.html)
     """
     initted = False
     credentials = None

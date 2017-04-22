@@ -1,9 +1,9 @@
 import mysql.connector
+
 from necrobot.util import console
 
 from necrobot.database.dbconnect import DBConnect
 from necrobot.user.necrouser import NecroUser
-from necrobot.user.userprefs import UserPrefs
 
 
 # Commit function
@@ -51,8 +51,6 @@ def write_user(necro_user: NecroUser):
             "WHERE user_id=%s",
             params
         )
-
-    valid_user_ids[necro_user.user_id] = True
 
 
 # Search

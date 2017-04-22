@@ -4,7 +4,6 @@ import pytz
 
 from necrobot.database import matchdb
 from necrobot.util import console
-from necrobot.database import dbconnect
 from necrobot.match import matchutil
 from necrobot.user import userutil
 from necrobot.util import timestr
@@ -26,6 +25,15 @@ class Cawmentate(CommandType):
         await _do_cawmentary_command(cmd, self, add=True)
 
 
+class Uncawmentate(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
+        self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} rtmp1 rtmp2`.'.format(self.mention)
+
+    async def _do_execute(self, cmd):
+        await _do_cawmentary_command(cmd=cmd, cmd_type=self, add=False)
+
+
 class Vod(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'vod')
@@ -36,15 +44,6 @@ class Vod(CommandType):
         await self.client.send_message(
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
-
-
-class Uncawmentate(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
-        self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} rtmp1 rtmp2`.'.format(self.mention)
-
-    async def _do_execute(self, cmd):
-        await _do_cawmentary_command(cmd=cmd, cmd_type=self, add=False)
 
 
 # Matchroom commands
@@ -530,7 +529,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Check if the match already has cawmentary
     if add and match.cawmentator_id is not None:
-        cawmentator_user = userutil.get_user(discord_id=cawmentator_id)
+        cawmentator_user = userutil.get_user(discord_id=match.cawmentator_id)
         if cawmentator_user is not None:
             await cmd_type.client.send_message(
                 cmd.channel,
@@ -540,7 +539,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         else:
             console.error(
                 'Unexpected error in Cawmentate._do_execute(): Couldn\'t find NecroUser for '
-                'cawmentator ID {0}'.format(cawmentator_id)
+                'cawmentator ID {0}'.format(match.cawmentator_id)
             )
             # No return here; we'll just write over this mystery ID
     elif not add:

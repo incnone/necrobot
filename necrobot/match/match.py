@@ -2,6 +2,7 @@ import datetime
 import pytz
 
 from necrobot.user import userutil
+from necrobot.util import console
 from necrobot.util.commitdec import commits
 
 from necrobot.race.raceinfo import RaceInfo
@@ -63,8 +64,10 @@ class Match(object):
         self._match_id = match_id
 
         # Racers in the match
-        self._racer_1_id = int(racer_1_id)
-        self._racer_2_id = int(racer_2_id)
+        self._racer_1 = userutil.get_user(user_id=racer_1_id)
+        self._racer_2 = userutil.get_user(user_id=racer_2_id)
+        if self._racer_1 is None or self._racer_2 is None:
+            raise RuntimeError('Attempted to make a Match object with an unregistered racer.')
 
         # Scheduling data
         self._suggested_time = None
@@ -89,6 +92,9 @@ class Match(object):
     def __eq__(self, other):
         return self.match_id == other.match_id
 
+    def __str__(self):
+        return '{0}-{1}'.format(self.matchroom_name, self.match_id)
+
     @property
     def format_str(self) -> str:
         """Get a string describing the match format."""
@@ -110,16 +116,16 @@ class Match(object):
         return self._match_id
 
     @property
-    def racers(self):
+    def racers(self) -> list:
         return [self.racer_1, self.racer_2]
 
     @property
-    def racer_1(self):
-        return userutil.get_user(user_id=self._racer_1_id)
+    def racer_1(self) -> NecroUser:
+        return self._racer_1
 
     @property
-    def racer_2(self):
-        return userutil.get_user(user_id=self._racer_2_id)
+    def racer_2(self) -> NecroUser:
+        return self._racer_2
 
     @property
     def suggested_time(self) -> datetime.datetime:
@@ -172,14 +178,18 @@ class Match(object):
     @property
     def matchroom_name(self) -> str:
         """Get a name for a channel for this match."""
-        name = ''
-        racer_names_ok = True
+        racer_names = []
         for racer in self.racers:
-            if racer.discord_name is None:
-                racer_names_ok = False
-            else:
-                name += racer.discord_name + '-'
-        return name[:-1] if racer_names_ok else self.race_info.raceroom_name
+            if racer.discord_name is not None:
+                racer_names.append(racer.discord_name.lower())
+            elif racer.rtmp_name is not None:
+                racer_names.append(racer.rtmp_name.lower())
+
+        if len(racer_names) == 2:
+            racer_names.sort()
+            return '{0}-{1}'.format(racer_names[0], racer_names[1])
+        else:
+            return self.race_info.raceroom_name
 
     @property
     def time_until_match(self) -> datetime.datetime or None:
@@ -214,9 +224,9 @@ class Match(object):
         bool
             Whether the Match has been confirmed by racer.
         """
-        if racer.user_id == self._racer_1_id:
+        if racer == self.racer_1:
             return self._confirmed_by_r1
-        elif racer.user_id == self._racer_2_id:
+        elif racer == self.racer_2:
             return self._confirmed_by_r2
         else:
             return False
@@ -246,9 +256,9 @@ class Match(object):
         ----------
         racer: NecroUser
         """
-        if racer.user_id == self._racer_1_id:
+        if racer == self.racer_1:
             self._confirmed_by_r1 = True
-        elif racer.user_id == self._racer_2_id:
+        elif racer == self.racer_2:
             self._confirmed_by_r2 = True
 
     # Unconfirm
@@ -262,12 +272,12 @@ class Match(object):
         ----------
         racer: NecroUser
         """
-        if racer.user_id == self._racer_1_id:
+        if racer == self.racer_1:
             if (not self._confirmed_by_r2) or self._r2_wishes_to_unconfirm:
                 self.force_unconfirm()
             else:
                 self._r1_wishes_to_unconfirm = True
-        elif racer.user_id == self._racer_2_id:
+        elif racer == self.racer_2:
             if (not self._confirmed_by_r1) or self._r1_wishes_to_unconfirm:
                 self.force_unconfirm()
             else:
@@ -304,8 +314,6 @@ class Match(object):
         """
         self._is_best_of = False
         self._number_of_races = number
-        if commit:
-            self.commit()
 
     @commits
     def set_best_of(self, number: int):

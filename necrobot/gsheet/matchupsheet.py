@@ -5,7 +5,8 @@ from necrobot.match import matchutil
 from necrobot.user import userutil
 from necrobot.util import console
 
-from necrobot.gsheet.sheetutil import SheetCell, SheetRange
+from necrobot.gsheet.sheetrange import SheetRange
+from necrobot.gsheet.sheetcell import SheetCell
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.match.match import Match
 
@@ -206,12 +207,17 @@ class MatchupSheet(object):
         self.wks_name = wks_name
         self.column_data = MatchupSheetIndexData(self.gsheet_id, self.wks_name)
 
-    def get_matches(self):
-        """Read racer names and match types from the GSheet; create and register (with the DB) corresponding matches.
-         
+    def get_matches(self, **kwargs):
+        """Read racer names and match types from the GSheet; create corresponding matches.
+        
+        Parameters
+        ----------
+        kwargs:
+            Parameters to be passed to matchutil.make_match for every match made.
+        
         Returns
         -------
-        list(Match)
+        list[Match]
             The list of created Matches.
         """
 
@@ -239,8 +245,7 @@ class MatchupSheet(object):
                 new_match = matchutil.make_match(
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,
-                    ranked=True,
-                    register=True
+                    **kwargs
                 )
                 matches.append(new_match)
         return matches

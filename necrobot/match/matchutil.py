@@ -1,8 +1,7 @@
 import discord
 
 from necrobot.database import matchdb
-from necrobot.util import console
-from necrobot.user import userutil
+from necrobot.util import console, writechannel
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match.match import Match
@@ -123,6 +122,51 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
     return name_prefix if not found else '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
 
+def get_matches_with_channels() -> list:
+    """
+    Returns
+    -------
+    list[Match]
+        A list of all Matches that have associated channels on the server.
+    """
+    matches = []
+
+    for row in matchdb.get_channeled_matches_raw_data():
+        channel_id = int(row[13])
+        channel = Necrobot().find_channel_with_id(channel_id)
+        if channel is not None:
+            match = _make_match_from_raw_db_data(row=row)
+            matches.append(match)
+        else:
+            console.error('Found Match with channel {0}, but couldn\'t find this channel.'.format(channel_id))
+
+    return matches
+
+
+async def delete_all_match_channels(log=False) -> None:
+    """Delete all match channels from the server.
+    
+    Parameters
+    ----------
+    log: bool
+        If True, the channel text will be written to a log file before deletion.
+    """
+    for row in matchdb.get_channeled_matches_raw_data():
+        match_id = int(row[0])
+        channel_id = int(row[13])
+        channel = Necrobot().find_channel_with_id(channel_id)
+        if channel is not None:
+            if log:
+                await writechannel.write_channel(
+                    client=Necrobot().client,
+                    channel=channel,
+                    outfile_name='{0}-{1}'.format(match_id, channel.name)
+                )
+            await Necrobot().client.delete_channel(channel)
+
+        matchdb.register_match_channel(match_id, None)
+
+
 async def recover_stored_match_rooms() -> None:
     """Create MatchRoom objects for matches in the database with stored channels that exist on the
     discord server.
@@ -136,7 +180,7 @@ async def recover_stored_match_rooms() -> None:
             new_room = MatchRoom(match_discord_channel=channel, match=match)
             Necrobot().register_bot_channel(channel, new_room)
             await new_room.initialize()
-            console.info('  Channel ID: {0}  Match: {1}'.format(channel_id, match.matchroom_name))
+            console.info('  Channel ID: {0}  Match: {1}'.format(channel_id, match))
         else:
             console.info('  Couldn\'t find channel with ID {0}.'.format(channel_id))
     console.info('-----------------------------------------')
@@ -164,6 +208,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
         if register:
             match.commit()
         else:
+            console.error('Tried to make a MatchRoom for an unregistered Match ({0}).'.format(match.matchroom_name))
             return None
 
     # Check to see if we already have the match channel
@@ -177,7 +222,8 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
         permit_read = discord.PermissionOverwrite(read_messages=True)
         racer_permissions = []
         for racer in match.racers:
-            racer_permissions.append(discord.ChannelPermissions(target=racer.member, overwrite=permit_read))
+            if racer.member is not None:
+                racer_permissions.append(discord.ChannelPermissions(target=racer.member, overwrite=permit_read))
 
         # Make a channel for the room
         match_channel = await necrobot.client.create_channel(
@@ -226,11 +272,15 @@ async def close_match_room(match: Match) -> None:
 
 
 def _make_match_from_raw_db_data(row):
+    match_id = int(row[0])
+    if match_id in match_library:
+        return match_library[match_id]
+
     race_info = matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
 
     return Match(
         commit_fn=matchdb.write_match,
-        match_id=int(row[0]),
+        match_id=match_id,
         race_info=race_info,
         racer_1_id=int(row[2]),
         racer_2_id=int(row[3]),

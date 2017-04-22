@@ -21,7 +21,8 @@ def ready_client_events(client, the_necrobot):
         await the_necrobot.post_login_init(
             client=client,
             server_id=config.Config.SERVER_ID,
-            load_config_fn=botconfigs.load_standard_config
+            # load_config_fn=botconfigs.load_standard_config  # TODO put back
+            load_config_fn=botconfigs.load_testing_config
         )
 
     # Called whenever a new message is posted in any necrobot on any server

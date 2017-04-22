@@ -8,7 +8,6 @@ import time
 from enum import IntEnum
 
 from necrobot.database import racedb
-from necrobot.database import dbconnect
 from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util import seedgen
