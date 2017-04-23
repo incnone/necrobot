@@ -27,6 +27,8 @@ class DBConnect(object):
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cursor.close()
         if exc_type is None and self.commit:
             DBConnect.db_connection.commit()
-        self.cursor.close()
+        elif self.commit:
+            DBConnect.db_connection.rollback()

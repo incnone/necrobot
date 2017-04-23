@@ -10,9 +10,13 @@ from necrobot.gsheet.matchupsheet import MatchupSheet
 class GetGSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'getgsheet')
-        self.help_text = '[Admin only] Return the name of the current GSheet, and a link to it, if the bot has ' \
+        self.help_text = 'Return the name of the current GSheet, and a link to it, if the bot has ' \
                          'permissions; otherwise, returns an error message.'
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Current GSheet info.'
 
     async def _do_execute(self, cmd: Command):
         perm_info = sheetutil.has_read_write_permissions(Config.GSHEET_ID)
@@ -35,10 +39,14 @@ class GetGSheet(CommandType):
 class MakeFromSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'makefromsheet')
-        self.help_text = '[Admin only] `{0} sheetname`: make races from the worksheet `sheetname`. (Note that the ' \
+        self.help_text = '`{0} sheetname`: make races from the worksheet `sheetname`. (Note that the ' \
                          'bot must be pointed at the correct GSheet for this to work; this can be set via the bot\'s ' \
                          'config file, or by calling `.setgsheet`.'.format(self.mention)
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Make match rooms.'
 
     async def _do_execute(self, cmd: Command):
         if len(cmd.args) != 1:
@@ -90,13 +98,17 @@ class MakeFromSheet(CommandType):
 class SetGSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setgsheet')
-        self.help_text = '[Admin only] `{0} sheet_id` : Set the bot to read from the GSheet with the given ID. This ' \
+        self.help_text = '`{0} sheet_id` : Set the bot to read from the GSheet with the given ID. This ' \
                          'will modify the bot\'s config file, and this sheet will become the default. Note: the ID ' \
                          'of a GSheet is the long sequence of letters and numbers in its URL. (The URL looks like ' \
                          'docs.google.com/spreadsheets/d/`sheet_id`/edit#gid=`worksheet_id`; you want `sheet_id`.) ' \
                          'Note that the bot must have read-write access to the GSheet.' \
                          .format(self.mention)
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return "Set the bot's GSheet."
 
     async def _do_execute(self, cmd: Command):
         if len(cmd.args) != 1:

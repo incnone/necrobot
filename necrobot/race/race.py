@@ -19,8 +19,61 @@ from necrobot.race.racer import Racer
 from necrobot.config import Config
 
 
+# RaceEvent ---------------------------------------------
+class RaceEvent(object):
+    class EventType(Enum):
+        RACER_ENTER = 0
+        RACER_UNENTER = 1
+        RACER_READY = 2
+        RACER_UNREADY = 3
+        RACER_FINISH = 4
+        RACER_UNFINISH = 5
+        RACER_FORFEIT = 6
+        RACER_UNFORFEIT = 7
+
+        RACE_BEGIN_COUNTDOWN = 101
+        RACE_CANCEL_COUNTDOWN = 102
+        RACE_BEGIN = 103
+        RACE_END = 104
+        RACE_CANCEL_FINALIZE = 105
+        RACE_FINALIZE = 106
+        RACE_CANCEL = 107
+        RACE_PAUSE = 108
+        RACE_UNPAUSE = 109
+
+        ADD_EXTRANEOUS = 201
+        CHANGE_RULES = 202
+
+    def __init__(self, race, event: EventType):
+        self.race = race
+        self.event = event
+
+
 # RaceStatus enum ---------------------------------------------------------
 class RaceStatus(IntEnum):
+    """An Enum describing the current "phase" of the race.
+    
+    Values
+    ------
+        uninitialized  
+            initialize() should be called on this object (not called in __init__ because coroutine).
+        entry_open      
+            The race is open to new entrants.
+        counting_down
+            The racebot is counting down to race start.
+            If people .unready during this time, race reverts to the entry_open state.
+        racing 
+            The race has begun, and at least one player is still racing.
+        race_completed
+            All players have either finished or forfeited.
+            If players .undone during this time, race reverts to the racing state.
+        race_finalized
+            All players have finished or forfeited, and the race results are marked as final and can be
+            recorded. No further changes possible.
+        canceled
+            The race has been canceled. No further changes possible.    
+    """
+
     uninitialized = 0
     entry_open = 1
     counting_down = 2
@@ -30,25 +83,18 @@ class RaceStatus(IntEnum):
     finalized = 6
     canceled = 7
 
-StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
-              RaceStatus.entry_open: 'Entry open!',
-              RaceStatus.counting_down: 'Starting!',
-              RaceStatus.racing: 'In progress!',
-              RaceStatus.paused: 'Paused!',
-              RaceStatus.completed: 'Complete.',
-              RaceStatus.finalized: 'Results finalized.',
-              RaceStatus.canceled: 'Race canceled.'}
-
-#    uninitialized   --  initialize() should be called on this object (not called in __init__ because coroutine)
-#    entry_open      --  the race is open to new entrants
-#    counting_down   --  the racebot is counting down to race start.
-#                        if people .unready during this time, race reverts to the entry_open state
-#    racing          --  the race has begun, and at least one player is still racing
-#    race_completed  --  all players have either finished or forfeited.
-#                        if players .undone during this time, race reverts to the racing state
-#    race_finalized  --  all players have finished or forfeited, and the race results are marked as final and can be
-#                        recorded. no further changes possible.
-#    canceled       --  the race has been canceled. no further changes possible.
+    def __str__(self):
+        status_strs = {
+            RaceStatus.uninitialized: 'Not initialized.',
+            RaceStatus.entry_open: 'Entry open!',
+            RaceStatus.counting_down: 'Starting!',
+            RaceStatus.racing: 'In progress!',
+            RaceStatus.paused: 'Paused!',
+            RaceStatus.completed: 'Complete.',
+            RaceStatus.finalized: 'Results finalized.',
+            RaceStatus.canceled: 'Race canceled.'
+        }
+        return status_strs[self]
 
 
 # Race class --------------------------------------------------------------
@@ -78,7 +124,7 @@ class Race(object):
     # Returns the status string
     @property
     def status_str(self) -> str:
-        return StatusStrs[self._status]
+        return str(self._status)
 
     # Returns time elapsed in the race in ms
     @property
@@ -688,32 +734,3 @@ class Race(object):
     async def _write(self, text: str, mute=False):
         if not mute:
             await self.parent.write(text)
-
-
-class RaceEvent(object):
-    class EventType(Enum):
-        RACER_ENTER = 0
-        RACER_UNENTER = 1
-        RACER_READY = 2
-        RACER_UNREADY = 3
-        RACER_FINISH = 4
-        RACER_UNFINISH = 5
-        RACER_FORFEIT = 6
-        RACER_UNFORFEIT = 7
-
-        RACE_BEGIN_COUNTDOWN = 101
-        RACE_CANCEL_COUNTDOWN = 102
-        RACE_BEGIN = 103
-        RACE_END = 104
-        RACE_CANCEL_FINALIZE = 105
-        RACE_FINALIZE = 106
-        RACE_CANCEL = 107
-        RACE_PAUSE = 108
-        RACE_UNPAUSE = 109
-
-        ADD_EXTRANEOUS = 201
-        CHANGE_RULES = 202
-
-    def __init__(self, race: Race, event: EventType):
-        self.race = race
-        self.event = event

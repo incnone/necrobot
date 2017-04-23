@@ -64,7 +64,19 @@ class CommandType(object):
 
     @property
     def mention(self) -> str:
-        return Config.BOT_COMMAND_PREFIX + str(self.command_name_list[0])
+        return Config.BOT_COMMAND_PREFIX + self.command_name
+
+    @property
+    def command_name(self) -> str:
+        return str(self.command_name_list[0])
+
+    @property
+    def short_help_text(self) -> str:
+        """Override this to provide briefer help text for .help --verbose calls."""
+        if len(self.help_text) > 50:
+            return '{0}...'.format(self.help_text[:50].replace('`', ''))
+        else:
+            return self.help_text
 
     # Returns True if the name can be used to call this command
     def called_by(self, name: str) -> bool:

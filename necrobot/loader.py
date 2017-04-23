@@ -44,14 +44,15 @@ async def load_necrobot_config(necrobot):
     ratingutil.init()
 
 
+# TODO: Make channel names changeable
 async def load_condorbot_config(necrobot):
     # PM Channel
     necrobot.register_pm_channel(CondorPMChannel())
 
     # Main Channel
-    main_discord_channel = necrobot.find_channel(Config.MAIN_CHANNEL_NAME)
+    main_discord_channel = necrobot.find_channel('season5')
     if main_discord_channel is None:
-        console.error('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
+        console.error('Could not find the "{0}" channel.'.format('season5'))
     necrobot.register_bot_channel(main_discord_channel, CondorMainChannel())
 
     # Admin channel

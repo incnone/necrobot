@@ -278,7 +278,7 @@ def _make_match_from_raw_db_data(row):
 
     race_info = matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
 
-    return Match(
+    new_match = Match(
         commit_fn=matchdb.write_match,
         match_id=match_id,
         race_info=race_info,
@@ -294,3 +294,6 @@ def _make_match_from_raw_db_data(row):
         max_races=int(row[11]),
         cawmentator_id=row[12]
     )
+
+    match_library[new_match.match_id] = new_match
+    return new_match

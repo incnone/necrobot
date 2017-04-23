@@ -7,24 +7,43 @@ FIELD_UNKNOWN = int(-1)
 
 
 class RacerStatus(IntEnum):
+    """The status (racing/forfeit/etc) of the current racer.
+    
+    Allowable transitions are:
+       unready <--> ready      (use ready() and unready())
+       ready    --> racing     (use begin_race())
+       racing  <--> forfeit    (use forfeit() and unforfeit())
+       racing  <--> finished   (use finish() and unfinish())
+    
+    Values
+    ------
+    unready
+        The racer is not yet ready to begin the race.
+    ready
+        The racer is ready to begin the race (but the race has not begun). Can still revert to unready.
+    racing
+        The racer is currently racing.
+    forfeit
+        The racer has forfeit the race.
+    finished
+        The racer has finished the race.     
+    """
+
     unready = 1
     ready = 2
     racing = 3
     forfeit = 4
     finished = 5
 
-StatusStrs = {RacerStatus.unready: 'Not ready.',
-              RacerStatus.ready: 'Ready!',
-              RacerStatus.racing: 'Racing!',
-              RacerStatus.forfeit: 'Forfeit!',
-              RacerStatus.finished: ''
-              }
-
-# Allowable transitions are:
-#        unready <--> ready      (use ready() and unready())
-#        ready    --> racing     (use begin_race())
-#        racing  <--> forfeit    (use forfeit() and unforfeit())
-#        racing  <--> finished   (use finish() and unfinish())
+    def __str__(self):
+        status_strs = {
+            RacerStatus.unready: 'Not ready.',
+            RacerStatus.ready: 'Ready!',
+            RacerStatus.racing: 'Racing!',
+            RacerStatus.forfeit: 'Forfeit!',
+            RacerStatus.finished: ''
+        }
+        return status_strs[self]
 
 
 class Racer(object):
@@ -59,7 +78,7 @@ class Racer(object):
             if not self.igt == -1 and not short:
                 status += ' (igt {})'.format(racetime.to_str(self.igt))
         else:
-            status += StatusStrs[self._state]
+            status += str(self._state)
             if self._state == RacerStatus.forfeit and not short:
                 status += ' (rta {}'.format(racetime.to_str(self.time))
                 if 0 < self.level < 22:

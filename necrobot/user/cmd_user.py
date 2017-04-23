@@ -92,7 +92,7 @@ class ViewPrefs(CommandType):
 class RTMP(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rtmp')
-        self.help_text = '[Admin only] Register an RTMP stream. Usage is ' \
+        self.help_text = 'Register an RTMP stream. Usage is ' \
                          '`{0} discord_name rtmp_name`.'.format(self.mention)
         self.admin_only = True
 
@@ -114,9 +114,8 @@ class RTMP(CommandType):
             return
 
         rtmp_name = cmd.args[1]
-        user.rtmp_name = rtmp_name
         try:
-            userdb.write_user(user)
+            user.set(rtmp_name=rtmp_name)
         except IntegrityError:
             duplicate_user = userutil.get_user(rtmp_name=rtmp_name)
             if duplicate_user is None:
@@ -260,7 +259,7 @@ class Register(CommandType):
 class RegisterAll(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'registerall')
-        self.help_text = '[Admin only] Register all unregistered users.'
+        self.help_text = 'Register all unregistered users.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):

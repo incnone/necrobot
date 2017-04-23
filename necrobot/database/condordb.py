@@ -2,11 +2,13 @@
 Interaction with the necrobot.condor_events table.
 """
 
+import re
+from necrobot.config import Config
 from necrobot.database.dbconnect import DBConnect
 
 
 class EventAlreadyExists(Exception):
-    def __init__(self, exc_str):
+    def __init__(self, exc_str=None):
         self._exc_str = exc_str
 
     def __str__(self):
@@ -14,6 +16,10 @@ class EventAlreadyExists(Exception):
 
 
 class EventDoesNotExist(Exception):
+    pass
+
+
+class InvalidSchemaName(Exception):
     pass
 
 
@@ -30,6 +36,10 @@ def create_new_event(schema_name: str):
     EventAlreadyExists
         When the schema_name already exists.
     """
+    table_name_validator = re.compile(r'^[0-9a-zA-Z_$]+$')
+    if not table_name_validator.match(schema_name):
+        raise InvalidSchemaName()
+
     params = (schema_name,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
@@ -42,17 +52,34 @@ def create_new_event(schema_name: str):
             raise EventAlreadyExists(row[0])
 
         cursor.execute(
-            "CREATE SCHEMA %s "
-            "DEFAULT CHARACTER SET = utf8 "
-            "DEFAULT COLLATE = utf8_general_ci",
+            "SELECT SCHEMA_NAME "
+            "FROM INFORMATION_SCHEMA.SCHEMATA "
+            "WHERE SCHEMA_NAME = %s",
             params
         )
+        for _ in cursor:
+            raise EventAlreadyExists('Schema exists, but is not a CoNDOR event.')
+
         cursor.execute(
-            "INSERT INTO condor_events "
+            "CREATE SCHEMA `{0}` "
+            "DEFAULT CHARACTER SET = utf8 "
+            "DEFAULT COLLATE = utf8_general_ci".format(schema_name)
+        )
+        cursor.execute(
+            "INSERT INTO `condor_events` "
             "(`schema_name`) "
             "VALUES (%s)",
             params
         )
+
+        cursor.execute(
+            "CREATE TABLE `{0}`.`matches` LIKE `{1}`.`matches`".format(schema_name, Config.MYSQL_DB_NAME))
+        cursor.execute(
+            "CREATE TABLE `{0}`.`match_races` LIKE `{1}`.`match_races`".format(schema_name, Config.MYSQL_DB_NAME))
+        cursor.execute(
+            "CREATE TABLE `{0}`.`races` LIKE `{1}`.`races`".format(schema_name, Config.MYSQL_DB_NAME))
+        cursor.execute(
+            "CREATE TABLE `{0}`.`race_runs` LIKE `{1}`.`race_runs`".format(schema_name, Config.MYSQL_DB_NAME))
 
 
 def get_event_name(schema_name: str) -> str:
@@ -118,6 +145,5 @@ def set_event_name(schema_name: str, event_name: str) -> None:
             "WHERE `schema_name`=%s",
             params
         )
-        success = bool(cursor.fetchone()[0])
-        if not success:
+        if not cursor.rowcount:
             raise EventDoesNotExist()

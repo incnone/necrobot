@@ -1,7 +1,8 @@
 def commits(func):
-    def func_wrapper(self, *args, commit: bool = True, **kwargs):
-        func(*args, **kwargs)
-        if commit:
+    def func_wrapper(self, *args, **kwargs):
+        func(self, *args, **kwargs)
+
+        if 'commit' not in kwargs or kwargs['commit']:
             self.commit()
 
     return func_wrapper

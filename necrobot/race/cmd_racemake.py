@@ -43,7 +43,9 @@ class Make(CommandType):
 class MakePrivate(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'makeprivate')
-        self.help_text = "Create a new private race room. This takes the same command-line options as `.make`."
+        self.help_text = "Create a new private race room. This takes the same command-line options as `.make`. You " \
+                         "can create multiple rooms at once by adding `-repeat N`, where `N` is the number of rooms " \
+                         "to create (limit 20)."
 
     async def _do_execute(self, command):
         try:
@@ -70,7 +72,9 @@ class MakePrivate(CommandType):
 class MakeCondor(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'makecondor')
-        self.help_text = "Create a new CoNDOR race room. This takes the same command-line options as `.make`."
+        self.help_text = "Create a new CoNDOR race room. This takes the same command-line options as `.make`. You " \
+                         "can create multiple rooms at once by adding `-repeat N`, where `N` is the number of rooms " \
+                         "to create (limit 20)."
         self.admin_only = True
 
     async def _do_execute(self, command):

@@ -2,21 +2,29 @@
 
 Current version: 0.10
 
+## Condorbot
+
+- Setting default match type
+- Matchup creation
+- Deal with HTTP errors (service down) when making requests to the GSheet API
+- Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
+of information
+
 ## Ladderbot
 
 - Automatch feature
 - Better rankings display
-- Import all condorbot functionality
-- Deal with HTTP errors (service down) when making requests to the GSheet API
 
 ## Bugs
 
 ### Fixable/precise but not urgent
 
 - `.dailywhen` is not working as advertised.
+- Deal with duplicated Discord names in commands like `.add`
  
 ### Vague or not urgent
 
+- More friendly parsing of spaces in command arguments
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - Daily leaderboards will break due to post length if more than ~45 people participate
 - It's technically possible for the daily seed to be the same as a previous seed
@@ -41,7 +49,10 @@ just finished or the race that people are currently entering. It maybe also does
 
 ### Stream support / Twitch integration
 
-Allow for users to register their streams and to tag certain races as "streamed". For such races, generate a multitwitch or kadgar link upon asking. As an even bigger project, make the bot able to check whether said users are actually streaming. Also, make the bot able to report in your twitch chat when people in your race have finished or forfeit (and who won, etc.)
+Allow for users to register their streams and to tag certain races as "streamed". For such races, generate 
+a multitwitch or kadgar link upon asking. As an even bigger project, make the bot able to check whether said 
+users are actually streaming. Also, make the bot able to report in your twitch chat when people in your race 
+have finished or forfeit (and who won, etc.)
 
 ### Daily improvements
 

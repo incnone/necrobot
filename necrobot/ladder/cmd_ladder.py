@@ -22,6 +22,10 @@ class LadderFastest(CommandType):
         CommandType.__init__(self, bot_channel, 'ladder-fastest')
         self.help_text = 'Get a list of the fastest ranked ladder clears.'
 
+    @property
+    def short_help_text(self):
+        return 'Fastest ranked clears.'
+
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
@@ -33,6 +37,10 @@ class LadderRegister(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'ladder-register')
         self.help_text = 'Begin registering yourself for the Necrobot ladder.'
+
+    @property
+    def short_help_text(self):
+        return 'Begin registration for ladder.'
 
     async def _do_execute(self, cmd):
         # TODO
@@ -48,6 +56,10 @@ class LadderStats(CommandType):
         self.help_text = 'Display racer stats. Usage is `.stats rtmp_name`. If no racer is given, will display ' \
                          'stats for the command caller.'
 
+    @property
+    def short_help_text(self):
+        return 'Display racer stats.'
+
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
@@ -59,7 +71,7 @@ class LadderStats(CommandType):
 class NextRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'next')
-        self.help_text = 'Displays upcoming ladder matches.'
+        self.help_text = 'Display upcoming ladder matches.'
 
     async def _do_execute(self, cmd):
         # TODO
@@ -72,6 +84,10 @@ class Ranked(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'ranked')
         self.help_text = 'Create a ranked ladder match (`{0} opponent_name`).'.format(self.mention)
+
+    @property
+    def short_help_text(self):
+        return 'Create ladder match.'
 
     async def _do_execute(self, cmd):
         if len(cmd.args[0]) != 1:
@@ -96,6 +112,10 @@ class Rating(CommandType):
         CommandType.__init__(self, bot_channel, 'rating')
         self.help_text = '`{} username` returns the TrueSkill rating of the discord user `username`; if no ' \
                          'username is given, returns your TrueSkill rating.'
+
+    @property
+    def short_help_text(self):
+        return 'Get ladder rating.'
 
     async def _do_execute(self, cmd):
         if len(cmd.args) == 0:
@@ -130,6 +150,10 @@ class Unranked(CommandType):
         self.help_text = 'Suggest an unranked match with an opponent with `{0} opponent_name`. Both ' \
                          'players must do this for the match to be made.'.format(self.mention)
 
+    @property
+    def short_help_text(self):
+        return 'Create unranked match.'
+
     async def _do_execute(self, cmd):
         if len(cmd.args[0]) != 1:
             await self.client.send_message(
@@ -152,7 +176,7 @@ class Unranked(CommandType):
 class Automatch(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'automatch')
-        self.help_text = '[Admin only] Make the automated ladder matches.'
+        self.help_text = 'Make automated ladder matches.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -165,7 +189,7 @@ class Automatch(CommandType):
 class CloseFinished(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'closefinished')
-        self.help_text = '[Admin only] Close all finished match rooms.'
+        self.help_text = 'Close all finished match rooms.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -178,9 +202,13 @@ class CloseFinished(CommandType):
 class DropRacer(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'dropracer')
-        self.help_text = '[Admin only] Drop a racer from all their current matches. ' \
+        self.help_text = 'Drop a racer from all their current matches. ' \
                          'Usage is `{0} rtmp_name`.'.format(self.mention)
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Drop a racer from current races.'
 
     async def _do_execute(self, cmd):
         # TODO
@@ -192,9 +220,13 @@ class DropRacer(CommandType):
 class ForceRanked(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-ranked')
-        self.help_text = '[Admin only] Create a ranked ladder match between two racers with ' \
+        self.help_text = 'Create a ranked ladder match between two racers with ' \
                          '`{0} racer_1_name racer_2_name`.'.format(self.mention)
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Create ranked ladder match.'
 
     async def _do_execute(self, cmd):
         # Parse arguments

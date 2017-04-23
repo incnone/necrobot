@@ -21,6 +21,10 @@ class Cawmentate(CommandType):
                          'rtmn2`, where `rtmp1` and `rtmn2` are the RTMP names of the racers in the match. ' \
                          '(Call `.userinfo` for RTMP names.)'.format(self.mention)
 
+    @property
+    def short_help_text(self):
+        return 'Register for cawmentary.'
+
     async def _do_execute(self, cmd):
         await _do_cawmentary_command(cmd, self, add=True)
 
@@ -30,6 +34,10 @@ class Uncawmentate(CommandType):
         CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
         self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} rtmp1 rtmp2`.'.format(self.mention)
 
+    @property
+    def short_help_text(self):
+        return 'Unregister for cawmentary.'
+
     async def _do_execute(self, cmd):
         await _do_cawmentary_command(cmd=cmd, cmd_type=self, add=False)
 
@@ -38,6 +46,10 @@ class Vod(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'vod')
         self.help_text = 'Add a link to a vod for a given match. Usage is `{0} rtmp1 rtmp2 URL`.'.format(self.mention)
+
+    @property
+    def short_help_text(self):
+        return 'Add a link to a vod.'
 
     async def _do_execute(self, cmd):
         # TODO
@@ -51,6 +63,10 @@ class Confirm(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'confirm')
         self.help_text = 'Confirm that you agree to the suggested time for this match.'
+
+    @property
+    def short_help_text(self):
+        return 'Confirm suggested match time.'
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
@@ -75,7 +91,6 @@ class Confirm(CommandType):
             return
 
         match.confirm_time(author_as_necrouser)
-        matchdb.write_match(match)
         await self.client.send_message(
             cmd.channel,
             '{0}: Confirmed acceptance of match time {1}.'.format(
@@ -126,6 +141,10 @@ class Suggest(CommandType):
                          '   `{0} Thursday 8p`' \
                          '   `{0} today 9:15pm`' \
                          '   `{0} now'.format(self.mention)
+
+    @property
+    def short_help_text(self):
+        return 'Suggest a match time.'
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
@@ -196,7 +215,6 @@ class Suggest(CommandType):
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)
         match.confirm_time(author_as_necrouser)
-        matchdb.write_match(match)
 
         # Output what we did
         for racer in match.racers:
@@ -232,6 +250,10 @@ class Unconfirm(CommandType):
         self.help_text = 'Remove your confirmation. If all racers have already confirmed, then all racers must ' \
                          '`.unconfirm` for the match to be unscheduled.'
 
+    @property
+    def short_help_text(self):
+        return 'Unconfirm current match time.'
+
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
 
@@ -251,7 +273,6 @@ class Unconfirm(CommandType):
 
         match_was_scheduled = match.is_scheduled
         match.unconfirm_time(author_as_necrouser)
-        matchdb.write_match(match)
 
         # if match was scheduled...
         if match_was_scheduled:
@@ -279,7 +300,7 @@ class Unconfirm(CommandType):
 class CancelRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'cancelrace')
-        self.help_text = '[Admin only] Change the winner for a specified race.'
+        self.help_text = 'Change the winner for a specified race.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -289,7 +310,7 @@ class CancelRace(CommandType):
 class ChangeWinner(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'changewinner')
-        self.help_text = '[Admin only] Change the winner for a specified race.'
+        self.help_text = 'Change the winner for a specified race.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -299,26 +320,25 @@ class ChangeWinner(CommandType):
 class ForceBegin(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-begin')
-        self.help_text = '[Admin only] Force the match to begin now.'
+        self.help_text = 'Force the match to begin now.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
         match.suggest_time(pytz.utc.localize(datetime.datetime.utcnow()))
         match.force_confirm()
-        matchdb.write_match(match)
         await self.bot_channel.update()
 
 
 class ForceConfirm(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-confirm')
-        self.help_text = '[Admin only] Force all racers to confirm the suggested time.'
+        self.help_text = 'Force all racers to confirm the suggested time.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
-        if not match.is_scheduled:
+        if not match.has_suggested_time:
             await self.client.send_message(
                 cmd.channel,
                 'Error: A scheduled time for this match has not been suggested. '
@@ -326,20 +346,23 @@ class ForceConfirm(CommandType):
             return
 
         match.force_confirm()
-        matchdb.write_match(match)
 
         await self.client.send_message(
             cmd.channel,
             '{0} has forced confirmation of match time: {1}.'.format(
-                cmd.author.mention, timestr.str_full_12h(match.time)))
+                cmd.author.mention, timestr.str_full_12h(match.suggested_time)))
         await self.bot_channel.update()
 
 
 class ForceNewRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-newrace')
-        self.help_text = '[Admin only] Force the bot to make a new race (the current race will be canceled).'
+        self.help_text = 'Force the bot to make a new race (the current race will be canceled).'
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Make a new race.'
 
     async def _do_execute(self, cmd):
         await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
@@ -348,7 +371,7 @@ class ForceNewRace(CommandType):
 class ForceRecordRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-recordrace')
-        self.help_text = '[Admin only] Manually record the result of a race.'
+        self.help_text = 'Manually record the result of a race.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -358,11 +381,15 @@ class ForceRecordRace(CommandType):
 class ForceReschedule(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-reschedule')
-        self.help_text = '[Admin only] Forces the race to be rescheduled for a specific UTC time. Usage same as ' \
+        self.help_text = 'Forces the race to be rescheduled for a specific UTC time. Usage same as ' \
                          '`.suggest`, e.g., `.f-reschedule February 18 2:30p`, except that the timezone is always ' \
                          'taken to be UTC. This command unschedules the match and `.suggests` a new time. Use ' \
                          '`.f-confirm` after if you wish to automatically have the racers confirm this new time.'
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Reschedule match.'
 
     async def _do_execute(self, cmd):
         # Parse the inputs as a datetime
@@ -378,7 +405,6 @@ class ForceReschedule(CommandType):
 
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)
-        matchdb.write_match(match)
 
         # Output what we did
         for racer in match.racers:
@@ -403,8 +429,12 @@ class ForceReschedule(CommandType):
 class Postpone(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'postpone')
-        self.help_text = '[Admin only] Postpones the match. An admin can resume with `.f-begin`.'
+        self.help_text = 'Postpones the match. An admin can resume with `.f-begin`.'
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Postpone match.'
 
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
@@ -415,7 +445,6 @@ class Postpone(CommandType):
             return
 
         match.force_unconfirm()
-        matchdb.write_match(match)
         await self.client.send_message(
             cmd.channel,
             'The match has been postponed. An admin can resume with `.forcebeginmatch`, or the racers can '
@@ -426,7 +455,7 @@ class Postpone(CommandType):
 class RebootRoom(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rebootroom')
-        self.help_text = '[Admin only] Reboots the match room (may help solve bugs).'
+        self.help_text = 'Reboots the match room (may help solve bugs).'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -439,9 +468,13 @@ class RebootRoom(CommandType):
 class SetMatchType(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setmatchtype')
-        self.help_text = '[Admin only] Set the type of the match. Use `.setmatchtype repeat X` to make the match be ' \
+        self.help_text = 'Set the type of the match. Use `.setmatchtype repeat X` to make the match be ' \
                          'racers play X races; use `.setmatchtype bestof Y` to make the match a best-of-Y.'
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Set match type (e.g. best-of-X).'
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 2:
@@ -462,13 +495,11 @@ class SetMatchType(CommandType):
 
         if matchtype.lower() == 'repeat':
             match.set_repeat(num)
-            matchdb.write_match(match)
             await self.client.send_message(
                 cmd.channel,
                 'This match has been set to be a repeat-{0}.'.format(num))
         elif matchtype.lower() == 'bestof':
             match.set_best_of(num)
-            matchdb.write_match(match)
             await self.client.send_message(
                 cmd.channel,
                 'This match has been set to be a best-of-{0}.'.format(num))
@@ -484,7 +515,7 @@ class SetMatchType(CommandType):
 class Update(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'update')
-        self.help_text = '[Admin only] Update the match room (may help solve bugs).'
+        self.help_text = 'Update the match room (may help solve bugs).'
         self.admin_only = True
 
     async def _do_execute(self, cmd):

@@ -229,8 +229,8 @@ class MatchupSheet(object):
                 return matches
 
             for row_values in value_range['values']:
-                racer_1_name = row_values[self.column_data.racer_1]
-                racer_2_name = row_values[self.column_data.racer_2]
+                racer_1_name = row_values[self.column_data.racer_1].rstrip(' ')
+                racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
                 racer_1 = userutil.get_user(any_name=racer_1_name, register=True)
                 racer_2 = userutil.get_user(any_name=racer_2_name, register=True)
                 if racer_1 is None or racer_2 is None:

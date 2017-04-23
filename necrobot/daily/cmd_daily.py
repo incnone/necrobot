@@ -38,6 +38,10 @@ class DailyChar(DailyCommandType):
         DailyCommandType.__init__(self, bot_channel, 'dailychar', 'dailywho')
         self.help_text = 'Get the character for the current rotating-character daily.'
 
+    @property
+    def short_help_text(self):
+        return 'Rotating-daily character.'
+
     async def _daily_do_execute(self, command, daily_type):
         character = dailytype.character(dailytype.DailyType.rotating, self._daily_manager.today_number)
         await self.client.send_message(
@@ -51,6 +55,10 @@ class DailyResubmit(DailyCommandType):
         self.help_text = 'Submit for the Cadence daily, overriding a previous submission. Use this to correct a ' \
                          'mistake in a daily submission. (Use the `rot` flag to resubmit for the rotating-character ' \
                          'daily.)'
+
+    @property
+    def short_help_text(self):
+        return 'Resubmit for daily.'
 
     async def _daily_do_execute(self, command, daily_type):
         daily = self._daily_manager.daily(daily_type)
@@ -108,7 +116,7 @@ class DailyRules(DailyCommandType):
 class DailySchedule(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'dailyschedule')
-        self.help_text = 'See the scheduled characters for the next few days.'
+        self.help_text = 'See the upcoming scheduled characters.'
 
     async def _daily_do_execute(self, command, called_type):
         char_list_str = ''
@@ -137,6 +145,10 @@ class DailySeed(DailyCommandType):
         self.help_text = 'Get the seed for today\'s Cadence daily. ' \
                          'Use the `-rot` flag to get the rotating-character daily seed.'
 
+    @property
+    def short_help_text(self):
+        return 'Get daily seed.'
+
     async def _daily_do_execute(self, command, daily_type):
         daily = self._daily_manager.daily(daily_type)
         user_id = int(command.author.id)
@@ -163,6 +175,10 @@ class DailyStatus(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'dailystatus')
         self.help_text = "Find out whether you've submitted to today's dailies."
+
+    @property
+    def short_help_text(self):
+        return "Your status for today's dailies."
 
     async def _daily_do_execute(self, command, daily_type):
         status = ''
@@ -201,6 +217,10 @@ class DailySubmit(DailyCommandType):
                          "`.dailysubmit 12:34.56`. If you die during the daily, you may submit your run as " \
                          "`.dailysubmit death` or provide the level of death, e.g. `.dailysubmit death 4-4` for a " \
                          "death on dead ringer. This command can be called in the appropriate spoilerchat or via PM."
+
+    @property
+    def short_help_text(self):
+        return 'Submit daily result.'
 
     async def _daily_do_execute(self, command, daily_type):
         daily = self._daily_manager.daily(daily_type)
@@ -256,6 +276,10 @@ class DailyUnsubmit(DailyCommandType):
         self.help_text = 'Retract your most recent Cadence daily submission; this only works while the daily is ' \
                          'still open. (Use the `rot` flag to unsubmit for the rotating-character daily.)'
 
+    @property
+    def short_help_text(self):
+        return 'Retract most recent submission.'
+
     async def _daily_do_execute(self, command, daily_type):
         daily = self._daily_manager.daily(daily_type)
         daily_number = daily.submitted_daily(command.author.id)
@@ -298,6 +322,10 @@ class DailyWhen(DailyCommandType):
                          'the `-rot` flag to get information (including character) for the rotating-character daily.' \
                          'Calling `.dailywhen coda` will tell you when the next Coda daily is (likewise for other ' \
                          'characters).'
+
+    @property
+    def short_help_text(self):
+        return 'Daily time info.'
 
     async def _daily_do_execute(self, command, daily_type):
         today_number = self._daily_manager.today_number

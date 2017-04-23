@@ -1,3 +1,4 @@
+import datetime
 import discord
 import pytz
 
@@ -23,7 +24,7 @@ class NecroUser(object):
         self._rtmp_name = None
         self._timezone = None
         self._user_info = None
-        self._user_prefs = None
+        self._user_prefs = UserPrefs()
 
         self._commit = commit_fn
 
@@ -34,54 +35,58 @@ class NecroUser(object):
         self._commit(self)
 
     @property
-    def user_id(self):
+    def user_id(self) -> int:
         return self._user_id
 
     @property
-    def discord_id(self):
+    def discord_id(self) -> int:
         return self.discord_member.id if self.discord_member is not None else None
 
     @property
-    def discord_member(self):
+    def discord_member(self) -> discord.Member:
         return self._discord_member
 
     @property
-    def discord_name(self):
+    def discord_name(self) -> str:
         return self.discord_member.display_name if self.discord_member is not None else None
 
     @property
-    def member(self):
+    def member(self) -> discord.Member:
         return self._discord_member
 
     @property
-    def rtmp_name(self):
+    def rtmp_name(self) -> str:
         return self._rtmp_name
 
     @property
-    def timezone(self):
+    def timezone(self) -> datetime.datetime:
         return self._timezone
 
     @property
-    def twitch_name(self):
+    def timezone_str(self) -> str:
+        return str(self._timezone)
+
+    @property
+    def twitch_name(self) -> str:
         return self._twitch_name
 
     @property
-    def user_info(self):
+    def user_info(self) -> str:
         return self._user_info
 
     @property
-    def user_prefs(self):
+    def user_prefs(self) -> UserPrefs:
         return self._user_prefs
 
     @property
-    def infoname(self):
+    def infoname(self) -> str:
         if self.user_info is not None:
             return '{0} ({1})'.format(self.discord_name, self.user_info)
         else:
             return self.discord_name
 
     @property
-    def infotext(self):
+    def infotext(self) -> str:
         if self.twitch_name == self.rtmp_name:
             return '  Twitch/RTMP: {0}\n' \
                    '     Timezone: {1}'.format(
@@ -96,7 +101,7 @@ class NecroUser(object):
                     self.timezone)
 
     @property
-    def infobox(self):
+    def infobox(self) -> str:
         return '```\n' \
                '{0}\n' \
                '{1}```'.format(
@@ -104,11 +109,11 @@ class NecroUser(object):
                     self.infotext)
 
     @property
-    def escaped_twitch_name(self):
+    def escaped_twitch_name(self) -> str:
         return strutil.escaped(self.twitch_name)
 
     @property
-    def escaped_rtmp_name(self):
+    def escaped_rtmp_name(self) -> str:
         return strutil.escaped(self.rtmp_name)
 
     def set_user_id(self, user_id):
