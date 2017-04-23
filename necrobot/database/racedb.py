@@ -1,7 +1,13 @@
+"""
+Interaction with the races, race_types, and race_runs databases (necrobot or condor event schema).
+"""
+
 from necrobot.database.dbconnect import DBConnect
+from necrobot.race.race import Race
+from necrobot.race.raceinfo import RaceInfo
 
 
-def record_race(race):
+def record_race(race: Race) -> None:
     with DBConnect(commit=True) as cursor:
         # Find the race type
         racetype_params = (race.race_info.character_str,
@@ -72,7 +78,7 @@ def record_race(race):
                 user_params)
 
 
-def get_allzones_race_numbers(discord_id, amplified):
+def get_allzones_race_numbers(discord_id: int, amplified: bool) -> list:
     with DBConnect(commit=False) as cursor:
         params = (discord_id,)
         cursor.execute(
@@ -90,7 +96,7 @@ def get_allzones_race_numbers(discord_id, amplified):
         return cursor.fetchall()
 
 
-def get_all_racedata(discord_id, char_name, amplified):
+def get_all_racedata(discord_id: int, char_name: str, amplified: bool) -> list:
     with DBConnect(commit=False) as cursor:
         params = (discord_id, char_name)
         cursor.execute(
@@ -107,7 +113,7 @@ def get_all_racedata(discord_id, char_name, amplified):
         return cursor.fetchall()
 
 
-def get_fastest_times_leaderboard(character_name, amplified, limit):
+def get_fastest_times_leaderboard(character_name: str, amplified: bool, limit: int) -> list:
     with DBConnect(commit=False) as cursor:
         params = (character_name, limit,)
         cursor.execute(
@@ -138,7 +144,7 @@ def get_fastest_times_leaderboard(character_name, amplified, limit):
         return cursor.fetchall()
 
 
-def get_most_races_leaderboard(character_name, limit):
+def get_most_races_leaderboard(character_name: str, limit: int) -> list:
     with DBConnect(commit=False) as cursor:
         params = (character_name, character_name, limit,)
         cursor.execute(
@@ -181,7 +187,7 @@ def get_most_races_leaderboard(character_name, limit):
         return cursor.fetchall()
 
 
-def get_race_type_id(race_info, register=False):
+def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None:
     params = (
         race_info.character_str,
         race_info.descriptor,

@@ -12,15 +12,14 @@ from necrobot.botbase import cmd_admin
 from necrobot.race import cmd_race
 from necrobot.match import cmd_match
 
-from necrobot.database import ladderdb, matchdb
+from necrobot.database import ladderdb, matchdb, racedb
 from necrobot.ladder import ratingutil
 from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.match.match import Match
 from necrobot.race.raceconfig import RaceConfig
-from necrobot.race.race import Race
-from necrobot.race.raceevent import RaceEvent
+from necrobot.race.race import Race, RaceEvent
 
 
 class MatchRoom(BotChannel):
@@ -133,9 +132,8 @@ class MatchRoom(BotChannel):
     def before_races(self) -> bool:
         return self.current_race is None and self.last_begun_race is None
 
-    @property
-    def _race_winner(self) -> int:
-        race_winner_id = int(self.current_race.winner.member.id)
+    def _race_winner(self, race: Race) -> int:
+        race_winner_id = int(race.winner.member.id)
         if race_winner_id == int(self.match.racer_1.member.id):
             return 1
         elif race_winner_id == int(self.match.racer_2.member.id):
@@ -169,17 +167,17 @@ class MatchRoom(BotChannel):
             await self.update()
 
     # Process a RaceEvent
-    async def process(self, event: RaceEvent):
-        if event == RaceEvent.RACE_BEGIN:
+    async def process(self, race_event: RaceEvent):
+        if race_event.event == RaceEvent.EventType.RACE_BEGIN:
             self._last_begun_race = self._current_race
-        elif event == RaceEvent.RACE_END:
+        elif race_event.event == RaceEvent.EventType.RACE_END:
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
-            await self.write('The race will end in {} seconds.'.format(self.current_race.config.finalize_time_sec))
-        elif event == RaceEvent.RACE_FINALIZE:
-            race_winner = self._race_winner
-            self._record_match_race(race_winner)
+            await self.write('The race will end in {} seconds.'.format(self.current_race.race_config.finalize_time_sec))
+        elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
+            race_winner = self._race_winner(race_event.race)
+            self._record_race(race_event.race, race_winner)
             await self._record_new_ratings(race_winner)
-            await self.write('The race has ended.'.format(self.current_race.config.finalize_time_sec))
+            await self.write('The race has ended.'.format(self.current_race.race_config.finalize_time_sec))
             if self.played_all_races:
                 await self._end_match()
             else:
@@ -214,7 +212,7 @@ class MatchRoom(BotChannel):
         pass  # TODO
 
 # Race start/end
-    async def _countdown_to_match_start(self, warn=False):
+    async def _countdown_to_match_start(self, warn: bool = False):
         try:
             if not self.match.is_scheduled:
                 return
@@ -263,7 +261,7 @@ class MatchRoom(BotChannel):
         # Make the race
         match_race_data = matchdb.get_match_race_data(self.match.match_id)
         self._current_race = Race(self, self.match.race_info,
-                                  config=RaceConfig(finalize_time_sec=15, auto_forfeit=1))
+                                  race_config=RaceConfig(finalize_time_sec=15, auto_forfeit=1))
         self._current_race_number = match_race_data.num_races + 1
         await self._current_race.initialize()
 
@@ -286,7 +284,8 @@ class MatchRoom(BotChannel):
 
 
 # Database recording
-    def _record_match_race(self, race_winner):
+    def _record_race(self, race: Race, race_winner: int):
+        racedb.record_race(race)
         matchdb.record_match_race(
             match=self.match,
             race_number=self._current_race_number,
@@ -296,7 +295,7 @@ class MatchRoom(BotChannel):
             canceled=False
         )
 
-    async def _record_new_ratings(self, race_winner):
+    async def _record_new_ratings(self, race_winner: int):
         racer_1 = self.match.racer_1
         racer_2 = self.match.racer_2
         rating_1 = ladderdb.get_rating(racer_1.discord_id)

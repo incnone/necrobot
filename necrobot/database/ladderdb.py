@@ -1,3 +1,7 @@
+"""
+Interaction with the necrobot.ladder_data table.
+"""
+
 from necrobot.ladder import ratingutil
 
 from necrobot.database.dbconnect import DBConnect

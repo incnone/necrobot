@@ -5,13 +5,14 @@ import datetime
 
 from necrobot.botbase import cmd_admin
 from necrobot.race import cmd_race
-from necrobot.race import raceinfo
 from necrobot.race.publicrace import cmd_publicrace
+
+from necrobot.database import racedb
+from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.util.config import Config
-from necrobot.race.race import Race
-from necrobot.race.raceevent import RaceEvent
+from necrobot.race.race import Race, RaceEvent
 
 
 class RaceRoom(BotChannel):
@@ -21,7 +22,7 @@ class RaceRoom(BotChannel):
         self._race_info = race_info             # The type of races to be run in this room
 
         self._current_race = None               # The current race
-        self._last_race = None                  # The last race to finish
+        self._previous_race = None              # The previous race
 
         self._race_number = 0                   # The number of races we've done
         self._mention_on_new_race = []          # A list of users that should be @mentioned when a rematch is created
@@ -88,7 +89,7 @@ class RaceRoom(BotChannel):
         if not self._current_race.before_race:
             return self._current_race
         else:
-            return self._last_race
+            return self._previous_race
 
     @property
     def mentioned_users(self):
@@ -150,15 +151,16 @@ class RaceRoom(BotChannel):
         await self.client.send_message(self._channel, text)
 
     # Processes a race event
-    async def process(self, event: RaceEvent):
-        if event == RaceEvent.RACE_END:
+    async def process(self, race_event: RaceEvent):
+        if race_event.event == RaceEvent.EventType.RACE_END:
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write(
                 'The race is over. Results will be recorded in {} seconds. Until then, you may comment with '
-                '`.comment` or add an in-game-time with `.igt`.'.format(self.current_race.config.finalize_time_sec))
-        elif event == RaceEvent.RACE_FINALIZE:
-            if self.race_info.post_results:
-                await self.post_result()
+                '`.comment` or add an in-game-time with `.igt`.'.format(self.current_race.race_config.finalize_time_sec))
+        elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
+            racedb.record_race(race_event.race)
+            if race_event.race.race_info.post_results:
+                await self.post_result(race_event.race)
         else:
             await self.update()
 
@@ -167,13 +169,13 @@ class RaceRoom(BotChannel):
         await self.client.edit_channel(self._channel, topic=self._current_race.leaderboard)
 
     # Post the race result to the race necrobot
-    async def post_result(self):
+    async def post_result(self, race: Race):
         await self.client.send_message(
             self.results_channel,
             'Race begun at {0}:\n```\n{1}{2}\n```'.format(
-                self.current_race.start_datetime.strftime("%d %B %Y, UTC %H:%M"),
-                self.current_race.leaderboard_header,
-                self.current_race.leaderboard_text
+                race.start_datetime.strftime("%d %B %Y, UTC %H:%M"),
+                self.leaderboard_header,
+                race.leaderboard_text
             )
         )
 
@@ -232,11 +234,11 @@ class RaceRoom(BotChannel):
             asyncio.ensure_future(self._run_nopoke_delay())
 
 # Private -----------------------------------------------------------------
-    # Makes a new Race, overwriting the old one
+    # Makes a new Race (and stores the previous one in self._previous race)
     async def _make_new_race(self):
         # Make the race
         self._race_number += 1
-        self._last_race = self._current_race
+        self._previous_race = self._current_race
         self._current_race = Race(self, self.race_info)
         await self._current_race.initialize()
         await self.update()

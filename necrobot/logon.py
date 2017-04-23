@@ -14,15 +14,14 @@ from necrobot.util import backoff, config, console, seedgen
 
 
 # Define client events
-def ready_client_events(client, the_necrobot):
+def ready_client_events(client, the_necrobot, load_config_fn):
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
         await the_necrobot.post_login_init(
             client=client,
             server_id=config.Config.SERVER_ID,
-            # load_config_fn=botconfigs.load_standard_config  # TODO put back
-            load_config_fn=botconfigs.load_testing_config
+            load_config_fn=load_config_fn
         )
 
     # Called whenever a new message is posted in any necrobot on any server
@@ -37,7 +36,7 @@ def ready_client_events(client, the_necrobot):
         await the_necrobot.on_member_join(member)
 
 
-def main(def_client_events):
+def logon(config_filename: str, load_config_fn):
     # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
@@ -64,7 +63,7 @@ def main(def_client_events):
 
     # Initialize config file----------------------------------
     console.info('Initializing necrobot...')
-    config.init('data/bot_config')
+    config.init(config_filename)
 
     # Seed the random number generator------------------------
     seedgen.init_seed()
@@ -78,7 +77,7 @@ def main(def_client_events):
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
         the_necrobot = Necrobot()
-        def_client_events(client, the_necrobot)
+        ready_client_events(client, the_necrobot, load_config_fn)
 
         while not client.is_logged_in:
             try:
@@ -119,7 +118,3 @@ def main(def_client_events):
 
         if the_necrobot.quitting:
             break
-
-
-if __name__ == "__main__":
-    main(ready_client_events)

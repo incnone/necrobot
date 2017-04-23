@@ -2,10 +2,8 @@ import asyncio
 import sys
 import unittest
 
-import botconfigs
-import main
+from necrobot import config, loader, logon
 
-from necrobot.util import config
 from necrobot.botbase.command import Command
 
 TEST_CONFIG = False
@@ -34,7 +32,7 @@ def ready_client_events(client, the_necrobot):
         await the_necrobot.post_login_init(
             client=client,
             server_id=config.Config.SERVER_ID,
-            load_config_fn=botconfigs.load_standard_config
+            load_config_fn=loader.load_testing_config
         )
 
         sys.stdout.flush()
@@ -60,4 +58,4 @@ def ready_client_events(client, the_necrobot):
 
 
 if __name__ == "__main__":
-    main.main(ready_client_events)
+    logon.logon(ready_client_events)

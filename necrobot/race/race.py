@@ -4,16 +4,15 @@
 
 import asyncio
 import datetime
+import discord
 import time
-from enum import IntEnum
+from enum import IntEnum, Enum
 
-from necrobot.database import racedb
 from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util import seedgen
 from necrobot.util.ordinal import ordinal
 
-from necrobot.race.raceevent import RaceEvent
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.race.racer import Racer
@@ -55,14 +54,14 @@ StatusStrs = {RaceStatus.uninitialized: 'Not initialized.',
 # Race class --------------------------------------------------------------
 class Race(object):
     # NB: Call the coroutine initialize() to set up the room
-    def __init__(self, parent, race_info: RaceInfo, config=RaceConfig()):
+    def __init__(self, parent, race_info: RaceInfo, race_config: RaceConfig = RaceConfig()):
         self.race_id = None                       # After recording, the ID of the race in the DB
         self.parent = parent                      # The parent managing this race. Must implement write() and process().
         self.race_info = RaceInfo.copy(race_info)
         self.racers = []                          # A list of Racer
 
         self._status = RaceStatus.uninitialized   # The status of this race
-        self._config = config                     # The RaceConfig to use (determines some race behavior)
+        self._config = race_config                # The RaceConfig to use (determines some race behavior)
 
         self._countdown = int(0)                  # The current countdown
         self._start_datetime = None               # UTC time for the beginning of the race
@@ -78,12 +77,12 @@ class Race(object):
 # Race data
     # Returns the status string
     @property
-    def status_str(self):
+    def status_str(self) -> str:
         return StatusStrs[self._status]
 
     # Returns time elapsed in the race in ms
     @property
-    def current_time(self):
+    def current_time(self) -> int or None:
         if self._status == RaceStatus.paused:
             return int(100 * (self._last_pause_time - self._adj_start_time))
         elif self._status == RaceStatus.racing or self._status == RaceStatus.completed:
@@ -93,7 +92,7 @@ class Race(object):
 
     # Returns the current time elapsed as a string "[m]m:ss.hh"
     @property
-    def current_time_str(self):
+    def current_time_str(self) -> str:
         current_time_ = self.current_time
         if current_time_ is not None:
             return racetime.to_str(current_time_)
@@ -102,69 +101,69 @@ class Race(object):
 
     # Returns the UTC time for the beginning of the race
     @property
-    def start_datetime(self):
+    def start_datetime(self) -> datetime.datetime:
         return self._start_datetime
 
     # True if the race has not started
     @property
-    def before_race(self):
+    def before_race(self) -> bool:
         return self._status < RaceStatus.racing
 
     # True if the race is currently running
     @property
-    def during_race(self):
+    def during_race(self) -> bool:
         return self._status == RaceStatus.racing or self._status == RaceStatus.paused
 
     # True if the race is finalized or canceled
     @property
-    def complete(self):
+    def complete(self) -> bool:
         return self._status >= RaceStatus.completed
 
     # True if racers can enter the race
     @property
-    def entry_open(self):
+    def entry_open(self) -> bool:
         return self._status == RaceStatus.entry_open
 
     # True if the race can no longer be modified (finalized or canceled)
     @property
-    def final(self):
+    def final(self) -> bool:
         return self._status >= RaceStatus.finalized
 
     # True if we've passed the "no entrants" warning
     @property
-    def passed_no_entrants_warning_time(self):
+    def passed_no_entrants_warning_time(self) -> bool:
         time_since = datetime.timedelta(seconds=(time.monotonic() - self._last_no_entrants_time))
         return self._status != RaceStatus.uninitialized and time_since > Config.NO_ENTRANTS_CLEANUP_WARNING
 
     # True if we've passed the "no entrants" clear time
     @property
-    def passed_no_entrants_cleanup_time(self):
+    def passed_no_entrants_cleanup_time(self) -> bool:
         time_since = datetime.timedelta(seconds=(time.monotonic() - self._last_no_entrants_time))
         return self._status != RaceStatus.uninitialized and time_since > Config.NO_ENTRANTS_CLEANUP
 
     # True if the race has any entrants
     @property
-    def any_entrants(self):
+    def any_entrants(self) -> bool:
         return bool(self.racers)
 
     # True if the race is paused
     @property
-    def paused(self):
+    def paused(self) -> bool:
         return self._status == RaceStatus.paused
 
     @property
-    def config(self):
+    def race_config(self) -> RaceConfig:
         return self._config
 
 # Racer data
     # Returns true if all racers are ready and there's enough racers
     @property
-    def all_racers_ready(self):
+    def all_racers_ready(self) -> bool:
         return self.num_not_ready == 0 and (self.race_info.can_be_solo or len(self.racers) > 1)
 
     # Returns the number of racers not in the 'ready' state
     @property
-    def num_not_ready(self):
+    def num_not_ready(self) -> int:
         num = 0
         for racer in self.racers:
             if not racer.is_ready:
@@ -173,7 +172,7 @@ class Race(object):
 
     # Return the number of racers in the 'finished' state
     @property
-    def num_finished(self):
+    def num_finished(self) -> int:
         num = 0
         for racer in self.racers:
             if racer.is_finished:
@@ -182,7 +181,7 @@ class Race(object):
 
     # Returns a list of racers and their statuses.
     @property
-    def leaderboard_text(self, shortened=False):
+    def leaderboard_text(self, shortened: bool = False) -> str:
         char_limit = int(1900)      # The character limit on discord messages
 
         racer_list = []
@@ -212,21 +211,21 @@ class Race(object):
             return text
 
     @property
-    def winner(self):
+    def winner(self) -> int or None:
         if not self._status == RaceStatus.finalized or not self.racers:
             return None
         lead_racer = self.racers[0]
         return lead_racer if lead_racer.is_finished else None
 
     # True if the given discord.User is entered in the race
-    def has_racer(self, racer_usr):
+    def has_racer(self, racer_usr: discord.User) -> bool:
         for racer in self.racers:
             if int(racer.member.id) == int(racer_usr.id):
                 return True
         return False
 
     # Returns the given discord.User as a Racer, if possible
-    def get_racer(self, racer_usr):
+    def get_racer(self, racer_usr: discord.User) -> Racer:
         for racer in self.racers:
             if int(racer.member.id) == int(racer_usr.id):
                 return racer
@@ -252,7 +251,7 @@ class Race(object):
         if self._status == RaceStatus.entry_open:
             self._status = RaceStatus.counting_down
             self._countdown_future = asyncio.ensure_future(self._race_countdown())
-            await self._process(RaceEvent.RACE_BEGIN_COUNTDOWN)
+            await self._process(RaceEvent.EventType.RACE_BEGIN_COUNTDOWN)
 
     # Pause the race timer.
     async def pause(self, mute=False):
@@ -265,7 +264,7 @@ class Race(object):
             mention_str = mention_str[:-2]
 
             await self._write(mute=mute, text='Race paused. (Alerting {0}.)'.format(mention_str))
-            await self._process(RaceEvent.RACE_PAUSE)
+            await self._process(RaceEvent.EventType.RACE_PAUSE)
 
     # Unpause the race timer.
     async def unpause(self, mute=False):
@@ -273,7 +272,7 @@ class Race(object):
             await self._unpause_countdown(mute=mute)
 
     # Enters the given discord Member in the race
-    async def enter_member(self, racer_member, mute=False):
+    async def enter_member(self, racer_member: discord.Member, mute=False):
         if self.has_racer(racer_member):
             await self._write(mute=mute, text='{0} is already entered.'.format(racer_member.mention))
             return
@@ -291,10 +290,10 @@ class Race(object):
         await self._write(
             mute=mute,
             text='{0} has entered the race. {1} entrants.'.format(racer_member.mention, len(self.racers)))
-        await self._process(RaceEvent.RACER_ENTER)
+        await self._process(RaceEvent.EventType.RACER_ENTER)
 
     # Unenters the given discord Member in the race
-    async def unenter_member(self, racer_member, mute=False):
+    async def unenter_member(self, racer_member: discord.Member, mute=False):
         self.parent.dont_notify(racer_member)
 
         if not self.before_race:
@@ -309,12 +308,12 @@ class Race(object):
                 await self._cancel_countdown()
             await self._write(mute=mute, text='{0} is no longer entered.'.format(racer_member.mention))
             await self.begin_if_ready()
-            await self._process(RaceEvent.RACER_UNENTER)
+            await self._process(RaceEvent.EventType.RACER_UNENTER)
         else:
             await self._write(mute=mute, text='{0} is not entered.'.format(racer_member.mention))
 
     # Enters the racer if not entered, and puts that racer in the 'ready' state
-    async def enter_and_ready_member(self, racer_member, mute=False):
+    async def enter_and_ready_member(self, racer_member: discord.Member, mute=False):
         already_entered = self.has_racer(racer_member)
 
         if not already_entered and not self.before_race:
@@ -352,11 +351,11 @@ class Race(object):
 
         await self.begin_if_ready()
         if not already_entered:
-            await self._process(RaceEvent.RACER_ENTER)
-        await self._process(RaceEvent.RACER_READY)
+            await self._process(RaceEvent.EventType.RACER_ENTER)
+        await self._process(RaceEvent.EventType.RACER_READY)
 
     # Attempt to put the given Racer in the 'unready' state if they were ready
-    async def unready_member(self, racer_member, mute=False):
+    async def unready_member(self, racer_member: discord.Member, mute=False):
         if not self.before_race:
             return
 
@@ -372,12 +371,12 @@ class Race(object):
         success = await self._cancel_countdown()
         if success and racer.unready():
             await self._write(mute=mute, text='{0} is no longer ready.'.format(racer_member.mention))
-            await self._process(RaceEvent.RACER_UNREADY)
+            await self._process(RaceEvent.EventType.RACER_UNREADY)
         else:
             await self._write(mute=mute, text="Can't unready!")
 
     # Puts the given Racer in the 'finished' state and gets their time
-    async def finish_member(self, racer_member, mute=False):
+    async def finish_member(self, racer_member: discord.Member, mute=False):
         if not (self._status == RaceStatus.racing or self._status == RaceStatus.completed):
             return
 
@@ -394,10 +393,10 @@ class Race(object):
                     racer.time_str))
             if self._status == RaceStatus.racing:
                 await self._check_for_race_end()
-            await self._process(RaceEvent.RACER_FINISH)
+            await self._process(RaceEvent.EventType.RACER_FINISH)
 
     # Attempt to put the given Racer in the 'racing' state if they were finished
-    async def unfinish_member(self, racer_member, mute=False):
+    async def unfinish_member(self, racer_member: discord.Member, mute=False):
         if self.before_race or self.final:
             return
 
@@ -413,9 +412,9 @@ class Race(object):
         success = await self._cancel_finalization()
         if success and racer.unfinish():
             await self._write(mute=mute, text='{0} continues to race!'.format(racer_member.mention))
-            await self._process(RaceEvent.RACER_UNFINISH)
+            await self._process(RaceEvent.EventType.RACER_UNFINISH)
 
-    async def forfeit_racer(self, racer, mute=False):
+    async def forfeit_racer(self, racer: Racer, mute=False):
         if self.before_race or self.final:
             return
 
@@ -423,14 +422,14 @@ class Race(object):
         await self._write(mute=mute, text='{0} has forfeit the race.'.format(racer.member.mention))
 
     # Puts the given Racer in the 'forfeit' state
-    async def forfeit_member(self, racer_member, mute=False):
+    async def forfeit_member(self, racer_member: discord.Member, mute=False):
         racer = self.get_racer(racer_member)
         if racer is not None:
             await self.forfeit_racer(racer, mute)
-            await self._process(RaceEvent.RACER_FORFEIT)
+            await self._process(RaceEvent.EventType.RACER_FORFEIT)
 
     # Attempt to put the given Racer in the 'racing' state if they had forfeit
-    async def unforfeit_member(self, racer_member, mute=False):
+    async def unforfeit_member(self, racer_member: discord.Member, mute=False):
         if self.before_race or self.final:
             return False
 
@@ -448,7 +447,7 @@ class Race(object):
             await self._write(
                 mute=mute,
                 text='{0} is no longer forfeit and continues to race!'.format(racer_member.mention))
-            await self._process(RaceEvent.RACER_UNFORFEIT)
+            await self._process(RaceEvent.EventType.RACER_UNFORFEIT)
 
     # Forfeits all racers that have not yet finished
     async def forfeit_all_remaining(self, mute=False):
@@ -460,10 +459,10 @@ class Race(object):
                     await self._do_forfeit_racer(racer)
             if forfeit_any:
                 await self._write(mute=mute, text='All remaining racers forfeit.')
-                await self._process(RaceEvent.RACER_FORFEIT)
+                await self._process(RaceEvent.EventType.RACER_FORFEIT)
 
     # Adds the given string as a comment
-    async def add_comment_for_member(self, racer_member, comment_str):
+    async def add_comment_for_member(self, racer_member: discord.Member, comment_str: str):
         if self.before_race or self.final:
             return
 
@@ -472,10 +471,10 @@ class Race(object):
             return
 
         racer.add_comment(comment_str[:255])
-        await self._process(RaceEvent.ADD_EXTRANEOUS)
+        await self._process(RaceEvent.EventType.ADD_EXTRANEOUS)
 
     # Adds a death for the given member at the given level and causes them to forfeit
-    async def set_death_for_member(self, racer_member, level, mute=False):
+    async def set_death_for_member(self, racer_member: discord.Member, level: int, mute=False):
         if self.before_race or self.final:
             return
 
@@ -487,10 +486,10 @@ class Race(object):
         await self._write(mute=mute, text='{0} has forfeit the race.'.format(racer_member.mention))
         if not level == -1:
             racer.level = level
-        await self._process(RaceEvent.RACER_FORFEIT)
+        await self._process(RaceEvent.EventType.RACER_FORFEIT)
 
     # Adds an in-game time for the given member
-    async def set_igt_for_member(self, racer_member, igt):
+    async def set_igt_for_member(self, racer_member: discord.Member, igt: int):
         if self.before_race or self.final:
             return
 
@@ -500,10 +499,10 @@ class Race(object):
 
         if igt != -1 and racer.is_done_racing:
             racer.igt = int(igt)
-            await self._process(RaceEvent.ADD_EXTRANEOUS)
+            await self._process(RaceEvent.EventType.ADD_EXTRANEOUS)
 
     # Kicks the specified racers from the race (they can re-enter)
-    async def kick_racers(self, names_to_kick, mute=False):
+    async def kick_racers(self, names_to_kick: list, mute=False):
         for racer in self.racers:
             if racer.name.lower() in names_to_kick:
                 await self.unenter_member(racer.member, mute=mute)
@@ -514,7 +513,7 @@ class Race(object):
         await self._cancel_countdown()
         await self._cancel_finalization()
         await self._write(mute=mute, text='The race has been canceled.')
-        await self._process(RaceEvent.RACE_CANCEL)
+        await self._process(RaceEvent.EventType.RACE_CANCEL)
 
     # Reseed the race
     async def reseed(self, mute=False):
@@ -530,7 +529,7 @@ class Race(object):
         else:
             self.race_info.seed = seedgen.get_new_seed()
             await self._write(mute=mute, text='Changed seed to {0}.'.format(self.race_info.seed))
-            await self._process(RaceEvent.CHANGE_RULES)
+            await self._process(RaceEvent.EventType.CHANGE_RULES)
 
 # Private methods
     # Sort racer list
@@ -544,8 +543,8 @@ class Race(object):
         self.racers.sort(key=lambda r: r.time if r.is_finished else max_time)
 
     # Process an event
-    async def _process(self, event: RaceEvent):
-        await self.parent.process(event)
+    async def _process(self, event_type: RaceEvent.EventType):
+        await self.parent.process(RaceEvent(self, event_type))
 
     # Actually enter the racer
     def _do_enter_racer(self, racer_member):
@@ -565,7 +564,7 @@ class Race(object):
         self._adj_start_time = time.monotonic()
         self._start_datetime = datetime.datetime.utcnow()
         await self._write(mute=mute, text='GO!')
-        await self._process(RaceEvent.RACE_BEGIN)
+        await self._process(RaceEvent.EventType.RACE_BEGIN)
 
     # Checks to see if all racers have either finished or forfeited. If so, ends the race.
     # Return True if race was ended.
@@ -583,7 +582,7 @@ class Race(object):
         if self._status == RaceStatus.racing:
             self._status = RaceStatus.completed
             self._finalize_future = asyncio.ensure_future(self._finalization_countdown())
-            await self._process(RaceEvent.RACE_END)
+            await self._process(RaceEvent.EventType.RACE_END)
 
     # Countdown coroutine to be wrapped in self._countdown_future.
     # Warning: Do not call this -- use begin_countdown instead.
@@ -629,7 +628,7 @@ class Race(object):
             await self._write(mute=mute, text='GO!')
             self._status = RaceStatus.racing
             self._adj_start_time += time.monotonic() - self._last_pause_time
-            await self._process(RaceEvent.RACE_UNPAUSE)
+            await self._process(RaceEvent.EventType.RACE_UNPAUSE)
             return True
         return False
 
@@ -645,8 +644,7 @@ class Race(object):
         self._status = RaceStatus.finalized
         await self.forfeit_all_remaining(mute=True)
         self._sort_racers()
-        racedb.record_race(self)
-        await self._process(RaceEvent.RACE_FINALIZE)
+        await self._process(RaceEvent.EventType.RACE_FINALIZE)
 
     # Attempt to cancel the race countdown -- transition race state from 'counting_down' to 'entry_open'
     # Returns False only if there IS a countdown, AND we failed to cancel it
@@ -656,7 +654,7 @@ class Race(object):
                 if self._countdown_future.cancel():
                     self._countdown_future = None
                     self._status = RaceStatus.entry_open
-                    await self._process(RaceEvent.RACE_CANCEL_COUNTDOWN)
+                    await self._process(RaceEvent.EventType.RACE_CANCEL_COUNTDOWN)
                     await self._write(mute=mute, text='Countdown canceled.')
                     return True
                 else:
@@ -671,7 +669,7 @@ class Race(object):
                 if self._finalize_future.cancel():
                     self._finalize_future = None
                     self._status = RaceStatus.racing
-                    await self._process(RaceEvent.RACE_CANCEL_FINALIZE)
+                    await self._process(RaceEvent.EventType.RACE_CANCEL_FINALIZE)
                     await self._write(mute=mute, text='Race end canceled -- unfinished racers may continue!')
                     return True
                 else:
@@ -679,11 +677,40 @@ class Race(object):
         return True
 
     # Causes the racer to forfeit
-    async def _do_forfeit_racer(self, racer):
+    async def _do_forfeit_racer(self, racer: Racer):
         if racer.forfeit(self.current_time):
             await self._check_for_race_end()
 
     # Write text
-    async def _write(self, text, mute=False):
+    async def _write(self, text: str, mute=False):
         if not mute:
             await self.parent.write(text)
+
+
+class RaceEvent(object):
+    class EventType(Enum):
+        RACER_ENTER = 0
+        RACER_UNENTER = 1
+        RACER_READY = 2
+        RACER_UNREADY = 3
+        RACER_FINISH = 4
+        RACER_UNFINISH = 5
+        RACER_FORFEIT = 6
+        RACER_UNFORFEIT = 7
+
+        RACE_BEGIN_COUNTDOWN = 101
+        RACE_CANCEL_COUNTDOWN = 102
+        RACE_BEGIN = 103
+        RACE_END = 104
+        RACE_CANCEL_FINALIZE = 105
+        RACE_FINALIZE = 106
+        RACE_CANCEL = 107
+        RACE_PAUSE = 108
+        RACE_UNPAUSE = 109
+
+        ADD_EXTRANEOUS = 201
+        CHANGE_RULES = 202
+
+    def __init__(self, race: Race, event: EventType):
+        self.race = race
+        self.event = event

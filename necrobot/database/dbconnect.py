@@ -1,6 +1,6 @@
 import mysql.connector
 
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class DBConnect(object):

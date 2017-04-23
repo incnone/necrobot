@@ -8,12 +8,12 @@ class Config(object):
     @staticmethod
     def write():
         vals = [
+            ['login_token', Config.LOGIN_TOKEN],
+            ['server_id', Config.SERVER_ID],
             ['mysql_db_host', Config.MYSQL_DB_HOST],
             ['mysql_db_user', Config.MYSQL_DB_USER],
             ['mysql_db_passwd', Config.MYSQL_DB_PASSWD],
             ['mysql_db_name', Config.MYSQL_DB_NAME],
-            ['login_token', Config.LOGIN_TOKEN],
-            ['server_id', Config.SERVER_ID],
             ['vodrecord_username', Config.VODRECORD_USERNAME],
             ['vodrecord_passwd', Config.VODRECORD_PASSWD],
             ['gsheet_id', Config.GSHEET_ID],
@@ -24,7 +24,7 @@ class Config(object):
                 file.write('{0}={1}\n'.format(row[0], row[1]))
 
 # Info
-    CONFIG_FILE = 'data/bot_config'
+    CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
 
@@ -38,6 +38,7 @@ class Config(object):
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
 
 # Condor
+    CONDOR_EVENT = ''
     LOG_DIRECTORY = 'logs'
 
 # Daily
@@ -97,15 +98,16 @@ class Config(object):
 
 def init(config_filename):
     defaults = {
+        'login_token': '',
+        'server_id': '',
         'mysql_db_host': 'localhost',
         'mysql_db_user': 'root',
         'mysql_db_passwd': '',
         'mysql_db_name': 'necrobot',
-        'login_token': '',
-        'server_id': '',
         'vodrecord_username': '',
         'vodrecord_passwd': '',
         'gsheet_id': '',
+        'condor_event': '',
         }
 
     with open(config_filename, 'r') as file:
@@ -119,14 +121,18 @@ def init(config_filename):
             else:
                 console.error("Error in {0} reading line: \"{1}\".".format(config_filename, line))
 
+    Config.LOGIN_TOKEN = defaults['login_token']
+    Config.SERVER_ID = defaults['server_id']
+
     Config.MYSQL_DB_HOST = defaults['mysql_db_host']
     Config.MYSQL_DB_USER = defaults['mysql_db_user']
     Config.MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
     Config.MYSQL_DB_NAME = defaults['mysql_db_name']
-    Config.LOGIN_TOKEN = defaults['login_token']
-    Config.SERVER_ID = defaults['server_id']
+
     Config.VODRECORD_USERNAME = defaults['vodrecord_username']
     Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
+
+    Config.CONDOR_EVENT = defaults['condor_event']
     Config.GSHEET_ID = defaults['gsheet_id']
 
     Config.CONFIG_FILE = config_filename
@@ -136,6 +142,6 @@ def init(config_filename):
 
 class TestConfig(unittest.TestCase):
     def test_init_and_write(self):
-        init('data/bot_config')
+        init('data/necrobot_config')
         Config.CONFIG_FILE = 'data/config_write_test'
         Config.write()

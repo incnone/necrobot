@@ -1,3 +1,7 @@
+"""
+Interaction with the users table.
+"""
+
 import mysql.connector
 
 from necrobot.util import console

@@ -1,10 +1,23 @@
+"""
+Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
+"""
+
+from necrobot.database import racedb
+
 from necrobot.database.dbconnect import DBConnect
-from necrobot.database.racedb import get_race_type_id
+from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
 
 
-def record_match_race(match, race_number, race_id, winner, canceled, contested):
+def record_match_race(
+        match: Match,
+        race_number: int,
+        race_id: int,
+        winner: int,
+        canceled: bool,
+        contested: bool
+        ) -> None:
     with DBConnect(commit=True) as cursor:
         params = (
             match.match_id,
@@ -28,7 +41,7 @@ def record_match_race(match, race_number, race_id, winner, canceled, contested):
         )
 
 
-def get_largest_race_number(discord_id):
+def get_largest_race_number(discord_id: int) -> int:
     with DBConnect(commit=False) as cursor:
         params = (discord_id,)
         cursor.execute(
@@ -42,7 +55,7 @@ def get_largest_race_number(discord_id):
         return int(row[0]) if row is not None else 0
 
 
-def get_race_info_from_type_id(race_type):
+def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
     params = (race_type,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
@@ -65,11 +78,11 @@ def get_race_info_from_type_id(race_type):
             return None
 
 
-def write_match(match):
+def write_match(match: Match):
     if not match.is_registered:
         _register_match(match)
 
-    match_racetype_id = get_race_type_id(race_info=match.race_info, register=True)
+    match_racetype_id = racedb.get_race_type_id(race_info=match.race_info, register=True)
 
     params = (
         match_racetype_id,
@@ -108,7 +121,7 @@ def write_match(match):
         )
 
 
-def register_match_channel(match_id: int, channel_id: int or None):
+def register_match_channel(match_id: int, channel_id: int or None) -> None:
     params = (channel_id, match_id,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
@@ -132,7 +145,7 @@ def get_match_channel_id(match_id: int) -> int:
         return int(row[0]) if row[0] is not None else None
 
 
-def get_channeled_matches_raw_data():
+def get_channeled_matches_raw_data() -> list:
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT "
@@ -194,7 +207,7 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int)
         return int(row[0]) if row is not None else None
 
 
-def get_raw_match_data(match_id):
+def get_raw_match_data(match_id: int) -> list:
     params = (match_id,)
 
     with DBConnect(commit=False) as cursor:
@@ -220,8 +233,8 @@ def get_raw_match_data(match_id):
         return cursor.fetchone()
 
 
-def _register_match(match):
-    match_racetype_id = get_race_type_id(race_info=match.race_info, register=True)
+def _register_match(match: Match) -> None:
+    match_racetype_id = racedb.get_race_type_id(race_info=match.race_info, register=True)
 
     params = (
         match_racetype_id,
