@@ -302,6 +302,7 @@ def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
 def _transfer_user_id(from_user_id: int, to_user_id: int):
     params = (to_user_id, from_user_id,)
     with DBConnect(commit=True) as cursor:
+        # Update main-database matches
         cursor.execute(
             "UPDATE matches "
             "SET racer_1_id=%s "
@@ -314,3 +315,24 @@ def _transfer_user_id(from_user_id: int, to_user_id: int):
             "WHERE racer_2_id=%s",
             params
         )
+
+        # Update CoNDOR events
+        cursor.execute(
+            "SELECT `schema_name` "
+            "FROM condor_events "
+        )
+
+        for row in cursor:
+            schema_name = row[0]
+            cursor.execute(
+                "UPDATE {0}.matches "
+                "SET racer_1_id=%s "
+                "WHERE racer_1_id=%s".format(schema_name),
+                params
+            )
+            cursor.execute(
+                "UPDATE {0}.matches "
+                "SET racer_2_id=%s "
+                "WHERE racer_2_id=%s".format(schema_name),
+                params
+            )

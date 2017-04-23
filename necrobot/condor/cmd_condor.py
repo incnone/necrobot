@@ -54,6 +54,7 @@ class CloseAllMatches(CommandType):
 #             'Done closing all completed match channels.'
 #         )
 
+
 class GetCurrentEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'get-current-event')
@@ -62,7 +63,22 @@ class GetCurrentEvent(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        pass  # TODO
+        schema_name = Config.CONDOR_EVENT.lower()
+        try:
+            event_name = condordb.get_event_name(schema_name)
+        except condordb.EventDoesNotExist:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: The current event (`{0}`) does not exist.'.format(schema_name)
+            )
+            return
+
+        await self.client.send_message(
+            cmd.channel,
+            'Current event:\n'
+            '    ID: `{0}`'
+            '  Name: {1}'.format(schema_name, event_name)
+        )
 
 
 class RegisterCondorEvent(CommandType):
@@ -120,13 +136,15 @@ class SetCondorEvent(CommandType):
         schema_name = cmd.args[0].lower()
         try:
             event_name = condordb.get_event_name(schema_name=schema_name)
-        except condordb.EventDoesNotExist as e:
+        except condordb.EventDoesNotExist:
             await self.client.send_message(
                 cmd.channel,
                 'Error: Event `{0}` does not exist.'
             )
             return
 
+        Config.CONDOR_EVENT = schema_name
+        Config.write()
         event_name_str = ' ({0})'.format(event_name) if event_name is not None else ''
         await self.client.send_message(
             cmd.channel,
@@ -143,4 +161,19 @@ class SetEventName(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        pass  # TODO
+        event_name = cmd.arg_string
+        schema_name = Config.CONDOR_EVENT.lower()
+
+        try:
+            condordb.set_event_name(schema_name=schema_name, event_name=event_name)
+        except condordb.EventDoesNotExist:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: The current event (`{0}`) does not exist.'
+            )
+            return
+
+        await self.client.send_message(
+            cmd.channel,
+            'Set the name of current CoNDOR event (`{0}`) to {1}.'.format(schema_name, event_name)
+        )

@@ -73,7 +73,7 @@ def get_event_name(schema_name: str) -> str:
         When there is no registered event by the given name.
     """
     params = (schema_name,)
-    with DBConnect(commit=True) as cursor:
+    with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT `event_name` "
             "FROM `condor_events` "
@@ -95,3 +95,29 @@ def get_event_name(schema_name: str) -> str:
 
         return event_name_row[0]
 
+
+def set_event_name(schema_name: str, event_name: str) -> None:
+    """
+    Parameters
+    ----------
+    schema_name: str
+        The name of the schema for the event (and also the event's unique identifier).
+    event_name: str
+        The custom descriptor for the event.    
+
+    Raises
+    ------
+    EventDoesNotExist
+        When there is no registered schema by the given name.
+    """
+    params = (event_name, schema_name,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            "UPDATE `condor_events` "
+            "SET `event_name` = %s "
+            "WHERE `schema_name`=%s",
+            params
+        )
+        success = bool(cursor.fetchone()[0])
+        if not success:
+            raise EventDoesNotExist()

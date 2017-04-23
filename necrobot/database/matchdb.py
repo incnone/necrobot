@@ -4,6 +4,7 @@ Interaction with matches and match_races tables (in the necrobot schema, or a co
 
 from necrobot.database import racedb
 
+from necrobot.config import Config
 from necrobot.database.dbconnect import DBConnect
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
@@ -29,14 +30,14 @@ def record_match_race(
         )
 
         cursor.execute(
-            "INSERT INTO match_races "
+            "INSERT INTO {0} "
             "(match_id, race_number, race_id, winner, canceled, contested) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "   race_id=VALUES(race_id), "
             "   winner=VALUES(winner), "
             "   canceled=VALUES(canceled), "
-            "   contested=VALUES(contested)",
+            "   contested=VALUES(contested)".format(_t('match_races')),
             params
         )
 
@@ -46,10 +47,10 @@ def get_largest_race_number(discord_id: int) -> int:
         params = (discord_id,)
         cursor.execute(
             "SELECT race_id "
-            "FROM race_runs "
+            "FROM {0} "
             "WHERE discord_id = %s "
             "ORDER BY race_id DESC "
-            "LIMIT 1",
+            "LIMIT 1".format(_t('race_runs')),
             params)
         row = cursor.fetchone()
         return int(row[0]) if row is not None else 0
@@ -102,7 +103,7 @@ def write_match(match: Match):
 
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE matches "
+            "UPDATE {0} "
             "SET "
             "   race_type_id=%s, "
             "   racer_1_id=%s, "
@@ -116,7 +117,7 @@ def write_match(match: Match):
             "   is_best_of=%s, "
             "   number_of_races=%s, "
             "   cawmentator_id=%s "
-            "WHERE match_id=%s",
+            "WHERE match_id=%s".format(_t('matches')),
             params
         )
 
@@ -125,9 +126,9 @@ def register_match_channel(match_id: int, channel_id: int or None) -> None:
     params = (channel_id, match_id,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE matches "
+            "UPDATE {0} "
             "SET channel_id=%s "
-            "WHERE match_id=%s",
+            "WHERE match_id=%s".format(_t('matches')),
             params
         )
 
@@ -137,8 +138,8 @@ def get_match_channel_id(match_id: int) -> int:
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT channel_id "
-            "FROM matches "
-            "WHERE match_id=%s",
+            "FROM {0} "
+            "WHERE match_id=%s".format(_t('matches')),
             params
         )
         row = cursor.fetchone()
@@ -163,8 +164,8 @@ def get_channeled_matches_raw_data() -> list:
             "   number_of_races, "
             "   cawmentator_id, "
             "   channel_id "
-            "FROM matches "
-            "WHERE channel_id IS NOT NULL"
+            "FROM {0} "
+            "WHERE channel_id IS NOT NULL".format(_t('matches'))
         )
         return cursor.fetchall()
 
@@ -174,8 +175,8 @@ def get_match_race_data(match_id: int) -> MatchRaceData:
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT canceled, winner "
-            "FROM `match_races` "
-            "WHERE match_id=%s",
+            "FROM {0} "
+            "WHERE match_id=%s".format(_t('match_races')),
             params
         )
         finished = 0
@@ -199,8 +200,8 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT match_id "
-            "FROM matches "
-            "WHERE (racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s)",
+            "FROM {0} "
+            "WHERE (racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s)".format(_t('matches')),
             params
         )
         row = cursor.fetchone()
@@ -226,8 +227,8 @@ def get_raw_match_data(match_id: int) -> list:
             "   is_best_of, "
             "   number_of_races, "
             "   cawmentator_id "
-            "FROM matches "
-            "WHERE match_id=%s",
+            "FROM {0} "
+            "WHERE match_id=%s".format(_t('matches')),
             params
         )
         return cursor.fetchone()
@@ -253,7 +254,7 @@ def _register_match(match: Match) -> None:
 
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "INSERT INTO matches "
+            "INSERT INTO {0} "
             "("
             "   race_type_id, "
             "   racer_1_id, "
@@ -268,8 +269,12 @@ def _register_match(match: Match) -> None:
             "   number_of_races, "
             "   cawmentator_id"
             ")"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)".format(_t('matches')),
             params
         )
         cursor.execute("SELECT LAST_INSERT_ID()")
         match.set_match_id(int(cursor.fetchone()[0]))
+
+
+def _t(tablename: str) -> str:
+    return '{0}.{1}'.format(Config.CONDOR_EVENT, tablename) if Config.CONDOR_EVENT else tablename
