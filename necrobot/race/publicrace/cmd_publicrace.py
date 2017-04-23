@@ -1,7 +1,7 @@
 # Commands specific to publicrace.RaceRoom (and its derived classes)
 
 from necrobot.botbase.command import CommandType
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class DelayRecord(CommandType):

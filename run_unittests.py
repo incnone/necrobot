@@ -11,7 +11,7 @@ TEST_SHEETS = True
 
 if TEST_CONFIG:
     # noinspection PyUnresolvedReferences
-    from necrobot.util.config import TestConfig
+    from necrobot.config import TestConfig
 
 if TEST_SHEETS:
     # noinspection PyUnresolvedReferences
@@ -25,14 +25,14 @@ if TEST_SHEETS:
 
 
 # Define client events
-def ready_client_events(client, the_necrobot):
+def ready_client_events(client, the_necrobot, load_config_fn):
     # Called after the client has successfully logged in
     @client.event
     async def on_ready():
         await the_necrobot.post_login_init(
             client=client,
             server_id=config.Config.SERVER_ID,
-            load_config_fn=loader.load_testing_config
+            load_config_fn=load_config_fn
         )
 
         sys.stdout.flush()
@@ -58,4 +58,8 @@ def ready_client_events(client, the_necrobot):
 
 
 if __name__ == "__main__":
-    logon.logon(ready_client_events)
+    logon.logon(
+        config_filename='data/necrobot_config',
+        load_config_fn=loader.load_testing_config,
+        def_events_fn=ready_client_events
+    )

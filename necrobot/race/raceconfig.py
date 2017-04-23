@@ -1,4 +1,4 @@
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class RaceConfig(object):

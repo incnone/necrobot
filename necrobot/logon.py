@@ -6,11 +6,10 @@ import logging
 import os
 import websockets
 
-import botconfigs
-
+from necrobot import config
 from necrobot.botbase.command import Command
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.util import backoff, config, console, seedgen
+from necrobot.util import backoff, console, seedgen
 
 
 # Define client events
@@ -36,7 +35,7 @@ def ready_client_events(client, the_necrobot, load_config_fn):
         await the_necrobot.on_member_join(member)
 
 
-def logon(config_filename: str, load_config_fn):
+def logon(config_filename: str, load_config_fn, def_events_fn=ready_client_events):
     # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
@@ -77,7 +76,7 @@ def logon(config_filename: str, load_config_fn):
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
         the_necrobot = Necrobot()
-        ready_client_events(client, the_necrobot, load_config_fn)
+        def_events_fn(client, the_necrobot, load_config_fn)
 
         while not client.is_logged_in:
             try:

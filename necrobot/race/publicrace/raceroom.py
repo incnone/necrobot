@@ -11,7 +11,7 @@ from necrobot.database import racedb
 from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.util.config import Config
+from necrobot.config import Config
 from necrobot.race.race import Race, RaceEvent
 
 
@@ -156,7 +156,8 @@ class RaceRoom(BotChannel):
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write(
                 'The race is over. Results will be recorded in {} seconds. Until then, you may comment with '
-                '`.comment` or add an in-game-time with `.igt`.'.format(self.current_race.race_config.finalize_time_sec))
+                '`.comment` or add an in-game-time with `.igt`.'.format(
+                    self.current_race.race_config.finalize_time_sec))
         elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
             racedb.record_race(race_event.race)
             if race_event.race.race_info.post_results:

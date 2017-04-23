@@ -5,7 +5,7 @@ import pycurl
 from io import BytesIO
 
 from necrobot.util import console
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class VodRecorder(object):

@@ -7,7 +7,7 @@ from necrobot.user import userutil
 
 from necrobot.botbase.command import CommandType
 from necrobot.user.userprefs import UserPrefs
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 MAX_USERINFO_LEN = 255
 

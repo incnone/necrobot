@@ -1,5 +1,8 @@
-from necrobot.botbase.command import Command, CommandType
+from necrobot.database import condordb
 from necrobot.match import matchutil
+
+from necrobot.config import Config
+from necrobot.botbase.command import Command, CommandType
 
 
 class CloseAllMatches(CommandType):
@@ -50,3 +53,94 @@ class CloseAllMatches(CommandType):
 #             cmd.channel,
 #             'Done closing all completed match channels.'
 #         )
+
+class GetCurrentEvent(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'get-current-event')
+        self.help_text = '[Admin only] Get the identifier and name of the current CoNDOR event.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        pass  # TODO
+
+
+class RegisterCondorEvent(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'register-condor-event')
+        self.help_text = '[Admin only] `{0} schema_name`: Create a new CoNDOR event in the database, and set this to ' \
+                         'be the bot\'s current event.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        schema_name = cmd.args[0].lower()
+        try:
+            condordb.create_new_event(schema_name=schema_name)
+        except condordb.EventAlreadyExists as e:
+            error_msg = 'Error: Schema `{0}` already exists.'
+            if str(e):
+                error_msg += ' (It is registered to the event "{0}".)'.format(e)
+            await self.client.send_message(
+                cmd.channel,
+                error_msg
+            )
+            return
+
+        Config.CONDOR_EVENT = schema_name
+        Config.write()
+        await self.client.send_message(
+            cmd.channel,
+            'Registered new CoNDOR event `{0}`, and set it to be the bot\'s current event.'.format(schema_name)
+        )
+
+
+class SetCondorEvent(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'set-condor-event')
+        self.help_text = '[Admin only] `{0} schema_name`: Set the bot\'s current event to `schema_name`.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        schema_name = cmd.args[0].lower()
+        try:
+            event_name = condordb.get_event_name(schema_name=schema_name)
+        except condordb.EventDoesNotExist as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Event `{0}` does not exist.'
+            )
+            return
+
+        event_name_str = ' ({0})'.format(event_name) if event_name is not None else ''
+        await self.client.send_message(
+            cmd.channel,
+            'Set the current CoNDOR event to `{0}`{1}.'.format(schema_name, event_name_str)
+        )
+
+
+class SetEventName(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'set-event-name')
+        self.help_text = '[Admin only] `{0} event_name`: Set the name of bot\'s current event. Note: This does not ' \
+                         'change or create a new event! Use `.register-condor-event` and `.set-condor-event`.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        pass  # TODO

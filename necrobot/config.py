@@ -16,6 +16,7 @@ class Config(object):
             ['mysql_db_name', Config.MYSQL_DB_NAME],
             ['vodrecord_username', Config.VODRECORD_USERNAME],
             ['vodrecord_passwd', Config.VODRECORD_PASSWD],
+            ['condor_event', Config.CONDOR_EVENT],
             ['gsheet_id', Config.GSHEET_ID],
         ]
 

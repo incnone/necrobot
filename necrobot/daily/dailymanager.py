@@ -8,7 +8,7 @@ from necrobot.botbase.necrobot import Necrobot
 from necrobot.daily.daily import DATE_ZERO, Daily
 from necrobot.daily.dailytype import DailyType
 from necrobot.user.userprefs import UserPrefs
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class DailyManager(object):

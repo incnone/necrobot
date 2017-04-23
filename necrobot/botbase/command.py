@@ -2,7 +2,7 @@ import discord
 import shlex
 
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.util.config import Config
+from necrobot.config import Config
 from necrobot.util import console
 
 

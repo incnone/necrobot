@@ -2,7 +2,7 @@ from necrobot.gsheet import sheetutil
 from necrobot.match import matchutil
 
 from necrobot.botbase.command import Command, CommandType
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 from necrobot.gsheet.matchupsheet import MatchupSheet
 

@@ -9,7 +9,7 @@ import unittest
 from apiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 DISCOVERY_URL = 'https://sheets.googleapis.com/$discovery/rest?version=v4'

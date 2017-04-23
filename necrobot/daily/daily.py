@@ -6,7 +6,7 @@ from necrobot.database import dailydb
 from necrobot.race import racetime
 from necrobot.daily import dailytype
 from necrobot.util import level, seedgen
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 

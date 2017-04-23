@@ -2,7 +2,7 @@ import discord
 
 from necrobot.database import dbutil
 from necrobot.util import console
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class Necrobot(object):

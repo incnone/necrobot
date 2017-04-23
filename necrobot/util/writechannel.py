@@ -1,7 +1,7 @@
 import codecs
 import os
 
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 async def write_channel(client, channel, outfile_name):

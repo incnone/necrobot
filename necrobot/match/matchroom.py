@@ -6,7 +6,7 @@ import discord
 
 from necrobot.util import console
 from necrobot.util import ordinal
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 from necrobot.botbase import cmd_admin
 from necrobot.race import cmd_race

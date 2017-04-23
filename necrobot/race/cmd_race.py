@@ -11,7 +11,7 @@ from necrobot.race import racetime
 from necrobot.util import level
 
 from necrobot.botbase.command import CommandType
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 class Enter(CommandType):

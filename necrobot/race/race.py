@@ -16,7 +16,7 @@ from necrobot.util.ordinal import ordinal
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.race.racer import Racer
-from necrobot.util.config import Config
+from necrobot.config import Config
 
 
 # RaceStatus enum ---------------------------------------------------------
@@ -181,7 +181,10 @@ class Race(object):
 
     # Returns a list of racers and their statuses.
     @property
-    def leaderboard_text(self, shortened: bool = False) -> str:
+    def leaderboard_text(self) -> str:
+        return self._leaderboard_text(False)
+
+    def _leaderboard_text(self, shortened) -> str:
         char_limit = int(1900)      # The character limit on discord messages
 
         racer_list = []
@@ -206,7 +209,7 @@ class Race(object):
             text += (rank_str + racer.name + (' ' * (max_name_len - len(racer.name))) + ' --- ' + stat_str + '\n')
 
         if len(text) > char_limit and not shortened:
-            return self.leaderboard_text(shortened=True)
+            return self._leaderboard_text(shortened=True)
         else:
             return text
 

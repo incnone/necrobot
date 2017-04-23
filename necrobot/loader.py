@@ -17,6 +17,8 @@ from necrobot.stdconfig.pmbotchannel import PMBotChannel
 
 
 async def load_necrobot_config(necrobot):
+    Config.RECORDING_ACTIVATED = False
+
     # PM Channel
     necrobot.register_pm_channel(PMBotChannel())
 
@@ -40,6 +42,7 @@ async def load_necrobot_config(necrobot):
 
     # Ratings
     ratingutil.init()
+
 
 async def load_condorbot_config(necrobot):
     # PM Channel
