@@ -19,9 +19,8 @@ class CondorAdminChannel(BotChannel):
 
             # cmd_condor.Automatch(self),
             # cmd_condor.CloseFinished(self),
-            # cmd_condor.DropRacer(self),
-
             cmd_condor.CloseAllMatches(self),
+            # cmd_condor.DropRacer(self),
 
             cmd_sheet.GetGSheet(self),
             cmd_sheet.MakeFromSheet(self),

@@ -33,7 +33,7 @@ def get_largest_race_number(discord_id):
         params = (discord_id,)
         cursor.execute(
             "SELECT race_id "
-            "FROM racer_data "
+            "FROM race_runs "
             "WHERE discord_id = %s "
             "ORDER BY race_id DESC "
             "LIMIT 1",
@@ -89,7 +89,7 @@ def write_match(match):
 
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE match_data "
+            "UPDATE matches "
             "SET "
             "   race_type_id=%s, "
             "   racer_1_id=%s, "
@@ -112,7 +112,7 @@ def register_match_channel(match_id: int, channel_id: int or None):
     params = (channel_id, match_id,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE match_data "
+            "UPDATE matches "
             "SET channel_id=%s "
             "WHERE match_id=%s",
             params
@@ -124,7 +124,7 @@ def get_match_channel_id(match_id: int) -> int:
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT channel_id "
-            "FROM match_data "
+            "FROM matches "
             "WHERE match_id=%s",
             params
         )
@@ -150,7 +150,7 @@ def get_channeled_matches_raw_data():
             "   number_of_races, "
             "   cawmentator_id, "
             "   channel_id "
-            "FROM match_data "
+            "FROM matches "
             "WHERE channel_id IS NOT NULL"
         )
         return cursor.fetchall()
@@ -186,7 +186,7 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT match_id "
-            "FROM match_data "
+            "FROM matches "
             "WHERE (racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s)",
             params
         )
@@ -213,7 +213,7 @@ def get_raw_match_data(match_id):
             "   is_best_of, "
             "   number_of_races, "
             "   cawmentator_id "
-            "FROM match_data "
+            "FROM matches "
             "WHERE match_id=%s",
             params
         )
@@ -240,7 +240,7 @@ def _register_match(match):
 
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "INSERT INTO match_data "
+            "INSERT INTO matches "
             "("
             "   race_type_id, "
             "   racer_1_id, "

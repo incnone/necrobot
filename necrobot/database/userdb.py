@@ -32,13 +32,13 @@ def write_user(necro_user: NecroUser):
         if rtmp_clash_user_id is not None:
             rtmp_clash_params = (rtmp_clash_user_id,)
             cursor.execute(
-                "DELETE FROM user_data "
+                "DELETE FROM users "
                 "WHERE user_id=%s",
                 rtmp_clash_params
             )
 
         cursor.execute(
-            "UPDATE user_data "
+            "UPDATE users "
             "SET "
             "   discord_id=%s, "
             "   discord_name=%s, "
@@ -102,7 +102,7 @@ def get_discord_id(discord_name):
         params = (discord_name,)
         cursor.execute(
             "SELECT discord_id "
-            "FROM user_data "
+            "FROM users "
             "WHERE discord_name=%s",
             params)
         row = cursor.fetchone()
@@ -123,7 +123,7 @@ def get_all_ids_matching_prefs(user_prefs):
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT discord_id "
-            "FROM user_data "
+            "FROM users "
             "WHERE {0}".format(where_query))
         to_return = []
         for row in cursor.fetchall():
@@ -136,7 +136,7 @@ def get_all_ids_matching_prefs(user_prefs):
 #         for member in members:
 #             params = (member.id, member.display_name,)
 #             cursor.execute(
-#                 "INSERT INTO user_data "
+#                 "INSERT INTO users "
 #                 "(discord_id, discord_name) "
 #                 "VALUES (%s,%s) "
 #                 "ON DUPLICATE KEY UPDATE "
@@ -148,7 +148,7 @@ def get_all_ids_matching_prefs(user_prefs):
 #     with DBConnect(commit=True) as cursor:
 #         params = (member.id, member.name,)
 #         cursor.execute(
-#             "INSERT INTO user_data "
+#             "INSERT INTO users "
 #             "(discord_id, discord_name) "
 #             "VALUES (%s,%s) "
 #             "ON DUPLICATE KEY UPDATE "
@@ -211,7 +211,7 @@ def _get_users_helpfn(
             "   daily_alert, "
             "   race_alert, "
             "   user_id "
-            "FROM user_data "
+            "FROM users "
             "WHERE {0}".format(where_query),
             params)
         return cursor.fetchall()
@@ -235,7 +235,7 @@ def _register_user(necro_user: NecroUser):
         if rtmp_clash_user_id is None:
             try:
                 cursor.execute(
-                    "INSERT INTO user_data "
+                    "INSERT INTO users "
                     "(discord_id, discord_name, twitch_name, timezone, user_info, daily_alert, race_alert, rtmp_name) "
                     "VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ",
                     params
@@ -247,7 +247,7 @@ def _register_user(necro_user: NecroUser):
                 raise
         else:
             cursor.execute(
-                "UPDATE user_data "
+                "UPDATE users "
                 "SET "
                 "   discord_id=%s, "
                 "   discord_name=%s, "
@@ -278,7 +278,7 @@ def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT user_id, discord_id "
-            "FROM user_data "
+            "FROM users "
             "WHERE rtmp_name=%s",
             rtmp_params
         )
@@ -299,13 +299,13 @@ def _transfer_user_id(from_user_id: int, to_user_id: int):
     params = (to_user_id, from_user_id,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE match_data "
+            "UPDATE matches "
             "SET racer_1_id=%s "
             "WHERE racer_1_id=%s",
             params
         )
         cursor.execute(
-            "UPDATE match_data "
+            "UPDATE matches "
             "SET racer_2_id=%s "
             "WHERE racer_2_id=%s",
             params

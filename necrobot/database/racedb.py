@@ -40,7 +40,7 @@ def record_race(race):
         )
 
         cursor.execute(
-            "INSERT INTO race_data "
+            "INSERT INTO races "
             "(timestamp, type_id, seed, condor, private) "
             "VALUES (%s,%s,%s,%s,%s)",
             race_params)
@@ -49,12 +49,12 @@ def record_race(race):
         cursor.execute("SELECT LAST_INSERT_ID()")
         race.race_id = int(cursor.fetchone()[0])
 
-        # Record each racer in racer_data
+        # Record each racer in race_runs
         rank = 1
         for racer in race.racers:
             racer_params = (race.race_id, racer.id, racer.time, rank, racer.igt, racer.comment, racer.level)
             cursor.execute(
-                "INSERT INTO racer_data "
+                "INSERT INTO race_runs "
                 "(race_id, discord_id, time, rank, igt, comment, level) "
                 "VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 racer_params)
@@ -64,7 +64,7 @@ def record_race(race):
             # Update the user's name in the database
             user_params = (racer.id, racer.name)
             cursor.execute(
-                'INSERT INTO user_data '
+                'INSERT INTO users '
                 '(discord_id, discord_name) '
                 'VALUES (%s,%s) '
                 'ON DUPLICATE KEY UPDATE '
@@ -77,13 +77,13 @@ def get_allzones_race_numbers(discord_id, amplified):
         params = (discord_id,)
         cursor.execute(
             "SELECT race_types.character, COUNT(*) as num "
-            "FROM racer_data "
-            "INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
-            "INNER JOIN race_types ON race_data.type_id = race_types.type_id "
-            "WHERE racer_data.discord_id = %s "
+            "FROM race_runs "
+            "INNER JOIN races ON races.race_id = race_runs.race_id "
+            "INNER JOIN race_types ON races.type_id = race_types.type_id "
+            "WHERE race_runs.discord_id = %s "
             "AND race_types.descriptor = 'All-zones' " +
             ("AND race_types.amplified " if amplified else "AND NOT race_types.amplified ") +
-            "AND race_types.seeded AND NOT race_data.private "
+            "AND race_types.seeded AND NOT races.private "
             "GROUP BY race_types.character "
             "ORDER BY num DESC",
             params)
@@ -94,15 +94,15 @@ def get_all_racedata(discord_id, char_name, amplified):
     with DBConnect(commit=False) as cursor:
         params = (discord_id, char_name)
         cursor.execute(
-            "SELECT racer_data.time, racer_data.level "
-            "FROM racer_data "
-            "INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
-            "INNER JOIN race_types ON race_data.type_id = race_types.type_id "
-            "WHERE racer_data.discord_id = %s "
+            "SELECT race_runs.time, race_runs.level "
+            "FROM race_runs "
+            "INNER JOIN races ON races.race_id = race_runs.race_id "
+            "INNER JOIN race_types ON races.type_id = race_types.type_id "
+            "WHERE race_runs.discord_id = %s "
             "AND race_types.character = %s "
             "AND race_types.descriptor = 'All-zones' " +
             ("AND race_types.amplified " if amplified else "AND NOT race_types.amplified ") +
-            "AND race_types.seeded AND NOT race_data.private ",
+            "AND race_types.seeded AND NOT races.private ",
             params)
         return cursor.fetchall()
 
@@ -111,28 +111,28 @@ def get_fastest_times_leaderboard(character_name, amplified, limit):
     with DBConnect(commit=False) as cursor:
         params = (character_name, limit,)
         cursor.execute(
-            "SELECT user_data.discord_name, racer_data.time, race_data.seed, race_data.timestamp "
-            "FROM racer_data "
+            "SELECT users.discord_name, race_runs.time, races.seed, races.timestamp "
+            "FROM race_runs "
             "INNER JOIN "
             "( "
             "    SELECT discord_id, MIN(time) AS min_time "
-            "    FROM racer_data "
-            "    INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
-            "    INNER JOIN race_types ON race_types.type_id = race_data.type_id "
+            "    FROM race_runs "
+            "    INNER JOIN races ON races.race_id = race_runs.race_id "
+            "    INNER JOIN race_types ON race_types.type_id = races.type_id "
             "    WHERE "
-            "        racer_data.time > 0 "
-            "        AND racer_data.level = -2 "
+            "        race_runs.time > 0 "
+            "        AND race_runs.level = -2 "
             "        AND race_types.character=%s "
             "        AND race_types.descriptor='All-zones' "
             "        AND race_types.seeded " +
             "        AND {0}race_types.amplified ".format('' if amplified else 'NOT ') +
-            "        AND NOT race_data.private "
+            "        AND NOT races.private "
             "    GROUP BY discord_id "
-            ") rd1 On rd1.discord_id = racer_data.discord_id "
-            "INNER JOIN user_data ON user_data.discord_id = racer_data.discord_id "
-            "INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
-            "WHERE racer_data.time = rd1.min_time "
-            "ORDER BY racer_data.time ASC "
+            ") rd1 On rd1.discord_id = race_runs.discord_id "
+            "INNER JOIN users ON users.discord_id = race_runs.discord_id "
+            "INNER JOIN races ON races.race_id = race_runs.race_id "
+            "WHERE race_runs.time = rd1.min_time "
+            "ORDER BY race_runs.time ASC "
             "LIMIT %s",
             params)
         return cursor.fetchall()
@@ -150,13 +150,13 @@ def get_most_races_leaderboard(character_name, limit):
             "FROM "
             "( "
             "    SELECT "
-            "        user_data.discord_name as user_name, "
+            "        users.discord_name as user_name, "
             "        SUM( "
             "                IF( "
             "                   race_types.character=%s "
             "                   AND race_types.descriptor='All-zones' "
             "                   AND NOT race_types.amplified "
-            "                   AND NOT race_data.private, "
+            "                   AND NOT races.private, "
             "                   1, 0 "
             "                ) "
             "        ) as num_predlc, "
@@ -165,15 +165,15 @@ def get_most_races_leaderboard(character_name, limit):
             "                   race_types.character=%s "
             "                   AND race_types.descriptor='All-zones' "
             "                   AND race_types.amplified "
-            "                   AND NOT race_data.private, "
+            "                   AND NOT races.private, "
             "                   1, 0 "
             "                ) "
             "        ) as num_postdlc "
-            "    FROM racer_data "
-            "    INNER JOIN user_data ON user_data.discord_id = racer_data.discord_id "
-            "    INNER JOIN race_data ON race_data.race_id = racer_data.race_id "
-            "    INNER JOIN race_types ON race_types.type_id = race_data.type_id "
-            "    GROUP BY user_data.discord_name "
+            "    FROM race_runs "
+            "    INNER JOIN users ON users.discord_id = race_runs.discord_id "
+            "    INNER JOIN races ON races.race_id = race_runs.race_id "
+            "    INNER JOIN race_types ON race_types.type_id = races.type_id "
+            "    GROUP BY users.discord_name "
             ") tbl1 "
             "ORDER BY total DESC "
             "LIMIT %s",

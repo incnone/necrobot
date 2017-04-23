@@ -6,7 +6,7 @@ def register_discord_user(user: discord.User):
     params = (user.id, user.display_name,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "INSERT INTO user_data "
+            "INSERT INTO users "
             "(discord_id, discord_name) "
             "VALUES (%s, %s) "
             "ON DUPLICATE KEY UPDATE "
