@@ -1,7 +1,9 @@
-from necrobot.botbase.command import Command, CommandType
 from necrobot.database import ladderdb
 from necrobot.match import matchutil
 from necrobot.user import userutil
+
+from necrobot.botbase.command import Command, CommandType
+from necrobot.match.matchinfo import MatchInfo
 
 
 # General commands
@@ -287,10 +289,11 @@ async def _create_match(
         return
 
     # Create the Match object
+    match_info = MatchInfo(ranked=ranked)
     new_match = matchutil.make_match(
         racer_1_id=racers[0].user_id,
         racer_2_id=racers[1].user_id,
-        ranked=ranked,
+        match_info=match_info,
         register=True
     )
 

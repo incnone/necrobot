@@ -2,7 +2,9 @@
 
 Current version: 0.10
 
-## Condorbot
+## To be done soon
+
+### Condorbot
 
 - Setting default match type
 - Matchup creation
@@ -10,10 +12,15 @@ Current version: 0.10
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
 
-## Ladderbot
+### Ladderbot
 
 - Automatch feature
 - Better rankings display
+
+### Other
+
+- Uniformize and improve argument parsing
+- Create unit tests for all modules
 
 ## Bugs
 
@@ -37,7 +44,9 @@ just finished or the race that people are currently entering. It maybe also does
 
 ## Features
 
+- Make `.notify on` do the obvious thing
 - add comment possibility to `.death`
+- fix `.d 1-3` (and the like) causing race finish
 - add more complicated sorts to `.mostraces`
 - add `.forceunready` command
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").

@@ -5,6 +5,7 @@ from necrobot.util import console, writechannel
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match.match import Match
+from necrobot.match.matchinfo import MatchInfo
 from necrobot.match.matchroom import MatchRoom
 from necrobot.race.raceinfo import RaceInfo
 
@@ -276,12 +277,17 @@ def _make_match_from_raw_db_data(row):
     if match_id in match_library:
         return match_library[match_id]
 
-    race_info = matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo()
+    match_info = MatchInfo(
+        race_info=matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo(),
+        ranked=bool(row[9]),
+        is_best_of=bool(row[10]),
+        max_races=int(row[11])
+    )
 
     new_match = Match(
         commit_fn=matchdb.write_match,
         match_id=match_id,
-        race_info=race_info,
+        match_info=match_info,
         racer_1_id=int(row[2]),
         racer_2_id=int(row[3]),
         suggested_time=row[4],
@@ -289,9 +295,6 @@ def _make_match_from_raw_db_data(row):
         r2_confirmed=bool(row[6]),
         r1_unconfirmed=bool(row[7]),
         r2_unconfirmed=bool(row[8]),
-        ranked=bool(row[9]),
-        is_best_of=bool(row[10]),
-        max_races=int(row[11]),
         cawmentator_id=row[12]
     )
 

@@ -87,6 +87,16 @@ class GetCurrentEvent(CommandType):
         )
 
 
+class GetMatchRules(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'get-match-rules')
+        self.help_text = "Get the current event's default match rules."
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        pass
+
+
 class RegisterCondorEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'register-condor-event')
@@ -202,3 +212,23 @@ class SetEventName(CommandType):
             cmd.channel,
             'Set the name of current CoNDOR event (`{0}`) to {1}.'.format(schema_name, event_name)
         )
+
+
+class SetMatchRules(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'set-match-rules')
+        self.help_text = \
+            'Set the current event\'s default match rules. Flags:\n' \
+            '`-bestof X | -repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \
+            '`-c charname`: Set the default match character.\n' \
+            '`-u | -s | -seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
+            '`-custom desc`: Give the matches a custom description.\n' \
+            '`-nodlc`: Matches are marked as being without the Amplified DLC.'
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Set current event\'s default match rules.'
+
+    async def _do_execute(self, cmd: Command):
+        pass

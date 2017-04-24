@@ -5,6 +5,7 @@ from necrobot.user import userutil
 from necrobot.util import console
 from necrobot.util.commitdec import commits
 
+from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.necrouser import NecroUser
 
@@ -14,16 +15,13 @@ class Match(object):
                  commit_fn,
                  racer_1_id,
                  racer_2_id,
-                 max_races=3,
-                 is_best_of=False,
                  match_id=None,
                  suggested_time=None,
                  r1_confirmed=False,
                  r2_confirmed=False,
                  r1_unconfirmed=False,
                  r2_unconfirmed=False,
-                 ranked=True,
-                 race_info=RaceInfo(),
+                 match_info=MatchInfo(),
                  cawmentator_id=None
                  ):
         """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
@@ -37,11 +35,6 @@ class Match(object):
             The DB user ID of the first racer.
         racer_2_id: int
             The DB user ID of the second racer.
-        max_races: int
-            The maximum number of races this match can be. (If is_best_of is True, then the match is a best of
-            max_races; otherwise, the match is just repeating max_races.)
-        is_best_of: bool
-            Whether the match is a best-of-X (if True) or a repeat-X (if False); X is max_races.
         match_id: int
             The DB unique ID of this match.
         suggested_time: datetime.datetime
@@ -54,10 +47,8 @@ class Match(object):
             Whether the first racer wishes to unconfirm the match time.
         r2_unconfirmed: bool
             Whether the second racer wishes to unconfirm the match time.
-        ranked: bool
-            Whether the results of this match should be used to update ladder rankings.
-        race_info: RaceInfo
-            The types of races to be run in this match.
+        match_info: MatchInfo
+            The type of match.
         cawmentator_id: int
             The DB unique ID of the cawmentator for this match.
         """
@@ -78,10 +69,7 @@ class Match(object):
         self._r2_wishes_to_unconfirm = r2_unconfirmed
 
         # Format data
-        self.ranked = ranked
-        self._number_of_races = max_races
-        self._is_best_of = is_best_of
-        self._race_info = race_info
+        self._match_info = match_info
 
         # Viewer data
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None
@@ -106,6 +94,10 @@ class Match(object):
         ranked_str = 'ranked' if self.ranked else 'unranked'
 
         return '{0}, {1}, {2}'.format(self.race_info.format_str, match_format_info, ranked_str)
+
+    @property
+    def ranked(self):
+        return self._match_info.ranked
 
     @property
     def is_registered(self) -> bool:
@@ -157,15 +149,19 @@ class Match(object):
 
     @property
     def is_best_of(self) -> int:
-        return self._is_best_of
+        return self._match_info.is_best_of
 
     @property
     def number_of_races(self) -> int:
-        return self._number_of_races
+        return self._match_info.max_races
 
     @property
     def race_info(self) -> RaceInfo:
-        return self._race_info
+        return self._match_info.race_info
+
+    @property
+    def match_info(self) -> MatchInfo:
+        return self._match_info
 
     @property
     def cawmentator(self):
@@ -312,8 +308,8 @@ class Match(object):
         number: int
             The number of races to be played in the match.
         """
-        self._is_best_of = False
-        self._number_of_races = number
+        self._match_info.is_best_of = False
+        self._match_info.max_races = number
 
     @commits
     def set_best_of(self, number: int):
@@ -324,8 +320,8 @@ class Match(object):
         number: int
             The maximum number of races to be played (the match will be a best-of-number).
         """
-        self._is_best_of = True
-        self._number_of_races = number
+        self._match_info.is_best_of = True
+        self._match_info.max_races = number
 
     @commits
     def set_race_info(self, race_info: RaceInfo):
@@ -336,7 +332,7 @@ class Match(object):
         race_info: RaceInfo
             The new match RaceInfo.
         """
-        self._race_info = race_info
+        self._match_info.race_info = race_info
 
     @commits
     def set_cawmentator_id(self, cawmentator_id: int or None):

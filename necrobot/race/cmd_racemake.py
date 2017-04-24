@@ -11,24 +11,13 @@ class Make(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'make')
         self.help_text = \
-            "Create a new race room. By default this creates an unseeded Cadence race, " \
-            "but there are optional parameters. First, the short form:\n" \
-            "```" \
-            ".make [char] [u|s]" \
-            "```" \
-            "makes a race with the given character and seeding options; `char` should be a Necrodancer character, " \
-            "and the other field is either the letter `u` or the letter `s`, according to whether the race should be " \
-            "seeded or unseeded. Examples: `.make dorian u` or `.make s dove` are both fine.\n" \
-            "\n" \
-            "More options are available using usual command-line syntax:" \
-            "```" \
-            ".make [-c char] [-u|-s|-seed number] [-custom desc] [-nodlc]" \
-            "```" \
-            "makes a race with character char, and seeded/unseeded determined by the `-u` or `-s` flag. If instead a " \
-            "number is specified, the race will be seeded and forced to use the seed given. The number must be an " \
-            "integer (text seeds are not supported). " \
-            "desc allows you to give any custom one-word description of the race (e.g., '4-shrine'). " \
-            "The -nodlc flag indicates that the race is run without the Amplified DLC; otherwise, the DLC is assumed."
+            'Makes a new race room; by default, this is Cadence All-zones seeded, Amplified. Change this by ' \
+            'providing flags:\n' \
+            '`-bestof X | -repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \
+            '`-c charname`: Set the default match character.\n' \
+            '`-u | -s | -seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
+            '`-custom desc`: Give the matches a custom description.\n' \
+            '`-nodlc`: Matches are marked as being without the Amplified DLC.'
 
     async def _do_execute(self, command):
         race_info = raceinfo.parse_args(command.args)

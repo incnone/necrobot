@@ -9,6 +9,7 @@ from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.sheetcell import SheetCell
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.match.match import Match
+from necrobot.match.matchinfo import MatchInfo
 
 
 class MatchupSheetIndexData(object):
@@ -532,10 +533,11 @@ class TestMatchupSheet(unittest.TestCase):
             self.assertIsNotNone(cawmentator)
         cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
 
+        match_info = MatchInfo(ranked=True)
         return matchutil.make_match(
             racer_1_id=racer_1.user_id,
             racer_2_id=racer_2.user_id,
-            ranked=True,
+            match_info=match_info,
             suggested_time=time,
             cawmentator_id=cawmentator_id,
             register=False
