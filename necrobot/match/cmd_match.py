@@ -429,7 +429,7 @@ class ForceReschedule(CommandType):
 
 class Postpone(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'postpone')
+        CommandType.__init__(self, bot_channel, 'postpone', 'f-unschedule')
         self.help_text = 'Postpones the match. An admin can resume with `.f-begin`.'
         self.admin_only = True
 

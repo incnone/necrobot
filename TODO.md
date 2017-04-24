@@ -6,11 +6,22 @@ Current version: 0.10
 
 ### Condorbot
 
-- Setting default match type
-- Matchup creation
+- Manual matchup creation
+- Automatching
 - Deal with HTTP errors (service down) when making requests to the GSheet API
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
+- A lot of unit testing
+
+#### Unimplemented commands:
+
+- `.next`
+- `.staff`
+- `.dropracer`
+- `.fastest`, `.stats` 
+- `.contest`
+- Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
+`.register`, `.cancel`, `.forcerecordmatch`
 
 ### Ladderbot
 
