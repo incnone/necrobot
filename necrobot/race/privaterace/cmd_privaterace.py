@@ -1,4 +1,4 @@
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 
 
 class Add(CommandType):

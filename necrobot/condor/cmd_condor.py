@@ -1,8 +1,10 @@
 from necrobot.database import condordb
-from necrobot.match import matchutil
+from necrobot.match import matchinfo, matchutil
 
 from necrobot.config import Config
-from necrobot.botbase.command import Command, CommandType
+from necrobot.botbase.command import Command
+from necrobot.botbase.commandtype import CommandType
+from necrobot.util.parse.exception import ParseException
 
 
 class CloseAllMatches(CommandType):
@@ -244,4 +246,20 @@ class SetMatchRules(CommandType):
         return 'Set current event\'s default match rules.'
 
     async def _do_execute(self, cmd: Command):
-        pass
+        try:
+            match_info = matchinfo.parse_args(cmd.args)
+        except ParseException as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error parsing inputs: {0}'.format(e)
+            )
+            return
+
+        condordb.set_event_match_info(Config.CONDOR_EVENT, match_info)
+        await self.client.send_message(
+            cmd.channel,
+            'Set the default match rules for `{0}` to {1}.'.format(
+                Config.CONDOR_EVENT,
+                match_info.format_str
+            )
+        )

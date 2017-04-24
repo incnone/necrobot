@@ -1,7 +1,7 @@
 from necrobot.database import userdb
 from necrobot.stats import statfn
 
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 from necrobot.util.character import NDChar
 
 

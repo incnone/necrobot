@@ -1,7 +1,8 @@
 from necrobot.gsheet import sheetutil
 from necrobot.match import matchutil
 
-from necrobot.botbase.command import Command, CommandType
+from necrobot.botbase.command import Command
+from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 
 from necrobot.gsheet.matchupsheet import MatchupSheet

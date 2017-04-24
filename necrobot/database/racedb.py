@@ -8,35 +8,46 @@ from necrobot.race.race import Race
 from necrobot.race.raceinfo import RaceInfo
 
 
-def record_race(race: Race) -> None:
-    with DBConnect(commit=True) as cursor:
-        # Find the race type
-        racetype_params = (race.race_info.character_str,
-                           race.race_info.descriptor,
-                           race.race_info.seeded,
-                           race.race_info.amplified,
-                           race.race_info.seed_fixed)
+def get_race_type_id(race_info: RaceInfo, register=False) -> int or None:
+    with DBConnect(commit=False) as cursor:
+        racetype_params = (
+            race_info.character_str,
+            race_info.descriptor,
+            race_info.seeded,
+            race_info.amplified,
+            race_info.seed_fixed
+        )
+
         cursor.execute(
-            "SELECT type_id "
-            "FROM race_types "
-            "WHERE `character`=%s "
-            "   AND descriptor=%s "
-            "   AND seeded = %s "
-            "   AND amplified = %s "
-            "   AND seed_fixed = %s",
-            racetype_params)
+            "SELECT `type_id` "
+            "FROM `race_types` "
+            "WHERE `character` = %s "
+            "   AND `descriptor` = %s "
+            "   AND `seeded` = %s "
+            "   AND `amplified` = %s "
+            "   AND `seed_fixed` = %s",
+            racetype_params
+        )
 
         row = cursor.fetchone()
-        if row is None:
+        if row is not None:
+            return int(row[0])
+        elif register:
             cursor.execute(
                 "INSERT INTO race_types "
                 "(`character`, descriptor, seeded, amplified, seed_fixed) "
                 "VALUES (%s, %s, %s, %s, %s)",
                 racetype_params)
             cursor.execute("SELECT LAST_INSERT_ID()")
+            return int(row[0])
+        else:
+            return None
 
-        type_id = int(row[0])
 
+def record_race(race: Race) -> None:
+    type_id = get_race_type_id(race.race_info, register=True)
+
+    with DBConnect(commit=True) as cursor:
         # Record the race
         race_params = (
             race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),

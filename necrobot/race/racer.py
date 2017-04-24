@@ -75,7 +75,7 @@ class Racer(object):
         status = ''
         if self._state == RacerStatus.finished:
             status += racetime.to_str(self.time)
-            if not self.igt == -1 and not short:
+            if not self.igt == FIELD_UNKNOWN and not short:
                 status += ' (igt {})'.format(racetime.to_str(self.igt))
         else:
             status += str(self._state)
@@ -83,7 +83,7 @@ class Racer(object):
                 status += ' (rta {}'.format(racetime.to_str(self.time))
                 if 0 < self.level < 22:
                     status += ', ' + level.to_str(self.level)
-                if not self.igt == -1:
+                if not self.igt == FIELD_UNKNOWN:
                     status += ', igt {}'.format(racetime.to_str(self.igt))
                 status += ')'
 

@@ -10,7 +10,7 @@
 from necrobot.race import racetime
 from necrobot.util import level
 
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 
 
@@ -57,8 +57,15 @@ class Done(CommandType):
         self.help_text = 'Indicates you have finished the race goal, and gets your final time. ' \
                          'You may instead use `.finish` if preferred.'
 
-    async def _do_execute(self, command):
-        await self.bot_channel.current_race.finish_member(command.author)
+    async def _do_execute(self, cmd):
+        # Override: parse .d X-Y as a death
+        if len(cmd.args) == 1 and cmd.command == 'd':
+            lvl = level.from_str(cmd.args[0])
+            if lvl != level.LEVEL_NOS and self.bot_channel.last_begun_race is not None:
+                await self.bot_channel.last_begun_race.set_death_for_member(cmd.author, lvl)
+                return
+
+        await self.bot_channel.current_race.finish_member(cmd.author)
 
 
 class Undone(CommandType):

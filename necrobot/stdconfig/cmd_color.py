@@ -3,7 +3,7 @@ import random
 
 import discord
 
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 
 PROTECTED_ROLENAMES = ['Necrobot']
 ROLES_COLORS = {

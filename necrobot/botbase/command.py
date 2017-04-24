@@ -1,13 +1,11 @@
 import discord
 import shlex
 
-from necrobot.botbase.necrobot import Necrobot
 from necrobot.config import Config
-from necrobot.util import console
 
 
-# Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)
 class Command(object):
+    """Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)"""
     def __init__(self, message):
         self.command = None
         self.args = []      
@@ -42,54 +40,3 @@ class Command(object):
     def arg_string(self) -> str:
         cut_len = len(Config.BOT_COMMAND_PREFIX) + len(self.command) + 1
         return self.message.content[cut_len:]
-
-
-# Abstract base class; a particular command that the bot can interpret, and how to interpret it
-# (For instance, racemodule has a CommandType object called make, for the `.make` command.)
-class CommandType(object):
-    def __init__(self, bot_channel, *args):
-        self.command_name_list = args               # the string that calls this command (e.g. 'make')
-        self.help_text = 'This command has no help text.'
-        self.admin_only = False                     # If true, only botchannel admins can call this command
-        self.secret_command = False                 # If true, never shows up on ".help" calls
-        self.bot_channel = bot_channel
-
-    @property
-    def client(self) -> discord.Client:
-        return self.necrobot.client
-
-    @property
-    def necrobot(self) -> Necrobot:
-        return self.bot_channel.necrobot
-
-    @property
-    def mention(self) -> str:
-        return Config.BOT_COMMAND_PREFIX + self.command_name
-
-    @property
-    def command_name(self) -> str:
-        return str(self.command_name_list[0])
-
-    @property
-    def short_help_text(self) -> str:
-        """Override this to provide briefer help text for .help --verbose calls."""
-        if len(self.help_text) > 50:
-            return '{0}...'.format(self.help_text[:50].replace('`', ''))
-        else:
-            return self.help_text
-
-    # Returns True if the name can be used to call this command
-    def called_by(self, name: str) -> bool:
-        return name in self.command_name_list
-
-    # If the Command object's command is this object's command, calls the (virtual) method _do_execute on it
-    async def execute(self, command: Command):
-        if command.command in self.command_name_list and \
-                ((not self.admin_only) or self.bot_channel.is_admin(command.author)):
-            await self._do_execute(command)
-
-    # Virtual; determine what this CommandType should do with a given Command
-    # command: [command.Command]
-    async def _do_execute(self, command: Command):
-        console.error('Called CommandType._do_execute in the abstract base class.')
-        pass

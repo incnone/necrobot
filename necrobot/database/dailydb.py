@@ -3,6 +3,7 @@ Interaction with the necrobot.dailies and necrobot.daily_runs tables.
 """
 
 from necrobot.database.dbconnect import DBConnect
+from necrobot.util import level
 
 
 def get_daily_seed(daily_id, daily_type):
@@ -50,9 +51,9 @@ def has_registered_daily(discord_id, daily_id, daily_type):
         return cursor.fetchone() is not None
 
 
-def register_daily(discord_id, daily_id, daily_type, level=-1, time=-1):
+def register_daily(discord_id, daily_id, daily_type, lvl=level.LEVEL_NOS, time=-1):
     with DBConnect(commit=True) as cursor:
-        params = (discord_id, daily_id, daily_type, level, time,)
+        params = (discord_id, daily_id, daily_type, lvl, time,)
         cursor.execute(
             "INSERT INTO daily_runs "
             "(discord_id, daily_id, type, level, time) "

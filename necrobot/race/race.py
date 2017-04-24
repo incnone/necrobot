@@ -11,6 +11,7 @@ from enum import IntEnum, Enum
 from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util import seedgen
+from necrobot.util import level
 from necrobot.util.ordinal import ordinal
 
 from necrobot.race.raceconfig import RaceConfig
@@ -533,7 +534,7 @@ class Race(object):
 
         await self._do_forfeit_racer(racer)
         await self._write(mute=mute, text='{0} has forfeit the race.'.format(racer_member.mention))
-        if not level == -1:
+        if not level == level.LEVEL_NOS:
             racer.level = level
         await self._process(RaceEvent.EventType.RACER_FORFEIT)
 

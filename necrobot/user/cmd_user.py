@@ -5,7 +5,7 @@ from mysql.connector import IntegrityError
 from necrobot.database import userdb
 from necrobot.user import userutil
 
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 from necrobot.user.userprefs import UserPrefs
 from necrobot.config import Config
 

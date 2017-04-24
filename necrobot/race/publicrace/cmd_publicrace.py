@@ -1,6 +1,6 @@
 # Commands specific to publicrace.RaceRoom (and its derived classes)
 
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 
 

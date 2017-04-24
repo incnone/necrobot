@@ -1,4 +1,4 @@
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 
 
@@ -23,7 +23,7 @@ class Help(CommandType):
         # Pop 'verbose' argument
         verbose = False
         for idx, arg in enumerate(args):
-            if arg == '--verbose':
+            if arg.lstrip('-') == 'verbose':
                 args.pop(idx)
                 verbose = True
 

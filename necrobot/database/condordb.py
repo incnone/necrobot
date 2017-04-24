@@ -3,6 +3,8 @@ Interaction with the necrobot.condor_events table.
 """
 
 import re
+from necrobot.database import racedb
+
 from necrobot.config import Config
 from necrobot.database.dbconnect import DBConnect
 from necrobot.match.matchinfo import MatchInfo
@@ -176,6 +178,39 @@ def get_event_name(schema_name: str) -> str:
             raise EventDoesNotExist()
 
         return event_name_row[0]
+
+
+def set_event_match_info(schema_name: str, match_info: MatchInfo):
+    """Set the default match info for the given event.
+    
+    Parameters
+    ----------
+    schema_name: str
+        The name of the schema for the event (and also the event's unique identifier).
+    match_info
+        The new default MatchInfo.
+    """
+    with DBConnect(commit=True) as cursor:
+        race_type_id = racedb.get_race_type_id(race_info=match_info.race_info, register=True)
+
+        params = (
+            match_info.max_races,
+            match_info.is_best_of,
+            match_info.ranked,
+            race_type_id,
+            schema_name
+        )
+
+        cursor.execute(
+            "UPDATE `condor_events` "
+            "SET "
+            "   `number_of_races`=%s, "
+            "   `is_best_of`=%s, "
+            "   `ranked`=%s, "
+            "   `race_type`=%s "
+            "WHERE `schema_name`=%s",
+            params
+        )
 
 
 def set_event_name(schema_name: str, event_name: str) -> None:

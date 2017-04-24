@@ -9,7 +9,8 @@ from necrobot.user import userutil
 from necrobot.util import timestr
 from necrobot.util.parse import dateparse
 
-from necrobot.botbase.command import Command, CommandType
+from necrobot.botbase.command import Command
+from necrobot.botbase.commandtype import CommandType
 from necrobot.util.parse.exception import ParseException
 
 

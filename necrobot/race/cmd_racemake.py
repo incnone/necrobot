@@ -1,7 +1,7 @@
 from necrobot.race import raceinfo, raceutil
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
 
-from necrobot.botbase.command import CommandType
+from necrobot.botbase.commandtype import CommandType
 from necrobot.util.parse.exception import ParseException
 
 

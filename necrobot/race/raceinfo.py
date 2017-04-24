@@ -99,8 +99,7 @@ def parse_args(args: list) -> RaceInfo:
     ------
     ParseException
     """
-    race_info = RaceInfo()
-    return parse_args_modify(args, race_info)
+    return parse_args_modify(args, RaceInfo())
 
 
 def parse_args_modify(args: list, race_info: RaceInfo) -> RaceInfo:
@@ -123,9 +122,32 @@ def parse_args_modify(args: list, race_info: RaceInfo) -> RaceInfo:
     ------
     ParseException
     """
+    return parse_from_dict(matchparse.parse_matchtype_args(args), race_info)
+
+
+def parse_from_dict(args_dict: dict, race_info: RaceInfo) -> RaceInfo:
+    """Returns a new RaceInfo which is the supplied RaceInfo with information changed as specified
+    by args_dict.
+    
+    Parameters
+    ----------
+    args_dict: dict[str, list[str]]
+        The parsed dict of command-line args.
+    race_info: RaceInfo
+        The RaceInfo to get a modified version of.
+
+    Returns
+    -------
+    RaceInfo
+        The modified RaceInfo.
+        
+    Raises
+    ------
+    ParseException
+    """
     new_race_info = RaceInfo.copy(race_info)
 
-    for keyword, params in matchparse.parse_matchtype_args(args):
+    for keyword, params in args_dict.items():
         if keyword == 'seeded':
             new_race_info.seeded = True
         elif keyword == 'unseeded':
