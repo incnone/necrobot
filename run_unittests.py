@@ -7,8 +7,9 @@ from necrobot import config, loader, logon
 from necrobot.botbase.command import Command
 
 TEST_CONFIG = False
-TEST_PARSE = True
-TEST_SHEETS = False
+TEST_PARSE = False
+TEST_SHEETS = True
+TEST_USER = False
 
 if TEST_CONFIG:
     # noinspection PyUnresolvedReferences
@@ -27,6 +28,10 @@ if TEST_SHEETS:
     from necrobot.gsheet.sheetrange import TestSheetRange
     # noinspection PyUnresolvedReferences
     from necrobot.gsheet.sheetutil import TestSheetUtil
+
+if TEST_USER:
+    # noinspection PyUnresolvedReferences
+    from necrobot.user.necrouser import TestNecroUser
 
 
 # Define client events
@@ -64,7 +69,7 @@ def ready_client_events(client, the_necrobot, load_config_fn):
 
 if __name__ == "__main__":
     logon.logon(
-        config_filename='data/necrobot_config',
-        load_config_fn=loader.load_testing_config,
+        config_filename='data/condorbot_config',
+        load_config_fn=loader.load_condorbot_config,
         def_events_fn=ready_client_events
     )

@@ -1,8 +1,7 @@
 from necrobot.database import ladderdb
-from necrobot.match import matchutil
+from necrobot.match import cmd_match
 from necrobot.user import userutil
 
-from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.match.matchinfo import MatchInfo
 
@@ -101,12 +100,12 @@ class Ranked(CommandType):
             )
             return
 
-        await _create_match(
+        await cmd_match.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_members=[cmd.author],
             racer_names=[cmd.args[0]],
-            ranked=True
+            match_info=MatchInfo(ranked=True)
         )
 
 
@@ -166,12 +165,12 @@ class Unranked(CommandType):
             )
             return
 
-        await _create_match(
+        await cmd_match.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_members=[cmd.author],
             racer_names=[cmd.args[0]],
-            ranked=False
+            match_info=MatchInfo(ranked=False)
         )
 
 
@@ -239,70 +238,9 @@ class ForceRanked(CommandType):
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        await _create_match(
+        await cmd_match.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],
-            ranked=True
+            match_info=MatchInfo(ranked=True)
         )
-
-
-async def _create_match(
-        cmd: Command,
-        cmd_type: CommandType,
-        racer_members=list(),
-        racer_names=list(),
-        ranked=False
-):
-    racers = []
-
-    # Add the racers from member objects
-    for member in racer_members:
-        racer_as_necrouser = userutil.get_user(discord_id=member.id)
-        if racer_as_necrouser is not None:
-            racers.append(racer_as_necrouser)
-        else:
-            await cmd_type.client.send_message(
-                cmd.channel,
-                'Unexpected error: Couldn\'t find `{0}` in the database.'.format(member.display_name)
-            )
-            return
-
-    # Add the racers from names
-    for name in racer_names:
-        racer_as_necrouser = userutil.get_user(any_name=name)
-
-        if racer_as_necrouser is not None:
-            racers.append(racer_as_necrouser)
-        else:
-            await cmd_type.client.send_message(
-                cmd.channel,
-                'Couldn\'t find a user with name `{0}`.'.format(name)
-            )
-            return
-
-    # Check we have exactly two racers
-    if len(racers) != 2:
-        await cmd_type.client.send_message(
-            cmd.channel,
-            'Unexpected error: Tried to create a match with more than two racers.'
-        )
-        return
-
-    # Create the Match object
-    match_info = MatchInfo(ranked=ranked)
-    new_match = matchutil.make_match(
-        racer_1_id=racers[0].user_id,
-        racer_2_id=racers[1].user_id,
-        match_info=match_info,
-        register=True
-    )
-
-    # Create the match room
-    match_room = await matchutil.make_match_room(new_match)
-
-    # Output success
-    await cmd_type.client.send_message(
-        cmd.channel,
-        'Match created in channel {0}.'.format(
-            match_room.channel.mention))

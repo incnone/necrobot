@@ -64,11 +64,11 @@ class MatchRoom(BotChannel):
         self._during_match_command_types = [
             cmd_admin.Help(self),
 
-            cmd_match.MatchInfo(self),
             cmd_match.CancelRace(self),
             cmd_match.ChangeWinner(self),
             cmd_match.ForceNewRace(self),
             cmd_match.ForceRecordRace(self),
+            cmd_match.GetMatchInfo(self),
             cmd_match.Postpone(self),
             cmd_match.RebootRoom(self),
             cmd_match.SetMatchType(self),

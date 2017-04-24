@@ -20,7 +20,7 @@ class GetGSheet(CommandType):
         return 'Current GSheet info.'
 
     async def _do_execute(self, cmd: Command):
-        perm_info = sheetutil.has_read_write_permissions(Config.GSHEET_ID)
+        perm_info = await sheetutil.has_read_write_permissions(Config.GSHEET_ID)
         if not perm_info[0]:
             await self.client.send_message(
                 cmd.channel,
@@ -66,7 +66,9 @@ class MakeFromSheet(CommandType):
 
         # TODO error checking somewhere
         matchup_sheet = MatchupSheet(gsheet_id=Config.GSHEET_ID, wks_name=wks_name)
-        matches = matchup_sheet.get_matches(register=False)
+        await matchup_sheet.initialize()
+
+        matches = await matchup_sheet.get_matches(register=False)
         matches_with_channels = matchutil.get_matches_with_channels()
         channeled_matchroom_names = dict()
         for match in matches_with_channels:
@@ -120,7 +122,7 @@ class SetGSheet(CommandType):
             return
 
         sheet_id = cmd.args[0]
-        perm_info = sheetutil.has_read_write_permissions(sheet_id)
+        perm_info = await sheetutil.has_read_write_permissions(sheet_id)
         if not perm_info[0]:
             await self.client.send_message(
                 cmd.channel,

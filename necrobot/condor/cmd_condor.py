@@ -1,5 +1,5 @@
 from necrobot.database import condordb
-from necrobot.match import matchinfo, matchutil
+from necrobot.match import cmd_match, matchinfo, matchutil
 
 from necrobot.config import Config
 from necrobot.botbase.command import Command
@@ -59,6 +59,48 @@ class CloseAllMatches(CommandType):
 #             cmd.channel,
 #             'Done closing all completed match channels.'
 #         )
+
+
+class MakeMatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makematch')
+        self.help_text = 'Create a new match room between two racers with ' \
+                         '`{0} racer_1_name racer_2_name`.'.format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Create new match room.'
+
+    async def _do_execute(self, cmd):
+        # Parse arguments
+        if len(cmd.args) != 2:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        schema_name = Config.CONDOR_EVENT
+        try:
+            match_info = condordb.get_event_match_info(schema_name)
+        except condordb.EventDoesNotExist:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Event `{0}` is not registered in the database.'.format(schema_name)
+            )
+            return
+
+        await cmd_match.make_match_from_cmd(
+            cmd=cmd,
+            cmd_type=self,
+            racer_names=[cmd.args[0], cmd.args[1]],
+            match_info=match_info
+        )
+
+        await self.client.send_message(
+            cmd.channel,
+            'Match created.'.format(schema_name)
+        )
 
 
 class GetCurrentEvent(CommandType):

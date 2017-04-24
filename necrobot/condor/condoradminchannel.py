@@ -24,6 +24,7 @@ class CondorAdminChannel(BotChannel):
             cmd_condor.CloseAllMatches(self),
             cmd_condor.GetCurrentEvent(self),
             cmd_condor.GetMatchRules(self),
+            cmd_condor.MakeMatch(self),
             cmd_condor.RegisterCondorEvent(self),
             cmd_condor.SetCondorEvent(self),
             cmd_condor.SetEventName(self),

@@ -6,7 +6,6 @@ Current version: 0.10
 
 ### Condorbot
 
-- Manual matchup creation
 - Automatching
 - Deal with HTTP errors (service down) when making requests to the GSheet API
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 

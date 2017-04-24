@@ -54,7 +54,7 @@ class SheetRange(object):
         self.lr_cell = self._get_cell_as_int_pair(range_args[1])
 
     def _update_range_name(self):
-        self.range_name = get_range_name(ul_cell=self.ul_cell, lr_cell=self.lr_cell, wks_name=self.wks_name)
+        self.range_name = _get_range_name(ul_cell=self.ul_cell, lr_cell=self.lr_cell, wks_name=self.wks_name)
 
     @staticmethod
     def _get_cell_as_int_pair(cell_str):
@@ -74,7 +74,7 @@ class SheetRange(object):
         return int(row_str), col_num
 
 
-def get_range_name(ul_cell: tuple, lr_cell: tuple, wks_name=None) -> str:
+def _get_range_name(ul_cell: tuple, lr_cell: tuple, wks_name=None) -> str:
     """Get a string representing the range specified.
     :param ul_cell: A 2-tuple(int) giving the upper-left cell coordinates
     :param lr_cell: A 2-tuple(int) giving the lower-left cell coordinates

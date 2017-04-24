@@ -1,6 +1,8 @@
 import datetime
 import discord
 import pytz
+import re
+import unittest
 
 from necrobot.util import console
 from necrobot.util import strutil
@@ -37,6 +39,24 @@ class NecroUser(object):
     @property
     def user_id(self) -> int:
         return self._user_id
+
+    @property
+    def name_regex(self):
+        """A compiled Regular Expression Object matching the racer's various names"""
+        re_str = r''
+        if self.rtmp_name is not None:
+            re_str += re.escape(self.rtmp_name) + r'|'
+        if self.discord_name is not None:
+            re_str += re.escape(self.discord_name) + r'|'
+        if self.twitch_name is not None:
+            re_str += re.escape(self.twitch_name) + r'|'
+
+        if re_str == r'':
+            return None
+
+        re_str = re_str[:-1]
+
+        return re.compile(r'(?i)^\s*(' + re_str + r')\s*$')
 
     @property
     def discord_id(self) -> int:
@@ -179,3 +199,21 @@ class NecroUser(object):
 
         if changed_any and commit:
             self.commit()
+
+
+class TestNecroUser(unittest.TestCase):
+    def setUp(self):
+        def commit_fn(user):
+            pass
+        self.commit_fn = commit_fn
+
+    def test_regex(self):
+        user_1 = NecroUser(self.commit_fn)
+        user_1.set(
+            rtmp_name='incnone RTMP',
+            twitch_name='incnone_twitch',
+            commit=False
+        )
+        self.assertTrue(user_1.name_regex.match(' incnone rtmp '))
+        self.assertTrue(user_1.name_regex.match(' Incnone_Twitch '))
+        self.assertFalse(user_1.name_regex.match('incnone_nomatch'))

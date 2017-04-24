@@ -4,6 +4,10 @@ import random
 import time
 
 
+class TimeoutException(Exception):
+    pass
+
+
 class ExponentialBackoff:
     """An implementation of the exponential backoff algorithm
 
@@ -26,13 +30,14 @@ class ExponentialBackoff:
         number in between may be returnd. Defaults to False.
     """
 
-    def __init__(self, base=1, *, integral=False):
+    def __init__(self, base=1, *, integral=False, timeout=None):
         self._base = base
 
         self._exp = 0
         self._max = 10
-        self._reset_time = base * 2 ** 11
         self._last_invocation = time.monotonic()
+        self._timeout = min(timeout, base * 2 ** (self._max + 1)) \
+            if timeout is not None else base * 2 ** (self._max + 1)
 
         # Use our own random instance to avoid messing with global one
         rand = random.Random()
@@ -48,15 +53,19 @@ class ExponentialBackoff:
         where exponent starts off at 1 and is incremented at every
         invocation of this method up to a maximum of 10.
 
-        If a period of more than base * 2^11 has passed since the last
-        retry, the exponent is reset to 1.
+        If a period of more than the timout has passed since the last
+        retry, raise a TimeoutException.
         """
         invocation = time.monotonic()
         interval = invocation - self._last_invocation
         self._last_invocation = invocation
 
-        if interval > self._reset_time:
-            self._exp = 0
+        if interval > self._timeout:
+            raise TimeoutException()
 
         self._exp = min(self._exp + 1, self._max)
         return self._randfunc(0, self._base * 2 ** self._exp)
+
+    def reset(self):
+        """Reset the delay"""
+        self._exp = 0
