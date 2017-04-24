@@ -2,7 +2,6 @@ import pytz
 
 from mysql.connector import IntegrityError
 
-from necrobot.database import userdb
 from necrobot.user import userutil
 
 from necrobot.botbase.commandtype import CommandType

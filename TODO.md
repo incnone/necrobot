@@ -4,13 +4,16 @@ Current version: 0.10
 
 ## To be done soon
 
-### Condorbot
+### Condorbot features
 
 - Automatching
-- Deal with HTTP errors (service down) when making requests to the GSheet API
+
+### Testing
+
+- HTTP errors (service down) when making requests to the GSheet API
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
-- A lot of unit testing
+- Other stuff
 
 #### Unimplemented commands:
 

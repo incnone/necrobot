@@ -3,17 +3,17 @@ necrobot (schema)
 		# Info about the event -- should remain the same for a whole event; "const" data
 		schema_name: varchar(25) PK
 			The name of the schema with the event's data (e.g. season5)
-		event_name: tinytext				
+		event_name: tinytext
 			A descriptive name of the event (e.g. "CoNDOR Season 5")
 		
 		# Info about the default match -- can change mid-event; "mutable" data
-		race_type: mediumint UN			
+		race_type: mediumint UN
 			The default race type for a match
-		number_of_races: tinyint			
+		number_of_races: tinyint
 			The default number of races for a match
-		is_best_of: bit(1)				
+		is_best_of: bit(1)
 			Whether matches are best-of-X by default
-		ranked: bit(1)					
+		ranked: bit(1)
 			Whether matches are ranked
 
 		# Info about the type of tournament

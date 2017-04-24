@@ -59,6 +59,7 @@ def logon(config_filename: str, load_config_fn, def_events_fn=ready_client_event
     handler = logging.FileHandler(filename=log_output_filename, encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
+    logging.getLogger('asyncio').addHandler(handler)
 
     # Initialize config file----------------------------------
     console.info('Initializing necrobot...')
@@ -70,9 +71,8 @@ def logon(config_filename: str, load_config_fn, def_events_fn=ready_client_event
     # Run client---------------------------------------------
     retry = backoff.ExponentialBackoff()
 
-    logger.info('Entering main loop.')
     while True:
-        logger.info('Beginning main loop: creating ')
+        logger.info('Beginning main loop.')
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
         the_necrobot = Necrobot()
@@ -117,3 +117,5 @@ def logon(config_filename: str, load_config_fn, def_events_fn=ready_client_event
 
         if the_necrobot.quitting:
             break
+
+    asyncio.get_event_loop().close()

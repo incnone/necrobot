@@ -27,7 +27,7 @@ if TEST_SHEETS:
     # noinspection PyUnresolvedReferences
     from necrobot.gsheet.sheetrange import TestSheetRange
     # noinspection PyUnresolvedReferences
-    from necrobot.gsheet.sheetutil import TestSheetUtil
+    # from necrobot.gsheet.sheetutil import TestSheetUtil
 
 if TEST_USER:
     # noinspection PyUnresolvedReferences

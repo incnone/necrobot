@@ -49,7 +49,7 @@ class MatchRoom(BotChannel):
             cmd_admin.Help(self),
 
             cmd_match.Confirm(self),
-            cmd_match.MatchInfo(self),
+            cmd_match.GetMatchInfo(self),
             cmd_match.Suggest(self),
             cmd_match.Unconfirm(self),
             cmd_match.ForceBegin(self),
@@ -154,7 +154,7 @@ class MatchRoom(BotChannel):
             self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start())
 
     # Change the RaceInfo for this room
-    async def change_race_info(self, command_args: str):
+    async def change_race_info(self, command_args: list):
         new_race_info = raceinfo.parse_args_modify(
             command_args,
             raceinfo.RaceInfo.copy(self.match.race_info)

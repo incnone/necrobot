@@ -104,39 +104,39 @@ class MatchupSheetIndexData(object):
 
     @property
     def racer_1(self):
-        return self._racer_1 - self.min_column
+        return self._racer_1 - self.min_column if self._racer_1 is not None else None
 
     @property
     def racer_2(self):
-        return self._racer_2 - self.min_column
+        return self._racer_2 - self.min_column if self._racer_2 is not None else None
 
     @property
     def cawmentary(self):
-        return self._cawmentary - self.min_column
+        return self._cawmentary - self.min_column if self._cawmentary is not None else None
 
     @property
     def date(self):
-        return self._date - self.min_column
+        return self._date - self.min_column if self._date is not None else None
 
     @property
     def match_type(self):
-        return self._match_type - self.min_column
+        return self._match_type - self.min_column if self._match_type is not None else None
 
     @property
     def score(self):
-        return self._score - self.min_column
+        return self._score - self.min_column if self._score is not None else None
 
     @property
     def tier(self):
-        return self._tier - self.min_column
+        return self._tier - self.min_column if self._tier is not None else None
 
     @property
     def vod(self):
-        return self._vod - self.min_column
+        return self._vod - self.min_column if self._vod is not None else None
 
     @property
     def winner(self):
-        return self._winner - self.min_column
+        return self._winner - self.min_column if self._winner is not None else None
 
     @property
     def full_range(self):

@@ -203,7 +203,7 @@ class NecroUser(object):
 
 class TestNecroUser(unittest.TestCase):
     def setUp(self):
-        def commit_fn(user):
+        def commit_fn(_):
             pass
         self.commit_fn = commit_fn
 

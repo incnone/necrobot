@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import unittest
 
@@ -11,6 +12,7 @@ from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.user import userutil
 from necrobot.util import console
+from necrobot.util.asynctest import async_test
 
 
 class MatchupSheet(object):
@@ -167,7 +169,7 @@ class MatchupSheet(object):
             lr_cell=(row, self.column_data.score,),
             wks_name=self.wks_name
         )
-        self._update_cells(
+        await self._update_cells(
             sheet_range=sheet_range,
             values=[[winner, '{0}-{1}'.format(winner_wins, loser_wins)]],
             raw_input=False
@@ -190,15 +192,15 @@ class MatchupSheet(object):
             if 'values' not in value_range:
                 return None
 
-            match_names = {match.racer_1.rtmp_name.lower(), match.racer_2.rtmp_name.lower()}
+            match_regex_1 = match.racer_1.name_regex
+            match_regex_2 = match.racer_2.name_regex
 
             values = value_range['values']
             for row, row_values in enumerate(values):
-                gsheet_names = {
-                    row_values[self.column_data.racer_1].lower().rstrip(' '),
-                    row_values[self.column_data.racer_2].lower().rstrip(' ')
-                }
-                if gsheet_names == match_names:
+                gsheet_name_1 = row_values[self.column_data.racer_1]
+                gsheet_name_2 = row_values[self.column_data.racer_2]
+                if (match_regex_1.match(gsheet_name_1) and match_regex_2.match(gsheet_name_2)) \
+                        or (match_regex_1.match(gsheet_name_2) and match_regex_2.match(gsheet_name_1)):
                     return row
             console.error('Couldn\'t find match {0}-{1} on the GSheet.'.format(
                 match.racer_1.rtmp_name,
@@ -278,85 +280,99 @@ class MatchupSheet(object):
             return response is not None
 
 
-# class TestMatchupSheet(unittest.TestCase):
-#     the_gsheet_id = '1JbwqUsX1ibHVVtcRVpOmaFJcfQz2ncBAOwb1nV1PsPA'
-#
-#     def setUp(self):
-#         self.sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet1')
-#         self.sheet_2 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet2')
-#         self.match_1 = self._get_match(
-#             r1_name='yjalexis',
-#             r2_name='macnd',
-#             time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20),
-#             cawmentator_name='incnone'
-#         )
-#         self.match_2 = self._get_match(
-#             r1_name='elad',
-#             r2_name='wilarseny',
-#             time=None,
-#             cawmentator_name=None
-#         )
-#
-#         self.assertEqual(self.match_1.cawmentator.rtmp_name, 'incnone')
-#
-#     def test_init(self):
-#         col_data = self.sheet_1.column_data
-#         self.assertEqual(col_data.tier, 1)
-#         self.assertEqual(col_data.racer_1, 2)
-#         self.assertEqual(col_data.racer_2, 3)
-#         self.assertEqual(col_data.date, 4)
-#         self.assertEqual(col_data.cawmentary, 5)
-#         self.assertEqual(col_data.winner, 6)
-#         self.assertEqual(col_data.score, 7)
-#         self.assertEqual(col_data.vod, 10)
-#         self.assertEqual(col_data.header_row, 3)
-#         self.assertEqual(col_data.footer_row, 6)
-#
-#         bad_col_data = self.sheet_2.column_data
-#         self.assertIsNone(bad_col_data.header_row)
-#
-#     @unittest.skip('slow')
-#     def test_get_matches(self):
-#         matches = self.sheet_1.get_matches()
-#         self.assertEqual(len(matches), 2)
-#         match = matches[0]
-#         self.assertEqual(match.racer_1.rtmp_name, 'yjalexis')
-#         self.assertEqual(match.racer_2.rtmp_name, 'macnd')
-#
-#     def test_schedule(self):
-#         self.assertRaises(RuntimeError, self.sheet_2._update_cell, 4, 4, 'Test update')
-#         self.sheet_1.schedule_match(self.match_1)
-#         self.sheet_1.schedule_match(self.match_2)
-#
-#     def test_record_score(self):
-#         self.sheet_1.record_score(self.match_1, 'macnd', 2, 1)
-#         self.sheet_1.record_score(self.match_2, 'elad', 3, 1)
-#
-#     def test_update_cawmentary_and_vod(self):
-#         self.sheet_1.add_cawmentary(self.match_1)
-#         self.sheet_1.add_vod(self.match_1, 'http://www.youtube.com/')
-#
-#     def _get_match(self,
-#                    r1_name: str,
-#                    r2_name: str,
-#                    time: datetime.datetime or None,
-#                    cawmentator_name: str or None
-#                    ) -> Match:
-#         racer_1 = userutil.get_user(any_name=r1_name, register=False)
-#         racer_2 = userutil.get_user(any_name=r2_name, register=False)
-#         cawmentator = userutil.get_user(rtmp_name=cawmentator_name)
-#         self.assertIsNotNone(racer_1)
-#         self.assertIsNotNone(racer_2)
-#         if cawmentator_name is not None:
-#             self.assertIsNotNone(cawmentator)
-#         cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
-#
-#         match_info = MatchInfo(ranked=True)
-#         return matchutil.make_match(
-#             racer_1_id=racer_1.user_id,
-#             racer_2_id=racer_2.user_id,
-#             match_info=match_info,
-#             suggested_time=time,
-#             cawmentator_id=cawmentator_id,
-#             register=False
-#         )
+class TestMatchupSheet(unittest.TestCase):
+    loop = asyncio.new_event_loop()
+    the_gsheet_id = '1JbwqUsX1ibHVVtcRVpOmaFJcfQz2ncBAOwb1nV1PsPA'
+
+    @classmethod
+    def setUpClass(cls):
+        pass
+        cls.sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet1')
+        cls.sheet_2 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet2')
+
+        cls.loop.run_until_complete(cls.sheet_1.initialize())
+        cls.loop.run_until_complete(cls.sheet_2.initialize())
+
+        cls.match_1 = cls._get_match(
+            r1_name='yjalexis',
+            r2_name='macnd',
+            time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20),
+            cawmentator_name='incnone'
+        )
+        cls.match_2 = cls._get_match(
+            r1_name='elad',
+            r2_name='wilarseny',
+            time=None,
+            cawmentator_name=None
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.loop.close()
+
+    @async_test(loop)
+    def test_init(self):
+        col_data = self.sheet_1.column_data
+        self.assertEqual(col_data.tier, 1)
+        self.assertEqual(col_data.racer_1, 2)
+        self.assertEqual(col_data.racer_2, 3)
+        self.assertEqual(col_data.date, 4)
+        self.assertEqual(col_data.cawmentary, 5)
+        self.assertEqual(col_data.winner, 6)
+        self.assertEqual(col_data.score, 7)
+        self.assertEqual(col_data.vod, 10)
+        self.assertEqual(col_data.header_row, 3)
+        self.assertEqual(col_data.footer_row, 8)
+
+        bad_col_data = self.sheet_2.column_data
+        self.assertIsNone(bad_col_data.header_row)
+
+    @async_test(loop)
+    def test_get_matches(self):
+        matches = yield from self.sheet_1.get_matches()
+        self.assertEqual(len(matches), 4)
+        match = matches[0]
+        self.assertEqual(match.racer_1.rtmp_name, 'yjalexis')
+        self.assertEqual(match.racer_2.rtmp_name, 'macnd')
+
+    @async_test(loop)
+    def test_schedule(self):
+        try:
+            yield from self.sheet_2._update_cell(row=4, col=4, value='Test update')
+            self.assertTrue(False)
+        except RuntimeError:
+            pass
+        yield from self.sheet_1.schedule_match(self.match_1)
+        yield from self.sheet_1.schedule_match(self.match_2)
+
+    @async_test(loop)
+    def test_record_score(self):
+        yield from self.sheet_1.record_score(self.match_1, 'macnd', 2, 1)
+        yield from self.sheet_1.record_score(self.match_2, 'elad', 3, 1)
+
+    @async_test(loop)
+    def test_update_cawmentary_and_vod(self):
+        yield from self.sheet_1.add_cawmentary(self.match_1)
+        yield from self.sheet_1.add_vod(self.match_1, 'http://www.youtube.com/')
+
+    @staticmethod
+    def _get_match(
+            r1_name: str,
+            r2_name: str,
+            time: datetime.datetime or None,
+            cawmentator_name: str or None
+            ) -> Match:
+        racer_1 = userutil.get_user(any_name=r1_name, register=False)
+        racer_2 = userutil.get_user(any_name=r2_name, register=False)
+        cawmentator = userutil.get_user(rtmp_name=cawmentator_name)
+        cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
+
+        match_info = MatchInfo(ranked=True)
+        return matchutil.make_match(
+            racer_1_id=racer_1.user_id,
+            racer_2_id=racer_2.user_id,
+            match_info=match_info,
+            suggested_time=time,
+            cawmentator_id=cawmentator_id,
+            register=False
+        )
