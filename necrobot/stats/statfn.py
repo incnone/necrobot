@@ -2,8 +2,8 @@ import math
 
 from necrobot.database import matchdb, racedb
 from necrobot.race import racetime
-from necrobot.util import character
 from necrobot.util import console
+from necrobot.util.character import NDChar
 
 
 class CharacterStats(object):
@@ -105,7 +105,7 @@ class StatCache(object):
             # If here, the cache is out-of-date
             general_stats = GeneralStats()
             for row in racedb.get_allzones_race_numbers(discord_id, amplified):
-                char = character.get_char_from_str(row[0])
+                char = NDChar.fromstr(row[0])
                 charstats = CharacterStats(char)
                 charstats.number_of_races = int(row[1])
                 total_time = 0
@@ -187,7 +187,7 @@ def get_winrates(discord_id_1, discord_id_2, ndchar, amplified):
 
 
 def get_most_races_infotext(ndchar, limit):
-    most_races = racedb.get_most_races_leaderboard(character.get_str_from_char(ndchar), limit)
+    most_races = racedb.get_most_races_leaderboard(str(ndchar), limit)
     infotext = '{0:>16} {1:>6} {2:>6}\n'.format('', 'Base', 'Amp')
     for row in most_races:
         infotext += '{0:>16} {1:>6} {2:>6}\n'.format(row[0], row[2], row[3])
@@ -195,7 +195,7 @@ def get_most_races_infotext(ndchar, limit):
 
 
 def get_fastest_times_infotext(ndchar, amplified, limit):
-    fastest_times = racedb.get_fastest_times_leaderboard(character.get_str_from_char(ndchar), amplified, limit)
+    fastest_times = racedb.get_fastest_times_leaderboard(str(ndchar), amplified, limit)
     infotext = '{0:>16} {1:<9} {2:<9} {3:<13}\n'.format('', 'Time (rta)', 'Seed', 'Date')
     for row in fastest_times:
         infotext += '{0:>16} {1:>9} {2:>9} {3:>13}\n'.format(

@@ -7,19 +7,24 @@ from necrobot import config, loader, logon
 from necrobot.botbase.command import Command
 
 TEST_CONFIG = False
-TEST_SHEETS = True
+TEST_PARSE = True
+TEST_SHEETS = False
 
 if TEST_CONFIG:
     # noinspection PyUnresolvedReferences
     from necrobot.config import TestConfig
 
+if TEST_PARSE:
+    # noinspection PyUnresolvedReferences
+    from necrobot.util.parse.matchparse import TestMatchParse
+
 if TEST_SHEETS:
     # noinspection PyUnresolvedReferences
-    # from necrobot.gsheet.spreadsheets import TestSpreadsheets
+    from necrobot.gsheet.spreadsheets import TestSpreadsheets
     # noinspection PyUnresolvedReferences
-    # from necrobot.gsheet.matchupsheet import TestMatchupSheet
+    from necrobot.gsheet.matchupsheet import TestMatchupSheet
     # noinspection PyUnresolvedReferences
-    # from necrobot.gsheet.sheetrange import TestSheetRange
+    from necrobot.gsheet.sheetrange import TestSheetRange
     # noinspection PyUnresolvedReferences
     from necrobot.gsheet.sheetutil import TestSheetUtil
 

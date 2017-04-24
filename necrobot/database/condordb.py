@@ -5,6 +5,8 @@ Interaction with the necrobot.condor_events table.
 import re
 from necrobot.config import Config
 from necrobot.database.dbconnect import DBConnect
+from necrobot.match.matchinfo import MatchInfo
+from necrobot.race.raceinfo import RaceInfo
 
 
 class EventAlreadyExists(Exception):
@@ -80,6 +82,59 @@ def create_new_event(schema_name: str):
             "CREATE TABLE `{0}`.`races` LIKE `{1}`.`races`".format(schema_name, Config.MYSQL_DB_NAME))
         cursor.execute(
             "CREATE TABLE `{0}`.`race_runs` LIKE `{1}`.`race_runs`".format(schema_name, Config.MYSQL_DB_NAME))
+
+
+def get_event_match_info(schema_name: str) -> MatchInfo:
+    """
+    Parameters
+    ----------
+    schema_name: str
+        The name of the schema for the event (and also the event's unique identifier).
+    
+    Returns
+    -------
+    MatchInfo
+        The default MatchInfo for the event.
+    """
+    params = (schema_name,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT "
+            "   `condor_events`.`number_of_races`, "
+            "   `condor_events`.`is_best_of`, "
+            "   `condor_events`.`ranked`, "
+            "   `race_types`.`character`, "
+            "   `race_types`.`descriptor`, "
+            "   `race_types`.`seeded`, "
+            "   `race_types`.`amplified`, "
+            "   `race_types`.`seed_fixed` "
+            "FROM `condor_events` "
+            "LEFT JOIN `race_types` ON `condor_events`.`race_type` = `race_types`.`type_id` "
+            "WHERE `condor_events`.`schema_name` = %s",
+            params
+        )
+        for row in cursor:
+            race_info = RaceInfo()
+            if row[3] is not None:
+                race_info.set_char(row[3])
+            if row[4] is not None:
+                race_info.descriptor = row[4]
+            if row[5] is not None:
+                race_info.seeded = bool(row[5])
+            if row[6] is not None:
+                race_info.amplified = bool(row[6])
+            if row[7] is not None:
+                race_info.seed_fixed = bool(row[7])
+
+            match_info = MatchInfo(
+                max_races=int(row[0]) if row[0] is not None else None,
+                is_best_of=bool(row[1]) if row[1] is not None else None,
+                ranked=bool(row[2]) if row[2] is not None else None,
+                race_info=race_info
+            )
+            return match_info
+
+        raise EventDoesNotExist()
 
 
 def get_event_name(schema_name: str) -> str:

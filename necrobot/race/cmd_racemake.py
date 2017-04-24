@@ -1,10 +1,8 @@
-import discord
-
-import necrobot.race.raceutil
-from necrobot.botbase.command import CommandType
-from necrobot.race import raceinfo
+from necrobot.race import raceinfo, raceutil
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
-from necrobot.util import console
+
+from necrobot.botbase.command import CommandType
+from necrobot.util.parse.exception import ParseException
 
 
 class Make(CommandType):
@@ -13,20 +11,22 @@ class Make(CommandType):
         self.help_text = \
             'Makes a new race room; by default, this is Cadence All-zones seeded, Amplified. Change this by ' \
             'providing flags:\n' \
-            '`-bestof X | -repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \
-            '`-c charname`: Set the default match character.\n' \
-            '`-u | -s | -seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
-            '`-custom desc`: Give the matches a custom description.\n' \
-            '`-nodlc`: Matches are marked as being without the Amplified DLC.'
+            '`charname`: Set the default match character.\n' \
+            '`u | s | seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
+            '`nodlc`: Matches are marked as being without the Amplified DLC.\n' \
+            '`--custom "desc"`: Give the matches a custom description.'
 
-    async def _do_execute(self, command):
-        race_info = raceinfo.parse_args(command.args)
-        if race_info:
-            try:
-                await necrobot.race.raceutil.make_room(race_info)
-            except discord.HTTPException as e:
-                await self.client.send_message(command.channel, 'Error making race.')
-                console.error(e.response)
+    async def _do_execute(self, cmd):
+        try:
+            race_info = raceinfo.parse_args(cmd.args)
+        except ParseException as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error parsing inputs: {0}'.format(e)
+            )
+            return
+
+        await raceutil.make_room(race_info)
 
 
 class MakePrivate(CommandType):

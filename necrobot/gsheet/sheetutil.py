@@ -74,5 +74,5 @@ class TestSheetUtil(unittest.TestCase):
         self.assertFalse(rw_none[0])
 
         self.assertEqual(rw_good[1], 'API Testing')
-        self.assertEqual(rw_bad[1][1:14], 'HttpError 403')
-        self.assertEqual(rw_none[1][1:14], 'HttpError 404')
+        self.assertEqual(rw_bad[1], "The caller does not have permission")
+        self.assertEqual(rw_none[1], "Not Found")

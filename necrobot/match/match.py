@@ -86,14 +86,7 @@ class Match(object):
     @property
     def format_str(self) -> str:
         """Get a string describing the match format."""
-        if self.is_best_of:
-            match_format_info = 'best-of-{0}'.format(self.number_of_races)
-        else:
-            match_format_info = '{0} races'.format(self.number_of_races)
-
-        ranked_str = 'ranked' if self.ranked else 'unranked'
-
-        return '{0}, {1}, {2}'.format(self.race_info.format_str, match_format_info, ranked_str)
+        return self.match_info.format_str
 
     @property
     def ranked(self):

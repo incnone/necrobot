@@ -94,7 +94,20 @@ class GetMatchRules(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        pass
+        schema_name = Config.CONDOR_EVENT
+        try:
+            match_info = condordb.get_event_match_info(schema_name)
+        except condordb.EventDoesNotExist:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Event `{0}` is not registered in the database.'.format(schema_name)
+            )
+            return
+
+        await self.client.send_message(
+            cmd.channel,
+            'Current event (`{0}`) default rules: {1}'.format(schema_name, match_info.format_str)
+        )
 
 
 class RegisterCondorEvent(CommandType):
@@ -132,7 +145,7 @@ class RegisterCondorEvent(CommandType):
         except condordb.InvalidSchemaName:
             await self.client.send_message(
                 cmd.channel,
-                'Error: `{0}` is an invalid schema name. (`a-z`, `A-Z`, `0-9`, `_` and `$` are allowed characters.)' \
+                'Error: `{0}` is an invalid schema name. (`a-z`, `A-Z`, `0-9`, `_` and `$` are allowed characters.)'
                 .format(schema_name)
             )
             return

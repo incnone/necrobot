@@ -1,7 +1,8 @@
-from necrobot.botbase.command import CommandType
 from necrobot.database import userdb
 from necrobot.stats import statfn
-from necrobot.util import character
+
+from necrobot.botbase.command import CommandType
+from necrobot.util.character import NDChar
 
 
 # class Matchup(CommandType):
@@ -93,7 +94,7 @@ class Fastest(CommandType):
                 '{0}: Wrong number of arguments for `.fastest`.'.format(cmd.author.mention))
             return
 
-        ndchar = character.get_char_from_str(args[0])
+        ndchar = NDChar.fromstr(args[0])
         if ndchar is None:
             await self.client.send_message(
                 cmd.channel,
@@ -123,7 +124,7 @@ class MostRaces(CommandType):
                 '{0}: Wrong number of arguments for `.mostraces`.'.format(cmd.author.mention))
             return
 
-        ndchar = character.get_char_from_str(cmd.args[0])
+        ndchar = NDChar.fromstr(cmd.args[0])
         if ndchar is None:
             await self.client.send_message(
                 cmd.channel,
