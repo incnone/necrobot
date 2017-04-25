@@ -4,7 +4,7 @@ from necrobot.test import msgqueue
 
 from necrobot.database import dbutil
 from necrobot.util import console
-from necrobot.config import Config
+from necrobot.config import Config, TestLevel
 from necrobot.botbase.command import Command, TestCommand
 
 
@@ -53,7 +53,7 @@ class Necrobot(object):
                 cmd = Command(message)
                 await self._execute(cmd)
 
-                if Config.TESTING:
+                if Config.TESTING <= TestLevel.TEST:
                     await msgqueue.send_message(message)
 
             @client.event
@@ -106,6 +106,7 @@ class Necrobot(object):
                 self.refresh()
 
             console.info(
+                '\n'
                 '-Logged in---------------\n'
                 '   User name: {0}\n'
                 ' Server name: {1}\n'

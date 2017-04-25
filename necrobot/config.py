@@ -1,7 +1,14 @@
 import datetime
 import unittest
 
+from enum import IntEnum
 from necrobot.util import console
+
+
+class TestLevel(IntEnum):
+    DEBUG = 0
+    TEST = 1
+    RUN = 2
 
 
 class Config(object):
@@ -9,7 +16,7 @@ class Config(object):
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
-    TESTING = True
+    TESTING = TestLevel.RUN
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff']  # list of names of roles to give admin access

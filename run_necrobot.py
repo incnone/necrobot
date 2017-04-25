@@ -1,4 +1,4 @@
-from necrobot import logon, loader
+from necrobot.util import logon, loader
 
 
 if __name__ == "__main__":

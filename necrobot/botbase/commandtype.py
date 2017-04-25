@@ -1,3 +1,4 @@
+import asyncio
 import discord
 
 from necrobot.util import console
@@ -8,6 +9,9 @@ from necrobot.config import Config
 
 
 class CommandType(object):
+    execution_id = 0
+    execution_id_lock = asyncio.Lock()
+
     """Abstract base class; a particular command that the bot can interpret, and how to interpret it.
     (For instance, racemodule has a CommandType object called make, for the `.make` command.)
     """
@@ -65,7 +69,21 @@ class CommandType(object):
         """
         if command.command in self.command_name_list and \
                 ((not self.admin_only) or self.bot_channel.is_admin(command.author)):
+            async with self.execution_id_lock:
+                self.execution_id += 1
+                this_id = self.execution_id
+
+            console.info(
+                'Call {0}: <ID={1}> <Caller={2}> <Channel={3}> <Message={4}>'.format(
+                    type(self).__name__,
+                    this_id,
+                    command.author.name,
+                    command.channel.name,
+                    command.content
+                )
+            )
             await self._do_execute(command)
+            console.info('Exit {0}: <ID={1}>'.format(type(self).__name__, this_id))
 
     async def _do_execute(self, command: Command):
         """Pure virtual: determine what this CommandType should do with a given Command.

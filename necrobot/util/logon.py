@@ -4,6 +4,8 @@ import datetime
 import discord
 import logging
 import os
+import sys
+import warnings
 import websockets
 
 from necrobot import config
@@ -12,6 +14,16 @@ from necrobot.botbase.necrobot import Necrobot
 
 
 def logon(config_filename: str, load_config_fn, on_ready_fn=None):
+    # Initialize config file----------------------------------
+    config.init(config_filename)
+
+    # Asyncio debug setup-------------------------------------
+    if config.Config.TESTING == config.TestLevel.DEBUG:
+        asyncio.get_event_loop().set_debug(True)
+        warnings.simplefilter("always", ResourceWarning)
+    elif config.Config.TESTING == config.TestLevel.TEST:
+        warnings.simplefilter("always", ResourceWarning)
+
     # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
@@ -30,16 +42,46 @@ def logon(config_filename: str, load_config_fn, on_ready_fn=None):
     log_output_filename = 'logging/{0}'.format(log_output_filename)
 
     # Set up logger
-    logger = logging.getLogger('discord')
-    logger.setLevel(logging.INFO)
-    handler = logging.FileHandler(filename=log_output_filename, encoding='utf-8', mode='w')
-    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-    logger.addHandler(handler)
-    logging.getLogger('asyncio').addHandler(handler)
+    if config.Config.TESTING == config.TestLevel.DEBUG:
+        asyncio_level = logging.DEBUG
+        discord_level = logging.DEBUG
+        necrobot_level = logging.DEBUG
+    elif config.Config.TESTING == config.TestLevel.TEST:
+        asyncio_level = logging.INFO
+        discord_level = logging.INFO
+        necrobot_level = logging.INFO
+    else:  # if config.Config.TESTING == config.TestLevel.RUN:
+        asyncio_level = logging.WARNING
+        discord_level = logging.WARNING
+        necrobot_level = logging.INFO
 
-    # Initialize config file----------------------------------
+    file_formatter = logging.Formatter('%(levelname)s:%(name)s: %(message)s')
+    stream_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    stderr_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler(filename=log_output_filename, encoding='utf-8', mode='w')
+
+    stdout_handler.setLevel(logging.INFO)
+    stderr_handler.setLevel(logging.INFO)
+
+    stdout_handler.setFormatter(stream_formatter)
+    stderr_handler.setFormatter(stream_formatter)
+    file_handler.setFormatter(file_formatter)
+
+    logging.getLogger('discord').setLevel(discord_level)
+    logging.getLogger('discord').addHandler(file_handler)
+    logging.getLogger('discord').addHandler(stderr_handler)
+    logging.getLogger('asyncio').setLevel(asyncio_level)
+    logging.getLogger('asyncio').addHandler(file_handler)
+    logging.getLogger('asyncio').addHandler(stderr_handler)
+
+    logger = logging.getLogger('necrobot')
+    logger.setLevel(necrobot_level)
+    logger.addHandler(file_handler)
+    logger.addHandler(stdout_handler)
+
     console.info('Initializing necrobot...')
-    config.init(config_filename)
 
     # Seed the random number generator------------------------
     seedgen.init_seed()

@@ -2,7 +2,7 @@ import asyncio
 import sys
 import unittest
 
-from necrobot import loader, logon
+from necrobot.util import loader, logon
 
 TEST_CONFIG = False
 TEST_PARSE = False

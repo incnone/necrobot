@@ -300,7 +300,8 @@ class Unconfirm(CommandType):
 class CancelRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'cancelrace')
-        self.help_text = 'Change the winner for a specified race.'
+        self.help_text = '`{0} N`: Cancel the `N`-th uncanceled race; `{0}` cancels the current race, if one is ' \
+                         'ongoing.'.format(self.mention)
         self.admin_only = True
 
     async def _do_execute(self, cmd):
@@ -310,7 +311,8 @@ class CancelRace(CommandType):
 class ChangeWinner(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'changewinner')
-        self.help_text = 'Change the winner for a specified race.'
+        self.help_text = '`{0} N username`: Change the winner for the `N`-th uncanceled race to `username`.' \
+                         .format(self.mention)
         self.admin_only = True
 
     async def _do_execute(self, cmd):

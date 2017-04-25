@@ -82,8 +82,8 @@ class MatchRoom(BotChannel):
             cmd_race.Unpause(self),
             cmd_race.Reseed(self),
             cmd_race.ChangeRules(self),
-            cmd_race.ForceForfeit(self),
-            cmd_race.ForceForfeitAll(self),
+            # cmd_race.ForceForfeit(self),
+            # cmd_race.ForceForfeitAll(self),
         ]
 
         self.command_types = self._prematch_command_types
