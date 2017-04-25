@@ -238,6 +238,13 @@ class Necrobot(object):
                 if int(member.id) == int(user.id):
                     return member
 
+        def find_role(self, role_name: str) -> discord.Role or None:
+            """Finds a discord.Role with the given name, if any"""
+            for role in self.server.roles:
+                if role.name.lower() == role_name.lower():
+                    return role
+            return None
+
         # Coroutines--------------------
         async def logout(self):
             """Log out of discord"""

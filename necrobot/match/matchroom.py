@@ -130,6 +130,10 @@ class MatchRoom(BotChannel):
         else:
             return match_race_data.num_finished >= self.match.number_of_races
 
+    @property
+    def during_races(self):
+        return self.current_race is not None and not self.played_all_races
+
     def _race_winner(self, race: Race) -> int:
         race_winner_id = int(race.winner.member.id)
         if race_winner_id == int(self.match.racer_1.member.id):

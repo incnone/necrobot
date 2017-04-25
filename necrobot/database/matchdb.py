@@ -2,6 +2,7 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 
+import datetime
 from necrobot.config import Config
 from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
@@ -144,14 +145,23 @@ def get_match_channel_id(match_id: int) -> int:
         cursor.execute(
             "SELECT channel_id "
             "FROM {0} "
-            "WHERE match_id=%s".format(_t('matches')),
+            "WHERE match_id=%s "
+            "LIMIT 1".format(_t('matches')),
             params
         )
         row = cursor.fetchone()
         return int(row[0]) if row[0] is not None else None
 
 
-def get_channeled_matches_raw_data() -> list:
+def get_channeled_matches_raw_data(must_be_scheduled: bool = False, order_by_time: bool = False) -> list:
+    where_query = "`channel_id` IS NOT NULL"
+    if must_be_scheduled:
+        where_query += " AND `suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`"
+
+    order_query = ''
+    if order_by_time:
+        order_query = "ORDER BY `suggested_time` ASC"
+
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT "
@@ -170,7 +180,7 @@ def get_channeled_matches_raw_data() -> list:
             "   cawmentator_id, "
             "   channel_id "
             "FROM {0} "
-            "WHERE channel_id IS NOT NULL".format(_t('matches'))
+            "WHERE {1} {2}".format(_t('matches'), where_query, order_query)
         )
         return cursor.fetchall()
 
@@ -200,13 +210,19 @@ def get_match_race_data(match_id: int) -> MatchRaceData:
         return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)
 
 
-def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int) -> int or None:
+def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int, channeled=True) -> int or None:
     params = (racer_1_id, racer_2_id, racer_2_id, racer_1_id)
+    where_query = '((racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s))'
+    if channeled:
+        where_query += ' AND `channel_id` IS NOT NULL'
+
     with DBConnect(commit=False) as cursor:
         cursor.execute(
             "SELECT match_id "
             "FROM {0} "
-            "WHERE (racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s)".format(_t('matches')),
+            "WHERE {1} "
+            "ORDER BY `suggested_time` DESC "
+            "LIMIT 1".format(_t('matches'), where_query),
             params
         )
         row = cursor.fetchone()
@@ -233,7 +249,8 @@ def get_raw_match_data(match_id: int) -> list:
             "   number_of_races, "
             "   cawmentator_id "
             "FROM {0} "
-            "WHERE match_id=%s".format(_t('matches')),
+            "WHERE match_id=%s "
+            "LIMIT 1".format(_t('matches')),
             params
         )
         return cursor.fetchone()

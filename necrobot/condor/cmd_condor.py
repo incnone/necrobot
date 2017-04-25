@@ -1,7 +1,10 @@
+import datetime
+import pytz
+
 from necrobot.database import condordb
 from necrobot.match import cmd_match, matchinfo, matchutil
 
-from necrobot.config import Config
+from necrobot.config import Config, TestLevel
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.util.parse.exception import ParseException
@@ -61,48 +64,6 @@ class CloseAllMatches(CommandType):
 #         )
 
 
-class MakeMatch(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'makematch')
-        self.help_text = 'Create a new match room between two racers with ' \
-                         '`{0} racer_1_name racer_2_name`.'.format(self.mention)
-        self.admin_only = True
-
-    @property
-    def short_help_text(self):
-        return 'Create new match room.'
-
-    async def _do_execute(self, cmd):
-        # Parse arguments
-        if len(cmd.args) != 2:
-            await self.client.send_message(
-                cmd.channel,
-                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
-            return
-
-        schema_name = Config.CONDOR_EVENT
-        try:
-            match_info = condordb.get_event_match_info(schema_name)
-        except condordb.EventDoesNotExist:
-            await self.client.send_message(
-                cmd.channel,
-                'Error: Event `{0}` is not registered in the database.'.format(schema_name)
-            )
-            return
-
-        await cmd_match.make_match_from_cmd(
-            cmd=cmd,
-            cmd_type=self,
-            racer_names=[cmd.args[0], cmd.args[1]],
-            match_info=match_info
-        )
-
-        await self.client.send_message(
-            cmd.channel,
-            'Match created.'.format(schema_name)
-        )
-
-
 class GetCurrentEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'get-current-event')
@@ -151,6 +112,81 @@ class GetMatchRules(CommandType):
         await self.client.send_message(
             cmd.channel,
             'Current event (`{0}`) default rules: {1}'.format(schema_name, match_info.format_str)
+        )
+
+
+class MakeMatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makematch')
+        self.help_text = 'Create a new match room between two racers with ' \
+                         '`{0} racer_1_name racer_2_name`.'.format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Create new match room.'
+
+    async def _do_execute(self, cmd):
+        # Parse arguments
+        if len(cmd.args) != 2:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        schema_name = Config.CONDOR_EVENT
+        try:
+            match_info = condordb.get_event_match_info(schema_name)
+        except condordb.EventDoesNotExist:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Event `{0}` is not registered in the database.'.format(schema_name)
+            )
+            return
+
+        await cmd_match.make_match_from_cmd(
+            cmd=cmd,
+            cmd_type=self,
+            racer_names=[cmd.args[0], cmd.args[1]],
+            match_info=match_info
+        )
+
+        await self.client.send_message(
+            cmd.channel,
+            'Match created.'.format(schema_name)
+        )
+
+
+class NextRace(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'next', 'nextrace', 'nextmatch')
+        self.help_text = 'Show upcoming matches.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        utcnow = pytz.utc.localize(datetime.datetime.utcnow())
+        num_to_show = 3
+
+        matches = matchutil.get_upcoming_and_current()
+        if not matches:
+            await self.client.send_message(
+                cmd.channel,
+                'Didn\'t find any scheduled matches!')
+            return
+
+        if len(matches) < num_to_show:
+            latest_shown = matches[len(matches) - 1]
+            upcoming_matches = []
+            for match in matches:
+                if match.suggested_time - latest_shown.suggested_time < datetime.timedelta(minutes=10) \
+                        or match.suggested_time - utcnow < datetime.timedelta(hours=1, minutes=5):
+                    upcoming_matches.append(match)
+        else:
+            upcoming_matches = matches
+
+        await self.client.send_message(
+            cmd.channel,
+            matchutil.get_nextrace_displaytext(upcoming_matches)
         )
 
 
@@ -305,3 +341,28 @@ class SetMatchRules(CommandType):
                 match_info.format_str
             )
         )
+
+
+class StaffAlert(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'staff')
+        self.help_text = 'Alert the CoNDOR Staff to a problem.'
+
+    async def _do_execute(self, cmd):
+        notifications_channel = self.necrobot.find_channel('bot_notifications')
+        if notifications_channel is not None:
+            await self.client.send_message(
+                notifications_channel,
+                'Alert: `.staff` called by `{0}` in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention))
+
+        if Config.TESTING <= TestLevel.TEST:
+            condor_staff_role = self.necrobot.find_role('CoNDOR Staff Fake')
+        else:
+            condor_staff_role = self.necrobot.find_role('CoNDOR Staff')
+
+        if condor_staff_role is not None:
+            await self.client.send_message(
+                cmd.channel,
+                '{0}: Alerting CoNDOR Staff: {1}.'.format(
+                    cmd.author.mention,
+                    condor_staff_role.mention))

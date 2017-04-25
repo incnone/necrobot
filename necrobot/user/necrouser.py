@@ -59,6 +59,18 @@ class NecroUser(object):
         return re.compile(r'(?i)^\s*(' + re_str + r')\s*$')
 
     @property
+    def bot_name(self) -> str:
+        if self.rtmp_name is not None:
+            return self.rtmp_name
+        elif self.discord_name is not None:
+            return self.discord_name
+        elif self.twitch_name is not None:
+            return self.twitch_name
+        else:
+            console.error('User with no name: ID <{}>.'.format(self.user_id))
+            return '<Unknown user>.'
+
+    @property
     def discord_id(self) -> int:
         return self.discord_member.id if self.discord_member is not None else None
 

@@ -1,7 +1,9 @@
+import datetime
 import discord
+import pytz
 
 from necrobot.database import matchdb, racedb
-from necrobot.util import console, writechannel
+from necrobot.util import console, timestr, writechannel
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match.match import Match
@@ -123,6 +125,30 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
     return name_prefix if not found else '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
 
+def get_upcoming_and_current() -> list:
+    """    
+    Returns
+    -------
+    list[Match]
+        A list of all upcoming and ongoing matches, in order. 
+    """
+    matches = []
+    for row in matchdb.get_channeled_matches_raw_data(must_be_scheduled=True, order_by_time=True):
+        channel_id = int(row[13]) if row[13] is not None else None
+        if channel_id is not None:
+            channel = Necrobot().find_channel_with_id(channel_id)
+            if channel is not None:
+                match = _make_match_from_raw_db_data(row=row)
+                if match.suggested_time > pytz.utc.localize(datetime.datetime.utcnow()):
+                    matches.append(match)
+                else:
+                    match_room = Necrobot().get_bot_channel(channel)
+                    if match_room is not None and match_room.during_races:
+                        matches.append(match)
+
+    return matches
+
+
 def get_matches_with_channels() -> list:
     """
     Returns
@@ -132,7 +158,7 @@ def get_matches_with_channels() -> list:
     """
     matches = []
 
-    for row in matchdb.get_channeled_matches_raw_data():
+    for row in matchdb.get_channeled_matches_raw_data(must_be_scheduled=False, order_by_time=False):
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
@@ -270,6 +296,30 @@ async def close_match_room(match: Match) -> None:
     await Necrobot().unregister_bot_channel(channel)
     await Necrobot().client.delete_channel(channel)
     matchdb.register_match_channel(match_id=match.match_id, channel_id=None)
+
+
+def get_nextrace_displaytext(match_list):
+    utcnow = pytz.utc.localize(datetime.datetime.utcnow())
+    if len(match_list) > 1:
+        display_text = 'Upcoming matches: \n'
+    else:
+        display_text = 'Next match: \n'
+
+    for match in match_list:
+        display_text += '\N{BULLET} **{0}** - **{1}**'.format(
+            match.racer_1.bot_name,
+            match.racer_2.bot_name)
+        if match.suggested_time is None:
+            display_text += '\n'
+            continue
+
+        display_text += ': {0} \n'.format(timestr.timedelta_to_str(match.suggested_time - utcnow, punctuate=True))
+        if match.cawmentator is not None:
+            display_text += '    Cawmentary: <http://www.twitch.tv/{0}> \n'.format(match.cawmentator.twitch_name)
+        elif match.racer_1.rtmp_name is not None and match.racer_2.rtmp_name is not None:
+            display_text += '    RTMP: <http://rtmp.condorleague.tv/#{0}/{1}> \n'.format(
+                match.racer_1.rtmp_name.lower(), match.racer_2.rtmp_name.lower())
+    return display_text
 
 
 def _make_match_from_raw_db_data(row):

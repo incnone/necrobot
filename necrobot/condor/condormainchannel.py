@@ -1,4 +1,5 @@
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.condor import cmd_condor
 from necrobot.match import cmd_match
 from necrobot.user import cmd_user
 
@@ -7,8 +8,8 @@ class CondorMainChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
         self.command_types = [
-            # NextRace
-            # StaffAlert
+            cmd_condor.NextRace(self),
+            cmd_condor.StaffAlert(self),
 
             cmd_match.Cawmentate(self),
             cmd_match.Uncawmentate(self),

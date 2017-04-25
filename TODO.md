@@ -21,7 +21,7 @@ of information
 
 #### Unimplemented commands:
 
-- cmd_condor: `.next`, `.staff`, `.dropracer`, `.contest`
+- cmd_condor: `.dropracer`, `.contest`
 - cmd_stats: `.fastest`, `.stats` 
 - Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
 `.register`, `.cancel`, `.forcerecordmatch`
@@ -58,6 +58,7 @@ just finished or the race that people are currently entering. It maybe also does
 
 ## Features
 
+- Configuration of `.racealert` for character-specific, etc
 - Make `.notify on` do the obvious thing
 - add comment possibility to `.death`
 - fix `.d 1-3` (and the like) causing race finish

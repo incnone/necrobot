@@ -666,7 +666,11 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Find the match
     match = matchutil.get_match_from_id(
-        match_id=matchdb.get_most_recent_scheduled_match_id_between(racers[0].user_id, racers[1].user_id)
+        match_id=matchdb.get_most_recent_scheduled_match_id_between(
+            racers[0].user_id,
+            racers[1].user_id,
+            channeled=True
+        )
     )
     if match is None:
         await cmd_type.client.send_message(
@@ -710,7 +714,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Add/delete the cawmentary
     if add:
-        match.set(cawmentator_id=int(cmd.author.id), commit=True)
+        match.set_cawmentator_id(int(cmd.author.id))
         await cmd_type.client.send_message(
             cmd.channel,
             'Added {0} as cawmentary for the match {1}-{2}.'.format(
@@ -718,7 +722,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
             )
         )
     else:
-        match.set(cawmentator_id=None, commit=True)
+        match.set_cawmentator_id(None)
         await cmd_type.client.send_message(
             cmd.channel,
             'Removed {0} as cawmentary for the match {1}-{2}.'.format(
