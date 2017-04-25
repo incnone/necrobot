@@ -10,6 +10,7 @@ from necrobot.ladder.rating import Rating
 
 def get_rating(discord_id: int) -> Rating:
     with DBConnect(commit=False) as cursor:
+        print('a')
         params = (discord_id,)
         cursor.execute(
             "SELECT trueskill_mu, trueskill_sigma "
@@ -18,8 +19,11 @@ def get_rating(discord_id: int) -> Rating:
             params
         )
 
+        print('b')
         row = cursor.fetchone()
+        print('c')
         if row is not None:
+            print('d')
             return ratingutil.create_rating(mu=row[0], sigma=row[1])
 
     # If here, there was no rating

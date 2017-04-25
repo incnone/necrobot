@@ -1,4 +1,3 @@
-from necrobot.botbase import cmd_admin
 from necrobot.match import cmd_match
 # from necrobot.stats import cmd_stats
 from necrobot.user import cmd_user
@@ -10,9 +9,6 @@ class CondorPMChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
         self.command_types = [
-            cmd_admin.Help(self),
-            cmd_admin.Info(self),
-
             cmd_match.Vod(self),
 
             # cmd_stats.Fastest(self),

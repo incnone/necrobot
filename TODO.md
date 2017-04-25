@@ -7,6 +7,7 @@ Current version: 0.10
 ### Condorbot features
 
 - Automatching
+- Sensical commands for completed matches
 
 ### Testing
 
@@ -14,6 +15,10 @@ Current version: 0.10
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
 - Other stuff
+
+### Bugs
+
+- Weird async bug when recording ladder ratings at end of match -- what is going on here?
 
 #### Unimplemented commands:
 

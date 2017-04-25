@@ -46,12 +46,14 @@ class PrivateRaceRoom(RaceRoom):
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
 
-        self.command_types.append(cmd_privaterace.Add(self))
-        self.command_types.append(cmd_privaterace.Remove(self))
-        self.command_types.append(cmd_privaterace.MakeAdmin(self))
-        self.command_types.append(cmd_privaterace.ShowAdmins(self))
-        self.command_types.append(cmd_privaterace.NoPost(self))
-        self.command_types.append(cmd_privaterace.Post(self))
+        self.command_types.extend([
+            cmd_privaterace.Add(self),
+            cmd_privaterace.Remove(self),
+            cmd_privaterace.MakeAdmin(self),
+            cmd_privaterace.ShowAdmins(self),
+            cmd_privaterace.NoPost(self),
+            cmd_privaterace.Post(self)
+        ])
 
     # A string to add to the race details ("Private")
     @property

@@ -2,13 +2,11 @@ import asyncio
 import sys
 import unittest
 
-from necrobot import config, loader, logon
-
-from necrobot.botbase.command import Command
+from necrobot import loader, logon
 
 TEST_CONFIG = False
 TEST_PARSE = False
-TEST_SHEETS = True
+TEST_SHEETS = False
 TEST_USER = False
 
 if TEST_CONFIG:
@@ -35,41 +33,21 @@ if TEST_USER:
 
 
 # Define client events
-def ready_client_events(client, the_necrobot, load_config_fn):
-    # Called after the client has successfully logged in
-    @client.event
-    async def on_ready():
-        await the_necrobot.post_login_init(
-            client=client,
-            server_id=config.Config.SERVER_ID,
-            load_config_fn=load_config_fn
-        )
+async def on_ready_fn(necrobot):
+    sys.stdout.flush()
+    await asyncio.sleep(1)
 
-        sys.stdout.flush()
-        await asyncio.sleep(1)
-
-        try:
-            unittest.main(verbosity=2)
-        except SystemExit:
-            pass
-        finally:
-            await the_necrobot.logout()
-
-    # Called whenever a new message is posted in any necrobot on any server
-    @client.event
-    async def on_message(message):
-        cmd = Command(message)
-        await the_necrobot.execute(cmd)
-
-    # Called when a new member joins any server
-    @client.event
-    async def on_member_join(member):
-        await the_necrobot.on_member_join(member)
+    try:
+        unittest.main(verbosity=2)
+    except SystemExit:
+        pass
+    finally:
+        await necrobot.logout()
 
 
 if __name__ == "__main__":
     logon.logon(
         config_filename='data/condorbot_config',
         load_config_fn=loader.load_condorbot_config,
-        def_events_fn=ready_client_events
+        on_ready_fn=on_ready_fn
     )

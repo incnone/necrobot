@@ -1,4 +1,3 @@
-from necrobot.botbase import cmd_admin
 from necrobot.condor import cmd_condor
 from necrobot.gsheet import cmd_sheet
 from necrobot.stdconfig import cmd_seedgen
@@ -14,9 +13,6 @@ class CondorAdminChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
         self.command_types = [
-            cmd_admin.Help(self),
-            cmd_admin.Info(self),
-
             # cmd_condor.Automatch(self),
             # cmd_condor.CloseFinished(self),
             # cmd_condor.DropRacer(self),

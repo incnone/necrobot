@@ -6,3 +6,4 @@ ignore/
 *.xml
 *.sql
 .idea/necrobot.iml
+ratelimittest.py

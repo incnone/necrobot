@@ -2,15 +2,14 @@ import datetime
 
 import pytz
 
-from necrobot.database import matchdb
-from necrobot.util import console
-from necrobot.match import matchinfo, matchutil
-from necrobot.user import userutil
-from necrobot.util import timestr
-from necrobot.util.parse import dateparse
-
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
+from necrobot.database import matchdb
+from necrobot.match import matchinfo, matchutil
+from necrobot.user import userutil
+from necrobot.util import console
+from necrobot.util import timestr
+from necrobot.util.parse import dateparse
 from necrobot.util.parse.exception import ParseException
 
 
@@ -114,7 +113,7 @@ class GetMatchInfo(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
         if not match.is_registered:
-            await self.client.write(
+            await self.client.send_message(
                 cmd.channel,
                 'Unexpected error (match not registered).'
             )
@@ -204,7 +203,7 @@ class Suggest(CommandType):
         # Check if the scheduled time is in the past
         utcnow = pytz.utc.localize(datetime.datetime.utcnow())
         time_until = suggested_time_utc - utcnow
-        if not time_until.total_seconds() > 0:
+        if not time_until.total_seconds() >= 0:
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: The time you are suggesting for the match appears to be in the past.'.format(
@@ -305,7 +304,7 @@ class CancelRace(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ChangeWinner(CommandType):
@@ -315,7 +314,7 @@ class ChangeWinner(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ForceBegin(CommandType):
@@ -350,8 +349,8 @@ class ForceConfirm(CommandType):
 
         await self.client.send_message(
             cmd.channel,
-            '{0} has forced confirmation of match time: {1}.'.format(
-                cmd.author.mention, timestr.str_full_12h(match.suggested_time)))
+            'Forced confirmation of match time: {0}.'.format(
+                timestr.str_full_12h(match.suggested_time)))
         await self.bot_channel.update()
 
 
@@ -366,7 +365,7 @@ class ForceNewRace(CommandType):
         return 'Make a new race.'
 
     async def _do_execute(self, cmd):
-        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ForceRecordRace(CommandType):
@@ -376,14 +375,14 @@ class ForceRecordRace(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.write(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
 
 
 class ForceReschedule(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-reschedule')
-        self.help_text = 'Forces the race to be rescheduled for a specific UTC time. Usage same as ' \
-                         '`.suggest`, e.g., `.f-reschedule February 18 2:30p`, except that the timezone is always ' \
+        CommandType.__init__(self, bot_channel, 'f-schedule')
+        self.help_text = 'Forces the race to be scheduled for a specific UTC time. Usage same as ' \
+                         '`.suggest`, e.g., `.f-schedule February 18 2:30p`, except that the timezone is always ' \
                          'taken to be UTC. This command unschedules the match and `.suggests` a new time. Use ' \
                          '`.f-confirm` after if you wish to automatically have the racers confirm this new time.'
         self.admin_only = True
@@ -446,11 +445,11 @@ class Postpone(CommandType):
             return
 
         match.force_unconfirm()
+        await self.bot_channel.update()
         await self.client.send_message(
             cmd.channel,
             'The match has been postponed. An admin can resume with `.forcebeginmatch`, or the racers can '
             '`.suggest` a new time as usual.')
-        await self.bot_channel.update()
 
 
 class RebootRoom(CommandType):
@@ -521,6 +520,10 @@ class Update(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.update()
+        await self.client.send_message(
+            cmd.channel,
+            'Updated.'
+        )
 
 
 async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
@@ -669,3 +672,4 @@ async def make_match_from_cmd(
         cmd.channel,
         'Match created in channel {0}.'.format(
             match_room.channel.mention))
+

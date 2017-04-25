@@ -6,7 +6,6 @@ from necrobot.user import userutil
 
 from necrobot.botbase.commandtype import CommandType
 from necrobot.user.userprefs import UserPrefs
-from necrobot.config import Config
 
 MAX_USERINFO_LEN = 255
 
@@ -143,22 +142,19 @@ class SetInfo(CommandType):
         self.help_text = 'Add additional information to be displayed on `{0}`.'.format(self.mention)
 
     async def _do_execute(self, cmd):
-        cut_length = len(cmd.command) + len(Config.BOT_COMMAND_PREFIX) + 1
-        info = cmd.message.content[cut_length:]
-
-        if len(info) > MAX_USERINFO_LEN:
+        if len(cmd.arg_string) > MAX_USERINFO_LEN:
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: `.setinfo` is limited to {1} characters.'.format(cmd.author.mention, MAX_USERINFO_LEN))
             return
 
-        if '\n' in info or '`' in info:
+        if '\n' in cmd.arg_string or '`' in cmd.arg_string:
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
-        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_info=info, commit=True)
+        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_info=cmd.arg_string, commit=True)
         await self.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))

@@ -3,7 +3,6 @@
 import asyncio
 import datetime
 
-from necrobot.botbase import cmd_admin
 from necrobot.race import cmd_race
 from necrobot.race.publicrace import cmd_publicrace
 
@@ -30,8 +29,6 @@ class RaceRoom(BotChannel):
         self._nopoke = False                    # When True, the .poke command fails
 
         self.command_types = [
-            cmd_admin.Help(self),
-
             cmd_race.Enter(self),
             cmd_race.Unenter(self),
             cmd_race.Ready(self),

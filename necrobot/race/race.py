@@ -13,11 +13,14 @@ from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util import seedgen
 from necrobot.util.ordinal import ordinal
+# from necrobot.util import ratelimit
 
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.race.racer import Racer
 from necrobot.config import Config
+
+# CHECK_RATE_LIMITS = False
 
 
 # RaceEvent ---------------------------------------------
@@ -419,6 +422,7 @@ class Race(object):
         # See if we can cancel a countdown. If cancel_countdown() returns False,
         # then there is a countdown and we failed to cancel it, so racer cannot be made unready.
         success = await self._cancel_countdown()
+
         if success and racer.unready():
             await self._write(mute=mute, text='{0} is no longer ready.'.format(racer_member.mention))
             await self._process(RaceEvent.EventType.RACER_UNREADY)
@@ -637,39 +641,55 @@ class Race(object):
     # Countdown coroutine to be wrapped in self._countdown_future.
     # Warning: Do not call this -- use begin_countdown instead.
     async def _race_countdown(self, mute=False):
-        countdown_systemtime_begin = time.monotonic()
-        countdown_timer = self._config.countdown_length
-        await asyncio.sleep(1)      # Pause before countdown
+        await self._do_countdown(
+            length=self._config.countdown_length,
+            incremental_start=self._config.incremental_countdown_start,
+            mute=mute
+        )
 
-        await self._write(mute=mute, text='The race will begin in {0} seconds.'.format(countdown_timer))
+        await self._begin_race()
+
+    async def _do_countdown(self, length: int, incremental_start: int = None, mute=False):
+        fudge = 0.6
+
+        countdown_systemtime_begin = time.monotonic()
+        countdown_timer = length
+
+        # if CHECK_RATE_LIMITS:
+        #     msg_rl_pair = await ratelimit.send_and_get_rate_limit(
+        #         client=self.parent.client,
+        #         channel=self.parent.channel,
+        #         content='The race will begin in {0} seconds.'.format(countdown_timer)
+        #     )
+        #     rate_limit_info = msg_rl_pair[1]
+        #     if rate_limit_info.remaining < 4:
+        #         await asyncio.sleep(rate_limit_info.time_until_reset.total_seconds())
+
+        if incremental_start is not None:
+            await self._write(mute=mute, text='The race will begin in {0} seconds.'.format(countdown_timer))
         while countdown_timer > 0:
-            if countdown_timer <= self._config.incremental_countdown_start:
+            sleep_time = float(countdown_systemtime_begin + length - countdown_timer + 1 - time.monotonic())
+
+            if incremental_start is None or countdown_timer <= incremental_start:
                 await self._write(mute=mute, text='{}'.format(countdown_timer))
-            sleep_time = \
-                countdown_systemtime_begin + self._config.countdown_length - countdown_timer + 1 - time.monotonic()
+
+            if sleep_time < fudge:
+                countdown_systemtime_begin += fudge - sleep_time
+                sleep_time = fudge
+
+            # print('Countdown cycle: Timer = {0}, Sleep Time = {1}'.format(countdown_timer, sleep_time))
+
             if sleep_time > 0:
                 await asyncio.sleep(sleep_time)         # sleep until the next tick
             countdown_timer -= 1
-
-        # Begin the race.
-        await self._begin_race()
 
     # Countdown for an unpause
     async def _unpause_countdown(self, mute=False):
-        countdown_systemtime_begin = time.monotonic()
-        countdown_timer = self._config.unpause_countdown_length
-        await asyncio.sleep(1)      # Pause before countdown
+        await self._do_countdown(
+            length=self._config.unpause_countdown_length,
+            mute=mute
+        )
 
-        while countdown_timer > 0:
-            await self._write(mute=mute, text='{}'.format(countdown_timer))
-            sleep_time = \
-                countdown_systemtime_begin + self._config.unpause_countdown_length \
-                - countdown_timer + 1 - time.monotonic()
-            if sleep_time > 0:
-                await asyncio.sleep(sleep_time)         # sleep until the next tick
-            countdown_timer -= 1
-
-        # Begin the race.
         await self._do_unpause_race()
 
     # Actually unpause the race

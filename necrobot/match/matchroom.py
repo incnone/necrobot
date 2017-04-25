@@ -8,9 +8,9 @@ from necrobot.util import console
 from necrobot.util import ordinal
 from necrobot.config import Config
 
-from necrobot.botbase import cmd_admin
 from necrobot.race import cmd_race
 from necrobot.match import cmd_match
+from necrobot.test import cmd_test
 
 from necrobot.database import ladderdb, matchdb, racedb
 from necrobot.ladder import ratingutil
@@ -46,8 +46,6 @@ class MatchRoom(BotChannel):
         self._current_race_contested = False
 
         self._prematch_command_types = [
-            cmd_admin.Help(self),
-
             cmd_match.Confirm(self),
             cmd_match.GetMatchInfo(self),
             cmd_match.Suggest(self),
@@ -59,11 +57,11 @@ class MatchRoom(BotChannel):
             cmd_match.RebootRoom(self),
             cmd_match.SetMatchType(self),
             cmd_match.Update(self),
+
+            cmd_test.TestMatch(self),
         ]
 
         self._during_match_command_types = [
-            cmd_admin.Help(self),
-
             cmd_match.CancelRace(self),
             cmd_match.ChangeWinner(self),
             cmd_match.ForceNewRace(self),
@@ -94,6 +92,10 @@ class MatchRoom(BotChannel):
     @property
     def channel(self) -> discord.Channel:
         return self._channel
+
+    @property
+    def client(self) -> discord.Client:
+        return self.necrobot.client
 
     @property
     def match(self) -> Match:
@@ -128,10 +130,6 @@ class MatchRoom(BotChannel):
         else:
             return match_race_data.num_finished >= self.match.number_of_races
 
-    @property
-    def before_races(self) -> bool:
-        return self.current_race is None and self.last_begun_race is None
-
     def _race_winner(self, race: Race) -> int:
         race_winner_id = int(race.winner.member.id)
         if race_winner_id == int(self.match.racer_1.member.id):
@@ -148,10 +146,17 @@ class MatchRoom(BotChannel):
         self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start(warn=True))
 
     async def update(self):
-        if self.match.is_scheduled and self.before_races:
+        if self.match.is_scheduled and self.current_race is None:
             if self._countdown_to_match_future is not None:
                 self._countdown_to_match_future.cancel()
             self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start())
+        elif not self.match.is_scheduled:
+            self._current_race = None
+
+        if self.current_race is None:
+            self.command_types = self._prematch_command_types
+        else:
+            self.command_types = self._during_match_command_types
 
     # Change the RaceInfo for this room
     async def change_race_info(self, command_args: list):
@@ -176,7 +181,7 @@ class MatchRoom(BotChannel):
         elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
             race_winner = self._race_winner(race_event.race)
             self._record_race(race_event.race, race_winner)
-            await self._record_new_ratings(race_winner)
+            # await self._record_new_ratings(race_winner)
             await self.write('The race has ended.'.format(self.current_race.race_config.finalize_time_sec))
             if self.played_all_races:
                 await self._end_match()
@@ -298,6 +303,7 @@ class MatchRoom(BotChannel):
     async def _record_new_ratings(self, race_winner: int):
         racer_1 = self.match.racer_1
         racer_2 = self.match.racer_2
+
         rating_1 = ladderdb.get_rating(racer_1.discord_id)
         rating_2 = ladderdb.get_rating(racer_2.discord_id)
 

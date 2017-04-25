@@ -13,8 +13,6 @@ class PMBotChannel(BotChannel):
         BotChannel.__init__(self)
         self.command_types = [
             cmd_admin.Die(self),
-            cmd_admin.Help(self),
-            cmd_admin.Info(self),
             cmd_admin.Reboot(self),
 
             cmd_daily.DailyChar(self),

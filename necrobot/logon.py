@@ -7,35 +7,11 @@ import os
 import websockets
 
 from necrobot import config
-from necrobot.botbase.command import Command
-from necrobot.botbase.necrobot import Necrobot
 from necrobot.util import backoff, console, seedgen
+from necrobot.botbase.necrobot import Necrobot
 
 
-# Define client events
-def ready_client_events(client, the_necrobot, load_config_fn):
-    # Called after the client has successfully logged in
-    @client.event
-    async def on_ready():
-        await the_necrobot.post_login_init(
-            client=client,
-            server_id=config.Config.SERVER_ID,
-            load_config_fn=load_config_fn
-        )
-
-    # Called whenever a new message is posted in any necrobot on any server
-    @client.event
-    async def on_message(message):
-        cmd = Command(message)
-        await the_necrobot.execute(cmd)
-
-    # Called when a new member joins any server
-    @client.event
-    async def on_member_join(member):
-        await the_necrobot.on_member_join(member)
-
-
-def logon(config_filename: str, load_config_fn, def_events_fn=ready_client_events):
+def logon(config_filename: str, load_config_fn, on_ready_fn=None):
     # Logging--------------------------------------------------
     file_format_str = '%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
@@ -76,7 +52,7 @@ def logon(config_filename: str, load_config_fn, def_events_fn=ready_client_event
         # Create the discord.py Client object and the Necrobot----
         client = discord.Client()
         the_necrobot = Necrobot()
-        def_events_fn(client, the_necrobot, load_config_fn)
+        the_necrobot.ready_client_events(client=client, load_config_fn=load_config_fn, on_ready_fn=on_ready_fn)
 
         while not client.is_logged_in:
             try:

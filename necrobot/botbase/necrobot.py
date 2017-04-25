@@ -1,8 +1,11 @@
 import discord
 
+from necrobot.test import msgqueue
+
 from necrobot.database import dbutil
 from necrobot.util import console
 from necrobot.config import Config
+from necrobot.botbase.command import Command, TestCommand
 
 
 class Necrobot(object):
@@ -28,8 +31,55 @@ class Necrobot(object):
             self._initted = False
             self._quitting = False
 
-        # Initializes object; call after client has been logged in to discord
-        async def post_login_init(self, client, server_id, load_config_fn):
+        # Events
+        def ready_client_events(self, client: discord.Client, load_config_fn, on_ready_fn=None):
+            @client.event
+            async def on_ready():
+                """Called after the client has successfully logged in"""
+                await self.post_login_init(
+                    client=client,
+                    server_id=Config.SERVER_ID,
+                    load_config_fn=load_config_fn
+                )
+                if on_ready_fn is not None:
+                    await on_ready_fn(self)
+
+            @client.event
+            async def on_message(message: discord.Message):
+                """Called whenever a new message is posted in any channel on any server"""
+                if not self._initted:
+                    return
+
+                cmd = Command(message)
+                await self._execute(cmd)
+
+                if Config.TESTING:
+                    await msgqueue.send_message(message)
+
+            @client.event
+            async def on_member_join(member: discord.Member):
+                """Called when anyone joins the server"""
+                if not self._initted:
+                    return
+
+                dbutil.register_discord_user(member)
+
+            @client.event
+            async def on_member_update(member_before: discord.Member, member_after: discord.Member):
+                """Called when anyone updates their discord profile"""
+                if not self._initted:
+                    return
+
+                if member_before.display_name != member_after.display_name:
+                    dbutil.register_discord_user(member_after)
+
+        async def post_login_init(
+            self,
+            client: discord.Client,
+            server_id: int,
+            load_config_fn
+        ):
+            """Initializes object; call after client has been logged in to discord"""
             self.client = client
 
             # Find the correct server
@@ -62,8 +112,8 @@ class Necrobot(object):
                 '-------------------------'.format(self.server.me.display_name, self.server.name)
             )
 
-        # Called when post_login_init() is run a second+ time
         def refresh(self):
+            """Called when post_login_init() is run a second+ time"""
             channel_pairs = {}
             for channel, bot_channel in self._bot_channels.items():
                 new_channel = self.find_channel_with_id(channel.id)
@@ -75,47 +125,51 @@ class Necrobot(object):
             for manager in self._managers.values():
                 manager.refresh()
 
-        # Called on shutdown
         def cleanup(self):
+            """Called on shutdown"""
             for manager in self._managers.values():
                 manager.close()
             self._bot_channels.clear()
 
-        # Returns the BotChannel corresponding to the given discord.Channel, if one exists
         def get_bot_channel(self, discord_channel):
+            """Returns the BotChannel corresponding to the given discord.Channel, if one exists"""
             if discord_channel.is_private:
                 return self._pm_bot_channel
             else:
                 return self._bot_channels[discord_channel]
 
-        # Registration of bot channels
-        def register_bot_channel(self, discord_channel, bot_channel):
+        def register_bot_channel(self, discord_channel: discord.Channel, bot_channel):
+            """Register a BotChannel"""
             self._bot_channels[discord_channel] = bot_channel
 
-        def unregister_bot_channel(self, discord_channel):
+        def unregister_bot_channel(self, discord_channel: discord.Channel):
+            """Unegister a BotChannel"""
             del self._bot_channels[discord_channel]
 
         def register_pm_channel(self, pm_bot_channel):
+            """Register a BotChannel for PMs"""
             self._pm_bot_channel = pm_bot_channel
 
-        # Registration of managers
         def register_manager(self, name, manager):
+            """Register a manager"""
             self._managers[name] = manager
 
         def unregister_manager(self, name):
+            """Unegister a manager"""
             del self._managers[name]
 
         def get_manager(self, name):
+            """Get a manager"""
             return self._managers[name]
 
-        # True if the bot wants to quit (i.e. if logout() has been called)
         @property
         def quitting(self):
+            """True if the bot wants to quit (i.e. if logout() has been called)"""
             return self._quitting
 
-        # A list of all admin roles on the server
         @property
         def admin_roles(self):
+            """A list of all admin roles on the server"""
             admin_roles = []
             for rolename in Config.ADMIN_ROLE_NAMES:
                 for role in self.server.roles:
@@ -123,31 +177,40 @@ class Necrobot(object):
                         admin_roles.append(role)
             return admin_roles
 
-        # True if the dicord.User is a server admin
-        def is_admin(self, user):
+        def is_admin(self, user: discord.User):
+            """True if user is a server admin"""
             member = self.get_as_member(user)
-            admin_roles = self.admin_roles
             for role in member.roles:
-                if role in admin_roles:
+                if role in self.admin_roles:
                     return True
             return False
 
-        # Returns the channel with the given name on the server, if any
         def find_channel(self, channel_name):
+            """Returns the channel with the given name on the server, if any"""
             for channel in self.server.channels:
                 if channel.name == channel_name:
                     return channel
             return None
 
-        # Returns the channel with the given ID on the server, if any
         def find_channel_with_id(self, channel_id):
+            """Returns the channel with the given ID on the server, if any"""
             for channel in self.server.channels:
                 if int(channel.id) == int(channel_id):
                     return channel
             return None
 
-        # Returns a member with a given username (capitalization ignored)
+        def find_admin(self, ignore=list()):
+            """Returns a random bot admin (for testing purposes)"""
+            for member in self.server.members:
+                if member.display_name in ignore:
+                    continue
+                for role in member.roles:
+                    if role in self.admin_roles:
+                        return member
+            return None
+
         def find_member(self, discord_name=None, discord_id=None):
+            """Returns a member with a given username (capitalization ignored)"""
             if discord_name is None and discord_id is None:
                 return None
 
@@ -160,41 +223,32 @@ class Necrobot(object):
                     if int(member.id) == int(discord_id):
                         return member
 
-        # Returns a list of all members with a given username (capitalization ignored)
         def find_members(self, username):
+            """Returns a list of all members with a given username (capitalization ignored)"""
             to_return = []
             for member in self.server.members:
                 if member.display_name.lower() == username.lower():
                     to_return.append(member)
             return to_return
 
-        # Returns the given Discord user as a member of the server
         def get_as_member(self, user):
+            """Returns the given Discord user as a member of the server"""
             for member in self.server.members:
                 if int(member.id) == int(user.id):
                     return member
 
-    # Coroutines--------------------
-        # Log out of discord
+        # Coroutines--------------------
         async def logout(self):
+            """Log out of discord"""
             self._quitting = True
             await self.client.logout()
 
-        # Log out of discord, but do not set quitting flag
         async def reboot(self):
+            """Log out of discord without setting self._quitting flag"""
             await self.client.logout()
 
-        # Called when anyone joins the server
-        @staticmethod
-        async def on_member_join(user: discord.User):
-            dbutil.register_discord_user(user)
-
-        # Executes a command
-        async def execute(self, cmd):
-            # Don't execute before init
-            if not self._initted:
-                return
-
+        async def _execute(self, cmd):
+            """Execute a command"""
             # Don't care about bad commands
             if cmd.command is None:
                 return
@@ -208,3 +262,6 @@ class Necrobot(object):
                 await self._pm_bot_channel.execute(cmd)
             elif cmd.channel in self._bot_channels:
                 await self._bot_channels[cmd.channel].execute(cmd)
+
+        async def force_command(self, channel: discord.Channel, author: discord.Member, message_str: str):
+            await self._execute(TestCommand(channel=channel, author=author, message_str=message_str))

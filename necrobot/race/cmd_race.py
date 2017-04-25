@@ -11,7 +11,6 @@ from necrobot.race import racetime
 from necrobot.util import level
 
 from necrobot.botbase.commandtype import CommandType
-from necrobot.config import Config
 
 
 class Enter(CommandType):
@@ -104,10 +103,10 @@ class Comment(CommandType):
         if self.bot_channel.last_begun_race is None:
             return
 
-        cut_length = len(command.command) + len(Config.BOT_COMMAND_PREFIX) + 1
         await self.bot_channel.last_begun_race.add_comment_for_member(
             command.author,
-            command.message.content[cut_length:])
+            command.message.arg_string
+        )
 
 
 class Death(CommandType):

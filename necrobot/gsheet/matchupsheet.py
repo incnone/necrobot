@@ -330,6 +330,7 @@ class TestMatchupSheet(unittest.TestCase):
     @async_test(loop)
     def test_get_matches(self):
         matches = yield from self.sheet_1.get_matches()
+        # noinspection PyTypeChecker
         self.assertEqual(len(matches), 4)
         match = matches[0]
         self.assertEqual(match.racer_1.rtmp_name, 'yjalexis')
