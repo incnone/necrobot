@@ -88,7 +88,10 @@ class Shame(CommandType):
     def __init__(self, race_room):
         CommandType.__init__(self, race_room, 'shame')
         self.help_text = ''
-        self.secret_command = True
+
+    @property
+    def show_in_help(self):
+        return False
 
     async def _do_execute(self, command):
         await self.bot_channel.write('Shame on you {0}!'.format(command.author.display_name))

@@ -305,7 +305,45 @@ class CancelRace(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        if len(cmd.args) > 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Too many args for `{0}`.'.format(self.mention)
+            )
+            return
+
+        if len(cmd.args) == 0:
+            if self.bot_channel.current_race.complete:
+                await self.client.send_message(
+                    cmd.channel,
+                    'There is no currently ongoing race. Use `{0} N` to cancel a specific previous race.'
+                    .format(self.mention)
+                )
+                return
+
+            await self.bot_channel.current_race.cancel()
+
+        else:
+            try:
+                race_number = int(cmd.args[0])
+            except ValueError:
+                await self.client.send_message(
+                    cmd.channel,
+                    "Error: couldn't parse {0} as a race number.".format(cmd.args[0])
+                )
+                return
+
+            success = matchdb.cancel_race(self.bot_channel.match, race_number)
+            if success:
+                await self.client.send_message(
+                    cmd.channel,
+                    'Canceled race {0}.'.format(race_number)
+                )
+            else:
+                await self.client.send_message(
+                    cmd.channel,
+                    'Error: Failed to cancel race {0}.'.format(race_number)
+                )
 
 
 class ChangeWinner(CommandType):
@@ -316,7 +354,49 @@ class ChangeWinner(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        if len(cmd.args) != 2:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of args for `{0}`.'.format(self.mention)
+            )
+            return
+
+        try:
+            race_number = int(cmd.args[0])
+        except ValueError:
+            await self.client.send_message(
+                cmd.channel,
+                "Couldn't parse `{0}` as a race number.".format(cmd.args[0])
+            )
+            return
+
+        winner = None
+        winner_name = cmd.args[1]
+        match = self.bot_channel.match
+        if match.racer_1.name_regex.match(winner_name):
+            winner = 1
+            winner_name = match.racer_1.discord_name
+        elif match.racer_2.name_regex.match(winner_name):
+            winner = 2
+            winner_name = match.racer_2.discord_name
+        if winner is None:
+            await self.client.send_message(
+                cmd.channel,
+                "Couldn't identify `{0}` as one of the racers in this match.".format(winner_name)
+            )
+            return
+
+        success = matchdb.change_winner(match=match, race_number=race_number, winner=winner)
+        if success:
+            await self.client.send_message(
+                cmd.channel,
+                'Changed the winner of race {0} to `{1}`.'.format(race_number, winner_name)
+            )
+        else:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Failed to change the winner of race {0}.'.format(race_number)
+            )
 
 
 class ForceBegin(CommandType):
@@ -367,17 +447,48 @@ class ForceNewRace(CommandType):
         return 'Make a new race.'
 
     async def _do_execute(self, cmd):
-        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        await self.bot_channel.force_new_race()
 
 
 class ForceRecordRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-recordrace')
-        self.help_text = 'Manually record the result of a race.'
+        self.help_text = '`{0} winner`: Manually record a race with `winner` as the winner.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.send_message(cmd.channel, '{0} is not implement yet.'.format(self.mention))
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of args for `{0}`.'.format(self.mention)
+            )
+            return
+
+        winner = None
+        winner_name = cmd.args[0]
+        match = self.bot_channel.match
+        if match.racer_1.name_regex.match(winner_name):
+            winner = 1
+            winner_name = match.racer_1.discord_name
+        elif match.racer_2.name_regex.match(winner_name):
+            winner = 2
+            winner_name = match.racer_2.discord_name
+
+        if winner is None:
+            await self.client.send_message(
+                cmd.channel,
+                "Couldn't identify `{0}` as one of the racers in this match.".format(winner_name)
+            )
+            return
+
+        matchdb.record_match_race(
+            match=match,
+            winner=winner
+        )
+        await self.client.send_message(
+            cmd.channel,
+            "Force-recorded a race with winner {0}.".format(winner_name)
+        )
 
 
 class ForceReschedule(CommandType):

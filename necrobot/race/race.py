@@ -566,7 +566,6 @@ class Race(object):
         self._status = RaceStatus.canceled
         await self._cancel_countdown()
         await self._cancel_finalization()
-        await self._write(mute=mute, text='The race has been canceled.')
         await self._process(RaceEvent.EventType.RACE_CANCEL)
 
     # Reseed the race

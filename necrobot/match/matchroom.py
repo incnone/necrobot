@@ -82,8 +82,8 @@ class MatchRoom(BotChannel):
             cmd_race.Unpause(self),
             cmd_race.Reseed(self),
             cmd_race.ChangeRules(self),
-            # cmd_race.ForceForfeit(self),
-            # cmd_race.ForceForfeitAll(self),
+
+            cmd_test.TestMatch(self),
         ]
 
         self.command_types = self._prematch_command_types
@@ -182,10 +182,14 @@ class MatchRoom(BotChannel):
             race_winner = self._race_winner(race_event.race)
             self._record_race(race_event.race, race_winner)
             # await self._record_new_ratings(race_winner)
-            await self.write('The race has ended.'.format(self.current_race.race_config.finalize_time_sec))
+            await self.write('The race has ended.')
             if self.played_all_races:
                 await self._end_match()
             else:
+                await self._begin_new_race()
+        elif race_event.event == RaceEvent.EventType.RACE_CANCEL:
+            await self.write('The race has been canceled.')
+            if not self.played_all_races:
                 await self._begin_new_race()
 
     # Write to the channel
@@ -207,6 +211,13 @@ class MatchRoom(BotChannel):
             minutes_until_match = int((self.match.time_until_match.total_seconds() + 30) // 60)
             await self.write('{0}: The match is scheduled to begin in {1} minutes.'.format(
                 alert_str[:-2], minutes_until_match))
+
+    async def force_new_race(self):
+        if not self.current_race.complete:
+            await self.current_race.cancel()
+
+        if self.current_race.final:
+            await self._begin_new_race()
 
     # PM an alert to the match cawmentator, if any
     async def alert_cawmentator(self):

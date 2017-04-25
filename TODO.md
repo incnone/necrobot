@@ -11,7 +11,6 @@ Current version: 0.10
 
 ### Testing
 
-- HTTP errors (service down) when making requests to the GSheet API
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
 - Other stuff
@@ -22,11 +21,8 @@ of information
 
 #### Unimplemented commands:
 
-- `.next`
-- `.staff`
-- `.dropracer`
-- `.fastest`, `.stats` 
-- `.contest`
+- cmd_condor: `.next`, `.staff`, `.dropracer`, `.contest`
+- cmd_stats: `.fastest`, `.stats` 
 - Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
 `.register`, `.cancel`, `.forcerecordmatch`
 

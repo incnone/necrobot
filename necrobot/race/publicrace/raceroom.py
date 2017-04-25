@@ -159,6 +159,9 @@ class RaceRoom(BotChannel):
             racedb.record_race(race_event.race)
             if race_event.race.race_info.post_results:
                 await self.post_result(race_event.race)
+        elif race_event.event == RaceEvent.EventType.RACE_CANCEL:
+            await self.write('The race has been canceled.')
+            await self.update()
         else:
             await self.update()
 

@@ -1,6 +1,6 @@
 import discord
 
-from necrobot.database import matchdb
+from necrobot.database import matchdb, racedb
 from necrobot.util import console, writechannel
 
 from necrobot.botbase.necrobot import Necrobot
@@ -278,7 +278,7 @@ def _make_match_from_raw_db_data(row):
         return match_library[match_id]
 
     match_info = MatchInfo(
-        race_info=matchdb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo(),
+        race_info=racedb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo(),
         ranked=bool(row[9]),
         is_best_of=bool(row[10]),
         max_races=int(row[11])

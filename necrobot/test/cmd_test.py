@@ -9,7 +9,7 @@ class TestCommandType(CommandType):
     def __init__(self, bot_channel, cmd_name):
         CommandType.__init__(self, bot_channel, cmd_name)
         self.admin_only = True
-        self.secret_command = True
+        self.testing_command = True
 
     def get_send_func(self, channel):
         async def send(racer, msg, wait_for=None):
@@ -50,44 +50,44 @@ class TestMatch(TestCommandType):
             )
             return
 
-        # Match info
-        await send(racer_1, '.matchinfo', wait_for='')
-        await send(admin, '.setmatchtype bestof 5', wait_for='This match has been set')
-        await send(admin, '.setmatchtype repeat 3', wait_for='This match has been set')
-
-        # Time suggestion
-        await send(racer_1, '.suggest friday 8p', wait_for='This match is suggested')
-        await send(racer_2, '.suggest tomorrow 12:30', wait_for='This match is suggested')
-        await send(racer_1, '.confirm', wait_for='officially scheduled')
-        await send(racer_2, '.unconfirm', wait_for='wishes to remove')
-        await send(racer_1, '.unconfirm', wait_for='has been unscheduled')
-
-        # Prematch admin commands
-        await send(admin, '.f-schedule tomorrow 21:15', wait_for='This match is suggested')
-        await send(admin, '.f-confirm', wait_for='Forced confirmation')
-        await send(admin, '.postpone', wait_for='has been postponed')
-        await send(admin, '.f-begin', wait_for='Please input')
-
-        # Race 1: Racer 1 wins, no finish from Racer 2
-        await send(racer_1, '.ready', wait_for='is ready')
-        await send(racer_2, '.ready', wait_for='The race will begin')
-        await send(racer_1, '.unready', wait_for='is no longer ready')
-        await send(racer_1, '.r', wait_for='GO!')
-        await send(racer_1, '.d', wait_for='Please input')
-
-        # Race 2: Try out admin commands, racer finish
-        await send(admin, '.reseed', wait_for='Changed seed')
-        await send(racer_2, '.ready', wait_for='is ready')
-        await send(racer_1, '.ready', wait_for='GO!')
-        await send(admin, '.pause', wait_for='Race paused')
-        await send(admin, '.unpause', wait_for='GO!')
-        await send(racer_1, '.time', wait_for='The current race time')
-        await send(racer_2, '.d', wait_for='has finished in')
-        await send(racer_1, '.d', wait_for='Please input')
-
-        # Admin stuff
-        await send(admin, '.cancelrace 1', wait_for='')
-        await send(admin, '.f-recordrace "{0}"'.format(racer_2.display_name), wait_for='')
+        # # Match info
+        # await send(racer_1, '.matchinfo', wait_for='')
+        # await send(admin, '.setmatchtype bestof 5', wait_for='This match has been set')
+        # await send(admin, '.setmatchtype repeat 3', wait_for='This match has been set')
+        #
+        # # Time suggestion
+        # await send(racer_1, '.suggest friday 8p', wait_for='This match is suggested')
+        # await send(racer_2, '.suggest tomorrow 12:30', wait_for='This match is suggested')
+        # await send(racer_1, '.confirm', wait_for='officially scheduled')
+        # await send(racer_2, '.unconfirm', wait_for='wishes to remove')
+        # await send(racer_1, '.unconfirm', wait_for='has been unscheduled')
+        #
+        # # Prematch admin commands
+        # await send(admin, '.f-schedule tomorrow 21:15', wait_for='This match is suggested')
+        # await send(admin, '.f-confirm', wait_for='Forced confirmation')
+        # await send(admin, '.postpone', wait_for='has been postponed')
+        # await send(admin, '.f-begin', wait_for='Please input')
+        #
+        # # Race 1: Racer 1 wins, no finish from Racer 2
+        # await send(racer_1, '.ready', wait_for='is ready')
+        # await send(racer_2, '.ready', wait_for='The race will begin')
+        # await send(racer_1, '.unready', wait_for='is no longer ready')
+        # await send(racer_1, '.r', wait_for='GO!')
+        # await send(racer_1, '.d', wait_for='Please input')
+        #
+        # # Race 2: Try out admin commands, racer finish
+        # await send(admin, '.reseed', wait_for='Changed seed')
+        # await send(racer_2, '.ready', wait_for='is ready')
+        # await send(racer_1, '.ready', wait_for='GO!')
+        # await send(admin, '.pause', wait_for='Race paused')
+        # await send(admin, '.unpause', wait_for='GO!')
+        # await send(racer_1, '.time', wait_for='The current race time')
+        # await send(racer_2, '.d', wait_for='has finished in')
+        # await send(racer_1, '.d', wait_for='Please input')
+        #
+        # # Admin stuff
+        # await send(admin, '.cancelrace 1', wait_for='')
+        # await send(admin, '.f-recordrace "{0}"'.format(racer_2.display_name), wait_for='')
         await send(admin, '.changewinner 2 "{0}"'.format(racer_1.display_name), wait_for='')
         await send(admin, '.postpone', wait_for='has been postponed')
         await send(admin, '.f-begin', wait_for='Please input')
@@ -100,8 +100,21 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.r', wait_for='is ready')
         await send(racer_2, '.r', wait_for='GO!')
 
-        # TODO: test forced forfeit
-        # await send(admin, '.pause', wait_for='Race paused')
-        # await send(admin, '.forceforfeit "{0}"'.format(racer_2.display_name), wait_for='Race paused')
+        await send(admin, '.pause', wait_for='Race paused')
+        await send(admin, '.cancelrace', wait_for='Please input')
+        await send(racer_1, '.r', wait_for='is ready')
+        await send(racer_2, '.r', wait_for='GO!')
+
+        await send(admin, '.pause', wait_for='Race paused')
+        await send(admin, '.forcenewrace', wait_for='Please input')
+        await send(racer_1, '.r', wait_for='is ready')
+        await send(racer_2, '.r', wait_for='GO!')
         await send(racer_1, '.d', wait_for='The match has ended')
-        await send(racer_2, '.matchinfo', wait_for='')
+
+        await send(admin, '.matchinfo', wait_for='')
+        await send(admin, '.f-newrace', wait_for='Please input')
+        await send(racer_1, '.r', wait_for='is ready')
+        await send(racer_2, '.r', wait_for='GO!')
+        await send(racer_2, '.d', wait_for='The match has ended')
+
+        await send(admin, '.cancelrace 3')

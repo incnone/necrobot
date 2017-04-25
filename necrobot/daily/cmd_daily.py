@@ -363,18 +363,19 @@ class DailyWhen(DailyCommandType):
 class ForceRunNewDaily(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'forcerunnewdaily')
-        self.secret_command = True
+        self.admin_only = True
+        self.testing_command = True
 
     async def _daily_do_execute(self, command, daily_type):
-        if self.necrobot.is_admin(command.author):
-            for daily_type in dailytype.DailyType:
-                await self._daily_manager.on_new_daily(self._daily_manager.daily(daily_type))
+        for daily_type in dailytype.DailyType:
+            await self._daily_manager.on_new_daily(self._daily_manager.daily(daily_type))
 
 
 class ForceUpdateLeaderboard(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'forceupdateleaderboard')
         self.admin_only = True
+        self.testing_command = True
 
     async def _daily_do_execute(self, command, daily_type):
         days_back = 0

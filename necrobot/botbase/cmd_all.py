@@ -1,5 +1,5 @@
 from necrobot.botbase.commandtype import CommandType
-from necrobot.config import Config
+from necrobot.config import Config, TestLevel
 
 
 class ForceCommand(CommandType):
@@ -48,8 +48,9 @@ class Help(CommandType):
         if len(args) == 0:
             command_list_text = ''
             for cmd_type in self.bot_channel.command_types:
-                if (not cmd_type.secret_command) \
-                        and (not cmd_type.admin_only or self.bot_channel.is_admin(cmd.author)):
+                if cmd_type.show_in_help \
+                        and (not cmd_type.admin_only or self.bot_channel.is_admin(cmd.author)) \
+                        and (not cmd_type.testing_command or Config.TESTING <= TestLevel.TEST):
                     if verbose:
                         command_list_text += '\n`{0}` -- {2}{1}'.format(
                             cmd_type.mention,
@@ -84,9 +85,22 @@ class Info(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'info')
         self.help_text = 'Necrobot version information.'
-        self.secret_command = True
+
+    @property
+    def show_in_help(self):
+        return False
 
     async def _do_execute(self, cmd):
+        debug_str = ''
+        if Config.TESTING == TestLevel.DEBUG:
+            debug_str = ' (DEBUG)'
+        elif Config.TESTING == TestLevel.TEST:
+            debug_str = ' (TEST)'
+
         await self.bot_channel.client.send_message(
             cmd.channel,
-            'Necrobot v-{0}. Type `.help` for a list of commands.'.format(Config.BOT_VERSION))
+            'Necrobot v-{0}{1}. Type `.help` for a list of commands.'.format(
+                Config.BOT_VERSION,
+                debug_str
+            )
+        )

@@ -5,7 +5,7 @@ from necrobot.util import console
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.config import Config
+from necrobot.config import Config, TestLevel
 
 
 class CommandType(object):
@@ -19,8 +19,12 @@ class CommandType(object):
         self.command_name_list = args               # the string that calls this command (e.g. 'make')
         self.help_text = 'This command has no help text.'
         self.admin_only = False                     # If true, only botchannel admins can call this command
-        self.secret_command = False                 # If true, never shows up on ".help" calls
+        self.testing_command = False                # If true, can only be called if Config.TESTING is not RUN
         self.bot_channel = bot_channel
+
+    @property
+    def show_in_help(self) -> bool:
+        return not self.testing_command or Config.TESTING <= TestLevel.TEST
 
     @property
     def client(self) -> discord.Client:
@@ -67,8 +71,9 @@ class CommandType(object):
         command: Command
             The command to maybe execute.
         """
-        if command.command in self.command_name_list and \
-                ((not self.admin_only) or self.bot_channel.is_admin(command.author)):
+        if command.command in self.command_name_list \
+                and ((not self.admin_only) or self.bot_channel.is_admin(command.author)) \
+                and (not self.testing_command or Config.TESTING <= TestLevel.TEST):
             async with self.execution_id_lock:
                 self.execution_id += 1
                 this_id = self.execution_id

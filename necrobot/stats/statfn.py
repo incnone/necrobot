@@ -1,6 +1,6 @@
 import math
 
-from necrobot.database import matchdb, racedb
+from necrobot.database import racedb
 from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util.character import NDChar
@@ -89,7 +89,7 @@ class StatCache(object):
             self._cache = {}  # Map from discord ID's to UserStats
 
         def get_general_stats(self, discord_id, amplified):
-            last_race_number = matchdb.get_largest_race_number(discord_id)
+            last_race_number = racedb.get_largest_race_number(discord_id)
 
             # Check whether we have an up-to-date cached version, and if so, return it
             cached_data = self.CachedStats()

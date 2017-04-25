@@ -2,23 +2,24 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 
-from necrobot.database import racedb
-
 from necrobot.config import Config
+from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
-from necrobot.race.raceinfo import RaceInfo
 
 
 def record_match_race(
         match: Match,
-        race_number: int,
-        race_id: int,
-        winner: int,
-        canceled: bool,
-        contested: bool
+        race_number: int = None,
+        race_id: int = None,
+        winner: int = None,
+        canceled: bool = False,
+        contested: bool = False
         ) -> None:
+    if race_number is None:
+        race_number = _get_new_race_number(match)
+
     with DBConnect(commit=True) as cursor:
         params = (
             match.match_id,
@@ -42,41 +43,45 @@ def record_match_race(
         )
 
 
-def get_largest_race_number(discord_id: int) -> int:
-    with DBConnect(commit=False) as cursor:
-        params = (discord_id,)
-        cursor.execute(
-            "SELECT race_id "
-            "FROM {0} "
-            "WHERE discord_id = %s "
-            "ORDER BY race_id DESC "
-            "LIMIT 1".format(_t('race_runs')),
-            params)
-        row = cursor.fetchone()
-        return int(row[0]) if row is not None else 0
+def change_winner(match: Match, race_number: int, winner: int) -> bool:
+    race_to_change = _get_uncanceled_race_number(match=match, race_number=race_number)
+    if race_to_change is None:
+        return False
 
-
-def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
-    params = (race_type,)
-    with DBConnect(commit=False) as cursor:
-        cursor.execute(
-            "SELECT `character`, `descriptor`, `seeded`, `amplified`, `seed_fixed` "
-            "FROM `race_types` "
-            "WHERE `type_id`=%s",
-            params
+    with DBConnect(commit=True) as cursor:
+        params = (
+            winner,
+            match.match_id,
+            race_to_change,
         )
 
-        row = cursor.fetchone()
-        if row is not None:
-            race_info = RaceInfo()
-            race_info.set_char(row[0])
-            race_info.descriptor = row[1]
-            race_info.seeded = bool(row[2])
-            race_info.amplified = bool(row[3])
-            race_info.seed_fixed = bool(row[4])
-            return race_info
-        else:
-            return None
+        cursor.execute(
+            "UPDATE {0} "
+            "SET `winner` = %s "
+            "WHERE `match_id` = %s AND `race_number` = %s".format(_t('match_races')),
+            params
+        )
+        return True
+
+
+def cancel_race(match: Match, race_number: int) -> bool:
+    race_to_cancel = _get_uncanceled_race_number(match=match, race_number=race_number)
+    if race_to_cancel is None:
+        return False
+
+    with DBConnect(commit=True) as cursor:
+        params = (
+            match.match_id,
+            race_to_cancel,
+        )
+
+        cursor.execute(
+            "UPDATE {0} "
+            "SET `canceled` = TRUE "
+            "WHERE `match_id` = %s AND `race_number` = %s".format(_t('match_races')),
+            params
+        )
+        return True
 
 
 def write_match(match: Match):
@@ -276,5 +281,36 @@ def _register_match(match: Match) -> None:
         match.set_match_id(int(cursor.fetchone()[0]))
 
 
+def _get_uncanceled_race_number(match: Match, race_number: int) -> int or None:
+    params = (match.match_id,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT `race_number` "
+            "FROM {0} "
+            "WHERE `match_id` = %s AND `canceled` = FALSE "
+            "ORDER BY `race_number` ASC".format(_t('match_races')),
+            params
+        )
+        races = cursor.fetchall()
+        if len(races) < race_number:
+            return None
+
+        return int(races[race_number - 1][0])
+
+
+def _get_new_race_number(match: Match) -> int:
+    params = (match.match_id,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT `race_number` "
+            "FROM {0} "
+            "WHERE `match_id` = %s "
+            "ORDER BY `race_number` DESC "
+            "LIMIT 1".format(_t('match_races')),
+            params
+        )
+        return int(cursor.fetchone()[0]) + 1
+
+
 def _t(tablename: str) -> str:
-    return '{0}.{1}'.format(Config.CONDOR_EVENT, tablename) if Config.CONDOR_EVENT else tablename
+    return '`{0}`.`{1}`'.format(Config.CONDOR_EVENT, tablename) if Config.CONDOR_EVENT else '`{0}`'.format(tablename)

@@ -207,3 +207,40 @@ def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None
 
 def _t(tablename: str) -> str:
     return '{0}.{1}'.format(Config.CONDOR_EVENT, tablename) if Config.CONDOR_EVENT else tablename
+
+
+def get_largest_race_number(discord_id: int) -> int:
+    with DBConnect(commit=False) as cursor:
+        params = (discord_id,)
+        cursor.execute(
+            "SELECT race_id "
+            "FROM {0} "
+            "WHERE discord_id = %s "
+            "ORDER BY race_id DESC "
+            "LIMIT 1".format(_t('race_runs')),
+            params)
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else 0
+
+
+def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
+    params = (race_type,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            "SELECT `character`, `descriptor`, `seeded`, `amplified`, `seed_fixed` "
+            "FROM `race_types` "
+            "WHERE `type_id`=%s",
+            params
+        )
+
+        row = cursor.fetchone()
+        if row is not None:
+            race_info = RaceInfo()
+            race_info.set_char(row[0])
+            race_info.descriptor = row[1]
+            race_info.seeded = bool(row[2])
+            race_info.amplified = bool(row[3])
+            race_info.seed_fixed = bool(row[4])
+            return race_info
+        else:
+            return None

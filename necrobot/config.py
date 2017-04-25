@@ -10,13 +10,16 @@ class TestLevel(IntEnum):
     TEST = 1
     RUN = 2
 
+    def __str__(self):
+        return self.name.lower()
+
 
 class Config(object):
     # Info ------------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
-    TESTING = TestLevel.RUN
+    TESTING = TestLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff']  # list of names of roles to give admin access
@@ -99,6 +102,7 @@ class Config(object):
             ['vodrecord_passwd', Config.VODRECORD_PASSWD],
             ['condor_event', Config.CONDOR_EVENT],
             ['gsheet_id', Config.GSHEET_ID],
+            ['test_level', Config.TESTING],
         ]
 
         with open(Config.CONFIG_FILE, 'w') as file:
@@ -118,6 +122,7 @@ def init(config_filename):
         'vodrecord_passwd': '',
         'gsheet_id': '',
         'condor_event': '',
+        'test_level': '',
         }
 
     with open(config_filename, 'r') as file:
@@ -144,6 +149,13 @@ def init(config_filename):
 
     Config.CONDOR_EVENT = defaults['condor_event']
     Config.GSHEET_ID = defaults['gsheet_id']
+
+    if defaults['test_level'] == 'debug':
+        Config.TESTING = TestLevel.DEBUG
+    elif defaults['test_level'] == 'test':
+        Config.TESTING = TestLevel.TEST
+    elif defaults['test_level'] == 'run':
+        Config.TESTING = TestLevel.RUN
 
     Config.CONFIG_FILE = config_filename
 

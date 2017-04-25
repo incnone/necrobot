@@ -66,7 +66,10 @@ def get_random_colorname(protected_colors):
 class ColorMe(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'dankify')
-        self.secret_command = True
+
+    @property
+    def show_in_help(self):
+        return False
 
     async def _do_execute(self, command):
         asyncio.ensure_future(color_user(command.author, self.client, self.necrobot.server))
