@@ -3,7 +3,7 @@ Interaction with the necrobot.leagues table.
 
 Methods
 -------
-create_league(schema_name: str) -> None 
+create_league(schema_name: str) -> None
     Make a new league.
 get_league(schema_name: str) -> League
     Get a registered league.
@@ -48,7 +48,7 @@ class InvalidSchemaName(Exception):
     pass
 
 
-def create_league(schema_name: str) -> League:
+async def create_league(schema_name: str) -> League:
     """Creates a new CoNDOR event with the given schema_name as its database.
     
     Parameters
@@ -66,7 +66,7 @@ def create_league(schema_name: str) -> League:
         raise InvalidSchemaName()
 
     params = (schema_name,)
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
             SELECT `league_name` 
@@ -131,14 +131,14 @@ def create_league(schema_name: str) -> League:
     )
 
 
-def get_entrant_ids() -> list:
+async def get_entrant_ids() -> list:
     """Get NecroUser IDs for all entrants to the league
     
     Returns
     -------
     list[int]
     """
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT `user_id`
@@ -151,7 +151,7 @@ def get_entrant_ids() -> list:
         return to_return
 
 
-def get_league(schema_name: str) -> League:
+async def get_league(schema_name: str) -> League:
     """
     Parameters
     ----------
@@ -164,7 +164,7 @@ def get_league(schema_name: str) -> League:
         A League object for the event.
     """
     params = (schema_name,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT 
@@ -214,7 +214,7 @@ def get_league(schema_name: str) -> League:
         raise LeagueDoesNotExist()
 
 
-def register_user(user_id: int) -> None:
+async def register_user(user_id: int) -> None:
     """Register the user for the league
     
     Parameters
@@ -222,7 +222,7 @@ def register_user(user_id: int) -> None:
     user_id: int
         The user's NecroUser ID.
     """
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         params = (user_id,)
         cursor.execute(
             """
@@ -236,7 +236,7 @@ def register_user(user_id: int) -> None:
         )
 
 
-def write_league(league: League) -> None:
+async def write_league(league: League) -> None:
     """Write the league to the database
     
     Parameters
@@ -245,7 +245,7 @@ def write_league(league: League) -> None:
         The league object to be written. Will create a new row if the schema_name is not in the database, and
         update otherwise.
     """
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         match_info = league.match_info
         race_type_id = racedb.get_race_type_id(race_info=match_info.race_info, register=True)
 

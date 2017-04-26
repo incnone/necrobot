@@ -1,4 +1,4 @@
-from necrobot.database import ladderdb
+from necrobot.database import ratingsdb
 from necrobot.match import cmd_match
 from necrobot.user import userutil
 
@@ -140,7 +140,7 @@ class Rating(CommandType):
             )
             return
 
-        rating = ladderdb.get_rating(discord_id=discord_id)
+        rating = await ratingsdb.get_rating(discord_id=discord_id)
         await self.client.send_message(
             cmd.channel,
             '**{0}**: {1}'.format(user_name, rating.displayed_rating))

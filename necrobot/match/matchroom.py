@@ -11,7 +11,7 @@ from necrobot.race import cmd_race
 from necrobot.match import cmd_match
 from necrobot.test import cmd_test
 
-from necrobot.database import ladderdb, matchdb, racedb
+from necrobot.database import ratingsdb, matchdb, racedb
 from necrobot.ladder import ratingutil
 from necrobot.race import raceinfo
 
@@ -364,13 +364,13 @@ class MatchRoom(BotChannel):
         racer_1 = self.match.racer_1
         racer_2 = self.match.racer_2
 
-        rating_1 = ladderdb.get_rating(racer_1.discord_id)
-        rating_2 = ladderdb.get_rating(racer_2.discord_id)
+        rating_1 = await ratingsdb.get_rating(racer_1.discord_id)
+        rating_2 = await ratingsdb.get_rating(racer_2.discord_id)
 
         new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
 
-        ladderdb.set_rating(racer_1.discord_id, new_ratings[0])
-        ladderdb.set_rating(racer_2.discord_id, new_ratings[1])
+        await ratingsdb.set_rating(racer_1.discord_id, new_ratings[0])
+        await ratingsdb.set_rating(racer_2.discord_id, new_ratings[1])
 
         # TODO: this isn't working
         # if Config.RATINGS_IN_NICKNAMES:

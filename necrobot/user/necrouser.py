@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import discord
 import pytz
@@ -34,7 +35,7 @@ class NecroUser(object):
         return self.user_id == other.user_id
 
     def commit(self):
-        self._commit(self)
+        asyncio.ensure_future(self._commit(self))
 
     @property
     def user_id(self) -> int:

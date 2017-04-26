@@ -15,7 +15,7 @@ class LeagueMgr(object, metaclass=Singleton):
     async def initialize(self):
         if Config.LEAGUE_NAME:
             try:
-                self.set_league(schema_name=Config.LEAGUE_NAME, save_to_config=False)
+                await self.set_league(schema_name=Config.LEAGUE_NAME, save_to_config=False)
             except leaguedb.LeagueDoesNotExist:
                 console.warning(
                     'League "{0}" does not exist.'.format(Config.LEAGUE_NAME)
@@ -28,7 +28,7 @@ class LeagueMgr(object, metaclass=Singleton):
         pass
 
     @staticmethod
-    def create_league(schema_name: str, save_to_config=True):
+    async def create_league(schema_name: str, save_to_config=True):
         """Registers a new league
         
         Parameters
@@ -45,14 +45,14 @@ class LeagueMgr(object, metaclass=Singleton):
         necrobot.database.leaguedb.InvalidSchemaName
             If the schema name is not a valid MySQL schema name
         """
-        necrobot.league.the_league.league = leaguedb.create_league(schema_name)
+        necrobot.league.the_league.league = await leaguedb.create_league(schema_name)
 
         if save_to_config:
             Config.LEAGUE_NAME = schema_name
             Config.write()
 
     @staticmethod
-    def set_league(schema_name: str, save_to_config=True):
+    async def set_league(schema_name: str, save_to_config=True):
         """Set the current league
         
         Parameters
@@ -67,7 +67,7 @@ class LeagueMgr(object, metaclass=Singleton):
         necrobot.database.leaguedb.LeagueDoesNotExist
             If the schema name does not refer to a registered league
         """
-        necrobot.league.the_league.league = leaguedb.get_league(schema_name)
+        necrobot.league.the_league.league = await leaguedb.get_league(schema_name)
 
         if save_to_config:
             Config.LEAGUE_NAME = schema_name

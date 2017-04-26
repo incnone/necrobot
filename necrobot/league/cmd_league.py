@@ -218,7 +218,7 @@ class SetCondorEvent(CommandType):
 
         schema_name = cmd.args[0].lower()
         try:
-            LeagueMgr().set_league(schema_name=schema_name)
+            await LeagueMgr().set_league(schema_name=schema_name)
         except leaguedb.LeagueDoesNotExist:
             await self.client.send_message(
                 cmd.channel,
@@ -273,7 +273,7 @@ class Register(CommandType):
 
     async def _do_execute(self, cmd: Command):
         user = userutil.get_user(discord_id=int(cmd.author.id))
-        leaguedb.register_user(user.user_id)
+        await leaguedb.register_user(user.user_id)
 
 
 class RegisterCondorEvent(CommandType):
@@ -298,7 +298,7 @@ class RegisterCondorEvent(CommandType):
 
         schema_name = cmd.args[0].lower()
         try:
-            LeagueMgr().create_league(schema_name=schema_name)
+            await LeagueMgr().create_league(schema_name=schema_name)
         except leaguedb.LeagueAlreadyExists as e:
             error_msg = 'Error: Schema `{0}` already exists.'.format(schema_name)
             if str(e):

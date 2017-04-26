@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import pytz
 
@@ -197,7 +198,7 @@ class Match(object):
 
     def commit(self):
         """Write the match to the database."""
-        self._commit(self)
+        asyncio.ensure_future(self._commit(self))
 
     def racing_in_match(self, user) -> bool:
         """        

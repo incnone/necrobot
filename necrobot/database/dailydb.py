@@ -1,5 +1,5 @@
 """
-Interaction async with the necrobot.dailies and necrobot.daily_runs tables.
+Interaction with the necrobot.dailies and necrobot.daily_runs tables.
 """
 
 from necrobot.database.dbconnect import DBConnect

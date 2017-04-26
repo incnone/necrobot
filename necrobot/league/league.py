@@ -17,7 +17,7 @@ class League(object):
             league_name: str,
             match_info: MatchInfo
     ):
-        self._commit_fn = commit_fn
+        self._commit = commit_fn
         self._schema_name = schema_name
         self.name = league_name
         self.match_info = match_info
@@ -27,4 +27,4 @@ class League(object):
         return self._schema_name
 
     def commit(self):
-        self._commit_fn(self)
+        asyncio.ensure_future(self._commit())
