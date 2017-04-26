@@ -2,10 +2,9 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 
-import datetime
-from necrobot.config import Config
 from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
+from necrobot.league.leaguemanager import LeagueManager
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
 
@@ -32,14 +31,38 @@ def record_match_race(
         )
 
         cursor.execute(
-            "INSERT INTO {0} "
-            "(match_id, race_number, race_id, winner, canceled, contested) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE "
-            "   race_id=VALUES(race_id), "
-            "   winner=VALUES(winner), "
-            "   canceled=VALUES(canceled), "
-            "   contested=VALUES(contested)".format(_t('match_races')),
+            """
+            INSERT INTO {0} 
+            (match_id, race_number, race_id, winner, canceled, contested) 
+            VALUES (%s, %s, %s, %s, %s, %s) 
+            ON DUPLICATE KEY UPDATE 
+               race_id=VALUES(race_id), 
+               winner=VALUES(winner), 
+               canceled=VALUES(canceled), 
+               contested=VALUES(contested)
+            """.format(_t('match_races')),
+            params
+        )
+
+
+def set_match_race_contested(
+        match: Match,
+        race_number: int = None,
+        contested: bool = True
+        ) -> None:
+    with DBConnect(commit=True) as cursor:
+        params = (
+            contested,
+            match.match_id,
+            race_number,
+        )
+
+        cursor.execute(
+            """
+            UPDATE {0}
+            SET `contested`=%s
+            WHERE `match_id`=%s AND `race_number`=%s
+            """.format(_t('match_races')),
             params
         )
 
@@ -57,9 +80,11 @@ def change_winner(match: Match, race_number: int, winner: int) -> bool:
         )
 
         cursor.execute(
-            "UPDATE {0} "
-            "SET `winner` = %s "
-            "WHERE `match_id` = %s AND `race_number` = %s".format(_t('match_races')),
+            """
+            UPDATE {0}
+            SET `winner` = %s
+            WHERE `match_id` = %s AND `race_number` = %s
+            """.format(_t('match_races')),
             params
         )
         return True
@@ -77,9 +102,11 @@ def cancel_race(match: Match, race_number: int) -> bool:
         )
 
         cursor.execute(
-            "UPDATE {0} "
-            "SET `canceled` = TRUE "
-            "WHERE `match_id` = %s AND `race_number` = %s".format(_t('match_races')),
+            """
+            UPDATE {0}
+            SET `canceled` = TRUE
+            WHERE `match_id` = %s AND `race_number` = %s
+            """.format(_t('match_races')),
             params
         )
         return True
@@ -104,26 +131,30 @@ def write_match(match: Match):
         match.is_best_of,
         match.number_of_races,
         match.cawmentator.user_id if match.cawmentator else None,
+        match.channel_id,
         match.match_id,
     )
 
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE {0} "
-            "SET "
-            "   race_type_id=%s, "
-            "   racer_1_id=%s, "
-            "   racer_2_id=%s, "
-            "   suggested_time=%s, "
-            "   r1_confirmed=%s, "
-            "   r2_confirmed=%s, "
-            "   r1_unconfirmed=%s, "
-            "   r2_unconfirmed=%s, "
-            "   ranked=%s, "
-            "   is_best_of=%s, "
-            "   number_of_races=%s, "
-            "   cawmentator_id=%s "
-            "WHERE match_id=%s".format(_t('matches')),
+            """
+            UPDATE {0}
+            SET
+               race_type_id=%s,
+               racer_1_id=%s,
+               racer_2_id=%s,
+               suggested_time=%s,
+               r1_confirmed=%s,
+               r2_confirmed=%s,
+               r1_unconfirmed=%s,
+               r2_unconfirmed=%s,
+               ranked=%s,
+               is_best_of=%s,
+               number_of_races=%s,
+               cawmentator_id=%s,
+               channel_id=%s
+            WHERE match_id=%s
+            """.format(_t('matches')),
             params
         )
 
@@ -132,9 +163,11 @@ def register_match_channel(match_id: int, channel_id: int or None) -> None:
     params = (channel_id, match_id,)
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "UPDATE {0} "
-            "SET channel_id=%s "
-            "WHERE match_id=%s".format(_t('matches')),
+            """
+            UPDATE {0}
+            SET channel_id=%s
+            WHERE match_id=%s
+            """.format(_t('matches')),
             params
         )
 
@@ -143,20 +176,31 @@ def get_match_channel_id(match_id: int) -> int:
     params = (match_id,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT channel_id "
-            "FROM {0} "
-            "WHERE match_id=%s "
-            "LIMIT 1".format(_t('matches')),
+            """
+            SELECT channel_id 
+            FROM {0} 
+            WHERE match_id=%s 
+            LIMIT 1
+            """.format(_t('matches')),
             params
         )
         row = cursor.fetchone()
         return int(row[0]) if row[0] is not None else None
 
 
-def get_channeled_matches_raw_data(must_be_scheduled: bool = False, order_by_time: bool = False) -> list:
+def get_channeled_matches_raw_data(
+        must_be_scheduled: bool = False,
+        order_by_time: bool = False,
+        racer_id: int = None
+) -> list:
+    params = tuple()
+
     where_query = "`channel_id` IS NOT NULL"
     if must_be_scheduled:
-        where_query += " AND `suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`"
+        where_query += " AND (`suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`)"
+    if racer_id is not None:
+        where_query += " AND (`racer_1_id` = %s OR `racer_2_id` = %s)"
+        params += (racer_id, racer_id,)
 
     order_query = ''
     if order_by_time:
@@ -164,34 +208,56 @@ def get_channeled_matches_raw_data(must_be_scheduled: bool = False, order_by_tim
 
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT "
-            "   match_id, "
-            "   race_type_id, "
-            "   racer_1_id, "
-            "   racer_2_id, "
-            "   suggested_time, "
-            "   r1_confirmed, "
-            "   r2_confirmed, "
-            "   r1_unconfirmed, "
-            "   r2_unconfirmed, "
-            "   ranked, "
-            "   is_best_of, "
-            "   number_of_races, "
-            "   cawmentator_id, "
-            "   channel_id "
-            "FROM {0} "
-            "WHERE {1} {2}".format(_t('matches'), where_query, order_query)
-        )
+            """
+            SELECT 
+                match_id, 
+                race_type_id, 
+                racer_1_id, 
+                racer_2_id, 
+                suggested_time, 
+                r1_confirmed, 
+                r2_confirmed, 
+                r1_unconfirmed, 
+                r2_unconfirmed, 
+                ranked, 
+                is_best_of, 
+                number_of_races, 
+                cawmentator_id, 
+                channel_id 
+            FROM {0} 
+            WHERE {1} {2}
+            """.format(_t('matches'), where_query, order_query), params)
         return cursor.fetchall()
+
+
+def delete_match(match_id: int):
+    params = (match_id,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            DELETE FROM {0} 
+            WHERE `match_id`=%s
+            """.format(_t('match_races')),
+            params
+        )
+        cursor.execute(
+            """
+            DELETE FROM {0} 
+            WHERE `match_id`=%s
+            """.format(_t('matches')),
+            params
+        )
 
 
 def get_match_race_data(match_id: int) -> MatchRaceData:
     params = (match_id,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT canceled, winner "
-            "FROM {0} "
-            "WHERE match_id=%s".format(_t('match_races')),
+            """
+            SELECT canceled, winner 
+            FROM {0} 
+            WHERE match_id=%s
+            """.format(_t('match_races')),
             params
         )
         finished = 0
@@ -218,11 +284,13 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int,
 
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT match_id "
-            "FROM {0} "
-            "WHERE {1} "
-            "ORDER BY `suggested_time` DESC "
-            "LIMIT 1".format(_t('matches'), where_query),
+            """
+            SELECT match_id 
+            FROM {0} 
+            WHERE {1} 
+            ORDER BY `suggested_time` DESC 
+            LIMIT 1
+            """.format(_t('matches'), where_query),
             params
         )
         row = cursor.fetchone()
@@ -234,23 +302,25 @@ def get_raw_match_data(match_id: int) -> list:
 
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT "
-            "   match_id, "
-            "   race_type_id, "
-            "   racer_1_id, "
-            "   racer_2_id, "
-            "   suggested_time, "
-            "   r1_confirmed, "
-            "   r2_confirmed, "
-            "   r1_unconfirmed, "
-            "   r2_unconfirmed, "
-            "   ranked, "
-            "   is_best_of, "
-            "   number_of_races, "
-            "   cawmentator_id "
-            "FROM {0} "
-            "WHERE match_id=%s "
-            "LIMIT 1".format(_t('matches')),
+            """
+            SELECT 
+               match_id, 
+               race_type_id, 
+               racer_1_id, 
+               racer_2_id, 
+               suggested_time, 
+               r1_confirmed, 
+               r2_confirmed, 
+               r1_unconfirmed, 
+               r2_unconfirmed, 
+               ranked, 
+               is_best_of, 
+               number_of_races, 
+               cawmentator_id 
+            FROM {0} 
+            WHERE match_id=%s 
+            LIMIT 1
+            """.format(_t('matches')),
             params
         )
         return cursor.fetchone()
@@ -276,22 +346,24 @@ def _register_match(match: Match) -> None:
 
     with DBConnect(commit=True) as cursor:
         cursor.execute(
-            "INSERT INTO {0} "
-            "("
-            "   race_type_id, "
-            "   racer_1_id, "
-            "   racer_2_id, "
-            "   suggested_time, "
-            "   r1_confirmed, "
-            "   r2_confirmed, "
-            "   r1_unconfirmed, "
-            "   r2_unconfirmed, "
-            "   ranked, "
-            "   is_best_of, "
-            "   number_of_races, "
-            "   cawmentator_id"
-            ")"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)".format(_t('matches')),
+            """
+            INSERT INTO {0} 
+            (
+               race_type_id, 
+               racer_1_id, 
+               racer_2_id, 
+               suggested_time, 
+               r1_confirmed, 
+               r2_confirmed, 
+               r1_unconfirmed, 
+               r2_unconfirmed, 
+               ranked, 
+               is_best_of, 
+               number_of_races, 
+               cawmentator_id
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """.format(_t('matches')),
             params
         )
         cursor.execute("SELECT LAST_INSERT_ID()")
@@ -302,10 +374,12 @@ def _get_uncanceled_race_number(match: Match, race_number: int) -> int or None:
     params = (match.match_id,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT `race_number` "
-            "FROM {0} "
-            "WHERE `match_id` = %s AND `canceled` = FALSE "
-            "ORDER BY `race_number` ASC".format(_t('match_races')),
+            """
+            SELECT `race_number` 
+            FROM {0} 
+            WHERE `match_id` = %s AND `canceled` = FALSE 
+            ORDER BY `race_number` ASC
+            """.format(_t('match_races')),
             params
         )
         races = cursor.fetchall()
@@ -319,15 +393,22 @@ def _get_new_race_number(match: Match) -> int:
     params = (match.match_id,)
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT `race_number` "
-            "FROM {0} "
-            "WHERE `match_id` = %s "
-            "ORDER BY `race_number` DESC "
-            "LIMIT 1".format(_t('match_races')),
+            """
+            SELECT `race_number` 
+            FROM {0} 
+            WHERE `match_id` = %s 
+            ORDER BY `race_number` DESC 
+            LIMIT 1
+            """.format(_t('match_races')),
             params
         )
-        return int(cursor.fetchone()[0]) + 1
+        row = cursor.fetchone()
+        return int(row[0]) + 1 if row is not None else 1
 
 
 def _t(tablename: str) -> str:
-    return '`{0}`.`{1}`'.format(Config.CONDOR_EVENT, tablename) if Config.CONDOR_EVENT else '`{0}`'.format(tablename)
+    league = LeagueManager().league
+    if league is not None:
+        return '`{0}`.`{1}`'.format(league.schema_name, tablename)
+    else:
+        return '`{0}`'.format(tablename)

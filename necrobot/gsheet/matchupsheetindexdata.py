@@ -47,7 +47,7 @@ class MatchupSheetIndexData(object):
                     break
 
             if sheet_size is None:
-                console.error(
+                console.warning(
                     'Couldn\'t find a worksheet. '
                     'GSheetID: {0}, Worksheet Name: {1}.'.format(self.gsheet_id, self.wks_name))
                 return

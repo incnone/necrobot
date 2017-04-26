@@ -4,6 +4,7 @@ from necrobot.database import racedb
 from necrobot.race import racetime
 from necrobot.util import console
 from necrobot.util.character import NDChar
+from necrobot.util.singleton import Singleton
 
 
 class CharacterStats(object):
@@ -76,84 +77,74 @@ class GeneralStats(object):
         return CharacterStats(char)
 
 
-class StatCache(object):
-    class __StatCache(object):
-        class CachedStats(object):
-            def __init__(self):
-                self.last_race_number_amplified = 0      # The number of the last race when amplified was cached
-                self.last_race_number_base = 0           # The number of the last race when base was cached
-                self.amplified_stats = GeneralStats()
-                self.base_stats = GeneralStats()
-
+class StatCache(object, metaclass=Singleton):
+    class CachedStats(object):
         def __init__(self):
-            self._cache = {}  # Map from discord ID's to UserStats
-
-        def get_general_stats(self, discord_id, amplified):
-            last_race_number = racedb.get_largest_race_number(discord_id)
-
-            # Check whether we have an up-to-date cached version, and if so, return it
-            cached_data = self.CachedStats()
-            if discord_id in self._cache:
-                cached_data = self._cache[discord_id]
-                if amplified:
-                    if cached_data.last_race_number_amplified == last_race_number:
-                        return cached_data.amplified_stats
-                else:
-                    if cached_data.last_race_number_base == last_race_number:
-                        return cached_data.base_stats
-
-            # If here, the cache is out-of-date
-            general_stats = GeneralStats()
-            for row in racedb.get_allzones_race_numbers(discord_id, amplified):
-                char = NDChar.fromstr(row[0])
-                charstats = CharacterStats(char)
-                charstats.number_of_races = int(row[1])
-                total_time = 0
-                total_squared_time = 0
-                number_of_wins = 0
-                number_of_forfeits = 0
-                for stat_row in racedb.get_all_racedata(discord_id, char.name, amplified):
-                    if int(stat_row[1]) == -2:  # finish
-                        time = int(stat_row[0])
-                        total_time += time
-                        total_squared_time += time * time
-                        number_of_wins += 1
-                    else:
-                        number_of_forfeits += 1
-
-                if number_of_wins > 0:
-                    charstats.mean = total_time / number_of_wins
-
-                if number_of_wins > 1:
-                    charstats.has_wins = True
-                    charstats.var = \
-                        (total_squared_time / (number_of_wins-1)) - charstats.mean * total_time/(number_of_wins-1)
-
-                if number_of_wins + number_of_forfeits > 0:
-                    charstats.winrate = number_of_wins / (number_of_wins + number_of_forfeits)
-
-                general_stats.insert_charstats(charstats)
-
-            # Update the cache
-            if amplified:
-                cached_data.last_race_number_amplified = last_race_number
-                cached_data.amplified_stats = general_stats
-            else:
-                cached_data.last_race_number_base = last_race_number
-                cached_data.base_stats = general_stats
-            self._cache[discord_id] = cached_data
-
-            # Return
-            return general_stats
-
-    instance = None
+            self.last_race_number_amplified = 0      # The number of the last race when amplified was cached
+            self.last_race_number_base = 0           # The number of the last race when base was cached
+            self.amplified_stats = GeneralStats()
+            self.base_stats = GeneralStats()
 
     def __init__(self):
-        if StatCache.instance is None:
-            StatCache.instance = StatCache.__StatCache()
+        self._cache = {}  # Map from discord ID's to UserStats
 
-    def __getattr__(self, name):
-        return getattr(StatCache.instance, name)
+    def get_general_stats(self, discord_id, amplified):
+        last_race_number = racedb.get_largest_race_number(discord_id)
+
+        # Check whether we have an up-to-date cached version, and if so, return it
+        cached_data = self.CachedStats()
+        if discord_id in self._cache:
+            cached_data = self._cache[discord_id]
+            if amplified:
+                if cached_data.last_race_number_amplified == last_race_number:
+                    return cached_data.amplified_stats
+            else:
+                if cached_data.last_race_number_base == last_race_number:
+                    return cached_data.base_stats
+
+        # If here, the cache is out-of-date
+        general_stats = GeneralStats()
+        for row in racedb.get_allzones_race_numbers(discord_id, amplified):
+            char = NDChar.fromstr(row[0])
+            charstats = CharacterStats(char)
+            charstats.number_of_races = int(row[1])
+            total_time = 0
+            total_squared_time = 0
+            number_of_wins = 0
+            number_of_forfeits = 0
+            for stat_row in racedb.get_all_racedata(discord_id, char.name, amplified):
+                if int(stat_row[1]) == -2:  # finish
+                    time = int(stat_row[0])
+                    total_time += time
+                    total_squared_time += time * time
+                    number_of_wins += 1
+                else:
+                    number_of_forfeits += 1
+
+            if number_of_wins > 0:
+                charstats.mean = total_time / number_of_wins
+
+            if number_of_wins > 1:
+                charstats.has_wins = True
+                charstats.var = \
+                    (total_squared_time / (number_of_wins-1)) - charstats.mean * total_time/(number_of_wins-1)
+
+            if number_of_wins + number_of_forfeits > 0:
+                charstats.winrate = number_of_wins / (number_of_wins + number_of_forfeits)
+
+            general_stats.insert_charstats(charstats)
+
+        # Update the cache
+        if amplified:
+            cached_data.last_race_number_amplified = last_race_number
+            cached_data.amplified_stats = general_stats
+        else:
+            cached_data.last_race_number_base = last_race_number
+            cached_data.base_stats = general_stats
+        self._cache[discord_id] = cached_data
+
+        # Return
+        return general_stats
 
 
 def get_general_stats(discord_id, amplified):

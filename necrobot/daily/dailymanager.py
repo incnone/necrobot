@@ -4,6 +4,7 @@ from necrobot.util import console
 from necrobot.database import userdb
 from necrobot.daily import dailytype
 
+from necrobot.util.singleton import Singleton
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.daily.daily import DATE_ZERO, Daily
 from necrobot.daily.dailytype import DailyType
@@ -11,17 +12,20 @@ from necrobot.user.userprefs import UserPrefs
 from necrobot.config import Config
 
 
-class DailyManager(object):
+class DailyManager(object, metaclass=Singleton):
     def __init__(self):
         console.info('Initializing new DailyManager object.')
         self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
         self._cadence_daily = Daily(self, DailyType.cadence)
         self._rotating_daily = Daily(self, DailyType.rotating)
 
-    def refresh(self):
+    async def initialize(self):
         pass
 
-    def close(self):
+    async def refresh(self):
+        pass
+
+    async def close(self):
         self._cadence_daily.close()
         self._rotating_daily.close()
 

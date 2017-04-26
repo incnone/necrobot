@@ -14,10 +14,10 @@ class CondorAdminChannel(BotChannel):
         BotChannel.__init__(self)
         self.command_types = [
             # cmd_condor.Automatch(self),
-            # cmd_condor.CloseFinished(self),
-            # cmd_condor.DropRacer(self),
 
             cmd_condor.CloseAllMatches(self),
+            cmd_condor.CloseFinished(self),
+            cmd_condor.DropRacer(self),
             cmd_condor.GetCurrentEvent(self),
             cmd_condor.GetMatchRules(self),
             cmd_condor.MakeMatch(self),

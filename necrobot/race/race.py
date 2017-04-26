@@ -347,8 +347,6 @@ class Race(object):
 
     # Unenters the given discord Member in the race
     async def unenter_member(self, racer_member: discord.Member, mute=False):
-        self.parent.dont_notify(racer_member)
-
         if not self.before_race:
             await self.forfeit_member(racer_member)
             return
@@ -379,7 +377,7 @@ class Race(object):
         racer = self.get_racer(racer_member)
         if racer is None:
             await self._write(mute=mute, text='Unexpected error.')
-            console.error("Unexpected error in race.race.Race.enter_and_ready_member: "
+            console.warning("Unexpected error in race.race.Race.enter_and_ready_member: "
                           "Couldn't find a Racer for the discord Member {0}.".format(racer_member.name))
             return
 
@@ -610,7 +608,7 @@ class Race(object):
     async def _begin_race(self, mute=False):
         for racer in self.racers:
             if not racer.begin_race():
-                console.error("{} isn't ready while calling race._begin_race -- unexpected error.".format(
+                console.warning("{} isn't ready while calling race._begin_race -- unexpected error.".format(
                     racer.name))
 
         self._status = RaceStatus.racing
@@ -653,16 +651,6 @@ class Race(object):
 
         countdown_systemtime_begin = time.monotonic()
         countdown_timer = length
-
-        # if CHECK_RATE_LIMITS:
-        #     msg_rl_pair = await ratelimit.send_and_get_rate_limit(
-        #         client=self.parent.client,
-        #         channel=self.parent.channel,
-        #         content='The race will begin in {0} seconds.'.format(countdown_timer)
-        #     )
-        #     rate_limit_info = msg_rl_pair[1]
-        #     if rate_limit_info.remaining < 4:
-        #         await asyncio.sleep(rate_limit_info.time_until_reset.total_seconds())
 
         if incremental_start is not None:
             await self._write(mute=mute, text='The race will begin in {0} seconds.'.format(countdown_timer))

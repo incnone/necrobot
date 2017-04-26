@@ -43,6 +43,8 @@ class MatchRoom(BotChannel):
         self._countdown_to_match_future = None  # Future that waits until the match start, then begins match
 
         self._current_race_number = None
+
+        self._last_begun_race_number = None
         self._current_race_contested = False
 
         self._prematch_command_types = [
@@ -64,6 +66,7 @@ class MatchRoom(BotChannel):
         self._during_match_command_types = [
             cmd_match.CancelRace(self),
             cmd_match.ChangeWinner(self),
+            cmd_match.Contest(self),
             cmd_match.ForceNewRace(self),
             cmd_match.ForceRecordRace(self),
             cmd_match.GetMatchInfo(self),
@@ -134,6 +137,21 @@ class MatchRoom(BotChannel):
     def during_races(self):
         return self.current_race is not None and not self.played_all_races
 
+    def contest_last_begun_race(self):
+        if self._last_begun_race is None:
+            contest_race_number = self._current_race_number - 1
+        else:
+            if not self._last_begun_race.final:
+                self._current_race_contested = True
+                return
+            contest_race_number = self._last_begun_race_number
+
+        matchdb.set_match_race_contested(
+            match=self.match,
+            race_number=contest_race_number,
+            contested=True
+        )
+
     def _race_winner(self, race: Race) -> int:
         race_winner_id = int(race.winner.member.id)
         if race_winner_id == int(self.match.racer_1.member.id):
@@ -179,6 +197,7 @@ class MatchRoom(BotChannel):
     async def process(self, race_event: RaceEvent):
         if race_event.event == RaceEvent.EventType.RACE_BEGIN:
             self._last_begun_race = self._current_race
+            self._last_begun_race_number = self._current_race_number
         elif race_event.event == RaceEvent.EventType.RACE_END:
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write('The race will end in {} seconds.'.format(self.current_race.race_config.finalize_time_sec))

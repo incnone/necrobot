@@ -92,7 +92,7 @@ def get_user(
                 _cache_user(user)
                 return user
         else:
-            console.error('Tried to register a NecroUser without providing a name or ID.')
+            console.warning('Tried to register a NecroUser without providing a name or ID.')
             return None
 
     # If more than one user is found, raise an exception

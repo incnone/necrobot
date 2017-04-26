@@ -8,6 +8,7 @@ Current version: 0.10
 
 - Automatching
 - Sensical commands for completed matches
+- Fix weirdness with `.contest` in condor vs ladder (cmd_stats has a similar issue)
 
 ### Testing
 
@@ -21,7 +22,6 @@ of information
 
 #### Unimplemented commands:
 
-- cmd_condor: `.dropracer`, `.contest`
 - cmd_stats: `.fastest`, `.stats` 
 - Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
 `.register`, `.cancel`, `.forcerecordmatch`
@@ -35,6 +35,13 @@ of information
 
 - Uniformize and improve argument parsing
 - Create unit tests for all modules
+- Notifications on race entry
+- Test Necrobot
+
+### Refactor
+
+- Racer should contain a NecroUser instead of a discord.Member
+- racetime could be a class and moved to util
 
 ## Bugs
 

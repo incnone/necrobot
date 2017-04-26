@@ -110,6 +110,19 @@ class Fastest(CommandType):
             infobox)
 
 
+# class LeagueFastest(CommandType):
+#     def __init__(self, bot_channel):
+#         CommandType.__init__(self, bot_channel, 'fastest')
+#         self.help_text = 'Get fastest wins.'
+#
+#     async def _do_execute(self, cmd):
+#         infobox = '```\nFastest wins:\n{0}```'.format(
+#             statfn.get_fastest_times_infotext(NDChar.Cadence, True, 20)
+#         )
+#
+#         await self.client.send_message(cmd.channel, infobox)
+
+
 class MostRaces(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'mostraces')

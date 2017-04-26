@@ -1,5 +1,5 @@
 from necrobot.botbase.commandtype import CommandType
-from necrobot.config import Config, TestLevel
+from necrobot.config import Config
 
 
 class ForceCommand(CommandType):
@@ -50,7 +50,7 @@ class Help(CommandType):
             for cmd_type in self.bot_channel.command_types:
                 if cmd_type.show_in_help \
                         and (not cmd_type.admin_only or self.bot_channel.is_admin(cmd.author)) \
-                        and (not cmd_type.testing_command or Config.TESTING <= TestLevel.TEST):
+                        and (not cmd_type.testing_command or Config.testing()):
                     if verbose:
                         command_list_text += '\n`{0}` -- {2}{1}'.format(
                             cmd_type.mention,
@@ -92,9 +92,9 @@ class Info(CommandType):
 
     async def _do_execute(self, cmd):
         debug_str = ''
-        if Config.TESTING == TestLevel.DEBUG:
+        if Config.debugging():
             debug_str = ' (DEBUG)'
-        elif Config.TESTING == TestLevel.TEST:
+        elif Config.testing():
             debug_str = ' (TEST)'
 
         await self.bot_channel.client.send_message(

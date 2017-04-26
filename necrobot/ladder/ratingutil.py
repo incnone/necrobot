@@ -32,7 +32,7 @@ def get_new_ratings(rating_1: Rating, rating_2: Rating, winner=1):
             return rating_1, rating_2
 
     except FloatingPointError:
-        console.error('FloatingPointError in rating.get_new_ratings.')
+        console.warning('FloatingPointError in rating.get_new_ratings.')
         return rating_1, rating_2
 
 

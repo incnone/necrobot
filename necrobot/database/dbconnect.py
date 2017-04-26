@@ -1,5 +1,6 @@
 import mysql.connector
 
+from necrobot.util import console
 from necrobot.config import Config
 
 
@@ -23,7 +24,10 @@ class DBConnect(object):
         if not DBConnect.db_connection.is_connected():
             raise RuntimeError('Couldn\'t connect to the MySQL database.')
 
-        self.cursor = DBConnect.db_connection.cursor()
+        if Config.debugging():
+            self.cursor = LoggingCursor(DBConnect.db_connection.cursor())
+        else:
+            self.cursor = DBConnect.db_connection.cursor()
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -32,3 +36,21 @@ class DBConnect(object):
             DBConnect.db_connection.commit()
         elif self.commit:
             DBConnect.db_connection.rollback()
+
+
+class LoggingCursor(object):
+    def __init__(self, cursor):
+        self.cursor = cursor
+
+    def __getattr__(self, name):
+        return getattr(self.cursor, name)
+
+    def __next__(self):
+        return self.cursor.__next__()
+
+    def __iter__(self):
+        return self.cursor.__iter__()
+
+    def execute(self, operation, *args, **kwargs):
+        console.debug(operation)
+        return self.cursor.execute(operation, *args, **kwargs)

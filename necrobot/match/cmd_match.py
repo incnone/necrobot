@@ -105,6 +105,22 @@ class Confirm(CommandType):
         await self.bot_channel.update()
 
 
+class Contest(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'contest')
+        self.help_text = 'Contest the result of the previous race.'
+
+    async def _do_execute(self, cmd):
+        self.bot_channel.contest_last_begun_race()
+        staff_role = self.necrobot.staff_role
+        if staff_role is not None:
+            contest_str = '{0}: The previous race has been marked as contested.'.format(staff_role.mention)
+        else:
+            contest_str = 'The previous race has been marked as contested.'
+
+        await self.client.send_message(cmd.channel, contest_str)
+
+
 class GetMatchInfo(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'matchinfo')
@@ -689,7 +705,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
             )
             return
         else:
-            console.error(
+            console.warning(
                 'Unexpected error in Cawmentate._do_execute(): Couldn\'t find NecroUser for '
                 'cawmentator ID {0}'.format(match.cawmentator_id)
             )

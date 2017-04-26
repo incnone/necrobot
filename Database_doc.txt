@@ -1,9 +1,9 @@
 necrobot (schema)
-	condor_events -- A list of CoNDOR events run on this bot, and information about each.
+	leagues -- A list of CoNDOR events run on this bot, and information about each.
 		# Info about the event -- should remain the same for a whole event; "const" data
 		schema_name: varchar(25) PK
 			The name of the schema with the event's data (e.g. season5)
-		event_name: tinytext
+		league_name: tinytext
 			A descriptive name of the event (e.g. "CoNDOR Season 5")
 		
 		# Info about the default match -- can change mid-event; "mutable" data
@@ -161,7 +161,7 @@ necrobot (schema)
 		race_alert: bit(1)
 			Whether the user receives PMs when a new race room opens.
 	
-event_name (schema) -- the tables here mirror the corresponding tables in necrobot
+league_name (schema) -- the tables here mirror the corresponding tables in necrobot
 	# TODO
 	tournaments -- info about "bracketed" sub-tourneys in this event (e.g. a final tourney)
 		tournament_id: smallint UN AI PK

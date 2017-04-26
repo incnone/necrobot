@@ -11,20 +11,22 @@ from necrobot.user.necrouser import NecroUser
 
 
 class Match(object):
-    def __init__(self,
-                 commit_fn,
-                 racer_1_id,
-                 racer_2_id,
-                 match_id=None,
-                 suggested_time=None,
-                 r1_confirmed=False,
-                 r2_confirmed=False,
-                 r1_unconfirmed=False,
-                 r2_unconfirmed=False,
-                 match_info=MatchInfo(),
-                 cawmentator_id=None
-                 ):
-        """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
+    def __init__(
+            self,
+            commit_fn,
+            racer_1_id,
+            racer_2_id,
+            match_id=None,
+            suggested_time=None,
+            r1_confirmed=False,
+            r2_confirmed=False,
+            r1_unconfirmed=False,
+            r2_unconfirmed=False,
+            match_info=MatchInfo(),
+            cawmentator_id=None,
+            channel_id=None
+    ):
+        """Create a `Match` object. There should be no need to call this directly; use `matchutil.make_match` instead, 
         since this needs to interact with the database.
         
         Parameters
@@ -51,6 +53,8 @@ class Match(object):
             The type of match.
         cawmentator_id: int
             The DB unique ID of the cawmentator for this match.
+        channel_id: int
+            The discord.ID of the channel for this match, if any.
         """
         self._match_id = match_id
 
@@ -73,6 +77,9 @@ class Match(object):
 
         # Viewer data
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None
+
+        # Channel data
+        self._channel_id = channel_id
 
         # Commit function
         self._commit = commit_fn
@@ -163,6 +170,10 @@ class Match(object):
     @property
     def cawmentator_id(self):
         return self._cawmentator_id
+
+    @property
+    def channel_id(self):
+        return self._channel_id
 
     @property
     def matchroom_name(self) -> str:
@@ -276,7 +287,7 @@ class Match(object):
     def force_confirm(self):
         """Forces all racers to confirm the suggested time."""
         if self._suggested_time is None:
-            console.error('Tried to force_confirm a Match with no suggested time.')
+            console.warning('Tried to force_confirm a Match with no suggested time.')
             return
         self._confirmed_by_r1 = True
         self._confirmed_by_r2 = True
@@ -333,10 +344,21 @@ class Match(object):
         
         Parameters
         ----------
-        cawmentator_id: int
+        cawmentator_id: Optional[int]
             The discord ID of the cawmentator.
         """
         self._cawmentator_id = cawmentator_id
+
+    @commits
+    def set_channel_id(self, channel_id: int or None):
+        """Sets a channel ID for the match.
+        
+        Parameters
+        ----------
+        channel_id: Optional[int]
+            A discord.Channel ID
+        """
+        self._channel_id = int(channel_id)
 
     def _set_suggested_time(self, time: datetime.datetime or None):
         if time is None:

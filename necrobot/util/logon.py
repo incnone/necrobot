@@ -18,10 +18,10 @@ def logon(config_filename: str, load_config_fn, on_ready_fn=None):
     config.init(config_filename)
 
     # Asyncio debug setup-------------------------------------
-    if config.Config.TESTING == config.TestLevel.DEBUG:
+    if config.Config.full_debugging():
         asyncio.get_event_loop().set_debug(True)
         warnings.simplefilter("always", ResourceWarning)
-    elif config.Config.TESTING == config.TestLevel.TEST:
+    elif config.Config.testing():
         warnings.simplefilter("always", ResourceWarning)
 
     # Logging--------------------------------------------------
@@ -42,15 +42,19 @@ def logon(config_filename: str, load_config_fn, on_ready_fn=None):
     log_output_filename = 'logging/{0}'.format(log_output_filename)
 
     # Set up logger
-    if config.Config.TESTING == config.TestLevel.DEBUG:
+    if config.Config.full_debugging():
         asyncio_level = logging.DEBUG
         discord_level = logging.DEBUG
         necrobot_level = logging.DEBUG
-    elif config.Config.TESTING == config.TestLevel.TEST:
+    elif config.Config.debugging():
+        asyncio_level = logging.INFO
+        discord_level = logging.INFO
+        necrobot_level = logging.DEBUG
+    elif config.Config.testing():
         asyncio_level = logging.INFO
         discord_level = logging.INFO
         necrobot_level = logging.INFO
-    else:  # if config.Config.TESTING == config.TestLevel.RUN:
+    else:  # if config.Config.TEST_LEVEL == config.TestLevel.RUN:
         asyncio_level = logging.WARNING
         discord_level = logging.WARNING
         necrobot_level = logging.INFO
@@ -62,8 +66,8 @@ def logon(config_filename: str, load_config_fn, on_ready_fn=None):
     stderr_handler = logging.StreamHandler()
     file_handler = logging.FileHandler(filename=log_output_filename, encoding='utf-8', mode='w')
 
-    stdout_handler.setLevel(logging.INFO)
-    stderr_handler.setLevel(logging.INFO)
+    # stdout_handler.setLevel(logging.INFO)
+    # stderr_handler.setLevel(logging.INFO)
 
     stdout_handler.setFormatter(stream_formatter)
     stderr_handler.setFormatter(stream_formatter)

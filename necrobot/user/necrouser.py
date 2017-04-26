@@ -67,7 +67,7 @@ class NecroUser(object):
         elif self.twitch_name is not None:
             return self.twitch_name
         else:
-            console.error('User with no name: ID <{}>.'.format(self.user_id))
+            console.warning('User with no name: ID <{}>.'.format(self.user_id))
             return '<Unknown user>.'
 
     @property
@@ -198,7 +198,7 @@ class NecroUser(object):
             changed_any = True
         if timezone is not None:
             if timezone not in pytz.common_timezones:
-                console.error('Tried to set timezone to {0}.'.format(timezone))
+                console.warning('Tried to set timezone to {0}.'.format(timezone))
             elif str(self.timezone) != timezone:
                 self._timezone = pytz.timezone(timezone)
                 changed_any = True

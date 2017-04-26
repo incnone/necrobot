@@ -1,7 +1,7 @@
 """
 Interaction with the users table.
 """
-
+import discord
 import mysql.connector
 
 from necrobot.util import console
@@ -36,23 +36,27 @@ def write_user(necro_user: NecroUser):
         if rtmp_clash_user_id is not None:
             rtmp_clash_params = (rtmp_clash_user_id,)
             cursor.execute(
-                "DELETE FROM users "
-                "WHERE user_id=%s",
+                """
+                DELETE FROM users 
+                WHERE user_id=%s
+                """,
                 rtmp_clash_params
             )
 
         cursor.execute(
-            "UPDATE users "
-            "SET "
-            "   discord_id=%s, "
-            "   discord_name=%s, "
-            "   twitch_name=%s, "
-            "   rtmp_name=%s, "
-            "   timezone=%s, "
-            "   user_info=%s, "
-            "   daily_alert=%s, "
-            "   race_alert=%s "
-            "WHERE user_id=%s",
+            """
+            UPDATE users 
+            SET 
+               discord_id=%s, 
+               discord_name=%s, 
+               twitch_name=%s, 
+               rtmp_name=%s, 
+               timezone=%s, 
+               user_info=%s, 
+               daily_alert=%s, 
+               race_alert=%s 
+            WHERE user_id=%s
+            """,
             params
         )
 
@@ -105,9 +109,11 @@ def get_discord_id(discord_name):
     with DBConnect(commit=False) as cursor:
         params = (discord_name,)
         cursor.execute(
-            "SELECT discord_id "
-            "FROM users "
-            "WHERE discord_name=%s",
+            """
+            SELECT discord_id 
+            FROM users 
+            WHERE discord_name=%s
+            """,
             params)
         row = cursor.fetchone()
         return int(row[0]) if row is not None else None
@@ -126,38 +132,15 @@ def get_all_ids_matching_prefs(user_prefs):
 
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT discord_id "
-            "FROM users "
-            "WHERE {0}".format(where_query))
+            """
+            SELECT discord_id 
+            FROM users 
+            WHERE {0}
+            """.format(where_query))
         to_return = []
         for row in cursor.fetchall():
             to_return.append(int(row[0]))
         return to_return
-
-
-# def register_all_users(members):
-#     with DBConnect(commit=True) as cursor:
-#         for member in members:
-#             params = (member.id, member.display_name,)
-#             cursor.execute(
-#                 "INSERT INTO users "
-#                 "(discord_id, discord_name) "
-#                 "VALUES (%s,%s) "
-#                 "ON DUPLICATE KEY UPDATE "
-#                 "discord_name=VALUES(discord_name)",
-#                 params)
-#
-#
-# def register_user(member):
-#     with DBConnect(commit=True) as cursor:
-#         params = (member.id, member.name,)
-#         cursor.execute(
-#             "INSERT INTO users "
-#             "(discord_id, discord_name) "
-#             "VALUES (%s,%s) "
-#             "ON DUPLICATE KEY UPDATE "
-#             "discord_name=VALUES(discord_name)",
-#             params)
 
 
 def _get_users_helpfn(
@@ -205,18 +188,20 @@ def _get_users_helpfn(
         where_query = where_query[len(connector):] if where_query else 'TRUE'
 
         cursor.execute(
-            "SELECT "
-            "   discord_id, "
-            "   discord_name, "
-            "   twitch_name, "
-            "   rtmp_name, "
-            "   timezone, "
-            "   user_info, "
-            "   daily_alert, "
-            "   race_alert, "
-            "   user_id "
-            "FROM users "
-            "WHERE {0}".format(where_query),
+            """
+            SELECT 
+               discord_id, 
+               discord_name, 
+               twitch_name, 
+               rtmp_name, 
+               timezone, 
+               user_info, 
+               daily_alert, 
+               race_alert, 
+               user_id 
+            FROM users 
+            WHERE {0}
+            """.format(where_query),
             params)
         return cursor.fetchall()
 
@@ -239,28 +224,32 @@ def _register_user(necro_user: NecroUser):
         if rtmp_clash_user_id is None:
             try:
                 cursor.execute(
-                    "INSERT INTO users "
-                    "(discord_id, discord_name, twitch_name, timezone, user_info, daily_alert, race_alert, rtmp_name) "
-                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ",
+                    """
+                    INSERT INTO users 
+                    (discord_id, discord_name, twitch_name, timezone, user_info, daily_alert, race_alert, rtmp_name) 
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s) 
+                    """,
                     params
                 )
                 cursor.execute("SELECT LAST_INSERT_ID()")
                 necro_user.set_user_id(int(cursor.fetchone()[0]))
             except mysql.connector.IntegrityError:
-                console.error('Tried to insert a duplicate racer entry. Params: {0}'.format(params))
+                console.warning('Tried to insert a duplicate racer entry. Params: {0}'.format(params))
                 raise
         else:
             cursor.execute(
-                "UPDATE users "
-                "SET "
-                "   discord_id=%s, "
-                "   discord_name=%s, "
-                "   twitch_name=%s, "
-                "   timezone=%s, "
-                "   user_info=%s, "
-                "   daily_alert=%s, "
-                "   race_alert=%s "
-                "WHERE rtmp_name=%s",
+                """
+                UPDATE users 
+                SET 
+                   discord_id=%s, 
+                   discord_name=%s, 
+                   twitch_name=%s, 
+                   timezone=%s, 
+                   user_info=%s, 
+                   daily_alert=%s, 
+                   race_alert=%s 
+                WHERE rtmp_name=%s
+                """,
                 params
             )
             necro_user.set_user_id(rtmp_clash_user_id)
@@ -281,9 +270,11 @@ def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
 
     with DBConnect(commit=False) as cursor:
         cursor.execute(
-            "SELECT user_id, discord_id "
-            "FROM users "
-            "WHERE rtmp_name=%s",
+            """
+            SELECT user_id, discord_id 
+            FROM users 
+            WHERE rtmp_name=%s
+            """,
             rtmp_params
         )
 
@@ -304,35 +295,60 @@ def _transfer_user_id(from_user_id: int, to_user_id: int):
     with DBConnect(commit=True) as cursor:
         # Update main-database matches
         cursor.execute(
-            "UPDATE matches "
-            "SET racer_1_id=%s "
-            "WHERE racer_1_id=%s",
+            """
+            UPDATE matches 
+            SET racer_1_id=%s 
+            WHERE racer_1_id=%s
+            """,
             params
         )
         cursor.execute(
-            "UPDATE matches "
-            "SET racer_2_id=%s "
-            "WHERE racer_2_id=%s",
+            """
+            UPDATE matches 
+            SET racer_2_id=%s 
+            WHERE racer_2_id=%s
+            """,
             params
         )
 
         # Update CoNDOR events
         cursor.execute(
-            "SELECT `schema_name` "
-            "FROM condor_events "
+            """
+            SELECT `schema_name` 
+            FROM leagues 
+            """
         )
 
         for row in cursor:
             schema_name = row[0]
             cursor.execute(
-                "UPDATE {0}.matches "
-                "SET racer_1_id=%s "
-                "WHERE racer_1_id=%s".format(schema_name),
+                """
+                UPDATE {0}.matches 
+                SET racer_1_id=%s 
+                WHERE racer_1_id=%s
+                """.format(schema_name),
                 params
             )
             cursor.execute(
-                "UPDATE {0}.matches "
-                "SET racer_2_id=%s "
-                "WHERE racer_2_id=%s".format(schema_name),
+                """
+                UPDATE {0}.matches 
+                SET racer_2_id=%s 
+                WHERE racer_2_id=%s.format(schema_name)
+                """,
                 params
             )
+
+
+def register_discord_user(user: discord.User):
+    params = (user.id, user.display_name,)
+    with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO users 
+            (discord_id, discord_name) 
+            VALUES (%s, %s) 
+            ON DUPLICATE KEY UPDATE 
+            discord_name = VALUES(discord_name)
+            """,
+            params
+        )

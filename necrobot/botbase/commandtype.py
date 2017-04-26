@@ -5,7 +5,7 @@ from necrobot.util import console
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.config import Config, TestLevel
+from necrobot.config import Config
 
 
 class CommandType(object):
@@ -24,7 +24,7 @@ class CommandType(object):
 
     @property
     def show_in_help(self) -> bool:
-        return not self.testing_command or Config.TESTING <= TestLevel.TEST
+        return not self.testing_command or Config.testing()
 
     @property
     def client(self) -> discord.Client:
@@ -73,7 +73,7 @@ class CommandType(object):
         """
         if command.command in self.command_name_list \
                 and ((not self.admin_only) or self.bot_channel.is_admin(command.author)) \
-                and (not self.testing_command or Config.TESTING <= TestLevel.TEST):
+                and (not self.testing_command or Config.testing()):
             async with self.execution_id_lock:
                 self.execution_id += 1
                 this_id = self.execution_id
@@ -98,4 +98,4 @@ class CommandType(object):
         command: Command
             The Command that was called, to be executed.
         """
-        console.error('Called CommandType._do_execute in the abstract base class.')
+        console.warning('Called CommandType._do_execute in the abstract base class.')

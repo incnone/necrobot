@@ -6,23 +6,37 @@ from necrobot.util import console
 
 
 class TestLevel(IntEnum):
-    DEBUG = 0
-    TEST = 1
-    RUN = 2
+    FULL_DEBUG = 0
+    BOT_DEBUG = 1
+    TEST = 2
+    RUN = 3
 
     def __str__(self):
         return self.name.lower()
 
 
 class Config(object):
+    @classmethod
+    def full_debugging(cls) -> bool:
+        return cls.TEST_LEVEL <= TestLevel.FULL_DEBUG
+
+    @classmethod
+    def debugging(cls) -> bool:
+        return cls.TEST_LEVEL <= TestLevel.BOT_DEBUG
+
+    @classmethod
+    def testing(cls) -> bool:
+        return cls.TEST_LEVEL <= TestLevel.TEST
+
     # Info ------------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
-    TESTING = TestLevel.TEST
+    TEST_LEVEL = TestLevel.BOT_DEBUG
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff']  # list of names of roles to give admin access
+    STAFF_ROLE = 'CoNDOR Staff Fake'
 
     # Channels --------------------------------------------------------------------------------
     MAIN_CHANNEL_NAME = 'necrobot_main'
@@ -30,8 +44,8 @@ class Config(object):
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
 
-    # Condor ----------------------------------------------------------------------------------
-    CONDOR_EVENT = ''
+    # League ----------------------------------------------------------------------------------
+    LEAGUE_NAME = ''
     LOG_DIRECTORY = 'logs'
 
     # Daily -----------------------------------------------------------------------------------
@@ -94,15 +108,19 @@ class Config(object):
         vals = [
             ['login_token', Config.LOGIN_TOKEN],
             ['server_id', Config.SERVER_ID],
+            ['test_level', Config.TEST_LEVEL],
+
             ['mysql_db_host', Config.MYSQL_DB_HOST],
             ['mysql_db_user', Config.MYSQL_DB_USER],
             ['mysql_db_passwd', Config.MYSQL_DB_PASSWD],
             ['mysql_db_name', Config.MYSQL_DB_NAME],
+
             ['vodrecord_username', Config.VODRECORD_USERNAME],
             ['vodrecord_passwd', Config.VODRECORD_PASSWD],
-            ['condor_event', Config.CONDOR_EVENT],
+
+            ['league_name', Config.LEAGUE_NAME],
+
             ['gsheet_id', Config.GSHEET_ID],
-            ['test_level', Config.TESTING],
         ]
 
         with open(Config.CONFIG_FILE, 'w') as file:
@@ -121,7 +139,7 @@ def init(config_filename):
         'vodrecord_username': '',
         'vodrecord_passwd': '',
         'gsheet_id': '',
-        'condor_event': '',
+        'league_name': '',
         'test_level': '',
         }
 
@@ -132,9 +150,9 @@ def init(config_filename):
                 if args[0] in defaults:
                     defaults[args[0]] = args[1].rstrip('\n')
                 else:
-                    console.error("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
+                    console.warning("Error in {0}: variable {1} isn't recognized.".format(config_filename, args[0]))
             else:
-                console.error("Error in {0} reading line: \"{1}\".".format(config_filename, line))
+                console.warning("Error in {0} reading line: \"{1}\".".format(config_filename, line))
 
     Config.LOGIN_TOKEN = defaults['login_token']
     Config.SERVER_ID = defaults['server_id']
@@ -147,15 +165,17 @@ def init(config_filename):
     Config.VODRECORD_USERNAME = defaults['vodrecord_username']
     Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
 
-    Config.CONDOR_EVENT = defaults['condor_event']
+    Config.LEAGUE_NAME = defaults['league_name']
     Config.GSHEET_ID = defaults['gsheet_id']
 
-    if defaults['test_level'] == 'debug':
-        Config.TESTING = TestLevel.DEBUG
+    if defaults['test_level'] == 'full_debug':
+        Config.TEST_LEVEL = TestLevel.FULL_DEBUG
+    elif defaults['test_level'] == 'bot_debug':
+        Config.TEST_LEVEL = TestLevel.BOT_DEBUG
     elif defaults['test_level'] == 'test':
-        Config.TESTING = TestLevel.TEST
+        Config.TEST_LEVEL = TestLevel.TEST
     elif defaults['test_level'] == 'run':
-        Config.TESTING = TestLevel.RUN
+        Config.TEST_LEVEL = TestLevel.RUN
 
     Config.CONFIG_FILE = config_filename
 

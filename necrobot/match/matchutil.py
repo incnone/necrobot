@@ -10,6 +10,7 @@ from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.match.matchroom import MatchRoom
 from necrobot.race.raceinfo import RaceInfo
+from necrobot.user.necrouser import NecroUser
 
 
 match_library = {}
@@ -149,68 +150,70 @@ def get_upcoming_and_current() -> list:
     return matches
 
 
-def get_matches_with_channels() -> list:
+def get_matches_with_channels(racer: NecroUser = None) -> list:
     """
+    Parameters
+    ----------
+    racer: NecroUser
+        The racer to find channels for. If None, finds all channeled matches.
+    
     Returns
     -------
     list[Match]
-        A list of all Matches that have associated channels on the server.
+        A list of all Matches that have associated channels on the server featuring the specified racer.
     """
     matches = []
+    if racer is not None:
+        raw_data = matchdb.get_channeled_matches_raw_data(
+            must_be_scheduled=False, order_by_time=False, racer_id=racer.user_id
+        )
+    else:
+        raw_data = matchdb.get_channeled_matches_raw_data(must_be_scheduled=False, order_by_time=False)
 
-    for row in matchdb.get_channeled_matches_raw_data(must_be_scheduled=False, order_by_time=False):
+    for row in raw_data:
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
             match = _make_match_from_raw_db_data(row=row)
             matches.append(match)
         else:
-            console.error('Found Match with channel {0}, but couldn\'t find this channel.'.format(channel_id))
+            console.warning('Found Match with channel {0}, but couldn\'t find this channel.'.format(channel_id))
 
     return matches
 
 
-async def delete_all_match_channels(log=False) -> None:
+async def delete_all_match_channels(log=False, completed_only=False) -> None:
     """Delete all match channels from the server.
     
     Parameters
     ----------
     log: bool
         If True, the channel text will be written to a log file before deletion.
+    completed_only: bool
+        If True, will only find completed matches.
     """
     for row in matchdb.get_channeled_matches_raw_data():
         match_id = int(row[0])
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
+        delete_this = True
         if channel is not None:
-            if log:
-                await writechannel.write_channel(
-                    client=Necrobot().client,
-                    channel=channel,
-                    outfile_name='{0}-{1}'.format(match_id, channel.name)
-                )
-            await Necrobot().client.delete_channel(channel)
+            if completed_only:
+                match_room = Necrobot().get_bot_channel(channel)
+                if match_room is None or not match_room.played_all_races:
+                    delete_this = False
 
-        matchdb.register_match_channel(match_id, None)
+            if delete_this:
+                if log:
+                    await writechannel.write_channel(
+                        client=Necrobot().client,
+                        channel=channel,
+                        outfile_name='{0}-{1}'.format(match_id, channel.name)
+                    )
+                await Necrobot().client.delete_channel(channel)
 
-
-async def recover_stored_match_rooms() -> None:
-    """Create MatchRoom objects for matches in the database with stored channels that exist on the
-    discord server.
-    """
-    console.info('Recovering stored match rooms------------')
-    for row in matchdb.get_channeled_matches_raw_data():
-        channel_id = int(row[13])
-        channel = Necrobot().find_channel_with_id(channel_id)
-        if channel is not None:
-            match = _make_match_from_raw_db_data(row=row)
-            new_room = MatchRoom(match_discord_channel=channel, match=match)
-            Necrobot().register_bot_channel(channel, new_room)
-            await new_room.initialize()
-            console.info('  Channel ID: {0}  Match: {1}'.format(channel_id, match))
-        else:
-            console.info('  Couldn\'t find channel with ID {0}.'.format(channel_id))
-    console.info('-----------------------------------------')
+        if delete_this:
+            matchdb.register_match_channel(match_id, None)
 
 
 async def make_match_room(match: Match, register=False) -> MatchRoom or None:
@@ -235,11 +238,11 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
         if register:
             match.commit()
         else:
-            console.error('Tried to make a MatchRoom for an unregistered Match ({0}).'.format(match.matchroom_name))
+            console.warning('Tried to make a MatchRoom for an unregistered Match ({0}).'.format(match.matchroom_name))
             return None
 
     # Check to see if we already have the match channel
-    channel_id = matchdb.get_match_channel_id(match.match_id)
+    channel_id = match.channel_id
     match_channel = necrobot.find_channel_with_id(channel_id) if channel_id is not None else None
 
     # If we couldn't find the channel or it didn't exist, make a new one
@@ -262,11 +265,11 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             type=discord.ChannelType.text)
 
         if match_channel is None:
-            console.error('Failed to make a match channel.')
+            console.warning('Failed to make a match channel.')
             return None
 
     # Make the actual RaceRoom and initialize it
-    matchdb.register_match_channel(match_id=match.match_id, channel_id=match_channel.id)
+    match.set_channel_id(int(match_channel.id))
     new_room = MatchRoom(match_discord_channel=match_channel, match=match)
     necrobot.register_bot_channel(match_channel, new_room)
     await new_room.initialize()
@@ -283,19 +286,19 @@ async def close_match_room(match: Match) -> None:
         The Match to close the channel for.
     """
     if not match.is_registered:
-        console.error('Trying to close the room for an unregistered match.')
+        console.warning('Trying to close the room for an unregistered match.')
         return
 
-    channel_id = matchdb.get_match_channel_id(match.match_id)
+    channel_id = match.channel_id
     channel = Necrobot().find_channel_with_id(channel_id)
     if channel is None:
-        console.error('Coudn\'t find channel with id {0} in close_match_room '
+        console.warning('Coudn\'t find channel with id {0} in close_match_room '
                       '(match_id={1}).'.format(channel_id, match.match_id))
         return
 
     await Necrobot().unregister_bot_channel(channel)
     await Necrobot().client.delete_channel(channel)
-    matchdb.register_match_channel(match_id=match.match_id, channel_id=None)
+    match.set_channel_id(None)
 
 
 def get_nextrace_displaytext(match_list):
@@ -322,7 +325,13 @@ def get_nextrace_displaytext(match_list):
     return display_text
 
 
-def _make_match_from_raw_db_data(row):
+def delete_match(match_id: int):
+    matchdb.delete_match(match_id=match_id)
+    if match_id in match_library:
+        del match_library[match_id]
+
+
+def make_match_from_raw_db_data(row):
     match_id = int(row[0])
     if match_id in match_library:
         return match_library[match_id]
@@ -345,7 +354,8 @@ def _make_match_from_raw_db_data(row):
         r2_confirmed=bool(row[6]),
         r1_unconfirmed=bool(row[7]),
         r2_unconfirmed=bool(row[8]),
-        cawmentator_id=row[12]
+        cawmentator_id=row[12],
+        channel_id=int(row[13]) if row[13] is not None else None
     )
 
     match_library[new_match.match_id] = new_match

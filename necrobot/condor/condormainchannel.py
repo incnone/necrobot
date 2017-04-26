@@ -1,6 +1,7 @@
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.condor import cmd_condor
 from necrobot.match import cmd_match
+from necrobot.stats import cmd_stats
 from necrobot.user import cmd_user
 
 
@@ -16,7 +17,6 @@ class CondorMainChannel(BotChannel):
             cmd_match.Vod(self),
 
             # cmd_stats.Fastest(self),
-            # cmd_stats.MostRaces(self),
             # cmd_stats.Stats(self),
 
             cmd_user.Register(self),

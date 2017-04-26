@@ -55,7 +55,7 @@ class MatchupSheet(object):
                 racer_1 = userutil.get_user(any_name=racer_1_name, register=True)
                 racer_2 = userutil.get_user(any_name=racer_2_name, register=True)
                 if racer_1 is None or racer_2 is None:
-                    console.error('Couldn\'t find racers for match {0}-{1}.'.format(
+                    console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
                         racer_1_name, racer_2_name
                     ))
                     continue
@@ -109,7 +109,7 @@ class MatchupSheet(object):
         if row is None:
             return
         if self.column_data.vod is None:
-            console.error('No Vod column on GSheet.')
+            console.warning('No Vod column on GSheet.')
             return
 
         await self._update_cell(
@@ -131,7 +131,7 @@ class MatchupSheet(object):
         if row is None:
             return
         if self.column_data.cawmentary is None:
-            console.error('No Cawmentary column on GSheet.')
+            console.warning('No Cawmentary column on GSheet.')
             return
 
         await self._update_cell(
@@ -155,13 +155,13 @@ class MatchupSheet(object):
         if row is None:
             return
         if self.column_data.winner is None:
-            console.error('No "Winner" column on GSheet.')
+            console.warning('No "Winner" column on GSheet.')
             return
         if self.column_data.score is None:
-            console.error('No "Score" column on GSheet.')
+            console.warning('No "Score" column on GSheet.')
             return
         if self.column_data.score != self.column_data.winner + 1:
-            console.error('Can\'t record score; algorithm assumes the score column is one right of the winner column.')
+            console.warning('Can\'t record score; algorithm assumes the score column is one right of the winner column.')
             return
 
         sheet_range = SheetRange(
@@ -202,7 +202,7 @@ class MatchupSheet(object):
                 if (match_regex_1.match(gsheet_name_1) and match_regex_2.match(gsheet_name_2)) \
                         or (match_regex_1.match(gsheet_name_2) and match_regex_2.match(gsheet_name_1)):
                     return row
-            console.error('Couldn\'t find match {0}-{1} on the GSheet.'.format(
+            console.warning('Couldn\'t find match {0}-{1} on the GSheet.'.format(
                 match.racer_1.rtmp_name,
                 match.racer_2.rtmp_name
             ))
