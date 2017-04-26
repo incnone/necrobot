@@ -12,35 +12,29 @@ Current version: 0.10
 
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
-- Other stuff
+- Create unit tests for all modules
+- Test Necrobot
 
 ### Bugs
 
-- Weird async bug when recording ladder ratings at end of match -- what is going on here?
+- Update database code to be async
 
 ### Automatching
 
 - Everything
 
-#### Unimplemented commands:
-
-- Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
-`.register`, `.cancel`, `.forcerecordmatch`
-
 ### Ladderbot
 
 - Better rankings display
 
-### Other
-
-- Uniformize and improve argument parsing
-- Create unit tests for all modules
-- Test Necrobot
-- Update database code to be async
-
 ### Refactor
 
+- Uniformize and improve argument parsing
 - racetime could be a class
+
+## Daily
+
+- Needs a big overhaul
 
 ## Bugs
 

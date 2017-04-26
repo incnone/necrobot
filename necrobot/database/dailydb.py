@@ -1,13 +1,13 @@
 """
-Interaction with the necrobot.dailies and necrobot.daily_runs tables.
+Interaction async with the necrobot.dailies and necrobot.daily_runs tables.
 """
 
 from necrobot.database.dbconnect import DBConnect
 import necrobot.util.level
 
 
-def get_daily_seed(daily_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def get_daily_seed(daily_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (daily_id, daily_type,)
         cursor.execute(
             """
@@ -19,8 +19,8 @@ def get_daily_seed(daily_id, daily_type):
         return cursor.fetchall()
 
 
-def get_daily_times(daily_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def get_daily_times(daily_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (daily_id, daily_type,)
         cursor.execute(
             """
@@ -34,8 +34,8 @@ def get_daily_times(daily_id, daily_type):
         return cursor.fetchall()
 
 
-def has_submitted_daily(discord_id, daily_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def has_submitted_daily(discord_id, daily_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (discord_id, daily_id, daily_type,)
         cursor.execute(
             """
@@ -47,8 +47,8 @@ def has_submitted_daily(discord_id, daily_id, daily_type):
         return cursor.fetchone() is not None
 
 
-def has_registered_daily(discord_id, daily_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def has_registered_daily(discord_id, daily_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (discord_id, daily_id, daily_type,)
         cursor.execute(
             """
@@ -60,8 +60,8 @@ def has_registered_daily(discord_id, daily_id, daily_type):
         return cursor.fetchone() is not None
 
 
-def register_daily(user_id, daily_id, daily_type, level=necrobot.util.level.LEVEL_NOS, time=-1):
-    with DBConnect(commit=True) as cursor:
+async def register_daily(user_id, daily_id, daily_type, level=necrobot.util.level.LEVEL_NOS, time=-1):
+    async with DBConnect(commit=True) as cursor:
         params = (user_id, daily_id, daily_type, level, time,)
         cursor.execute(
             """
@@ -78,8 +78,8 @@ def register_daily(user_id, daily_id, daily_type, level=necrobot.util.level.LEVE
             params)
 
 
-def registered_daily(discord_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def registered_daily(discord_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (discord_id, daily_type,)
         cursor.execute(
             """
@@ -94,8 +94,8 @@ def registered_daily(discord_id, daily_type):
         return int(row[0]) if row is not None else 0
 
 
-def submitted_daily(discord_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def submitted_daily(discord_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (discord_id, daily_type,)
         cursor.execute(
             """
@@ -110,8 +110,8 @@ def submitted_daily(discord_id, daily_type):
         return int(row[0]) if row is not None else 0
 
 
-def delete_from_daily(discord_id, daily_id, daily_type):
-    with DBConnect(commit=True) as cursor:
+async def delete_from_daily(discord_id, daily_id, daily_type):
+    async with DBConnect(commit=True) as cursor:
         params = (discord_id, daily_id, daily_type,)
         cursor.execute(
             """
@@ -122,8 +122,8 @@ def delete_from_daily(discord_id, daily_id, daily_type):
             params)
 
 
-def create_daily(daily_id, daily_type, seed, message_id=0):
-    with DBConnect(commit=True) as cursor:
+async def create_daily(daily_id, daily_type, seed, message_id=0):
+    async with DBConnect(commit=True) as cursor:
         params = (daily_id, daily_type, seed, message_id)
         cursor.execute(
             """
@@ -134,8 +134,8 @@ def create_daily(daily_id, daily_type, seed, message_id=0):
             params)
 
 
-def register_daily_message(daily_id, daily_type, message_id):
-    with DBConnect(commit=True) as cursor:
+async def register_daily_message(daily_id, daily_type, message_id):
+    async with DBConnect(commit=True) as cursor:
         params = (message_id, daily_id, daily_type,)
         cursor.execute(
             """
@@ -146,8 +146,8 @@ def register_daily_message(daily_id, daily_type, message_id):
             params)
 
 
-def get_daily_message_id(daily_id, daily_type):
-    with DBConnect(commit=False) as cursor:
+async def get_daily_message_id(daily_id, daily_type):
+    async with DBConnect(commit=False) as cursor:
         params = (daily_id, daily_type,)
         cursor.execute(
             """
