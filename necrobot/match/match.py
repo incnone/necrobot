@@ -60,10 +60,10 @@ class Match(object):
         self._match_id = match_id
 
         # Racers in the match
-        self._racer_1 = userutil.get_user(user_id=racer_1_id)
-        self._racer_2 = userutil.get_user(user_id=racer_2_id)
-        if self._racer_1 is None or self._racer_2 is None:
-            raise RuntimeError('Attempted to make a Match object with an unregistered racer.')
+        self._racer_1_id = racer_1_id
+        self._racer_1 = None
+        self._racer_2_id = racer_2_id
+        self._racer_2 = None
 
         # Scheduling data
         self._suggested_time = None
@@ -84,6 +84,12 @@ class Match(object):
 
         # Commit function
         self._commit = commit_fn
+
+    async def initialize(self):
+        self._racer_1 = await userutil.get_user(user_id=self._racer_1_id)
+        self._racer_2 = await userutil.get_user(user_id=self._racer_2_id)
+        if self._racer_1 is None or self._racer_2 is None:
+            raise RuntimeError('Attempted to make a Match object with an unregistered racer.')
 
     def __eq__(self, other):
         return self.match_id == other.match_id
@@ -165,10 +171,6 @@ class Match(object):
         return self._match_info
 
     @property
-    def cawmentator(self):
-        return userutil.get_user(discord_id=self._cawmentator_id)
-
-    @property
     def cawmentator_id(self):
         return self._cawmentator_id
 
@@ -199,6 +201,11 @@ class Match(object):
     def commit(self):
         """Write the match to the database."""
         asyncio.ensure_future(self._commit(self))
+
+    async def get_cawmentator(self):
+        if self._cawmentator_id is None:
+            return None
+        return await userutil.get_user(user_id=self._cawmentator_id)
 
     def racing_in_match(self, user) -> bool:
         """        
@@ -346,7 +353,7 @@ class Match(object):
         Parameters
         ----------
         cawmentator_id: Optional[int]
-            The discord ID of the cawmentator.
+            The user ID of the cawmentator.
         """
         self._cawmentator_id = cawmentator_id
 

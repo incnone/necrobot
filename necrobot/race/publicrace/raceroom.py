@@ -157,7 +157,7 @@ class RaceRoom(BotChannel):
                 '`.comment` or add an in-game-time with `.igt`.'.format(
                     self.current_race.race_config.finalize_time_sec))
         elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
-            racedb.record_race(race_event.race)
+            await racedb.record_race(race_event.race)
             if race_event.race.race_info.post_results:
                 await self.post_result(race_event.race)
         elif race_event.event == RaceEvent.EventType.RACE_CANCEL:

@@ -20,15 +20,15 @@ class DuplicateUserException(Exception):
         return self._err_str
 
 
-def get_user(
-        discord_id: int = None,
-        discord_name: str = None,
-        twitch_name: str = None,
-        rtmp_name: str = None,
-        user_id: int = None,
-        any_name: str = None,
-        register: bool = False
-        ) -> NecroUser or None:
+async def get_user(
+    discord_id: int = None,
+    discord_name: str = None,
+    twitch_name: str = None,
+    rtmp_name: str = None,
+    user_id: int = None,
+    any_name: str = None,
+    register: bool = False
+) -> NecroUser or None:
     """Search for a NecroUser satisfying all of the non-None parameters.
 
     Parameters
@@ -57,7 +57,7 @@ def get_user(
         The found NecroUser object.
     """
     if any_name is not None:
-        return _get_user_any_name(any_name, register)
+        return await _get_user_any_name(any_name, register)
 
     if discord_id is None and discord_name is None and twitch_name is None \
             and rtmp_name is None and user_id is None:
@@ -67,7 +67,7 @@ def get_user(
     if cached_user is not None:
         return cached_user
 
-    raw_db_data = userdb.get_users_with_all(
+    raw_db_data = await userdb.get_users_with_all(
         discord_id=discord_id,
         discord_name=discord_name,
         twitch_name=twitch_name,
@@ -108,9 +108,9 @@ def get_user(
     return None
 
 
-def commit_all_checked_out_users():
+async def commit_all_checked_out_users():
     for user in user_library_by_uid.values():
-        user.commit()
+        await user.commit()
 
 
 def _get_user_from_db_row(user_row):
@@ -120,12 +120,12 @@ def _get_user_from_db_row(user_row):
     return user
 
 
-def _get_user_any_name(name: str, register: bool) -> NecroUser or None:
+async def _get_user_any_name(name: str, register: bool) -> NecroUser or None:
     cached_user = _get_cached_user(rtmp_name=name)
     if cached_user is not None:
         return cached_user
 
-    raw_db_data = userdb.get_users_with_any(
+    raw_db_data = await userdb.get_users_with_any(
         discord_name=name,
         twitch_name=name,
         rtmp_name=name,

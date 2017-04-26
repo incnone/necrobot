@@ -17,7 +17,7 @@ match_library = {}
 
 
 # noinspection PyIncorrectDocstring
-def make_match(*args, register=False, **kwargs) -> Match:
+async def make_match(*args, register=False, **kwargs) -> Match:
     """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
     since this needs to interact with the database.
 
@@ -62,13 +62,14 @@ def make_match(*args, register=False, **kwargs) -> Match:
         return match_library[kwargs['match_id']]
 
     match = Match(*args, commit_fn=matchdb.write_match, **kwargs)
+    await match.initialize()
     if register:
         match.commit()
         match_library[match.match_id] = match
     return match
 
 
-def get_match_from_id(match_id: int) -> Match or None:
+async def get_match_from_id(match_id: int) -> Match or None:
     """Get a match object from its DB unique ID.
     
     Parameters
@@ -87,9 +88,9 @@ def get_match_from_id(match_id: int) -> Match or None:
     if match_id in match_library:
         return match_library[match_id]
 
-    raw_data = matchdb.get_raw_match_data(match_id)
+    raw_data = await matchdb.get_raw_match_data(match_id)
     if raw_data is not None:
-        return make_match_from_raw_db_data(raw_data)
+        return await make_match_from_raw_db_data(raw_data)
     else:
         return None
 
@@ -126,7 +127,7 @@ def get_matchroom_name(server: discord.Server, match: Match) -> str:
     return name_prefix if not found else '{0}-{1}'.format(name_prefix, largest_postfix + 1)
 
 
-def get_upcoming_and_current() -> list:
+async def get_upcoming_and_current() -> list:
     """    
     Returns
     -------
@@ -134,23 +135,23 @@ def get_upcoming_and_current() -> list:
         A list of all upcoming and ongoing matches, in order. 
     """
     matches = []
-    for row in matchdb.get_channeled_matches_raw_data(must_be_scheduled=True, order_by_time=True):
+    for row in await matchdb.get_channeled_matches_raw_data(must_be_scheduled=True, order_by_time=True):
         channel_id = int(row[13]) if row[13] is not None else None
         if channel_id is not None:
             channel = Necrobot().find_channel_with_id(channel_id)
             if channel is not None:
-                match = _make_match_from_raw_db_data(row=row)
+                match = await make_match_from_raw_db_data(row=row)
                 if match.suggested_time > pytz.utc.localize(datetime.datetime.utcnow()):
                     matches.append(match)
                 else:
                     match_room = Necrobot().get_bot_channel(channel)
-                    if match_room is not None and match_room.during_races:
+                    if match_room is not None and await match_room.during_races():
                         matches.append(match)
 
     return matches
 
 
-def get_matches_with_channels(racer: NecroUser = None) -> list:
+async def get_matches_with_channels(racer: NecroUser = None) -> list:
     """
     Parameters
     ----------
@@ -164,17 +165,17 @@ def get_matches_with_channels(racer: NecroUser = None) -> list:
     """
     matches = []
     if racer is not None:
-        raw_data = matchdb.get_channeled_matches_raw_data(
+        raw_data = await matchdb.get_channeled_matches_raw_data(
             must_be_scheduled=False, order_by_time=False, racer_id=racer.user_id
         )
     else:
-        raw_data = matchdb.get_channeled_matches_raw_data(must_be_scheduled=False, order_by_time=False)
+        raw_data = await matchdb.get_channeled_matches_raw_data(must_be_scheduled=False, order_by_time=False)
 
     for row in raw_data:
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
         if channel is not None:
-            match = _make_match_from_raw_db_data(row=row)
+            match = await make_match_from_raw_db_data(row=row)
             matches.append(match)
         else:
             console.warning('Found Match with channel {0}, but couldn\'t find this channel.'.format(channel_id))
@@ -192,7 +193,7 @@ async def delete_all_match_channels(log=False, completed_only=False) -> None:
     completed_only: bool
         If True, will only find completed matches.
     """
-    for row in matchdb.get_channeled_matches_raw_data():
+    for row in await matchdb.get_channeled_matches_raw_data():
         match_id = int(row[0])
         channel_id = int(row[13])
         channel = Necrobot().find_channel_with_id(channel_id)
@@ -200,7 +201,7 @@ async def delete_all_match_channels(log=False, completed_only=False) -> None:
         if channel is not None:
             if completed_only:
                 match_room = Necrobot().get_bot_channel(channel)
-                if match_room is None or not match_room.played_all_races:
+                if match_room is None or not await match_room.played_all_races():
                     delete_this = False
 
             if delete_this:
@@ -213,7 +214,7 @@ async def delete_all_match_channels(log=False, completed_only=False) -> None:
                 await Necrobot().client.delete_channel(channel)
 
         if delete_this:
-            matchdb.register_match_channel(match_id, None)
+            await matchdb.register_match_channel(match_id, None)
 
 
 async def make_match_room(match: Match, register=False) -> MatchRoom or None:
@@ -301,7 +302,7 @@ async def close_match_room(match: Match) -> None:
     match.set_channel_id(None)
 
 
-def get_nextrace_displaytext(match_list):
+async def get_nextrace_displaytext(match_list: list) -> str:
     utcnow = pytz.utc.localize(datetime.datetime.utcnow())
     if len(match_list) > 1:
         display_text = 'Upcoming matches: \n'
@@ -309,6 +310,7 @@ def get_nextrace_displaytext(match_list):
         display_text = 'Next match: \n'
 
     for match in match_list:
+        # noinspection PyUnresolvedReferences
         display_text += '\N{BULLET} **{0}** - **{1}**'.format(
             match.racer_1.bot_name,
             match.racer_2.bot_name)
@@ -317,7 +319,7 @@ def get_nextrace_displaytext(match_list):
             continue
 
         display_text += ': {0} \n'.format(timestr.timedelta_to_str(match.suggested_time - utcnow, punctuate=True))
-        if match.cawmentator is not None:
+        if await match.get_cawmentator() is not None:
             display_text += '    Cawmentary: <http://www.twitch.tv/{0}> \n'.format(match.cawmentator.twitch_name)
         elif match.racer_1.rtmp_name is not None and match.racer_2.rtmp_name is not None:
             display_text += '    RTMP: <http://rtmp.condorleague.tv/#{0}/{1}> \n'.format(
@@ -325,19 +327,19 @@ def get_nextrace_displaytext(match_list):
     return display_text
 
 
-def delete_match(match_id: int):
-    matchdb.delete_match(match_id=match_id)
+async def delete_match(match_id: int) -> None:
+    await matchdb.delete_match(match_id=match_id)
     if match_id in match_library:
         del match_library[match_id]
 
 
-def make_match_from_raw_db_data(row):
+async def make_match_from_raw_db_data(row: list) -> Match:
     match_id = int(row[0])
     if match_id in match_library:
         return match_library[match_id]
 
     match_info = MatchInfo(
-        race_info=racedb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo(),
+        race_info=await racedb.get_race_info_from_type_id(int(row[1])) if row[1] is not None else RaceInfo(),
         ranked=bool(row[9]),
         is_best_of=bool(row[10]),
         max_races=int(row[11])
@@ -358,5 +360,6 @@ def make_match_from_raw_db_data(row):
         channel_id=int(row[13]) if row[13] is not None else None
     )
 
+    await new_match.initialize()
     match_library[new_match.match_id] = new_match
     return new_match

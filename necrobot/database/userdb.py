@@ -11,12 +11,12 @@ from necrobot.user.necrouser import NecroUser
 
 
 # Commit function
-def write_user(necro_user: NecroUser):
+async def write_user(necro_user: NecroUser):
     if necro_user.user_id is None:
         _register_user(necro_user)
         return
 
-    rtmp_clash_user_id = _get_resolvable_rtmp_clash_user_id(necro_user)
+    rtmp_clash_user_id = await _get_resolvable_rtmp_clash_user_id(necro_user)
     if rtmp_clash_user_id is not None:
         _transfer_user_id(from_user_id=rtmp_clash_user_id, to_user_id=necro_user.user_id)
 
@@ -32,7 +32,7 @@ def write_user(necro_user: NecroUser):
         necro_user.user_id
     )
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         if rtmp_clash_user_id is not None:
             rtmp_clash_params = (rtmp_clash_user_id,)
             cursor.execute(
@@ -62,7 +62,7 @@ def write_user(necro_user: NecroUser):
 
 
 # Search
-def get_users_with_any(
+async def get_users_with_any(
         discord_id=None,
         discord_name=None,
         twitch_name=None,
@@ -83,7 +83,7 @@ def get_users_with_any(
     )
 
 
-def get_users_with_all(
+async def get_users_with_all(
         discord_id=None,
         discord_name=None,
         twitch_name=None,
@@ -105,8 +105,8 @@ def get_users_with_all(
 
 
 # TODO These have code smell
-def get_discord_id(discord_name):
-    with DBConnect(commit=False) as cursor:
+async def get_discord_id(discord_name):
+    async with DBConnect(commit=False) as cursor:
         params = (discord_name,)
         cursor.execute(
             """
@@ -119,7 +119,7 @@ def get_discord_id(discord_name):
         return int(row[0]) if row is not None else None
 
 
-def get_all_ids_matching_prefs(user_prefs):
+async def get_all_ids_matching_prefs(user_prefs):
     if user_prefs.is_empty:
         return []
 
@@ -130,7 +130,7 @@ def get_all_ids_matching_prefs(user_prefs):
         where_query += ' AND race_alert={0}'.format('TRUE' if user_prefs.race_alert else 'FALSE')
     where_query = where_query[5:]
 
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT discord_id 
@@ -143,7 +143,22 @@ def get_all_ids_matching_prefs(user_prefs):
         return to_return
 
 
-def _get_users_helpfn(
+async def register_discord_user(user: discord.User):
+    params = (user.id, user.display_name,)
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO users 
+                (discord_id, discord_name) 
+            VALUES (%s, %s) 
+            ON DUPLICATE KEY UPDATE 
+                discord_name = VALUES(discord_name)
+            """,
+            params
+        )
+
+
+async def _get_users_helpfn(
         discord_id,
         discord_name,
         twitch_name,
@@ -153,7 +168,7 @@ def _get_users_helpfn(
         case_sensitive,
         do_any
 ):
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         params = tuple()
         if discord_id is not None:
             params += (int(discord_id),)
@@ -206,8 +221,8 @@ def _get_users_helpfn(
         return cursor.fetchall()
 
 
-def _register_user(necro_user: NecroUser):
-    rtmp_clash_user_id = _get_resolvable_rtmp_clash_user_id(necro_user)
+async def _register_user(necro_user: NecroUser):
+    rtmp_clash_user_id = await _get_resolvable_rtmp_clash_user_id(necro_user)
 
     params = (
         necro_user.discord_id,
@@ -220,7 +235,7 @@ def _register_user(necro_user: NecroUser):
         necro_user.rtmp_name,
     )
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         if rtmp_clash_user_id is None:
             try:
                 cursor.execute(
@@ -255,7 +270,7 @@ def _register_user(necro_user: NecroUser):
             necro_user.set_user_id(rtmp_clash_user_id)
 
 
-def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
+async def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
     """
     Returns the user_id of any entry in the DB with the same rtmp_name as necro_user, a NULL discord_id,
     and a different user_id, or None if no such entry exists.
@@ -268,7 +283,7 @@ def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
 
     rtmp_params = (necro_user.rtmp_name,)
 
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT user_id, discord_id 
@@ -290,9 +305,9 @@ def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
             return None
 
 
-def _transfer_user_id(from_user_id: int, to_user_id: int):
+async def _transfer_user_id(from_user_id: int, to_user_id: int):
     params = (to_user_id, from_user_id,)
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         # Update main-database matches
         cursor.execute(
             """
@@ -337,18 +352,3 @@ def _transfer_user_id(from_user_id: int, to_user_id: int):
                 """,
                 params
             )
-
-
-def register_discord_user(user: discord.User):
-    params = (user.id, user.display_name,)
-    with DBConnect(commit=True) as cursor:
-        cursor.execute(
-            """
-            INSERT INTO users 
-                (discord_id, discord_name) 
-            VALUES (%s, %s) 
-            ON DUPLICATE KEY UPDATE 
-                discord_name = VALUES(discord_name)
-            """,
-            params
-        )

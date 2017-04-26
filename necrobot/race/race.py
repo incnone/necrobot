@@ -341,7 +341,7 @@ class Race(object):
         if self._status == RaceStatus.counting_down:
             await self._cancel_countdown()
 
-        self._do_enter_racer(racer_member)
+        await self._do_enter_racer(racer_member)
         await self._write(
             mute=mute,
             text='{0} has entered the race. {1} entrants.'.format(racer_member.mention, len(self.racers)))
@@ -374,7 +374,7 @@ class Race(object):
             return
 
         if not already_entered:
-            self._do_enter_racer(racer_member)
+            await self._do_enter_racer(racer_member)
 
         racer = self.get_racer(racer_member)
         if racer is None:
@@ -600,8 +600,9 @@ class Race(object):
         await self.parent.process(RaceEvent(self, event_type, **kwargs))
 
     # Actually enter the racer
-    def _do_enter_racer(self, racer_member):
+    async def _do_enter_racer(self, racer_member):
         racer = Racer(racer_member)
+        await racer.initialize()
         if racer in self.racers:
             return
         self.racers.append(racer)

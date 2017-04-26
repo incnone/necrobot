@@ -9,10 +9,10 @@ from necrobot.race.raceinfo import RaceInfo
 
 
 # Record a race-------------------------------------------------------------------
-def record_race(race: Race) -> None:
+async def record_race(race: Race) -> None:
     type_id = get_race_type_id(race.race_info, register=True)
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         # Record the race
         race_params = (
             race.start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
@@ -52,7 +52,7 @@ def record_race(race: Race) -> None:
 
 
 # Race type functions-------------------------------------------------------------------
-def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None:
+async def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None:
     params = (
         race_info.character_str,
         race_info.descriptor,
@@ -61,7 +61,7 @@ def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None
         race_info.seed_fixed,
     )
 
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT `type_id` 
@@ -85,7 +85,7 @@ def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None
         return None
 
     # Create the new race type
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
             INSERT INTO race_types 
@@ -98,9 +98,9 @@ def get_race_type_id(race_info: RaceInfo, register: bool = False) -> int or None
         return int(cursor.fetchone()[0])
 
 
-def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
+async def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
     params = (race_type,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT `character`, `descriptor`, `seeded`, `amplified`, `seed_fixed` 
@@ -124,8 +124,8 @@ def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
 
 
 # Stat functions-------------------------------------------------------------------
-def get_allzones_race_numbers(user_id: int, amplified: bool) -> list:
-    with DBConnect(commit=False) as cursor:
+async def get_allzones_race_numbers(user_id: int, amplified: bool) -> list:
+    async with DBConnect(commit=False) as cursor:
         params = (user_id,)
         cursor.execute(
             """
@@ -144,8 +144,8 @@ def get_allzones_race_numbers(user_id: int, amplified: bool) -> list:
         return cursor.fetchall()
 
 
-def get_all_racedata(user_id: int, char_name: str, amplified: bool) -> list:
-    with DBConnect(commit=False) as cursor:
+async def get_all_racedata(user_id: int, char_name: str, amplified: bool) -> list:
+    async with DBConnect(commit=False) as cursor:
         params = (user_id, char_name)
         cursor.execute(
             """
@@ -164,8 +164,8 @@ def get_all_racedata(user_id: int, char_name: str, amplified: bool) -> list:
         return cursor.fetchall()
 
 
-def get_fastest_times_leaderboard(character_name: str, amplified: bool, limit: int) -> list:
-    with DBConnect(commit=False) as cursor:
+async def get_fastest_times_leaderboard(character_name: str, amplified: bool, limit: int) -> list:
+    async with DBConnect(commit=False) as cursor:
         params = (character_name, limit,)
         cursor.execute(
             """
@@ -197,8 +197,8 @@ def get_fastest_times_leaderboard(character_name: str, amplified: bool, limit: i
         return cursor.fetchall()
 
 
-def get_most_races_leaderboard(character_name: str, limit: int) -> list:
-    with DBConnect(commit=False) as cursor:
+async def get_most_races_leaderboard(character_name: str, limit: int) -> list:
+    async with DBConnect(commit=False) as cursor:
         params = (character_name, character_name, limit,)
         cursor.execute(
             """
@@ -242,8 +242,8 @@ def get_most_races_leaderboard(character_name: str, limit: int) -> list:
         return cursor.fetchall()
 
 
-def get_largest_race_number(user_id: int) -> int:
-    with DBConnect(commit=False) as cursor:
+async def get_largest_race_number(user_id: int) -> int:
+    async with DBConnect(commit=False) as cursor:
         params = (user_id,)
         cursor.execute(
             """

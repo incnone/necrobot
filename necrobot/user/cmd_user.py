@@ -29,7 +29,8 @@ class DailyAlert(CommandType):
         else:
             user_prefs.daily_alert = False
 
-        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_prefs=user_prefs, commit=True)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user.set(user_prefs=user_prefs, commit=True)
 
         if user_prefs.daily_alert:
             await self.client.send_message(
@@ -60,7 +61,8 @@ class RaceAlert(CommandType):
         else:
             user_prefs.race_alert = False
 
-        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_prefs=user_prefs, commit=True)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user.set(user_prefs=user_prefs, commit=True)
 
         if user_prefs.race_alert:
             await self.client.send_message(
@@ -78,7 +80,7 @@ class ViewPrefs(CommandType):
         self.help_text = "See your current user preferences."
 
     async def _do_execute(self, cmd):
-        prefs = userutil.get_user(discord_id=int(cmd.author.id)).user_prefs
+        prefs = await userutil.get_user(discord_id=int(cmd.author.id)).user_prefs
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
@@ -104,7 +106,7 @@ class RTMP(CommandType):
 
         # Get the user
         discord_name = cmd.args[0]
-        user = userutil.get_user(discord_name=discord_name)
+        user = await userutil.get_user(discord_name=discord_name)
         if user is None:
             await self.client.send_message(
                 cmd.channel,
@@ -115,7 +117,7 @@ class RTMP(CommandType):
         try:
             user.set(rtmp_name=rtmp_name)
         except IntegrityError:
-            duplicate_user = userutil.get_user(rtmp_name=rtmp_name)
+            duplicate_user = await userutil.get_user(rtmp_name=rtmp_name)
             if duplicate_user is None:
                 await self.client.send_message(
                     cmd.channel,
@@ -154,7 +156,8 @@ class SetInfo(CommandType):
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
-        userutil.get_user(discord_id=int(cmd.author.id), register=True).set(user_info=cmd.arg_string, commit=True)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user.set(user_info=cmd.arg_string, commit=True)
         await self.client.send_message(
             cmd.channel,
             '{0}: Updated your user info.'.format(cmd.author.mention))
@@ -178,7 +181,7 @@ class Timezone(CommandType):
 
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
-            userutil.get_user(discord_id=int(cmd.author.id), register=True).set(timezone=tz_name, commit=True)
+            await userutil.get_user(discord_id=int(cmd.author.id), register=True).set(timezone=tz_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))
@@ -209,7 +212,8 @@ class Twitch(CommandType):
                 '{0}: Error: your twitch name cannot contain the character /. (Maybe you accidentally '
                 'included the "twitch.tv/" part of your stream name?)'.format(cmd.author.mention))
         else:
-            userutil.get_user(discord_id=int(cmd.author.id), register=True).set(twitch_name=twitch_name, commit=True)
+            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user.set(twitch_name=twitch_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Registered your twitch as `twitch.tv/{1}`.'.format(
@@ -230,9 +234,9 @@ class UserInfo(CommandType):
 
         # find the user's discord id
         if len(cmd.args) == 0:
-            racer = userutil.get_user(discord_id=cmd.author.id, register=True)
+            racer = await userutil.get_user(discord_id=cmd.author.id, register=True)
         else:
-            racer = userutil.get_user(any_name=cmd.args[0])
+            racer = await userutil.get_user(any_name=cmd.args[0])
             if racer is None:
                 await self.client.send_message(
                     cmd.channel, 'Couldn\'t find a user by the name `{0}`.'.format(cmd.args[0]))

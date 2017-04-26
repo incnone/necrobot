@@ -78,7 +78,7 @@ class Confirm(CommandType):
                 'Error: A scheduled time for this match has not been suggested. Use `.suggest` to suggest a time.')
             return
 
-        author_as_necrouser = userutil.get_user(discord_id=int(cmd.author.id))
+        author_as_necrouser = await userutil.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
@@ -113,7 +113,7 @@ class Contest(CommandType):
         self.help_text = 'Contest the result of the previous race.'
 
     async def _do_execute(self, cmd):
-        self.bot_channel.contest_last_begun_race()
+        await self.bot_channel.contest_last_begun_race()
         staff_role = self.necrobot.staff_role
         if staff_role is not None:
             contest_str = '{0}: The previous race has been marked as contested.'.format(staff_role.mention)
@@ -139,7 +139,7 @@ class GetMatchInfo(CommandType):
             )
             return
 
-        match_race_data = matchdb.get_match_race_data(match.match_id)
+        match_race_data = await matchdb.get_match_race_data(match.match_id)
 
         await self.client.send_message(
             cmd.channel,
@@ -178,7 +178,7 @@ class Suggest(CommandType):
             return
 
         # Get the command's author as a NecroUser object
-        author_as_necrouser = userutil.get_user(discord_id=cmd.author.id)
+        author_as_necrouser = await userutil.get_user(discord_id=cmd.author.id)
         if not author_as_necrouser:
             await self.client.send_message(
                 cmd.channel,
@@ -277,7 +277,7 @@ class Unconfirm(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
 
-        author_as_necrouser = userutil.get_user(discord_id=int(cmd.author.id))
+        author_as_necrouser = await userutil.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
@@ -353,7 +353,7 @@ class CancelRace(CommandType):
                 )
                 return
 
-            success = matchdb.cancel_race(self.bot_channel.match, race_number)
+            success = await matchdb.cancel_race(self.bot_channel.match, race_number)
             if success:
                 await self.client.send_message(
                     cmd.channel,
@@ -406,7 +406,7 @@ class ChangeWinner(CommandType):
             )
             return
 
-        success = matchdb.change_winner(match=match, race_number=race_number, winner=winner)
+        success = await matchdb.change_winner(match=match, race_number=race_number, winner=winner)
         if success:
             await self.client.send_message(
                 cmd.channel,
@@ -501,7 +501,7 @@ class ForceRecordRace(CommandType):
             )
             return
 
-        matchdb.record_match_race(
+        await matchdb.record_match_race(
             match=match,
             winner=winner
         )
@@ -672,10 +672,19 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     rtmp_names = [cmd.args[0], cmd.args[1]]
 
+    # Find the author as NecroUser
+    author_user = await userutil.get_user(discord_id=int(cmd.author.id))
+    if author_user is None or author_user.twitch_name is None:
+        await cmd_type.client.send_message(
+            cmd.channel,
+            'Please register a twitch stream in order to cawmentate (`.twitch`).'
+        )
+        return
+
     # Find the racers as NecroUsers
     racers = []
     for name in rtmp_names:
-        racer = userutil.get_user(any_name=name)
+        racer = await userutil.get_user(any_name=name)
         if racer is None:
             await cmd_type.client.send_message(
                 cmd.channel,
@@ -685,8 +694,8 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         racers.append(racer)
 
     # Find the match
-    match = matchutil.get_match_from_id(
-        match_id=matchdb.get_most_recent_scheduled_match_id_between(
+    match = await matchutil.get_match_from_id(
+        match_id=await matchdb.get_most_recent_scheduled_match_id_between(
             racers[0].user_id,
             racers[1].user_id,
             channeled=True
@@ -701,7 +710,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Check if the match already has cawmentary
     if add and match.cawmentator_id is not None:
-        cawmentator_user = userutil.get_user(discord_id=match.cawmentator_id)
+        cawmentator_user = await userutil.get_user(discord_id=match.cawmentator_id)
         if cawmentator_user is not None:
             await cmd_type.client.send_message(
                 cmd.channel,
@@ -734,7 +743,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Add/delete the cawmentary
     if add:
-        match.set_cawmentator_id(int(cmd.author.id))
+        match.set_cawmentator_id(author_user.user_id)
         await cmd_type.client.send_message(
             cmd.channel,
             'Added {0} as cawmentary for the match {1}-{2}.'.format(
@@ -762,7 +771,7 @@ async def make_match_from_cmd(
 
     # Add the racers from member objects
     for member in racer_members:
-        racer_as_necrouser = userutil.get_user(discord_id=member.id)
+        racer_as_necrouser = await userutil.get_user(discord_id=member.id)
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)
         else:
@@ -774,7 +783,7 @@ async def make_match_from_cmd(
 
     # Add the racers from names
     for name in racer_names:
-        racer_as_necrouser = userutil.get_user(any_name=name)
+        racer_as_necrouser = await userutil.get_user(any_name=name)
 
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)
@@ -794,7 +803,7 @@ async def make_match_from_cmd(
         return
 
     # Create the Match object
-    new_match = matchutil.make_match(
+    new_match = await matchutil.make_match(
         racer_1_id=racers[0].user_id,
         racer_2_id=racers[1].user_id,
         match_info=match_info,

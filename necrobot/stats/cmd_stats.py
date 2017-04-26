@@ -105,7 +105,7 @@ class Fastest(CommandType):
 
         infobox = 'Fastest public all-zones {2} {0} times:\n```\n{1}```'.format(
             ndchar.name,
-            statfn.get_fastest_times_infotext(ndchar, amplified, 20),
+            await statfn.get_fastest_times_infotext(ndchar, amplified, 20),
             'Amplified' if amplified else 'base-game')
         await self.client.send_message(
             cmd.channel,
@@ -119,7 +119,7 @@ class LeagueFastest(CommandType):
 
     async def _do_execute(self, cmd):
         infobox = '```\nFastest wins:\n{0}```'.format(
-            statfn.get_fastest_times_league_infotext(20)
+            await statfn.get_fastest_times_league_infotext(20)
         )
 
         await self.client.send_message(cmd.channel, infobox)
@@ -132,10 +132,10 @@ class LeagueStats(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) == 0:
-            user = userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
         else:
             username = cmd.arg_string
-            user = userutil.get_user(any_name=username)
+            user = await userutil.get_user(any_name=username)
             if user is None:
                 await self.client.send_message(
                     cmd.channel,
@@ -143,7 +143,7 @@ class LeagueStats(CommandType):
                 )
                 return
 
-        stats = statfn.get_league_stats(user.user_id)
+        stats = await statfn.get_league_stats(user.user_id)
         best_win = racetime.to_str(stats['best']) if stats['best'] is not None else '--'
         avg_win = racetime.to_str(stats['average']) if stats['average'] is not None else '--'
 
@@ -187,7 +187,7 @@ class MostRaces(CommandType):
 
         infobox = 'Most completed public all-zones {0} races:\n```\n{1}```'.format(
             ndchar.name,
-            statfn.get_most_races_infotext(ndchar, 20))
+            await statfn.get_most_races_infotext(ndchar, 20))
         await self.client.send_message(
             cmd.channel,
             infobox)
@@ -221,10 +221,10 @@ class Stats(CommandType):
             return
 
         if len(args) == 0:
-            user = userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
         else:  # len(args) == 1
             racer_name = args[0]
-            user = userutil.get_user(any_name=racer_name)
+            user = await userutil.get_user(any_name=racer_name)
             if user is None:
                 await self.client.send_message(
                     cmd.channel,
@@ -232,7 +232,7 @@ class Stats(CommandType):
                 return
 
         # Show stats
-        general_stats = statfn.get_general_stats(user.user_id, amplified=amplified)
+        general_stats = await statfn.get_general_stats(user.user_id, amplified=amplified)
         await self.client.send_message(
             cmd.channel,
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(

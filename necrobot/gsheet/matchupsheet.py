@@ -52,8 +52,8 @@ class MatchupSheet(object):
             for row_values in value_range['values']:
                 racer_1_name = row_values[self.column_data.racer_1].rstrip(' ')
                 racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
-                racer_1 = userutil.get_user(any_name=racer_1_name, register=True)
-                racer_2 = userutil.get_user(any_name=racer_2_name, register=True)
+                racer_1 = await userutil.get_user(any_name=racer_1_name, register=True)
+                racer_2 = await userutil.get_user(any_name=racer_2_name, register=True)
                 if racer_1 is None or racer_2 is None:
                     console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
                         racer_1_name, racer_2_name
@@ -63,7 +63,7 @@ class MatchupSheet(object):
                 # type_str = row_values[self.column_data.match_type]  # TODO
                 # tier = row_values[self.column_data.tier]  # TODO
 
-                new_match = matchutil.make_match(
+                new_match = await matchutil.make_match(
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,
                     **kwargs
@@ -134,10 +134,12 @@ class MatchupSheet(object):
             console.warning('No Cawmentary column on GSheet.')
             return
 
+        cawmentator = await userutil.get_user(user_id=match.cawmentator_id)
+
         await self._update_cell(
             row=row,
             col=self.column_data.cawmentary,
-            value=match.cawmentator.twitch_name,
+            value=cawmentator.twitch_name if cawmentator is not None else None,
             raw_input=False
         )
 
@@ -293,17 +295,21 @@ class TestMatchupSheet(unittest.TestCase):
         cls.loop.run_until_complete(cls.sheet_1.initialize())
         cls.loop.run_until_complete(cls.sheet_2.initialize())
 
-        cls.match_1 = cls._get_match(
-            r1_name='yjalexis',
-            r2_name='macnd',
-            time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20),
-            cawmentator_name='incnone'
+        cls.match_1 = TestMatchupSheet.loop.run_until.complete(
+            cls._get_match(
+                r1_name='yjalexis',
+                r2_name='macnd',
+                time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20),
+                cawmentator_name='incnone'
+            )
         )
-        cls.match_2 = cls._get_match(
-            r1_name='elad',
-            r2_name='wilarseny',
-            time=None,
-            cawmentator_name=None
+        cls.match_2 = TestMatchupSheet.loop.run_until.complete(
+            cls._get_match(
+                r1_name='elad',
+                r2_name='wilarseny',
+                time=None,
+                cawmentator_name=None
+            )
         )
 
     @classmethod
@@ -357,19 +363,19 @@ class TestMatchupSheet(unittest.TestCase):
         yield from self.sheet_1.add_vod(self.match_1, 'http://www.youtube.com/')
 
     @staticmethod
-    def _get_match(
+    async def _get_match(
             r1_name: str,
             r2_name: str,
             time: datetime.datetime or None,
             cawmentator_name: str or None
             ) -> Match:
-        racer_1 = userutil.get_user(any_name=r1_name, register=False)
-        racer_2 = userutil.get_user(any_name=r2_name, register=False)
-        cawmentator = userutil.get_user(rtmp_name=cawmentator_name)
+        racer_1 = await userutil.get_user(any_name=r1_name, register=False)
+        racer_2 = await userutil.get_user(any_name=r2_name, register=False)
+        cawmentator = await userutil.get_user(rtmp_name=cawmentator_name)
         cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
 
         match_info = MatchInfo(ranked=True)
-        return matchutil.make_match(
+        return await matchutil.make_match(
             racer_1_id=racer_1.user_id,
             racer_2_id=racer_2.user_id,
             match_info=match_info,

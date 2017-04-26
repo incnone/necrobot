@@ -22,4 +22,6 @@ class StaffAlert(CommandType):
                 cmd.channel,
                 '{0}: Alerting CoNDOR Staff: {1}.'.format(
                     cmd.author.mention,
-                    condor_staff_role.mention))
+                    condor_staff_role.mention
+                )
+            )

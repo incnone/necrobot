@@ -69,7 +69,7 @@ class MakeFromSheet(CommandType):
         await matchup_sheet.initialize()
 
         matches = await matchup_sheet.get_matches(register=False)
-        matches_with_channels = matchutil.get_matches_with_channels()
+        matches_with_channels = await matchutil.get_matches_with_channels()
         channeled_matchroom_names = dict()
         for match in matches_with_channels:
             if match.matchroom_name in channeled_matchroom_names:

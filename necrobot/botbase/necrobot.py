@@ -78,7 +78,7 @@ class Necrobot(object, metaclass=Singleton):
             if not self._initted:
                 return
 
-            userdb.register_discord_user(member)
+            await userdb.register_discord_user(member)
 
         @client.event
         async def on_member_update(member_before: discord.Member, member_after: discord.Member):
@@ -87,7 +87,7 @@ class Necrobot(object, metaclass=Singleton):
                 return
 
             if member_before.display_name != member_after.display_name:
-                userdb.register_discord_user(member_after)
+                await userdb.register_discord_user(member_after)
 
     async def post_login_init(
         self,

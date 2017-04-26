@@ -124,7 +124,7 @@ class Rating(CommandType):
             user_name = cmd.author.display_name
             discord_id = int(cmd.author.id)
         elif len(cmd.args) == 1:
-            necro_user = userutil.get_user(any_name=cmd.args[0])
+            necro_user = await userutil.get_user(any_name=cmd.args[0])
             if necro_user is None:
                 await self.client.send_message(
                     cmd.channel,

@@ -16,7 +16,7 @@ class CloseAllMatches(CommandType):
         CommandType.__init__(self, bot_channel, 'closeallmatches')
         self.help_text = 'Close all match rooms. Use `{0} nolog` to close all rooms without writing ' \
                          'logs (much faster, but no record will be kept of room chat).' \
-                         .format(self.mention)
+            .format(self.mention)
         self.admin_only = True
 
     @property
@@ -24,7 +24,7 @@ class CloseAllMatches(CommandType):
         return 'Close all match rooms.'
 
     async def _do_execute(self, cmd: Command):
-        log = not(len(cmd.args) == 1 and cmd.args[0].lstrip('-').lower() == 'nolog')
+        log = not (len(cmd.args) == 1 and cmd.args[0].lstrip('-').lower() == 'nolog')
 
         await self.client.send_message(
             cmd.channel,
@@ -45,11 +45,11 @@ class CloseFinished(CommandType):
         CommandType.__init__(self, bot_channel, 'closefinished')
         self.help_text = 'Close all match rooms with completed matches. Use `{0} nolog` to close ' \
                          'without writing logs (much faster, but no record will be kept of room chat).' \
-                         .format(self.mention)
+            .format(self.mention)
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        log = not(len(cmd.args) == 1 and cmd.args[0].lstrip('-').lower() == 'nolog')
+        log = not (len(cmd.args) == 1 and cmd.args[0].lstrip('-').lower() == 'nolog')
 
         await self.client.send_message(
             cmd.channel,
@@ -81,7 +81,7 @@ class DropRacer(CommandType):
             return
 
         username = cmd.args[0]
-        user = userutil.get_user(any_name=username)
+        user = await userutil.get_user(any_name=username)
         if user is None:
             await self.client.send_message(
                 cmd.channel,
@@ -89,13 +89,13 @@ class DropRacer(CommandType):
             )
             return
 
-        matches = matchutil.get_matches_with_channels(racer=user)
+        matches = await matchutil.get_matches_with_channels(racer=user)
         deleted_any = False
         for match in matches:
             channel = self.necrobot.find_channel_with_id(match.channel_id)
             if channel is not None:
                 await self.client.delete_channel(channel)
-                matchutil.delete_match(match_id=match.match_id)
+                await matchutil.delete_match(match_id=match.match_id)
                 deleted_any = True
 
         if deleted_any:
@@ -114,7 +114,7 @@ class GetCurrentEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'get-current-event')
         self.help_text = 'Get the identifier and name of the current CoNDOR event.' \
-                         .format(self.mention)
+            .format(self.mention)
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
@@ -201,7 +201,7 @@ class SetCondorEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'set-condor-event')
         self.help_text = '`{0} schema_name`: Set the bot\'s current event to `schema_name`.' \
-                         .format(self.mention)
+            .format(self.mention)
         self.admin_only = True
 
     @property
@@ -243,7 +243,7 @@ class NextRace(CommandType):
         utcnow = pytz.utc.localize(datetime.datetime.utcnow())
         num_to_show = 3
 
-        matches = matchutil.get_upcoming_and_current()
+        matches = await matchutil.get_upcoming_and_current()
         if not matches:
             await self.client.send_message(
                 cmd.channel,
@@ -262,7 +262,7 @@ class NextRace(CommandType):
 
         await self.client.send_message(
             cmd.channel,
-            matchutil.get_nextrace_displaytext(upcoming_matches)
+            await matchutil.get_nextrace_displaytext(upcoming_matches)
         )
 
 
@@ -272,7 +272,7 @@ class Register(CommandType):
         self.help_text = 'Register for the current event.'.format(self.mention)
 
     async def _do_execute(self, cmd: Command):
-        user = userutil.get_user(discord_id=int(cmd.author.id))
+        user = await userutil.get_user(discord_id=int(cmd.author.id))
         await leaguedb.register_user(user.user_id)
 
 
@@ -281,7 +281,7 @@ class RegisterCondorEvent(CommandType):
         CommandType.__init__(self, bot_channel, 'register-condor-event')
         self.help_text = '`{0} schema_name`: Create a new CoNDOR event in the database, and set this to ' \
                          'be the bot\'s current event.' \
-                         .format(self.mention)
+            .format(self.mention)
         self.admin_only = True
 
     @property
@@ -327,7 +327,7 @@ class SetEventName(CommandType):
         CommandType.__init__(self, bot_channel, 'set-event-name')
         self.help_text = '`{0} league_name`: Set the name of bot\'s current event. Note: This does not ' \
                          'change or create a new event! Use `.register-condor-event` and `.set-condor-event`.' \
-                         .format(self.mention)
+            .format(self.mention)
         self.admin_only = True
 
     @property

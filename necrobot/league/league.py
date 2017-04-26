@@ -1,3 +1,4 @@
+import asyncio
 import types
 from necrobot.match.matchinfo import MatchInfo
 

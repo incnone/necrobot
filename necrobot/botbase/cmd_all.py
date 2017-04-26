@@ -117,7 +117,7 @@ class Info(CommandType):
         elif Config.testing():
             debug_str = ' (TEST)'
 
-        await self.bot_channel.client.send_message(
+        await self.client.send_message(
             cmd.channel,
             'Necrobot v-{0}{1}. Type `.help` for a list of commands.'.format(
                 Config.BOT_VERSION,

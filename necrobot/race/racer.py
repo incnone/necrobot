@@ -11,12 +11,16 @@ FIELD_UNKNOWN = int(-1)
 
 class Racer(object):
     def __init__(self, member: discord.Member):
-        self._user = userutil.get_user(discord_id=int(member.id))
+        self._user = None
+        self._discord_id = int(member.id)
         self._state = RacerStatus.unready       # see RacerState notes above
         self.time = FIELD_UNKNOWN               # hundredths of a second
         self.igt = FIELD_UNKNOWN                # hundredths of a second
         self.level = level.LEVEL_NOS            # level of death (or LEVEL_FINISHED or LEVEL_UNKNOWN_DEATH)
         self.comment = ''                       # a comment added with .comment
+
+    async def initialize(self):
+        self._user = await userutil.get_user(discord_id=self._discord_id)
 
     @property
     def user(self) -> NecroUser:

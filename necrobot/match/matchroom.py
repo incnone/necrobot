@@ -126,19 +126,17 @@ class MatchRoom(BotChannel):
         """
         return self._last_begun_race
 
-    @property
-    def played_all_races(self) -> bool:
-        match_race_data = matchdb.get_match_race_data(self.match.match_id)
+    async def played_all_races(self) -> bool:
+        match_race_data = await matchdb.get_match_race_data(self.match.match_id)
         if self.match.is_best_of:
             return match_race_data.leader_wins > self.match.number_of_races // 2
         else:
             return match_race_data.num_finished >= self.match.number_of_races
 
-    @property
-    def during_races(self):
-        return self.current_race is not None and not self.played_all_races
+    async def during_races(self):
+        return self.current_race is not None and not await self.played_all_races()
 
-    def contest_last_begun_race(self):
+    async def contest_last_begun_race(self):
         if self._last_begun_race is None:
             contest_race_number = self._current_race_number - 1
         else:
@@ -147,7 +145,7 @@ class MatchRoom(BotChannel):
                 return
             contest_race_number = self._last_begun_race_number
 
-        matchdb.set_match_race_contested(
+        await matchdb.set_match_race_contested(
             match=self.match,
             race_number=contest_race_number,
             contested=True
@@ -219,7 +217,7 @@ class MatchRoom(BotChannel):
                             'close.'.format(self.channel.mention)
                 )
 
-            self._record_race(race_event.race, self._race_winner(race_event.race))
+            await self._record_race(race_event.race, self._race_winner(race_event.race))
             # await self._record_new_ratings(race_winner)
 
             # Write end-of-race message
@@ -232,13 +230,13 @@ class MatchRoom(BotChannel):
             await self.write(end_race_msg)
 
             # Begin a new race if appropriate, or end the match.
-            if self.played_all_races:
+            if await self.played_all_races():
                 await self._end_match()
             else:
                 await self._begin_new_race()
         elif race_event.event == RaceEvent.EventType.RACE_CANCEL:
             await self.write('The race has been canceled.')
-            if not self.played_all_races:
+            if not await self.played_all_races():
                 await self._begin_new_race()
 
     # Write to the channel
@@ -286,7 +284,7 @@ class MatchRoom(BotChannel):
 
             # Begin match now if appropriate
             if time_until_match < datetime.timedelta(seconds=0):
-                if not self.played_all_races:
+                if not await self.played_all_races():
                     if warn:
                         await self.write(
                             'I believe that I was just restarted; an error may have occurred. I am '
@@ -324,7 +322,7 @@ class MatchRoom(BotChannel):
         self.channel_commands = self._during_match_channel_commands
 
         # Make the race
-        match_race_data = matchdb.get_match_race_data(self.match.match_id)
+        match_race_data = await matchdb.get_match_race_data(self.match.match_id)
         self._current_race = Race(self, self.match.race_info,
                                   race_config=RaceConfig(finalize_time_sec=15, auto_forfeit=1))
         self._current_race_number = match_race_data.num_races + 1
@@ -349,9 +347,9 @@ class MatchRoom(BotChannel):
 
 
 # Database recording
-    def _record_race(self, race: Race, race_winner: int):
-        racedb.record_race(race)
-        matchdb.record_match_race(
+    async def _record_race(self, race: Race, race_winner: int):
+        await racedb.record_race(race)
+        await matchdb.record_match_race(
             match=self.match,
             race_number=self._current_race_number,
             race_id=self.current_race.race_id,

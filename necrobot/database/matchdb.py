@@ -9,7 +9,7 @@ from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
 
 
-def record_match_race(
+async def record_match_race(
         match: Match,
         race_number: int = None,
         race_id: int = None,
@@ -20,7 +20,7 @@ def record_match_race(
     if race_number is None:
         race_number = _get_new_race_number(match)
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         params = (
             match.match_id,
             race_number,
@@ -45,12 +45,12 @@ def record_match_race(
         )
 
 
-def set_match_race_contested(
+async def set_match_race_contested(
         match: Match,
         race_number: int = None,
         contested: bool = True
         ) -> None:
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         params = (
             contested,
             match.match_id,
@@ -67,12 +67,12 @@ def set_match_race_contested(
         )
 
 
-def change_winner(match: Match, race_number: int, winner: int) -> bool:
+async def change_winner(match: Match, race_number: int, winner: int) -> bool:
     race_to_change = _get_uncanceled_race_number(match=match, race_number=race_number)
     if race_to_change is None:
         return False
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         params = (
             winner,
             match.match_id,
@@ -90,12 +90,12 @@ def change_winner(match: Match, race_number: int, winner: int) -> bool:
         return True
 
 
-def cancel_race(match: Match, race_number: int) -> bool:
+async def cancel_race(match: Match, race_number: int) -> bool:
     race_to_cancel = _get_uncanceled_race_number(match=match, race_number=race_number)
     if race_to_cancel is None:
         return False
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         params = (
             match.match_id,
             race_to_cancel,
@@ -112,11 +112,11 @@ def cancel_race(match: Match, race_number: int) -> bool:
         return True
 
 
-def write_match(match: Match):
+async def write_match(match: Match):
     if not match.is_registered:
         _register_match(match)
 
-    match_racetype_id = racedb.get_race_type_id(race_info=match.race_info, register=True)
+    match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)
 
     params = (
         match_racetype_id,
@@ -130,12 +130,12 @@ def write_match(match: Match):
         match.ranked,
         match.is_best_of,
         match.number_of_races,
-        match.cawmentator.user_id if match.cawmentator else None,
+        match.cawmentator_id,
         match.channel_id,
         match.match_id,
     )
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
             UPDATE {matches}
@@ -159,9 +159,9 @@ def write_match(match: Match):
         )
 
 
-def register_match_channel(match_id: int, channel_id: int or None) -> None:
+async def register_match_channel(match_id: int, channel_id: int or None) -> None:
     params = (channel_id, match_id,)
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
             UPDATE {matches}
@@ -172,9 +172,9 @@ def register_match_channel(match_id: int, channel_id: int or None) -> None:
         )
 
 
-def get_match_channel_id(match_id: int) -> int:
+async def get_match_channel_id(match_id: int) -> int:
     params = (match_id,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT channel_id 
@@ -188,7 +188,7 @@ def get_match_channel_id(match_id: int) -> int:
         return int(row[0]) if row[0] is not None else None
 
 
-def get_channeled_matches_raw_data(
+async def get_channeled_matches_raw_data(
         must_be_scheduled: bool = False,
         order_by_time: bool = False,
         racer_id: int = None
@@ -206,7 +206,7 @@ def get_channeled_matches_raw_data(
     if order_by_time:
         order_query = "ORDER BY `suggested_time` ASC"
 
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT 
@@ -230,9 +230,9 @@ def get_channeled_matches_raw_data(
         return cursor.fetchall()
 
 
-def delete_match(match_id: int):
+async def delete_match(match_id: int):
     params = (match_id,)
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
             DELETE FROM {match_races} 
@@ -249,9 +249,9 @@ def delete_match(match_id: int):
         )
 
 
-def get_match_race_data(match_id: int) -> MatchRaceData:
+async def get_match_race_data(match_id: int) -> MatchRaceData:
     params = (match_id,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT canceled, winner 
@@ -276,13 +276,13 @@ def get_match_race_data(match_id: int) -> MatchRaceData:
         return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)
 
 
-def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int, channeled=True) -> int or None:
+async def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int, channeled=True) -> int or None:
     params = (racer_1_id, racer_2_id, racer_2_id, racer_1_id)
     where_query = '((racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s))'
     if channeled:
         where_query += ' AND `channel_id` IS NOT NULL'
 
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT match_id 
@@ -297,9 +297,9 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int,
         return int(row[0]) if row is not None else None
 
 
-def get_fastest_wins_raw(limit: int = None) -> list:
+async def get_fastest_wins_raw(limit: int = None) -> list:
     params = (limit,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT
@@ -345,9 +345,9 @@ def get_fastest_wins_raw(limit: int = None) -> list:
         return cursor.fetchall()
 
 
-def get_matchstats_raw(user_id: int) -> list:
+async def get_matchstats_raw(user_id: int) -> list:
     params = (user_id,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT
@@ -378,10 +378,10 @@ def get_matchstats_raw(user_id: int) -> list:
         return winner_data + loser_data
 
 
-def get_raw_match_data(match_id: int) -> list:
+async def get_raw_match_data(match_id: int) -> list:
     params = (match_id,)
 
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT 
@@ -407,8 +407,8 @@ def get_raw_match_data(match_id: int) -> list:
         return cursor.fetchone()
 
 
-def _register_match(match: Match) -> None:
-    match_racetype_id = racedb.get_race_type_id(race_info=match.race_info, register=True)
+async def _register_match(match: Match) -> None:
+    match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)
 
     params = (
         match_racetype_id,
@@ -422,10 +422,10 @@ def _register_match(match: Match) -> None:
         match.ranked,
         match.is_best_of,
         match.number_of_races,
-        match.cawmentator.user_id if match.cawmentator else None,
+        match.cawmentator_id,
     )
 
-    with DBConnect(commit=True) as cursor:
+    async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
             INSERT INTO {0} 
@@ -451,9 +451,9 @@ def _register_match(match: Match) -> None:
         match.set_match_id(int(cursor.fetchone()[0]))
 
 
-def _get_uncanceled_race_number(match: Match, race_number: int) -> int or None:
+async def _get_uncanceled_race_number(match: Match, race_number: int) -> int or None:
     params = (match.match_id,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT `race_number` 
@@ -470,9 +470,9 @@ def _get_uncanceled_race_number(match: Match, race_number: int) -> int or None:
         return int(races[race_number - 1][0])
 
 
-def _get_new_race_number(match: Match) -> int:
+async def _get_new_race_number(match: Match) -> int:
     params = (match.match_id,)
-    with DBConnect(commit=False) as cursor:
+    async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT `race_number` 

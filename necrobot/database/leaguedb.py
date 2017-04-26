@@ -245,10 +245,10 @@ async def write_league(league: League) -> None:
         The league object to be written. Will create a new row if the schema_name is not in the database, and
         update otherwise.
     """
-    async with DBConnect(commit=True) as cursor:
-        match_info = league.match_info
-        race_type_id = racedb.get_race_type_id(race_info=match_info.race_info, register=True)
+    match_info = league.match_info
+    race_type_id = await racedb.get_race_type_id(race_info=match_info.race_info, register=True)
 
+    async with DBConnect(commit=True) as cursor:
         params = (
             league.schema_name,
             league.name,
