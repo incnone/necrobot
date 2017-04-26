@@ -36,10 +36,14 @@ async def color_user(member, client, server):
         if role.name in PROTECTED_ROLENAMES:
             protected_colors.append(role.colour)            
 
+    roles_to_remove = []
     for role in member.roles:
         if role.name in ROLES_COLORS.keys():
-            await client.remove_roles(member, role)
+            roles_to_remove.append(role)
             protected_colors.append(role.colour)
+
+    for role in roles_to_remove:
+        await client.remove_roles(member, role)
 
     new_colorname = get_random_colorname(protected_colors)
     role_to_use = None

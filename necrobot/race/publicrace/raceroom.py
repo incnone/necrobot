@@ -6,6 +6,7 @@ import discord
 
 from necrobot.race import cmd_race
 from necrobot.race.publicrace import cmd_publicrace
+from necrobot.test import cmd_test
 
 from necrobot.database import racedb
 from necrobot.race import raceinfo
@@ -52,7 +53,7 @@ class RaceRoom(BotChannel):
 
             cmd_publicrace.Rematch(self),
             cmd_publicrace.Kick(self),
-            cmd_publicrace.DelayRecord(self),
+            # cmd_publicrace.DelayRecord(self),
             cmd_publicrace.Notify(self),
             cmd_publicrace.Unnotify(self),
             cmd_publicrace.Missing(self),
@@ -60,6 +61,8 @@ class RaceRoom(BotChannel):
             cmd_publicrace.Poke(self),
             cmd_publicrace.ForceCancel(self),
             cmd_publicrace.ForceClose(self),
+
+            cmd_test.TestRace(self),
         ]
 
 # Properties ------------------------------
@@ -172,7 +175,7 @@ class RaceRoom(BotChannel):
 
     # Updates the leaderboard
     async def update(self):
-        await self.client.edit_channel(self._channel, topic=self._current_race.leaderboard)
+        await self.client.edit_channel(self._channel, topic=self.leaderboard)
 
     # Post the race result to the race necrobot
     async def post_result(self, race: Race):
@@ -222,7 +225,7 @@ class RaceRoom(BotChannel):
 
         ready_racers = []
         unready_racers = []
-        for racer in self._current_race.racers.values():
+        for racer in self._current_race.racers:
             if racer.is_ready:
                 ready_racers.append(racer)
             else:

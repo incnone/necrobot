@@ -18,7 +18,7 @@ async def record_match_race(
         contested: bool = False
         ) -> None:
     if race_number is None:
-        race_number = _get_new_race_number(match)
+        race_number = await _get_new_race_number(match)
 
     async with DBConnect(commit=True) as cursor:
         params = (
@@ -68,7 +68,7 @@ async def set_match_race_contested(
 
 
 async def change_winner(match: Match, race_number: int, winner: int) -> bool:
-    race_to_change = _get_uncanceled_race_number(match=match, race_number=race_number)
+    race_to_change = await _get_uncanceled_race_number(match=match, race_number=race_number)
     if race_to_change is None:
         return False
 
@@ -91,7 +91,7 @@ async def change_winner(match: Match, race_number: int, winner: int) -> bool:
 
 
 async def cancel_race(match: Match, race_number: int) -> bool:
-    race_to_cancel = _get_uncanceled_race_number(match=match, race_number=race_number)
+    race_to_cancel = await _get_uncanceled_race_number(match=match, race_number=race_number)
     if race_to_cancel is None:
         return False
 
@@ -114,7 +114,7 @@ async def cancel_race(match: Match, race_number: int) -> bool:
 
 async def write_match(match: Match):
     if not match.is_registered:
-        _register_match(match)
+        await _register_match(match)
 
     match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)
 

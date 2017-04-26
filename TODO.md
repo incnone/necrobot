@@ -13,7 +13,10 @@ Current version: 0.10
 - Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
 of information
 - Create unit tests for all modules
-- Test Necrobot
+
+#### Things to test
+
+- New user registration
 
 ### Bugs
 

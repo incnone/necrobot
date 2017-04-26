@@ -361,7 +361,7 @@ class Race(object):
                 await self._cancel_countdown()
             await self._write(mute=mute, text='{0} is no longer entered.'.format(racer_member.mention))
             await self.begin_if_ready()
-            await self._process(RaceEvent.EventType.RACER_UNENTER)
+            await self._process(RaceEvent.EventType.RACER_UNENTER, racer_member=racer_member)
         else:
             await self._write(mute=mute, text='{0} is not entered.'.format(racer_member.mention))
 
@@ -404,8 +404,8 @@ class Race(object):
 
         await self.begin_if_ready()
         if not already_entered:
-            await self._process(RaceEvent.EventType.RACER_ENTER)
-        await self._process(RaceEvent.EventType.RACER_READY)
+            await self._process(RaceEvent.EventType.RACER_ENTER, racer_member=racer_member)
+        await self._process(RaceEvent.EventType.RACER_READY, racer_member=racer_member)
 
     # Attempt to put the given Racer in the 'unready' state if they were ready
     async def unready_member(self, racer_member: discord.Member, mute=False):
@@ -425,7 +425,7 @@ class Race(object):
 
         if success and racer.unready():
             await self._write(mute=mute, text='{0} is no longer ready.'.format(racer_member.mention))
-            await self._process(RaceEvent.EventType.RACER_UNREADY)
+            await self._process(RaceEvent.EventType.RACER_UNREADY, racer_member=racer_member)
         else:
             await self._write(mute=mute, text="Can't unready!")
 
@@ -447,7 +447,7 @@ class Race(object):
                     racer.time_str))
             if self._status == RaceStatus.racing:
                 await self._check_for_race_end()
-            await self._process(RaceEvent.EventType.RACER_FINISH)
+            await self._process(RaceEvent.EventType.RACER_FINISH, racer_member=racer_member)
 
     # Attempt to put the given Racer in the 'racing' state if they were finished
     async def unfinish_member(self, racer_member: discord.Member, mute=False):
@@ -466,7 +466,7 @@ class Race(object):
         success = await self._cancel_finalization()
         if success and racer.unfinish():
             await self._write(mute=mute, text='{0} continues to race!'.format(racer_member.mention))
-            await self._process(RaceEvent.EventType.RACER_UNFINISH)
+            await self._process(RaceEvent.EventType.RACER_UNFINISH, racer_member=racer_member)
 
     async def forfeit_racer(self, racer: Racer, mute=False):
         if self.before_race or self.final:
@@ -480,7 +480,7 @@ class Race(object):
         racer = self.get_racer(racer_member)
         if racer is not None:
             await self.forfeit_racer(racer, mute)
-            await self._process(RaceEvent.EventType.RACER_FORFEIT)
+            await self._process(RaceEvent.EventType.RACER_FORFEIT, racer_member=racer_member)
 
     # Attempt to put the given Racer in the 'racing' state if they had forfeit
     async def unforfeit_member(self, racer_member: discord.Member, mute=False):
@@ -501,7 +501,7 @@ class Race(object):
             await self._write(
                 mute=mute,
                 text='{0} is no longer forfeit and continues to race!'.format(racer_member.mention))
-            await self._process(RaceEvent.EventType.RACER_UNFORFEIT)
+            await self._process(RaceEvent.EventType.RACER_UNFORFEIT, racer_member=racer_member)
 
     # Forfeits all racers that have not yet finished
     async def forfeit_all_remaining(self, mute=False):
@@ -513,7 +513,6 @@ class Race(object):
                     await self._do_forfeit_racer(racer)
             if forfeit_any:
                 await self._write(mute=mute, text='All remaining racers forfeit.')
-                await self._process(RaceEvent.EventType.RACER_FORFEIT)
 
     # Adds the given string as a comment
     async def add_comment_for_member(self, racer_member: discord.Member, comment_str: str):
@@ -540,7 +539,7 @@ class Race(object):
         await self._write(mute=mute, text='{0} has forfeit the race.'.format(racer_member.mention))
         if not level == necrobot.util.level.LEVEL_NOS:
             racer.level = level
-        await self._process(RaceEvent.EventType.RACER_FORFEIT)
+        await self._process(RaceEvent.EventType.RACER_FORFEIT, racer_member=racer_member)
 
     # Adds an in-game time for the given member
     async def set_igt_for_member(self, racer_member: discord.Member, igt: int):
@@ -571,12 +570,12 @@ class Race(object):
     # Reseed the race
     async def reseed(self, mute=False):
         if not self.race_info.seeded:
-            await self._write(mute=mute, text='This is not a seeded race. Use `.newrules` to change this.')
+            await self._write(mute=mute, text='This is not a seeded race. Use `.changerulse` to change this.')
 
         elif self.race_info.seed_fixed:
             await self._write(
                 mute=mute,
-                text='The seed for this race was fixed by its rules. Use `.newrules` to change this.')
+                text='The seed for this race was fixed by its rules. Use `.changerulse` to change this.')
             return
 
         else:

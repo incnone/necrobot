@@ -24,8 +24,7 @@ async def make_room(race_info):
         necrobot.register_bot_channel(race_channel, new_room)
 
         # Send PM alerts
-        alert_pref = UserPrefs()
-        alert_pref.race_alert = True
+        alert_pref = UserPrefs(daily_alert=None, race_alert=True)
 
         alert_string = 'A new race has been started:\nFormat: {1}\nChannel: {0}'.format(
             race_channel.mention, race_info.format_str)

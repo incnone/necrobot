@@ -10,6 +10,7 @@
 from necrobot.util import level, racetime
 
 from necrobot.botbase.commandtype import CommandType
+from necrobot.util.parse.exception import ParseException
 
 
 class Enter(CommandType):
@@ -56,7 +57,7 @@ class Done(CommandType):
 
     async def _do_execute(self, cmd):
         # Override: parse .d X-Y as a death
-        if len(cmd.args) >= 1 and cmd.cmd == 'd':
+        if len(cmd.args) >= 1 and cmd.command == 'd':
             lvl = level.from_str(cmd.args[0])
             if lvl != level.LEVEL_NOS:
                 await self.reparse_as('death', cmd)
@@ -231,4 +232,10 @@ class ChangeRules(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.bot_channel.change_race_info(cmd.args)
+        try:
+            await self.bot_channel.change_race_info(cmd.args)
+        except ParseException as e:
+            await self.client.send_message(
+                cmd.channel,
+                "Couldn't parse input: `{0}`.".format(e)
+            )

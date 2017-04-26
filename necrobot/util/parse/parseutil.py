@@ -80,7 +80,7 @@ def parse(args: list, keyword_set: set) -> dict:
             keyword_name = keyword.keyword_name
 
             if keyword_name in parsed_dict:
-                raise DoubledArgException(keyword=keyword)
+                raise DoubledArgException(keyword=keyword.keyword)
 
             if keyword.param_for is not None:
                 parsed_dict[keyword_name] = [keyword.keyword]

@@ -1,5 +1,5 @@
 class UserPrefs(object):
-    def __init__(self, daily_alert: bool = None, race_alert: bool = None):
+    def __init__(self, daily_alert: bool or None, race_alert: bool or None):
         self.daily_alert = daily_alert
         self.race_alert = race_alert
 

@@ -13,15 +13,15 @@ class DBConnect(object):
         self.cursor = None
         self.commit = commit
 
-    def __aenter__(self):
-        yield from DBConnect._lock.acquire()
+    async def __aenter__(self):
+        await DBConnect._lock.acquire()
         try:
             return self.__enter__()
         except Exception:
             DBConnect._lock.release()
             raise
 
-    def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         try:
             return self.__exit__(exc_type, exc_val, exc_tb)
         finally:

@@ -13,12 +13,12 @@ from necrobot.user.necrouser import NecroUser
 # Commit function
 async def write_user(necro_user: NecroUser):
     if necro_user.user_id is None:
-        _register_user(necro_user)
+        await _register_user(necro_user)
         return
 
     rtmp_clash_user_id = await _get_resolvable_rtmp_clash_user_id(necro_user)
     if rtmp_clash_user_id is not None:
-        _transfer_user_id(from_user_id=rtmp_clash_user_id, to_user_id=necro_user.user_id)
+        await _transfer_user_id(from_user_id=rtmp_clash_user_id, to_user_id=necro_user.user_id)
 
     params = (
         necro_user.discord_id,
@@ -71,7 +71,7 @@ async def get_users_with_any(
         user_id=None,
         case_sensitive=False
 ):
-    return _get_users_helpfn(
+    return await _get_users_helpfn(
         discord_id=discord_id,
         discord_name=discord_name,
         twitch_name=twitch_name,
@@ -92,7 +92,7 @@ async def get_users_with_all(
         user_id=None,
         case_sensitive=False
 ):
-    return _get_users_helpfn(
+    return await _get_users_helpfn(
         discord_id=discord_id,
         discord_name=discord_name,
         twitch_name=twitch_name,

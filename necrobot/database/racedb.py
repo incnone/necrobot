@@ -10,7 +10,7 @@ from necrobot.race.raceinfo import RaceInfo
 
 # Record a race-------------------------------------------------------------------
 async def record_race(race: Race) -> None:
-    type_id = get_race_type_id(race.race_info, register=True)
+    type_id = await get_race_type_id(race.race_info, register=True)
 
     async with DBConnect(commit=True) as cursor:
         # Record the race

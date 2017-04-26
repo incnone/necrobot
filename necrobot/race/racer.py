@@ -20,7 +20,7 @@ class Racer(object):
         self.comment = ''                       # a comment added with .comment
 
     async def initialize(self):
-        self._user = await userutil.get_user(discord_id=self._discord_id)
+        self._user = await userutil.get_user(discord_id=self._discord_id, register=True)
 
     @property
     def user(self) -> NecroUser:

@@ -23,11 +23,7 @@ class DailyAlert(CommandType):
                 "Couldn't parse cmd. Call `{0} on` or `{0} off`.".format(self.mention))
             return
 
-        user_prefs = UserPrefs()
-        if cmd.args[0] == 'on':
-            user_prefs.daily_alert = True
-        else:
-            user_prefs.daily_alert = False
+        user_prefs = UserPrefs(daily_alert=(cmd.args[0] == 'on'), race_alert=None)
 
         user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
         user.set(user_prefs=user_prefs, commit=True)
@@ -55,11 +51,7 @@ class RaceAlert(CommandType):
                 "Couldn't parse cmd. Call `{0} on` or `{0} off`.".format(self.mention))
             return
 
-        user_prefs = UserPrefs()
-        if cmd.args[0] == 'on':
-            user_prefs.race_alert = True
-        else:
-            user_prefs.race_alert = False
+        user_prefs = UserPrefs(daily_alert=None, race_alert=(cmd.args[0] == 'on'))
 
         user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
         user.set(user_prefs=user_prefs, commit=True)

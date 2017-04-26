@@ -27,7 +27,7 @@ class NecroUser(object):
         self._rtmp_name = None
         self._timezone = None
         self._user_info = None
-        self._user_prefs = UserPrefs()
+        self._user_prefs = UserPrefs(daily_alert=False, race_alert=False)
 
         self._commit = commit_fn
 

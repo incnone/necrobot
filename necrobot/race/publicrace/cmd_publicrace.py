@@ -50,8 +50,8 @@ class Unnotify(CommandType):
 
 class Missing(CommandType):
     def __init__(self, race_room):
-        CommandType.__init__(self, race_room, 'missing')
-        self.help_text = 'List users that were notified but have not yet entered.'
+        CommandType.__init__(self, race_room, 'missing', 'entrants')
+        self.help_text = 'List users with statuses.'
 
     async def _do_execute(self, command):
         if self.bot_channel.current_race.before_race:

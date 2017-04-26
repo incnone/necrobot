@@ -5,10 +5,9 @@ class RacerStatus(IntEnum):
     """The status (racing/forfeit/etc) of the current racer.
     
     Allowable transitions are:
-       unready <--> ready      (use ready() and unready())
-       ready    --> racing     (use begin_race())
-       racing  <--> forfeit    (use forfeit() and unforfeit())
-       racing  <--> finished   (use finish() and unfinish())
+       unready <--> ready                    (use ready() and unready())
+       ready    --> racing                   (use begin_race())
+       racing  <--> forfeit <--> finished    (use forfeit(), unforfeit(), finish(), unfinish())
     
     Values
     ------
