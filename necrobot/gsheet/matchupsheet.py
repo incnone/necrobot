@@ -161,7 +161,7 @@ class MatchupSheet(object):
             console.warning('No "Score" column on GSheet.')
             return
         if self.column_data.score != self.column_data.winner + 1:
-            console.warning('Can\'t record score; algorithm assumes the score column is one right of the winner column.')
+            console.warning("Can't record score; algorithm assumes the score column is one right of the winner column.")
             return
 
         sheet_range = SheetRange(

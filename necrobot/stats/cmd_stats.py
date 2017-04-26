@@ -1,5 +1,6 @@
 from necrobot.database import userdb
 from necrobot.stats import statfn
+from necrobot.user import userutil
 
 from necrobot.botbase.commandtype import CommandType
 from necrobot.util.character import NDChar
@@ -180,27 +181,22 @@ class Stats(CommandType):
                 '{0}: Error: wrong number of arguments for `.stats`.'.format(cmd.author.mention))
             return
 
-        racer_name = cmd.author.display_name
-        racer_id = int(cmd.author.id)
-        if len(args) == 1:
+        if len(args) == 0:
+            user = userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        else:  # len(args) == 1
             racer_name = args[0]
-            member = self.necrobot.find_member(discord_name=racer_name)
-            if member is not None:
-                racer_name = member.display_name
-                racer_id = int(member.id)
-            else:
-                racer_id = int(userdb.get_discord_id(racer_name))
-                if racer_id is None:
-                    await self.client.send_message(
-                        cmd.channel,
-                        '{0}: Could not find user "{1}".'.format(cmd.author.mention, args[0]))
-                    return
+            user = userutil.get_user(any_name=racer_name)
+            if user is None:
+                await self.client.send_message(
+                    cmd.channel,
+                    'Could not find user "{0}".'.format(racer_name))
+                return
 
         # Show stats
-        general_stats = statfn.get_general_stats(racer_id, amplified=amplified)
+        general_stats = statfn.get_general_stats(user.user_id, amplified=amplified)
         await self.client.send_message(
             cmd.channel,
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(
-                racer_name,
+                user.bot_name,
                 'Amplified' if amplified else 'Base game',
                 general_stats.infotext))

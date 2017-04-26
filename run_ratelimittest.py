@@ -1,8 +1,7 @@
 import asyncio
 import sys
 
-from necrobot import loader, logon
-from necrobot.util import ratelimit
+from necrobot.util import loader, logon, ratelimit
 
 
 async def on_ready_fn(necrobot):

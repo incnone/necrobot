@@ -8,7 +8,6 @@ Current version: 0.10
 
 - Automatching
 - Sensical commands for completed matches
-- Fix weirdness with `.contest` in condor vs ladder (cmd_stats has a similar issue)
 
 ### Testing
 

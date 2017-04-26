@@ -42,7 +42,6 @@ class MainBotChannel(BotChannel):
 
             cmd_user.DailyAlert(self),
             cmd_user.RaceAlert(self),
-            cmd_user.Register(self),
             cmd_user.RTMP(self),
             cmd_user.SetInfo(self),
             cmd_user.Timezone(self),

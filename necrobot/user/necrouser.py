@@ -83,6 +83,10 @@ class NecroUser(object):
         return self.discord_member.display_name if self.discord_member is not None else None
 
     @property
+    def display_name(self) -> str:
+        return self.bot_name
+
+    @property
     def member(self) -> discord.Member:
         return self._discord_member
 

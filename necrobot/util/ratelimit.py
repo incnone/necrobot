@@ -37,6 +37,7 @@ class RateLimitInfo(object):
             return datetime.timedelta(seconds=0)
 
 
+# noinspection PyProtectedMember
 @asyncio.coroutine
 def send_and_get_rate_limit(
         client: discord.Client,
@@ -52,6 +53,7 @@ def send_and_get_rate_limit(
     rate_limit_info = RateLimitInfo()
     data = yield from send_message(client.http, channel_id, content, rate_limit_info)
     channel = client.get_channel(data.get('channel_id'))
+    # noinspection PyArgumentList
     message = client.connection._create_message(channel=channel, **data)
     return message, rate_limit_info
 

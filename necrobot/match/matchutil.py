@@ -89,7 +89,7 @@ def get_match_from_id(match_id: int) -> Match or None:
 
     raw_data = matchdb.get_raw_match_data(match_id)
     if raw_data is not None:
-        return _make_match_from_raw_db_data(raw_data)
+        return make_match_from_raw_db_data(raw_data)
     else:
         return None
 
@@ -293,7 +293,7 @@ async def close_match_room(match: Match) -> None:
     channel = Necrobot().find_channel_with_id(channel_id)
     if channel is None:
         console.warning('Coudn\'t find channel with id {0} in close_match_room '
-                      '(match_id={1}).'.format(channel_id, match.match_id))
+                        '(match_id={1}).'.format(channel_id, match.match_id))
         return
 
     await Necrobot().unregister_bot_channel(channel)

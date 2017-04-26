@@ -28,4 +28,4 @@ class RedoInit(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        self.necrobot.post_login_init(self.necrobot.server.id)
+        await self.necrobot.redo_init()

@@ -15,7 +15,6 @@ class CondorPMChannel(BotChannel):
             # cmd_stats.MostRaces(self),
             # cmd_stats.Stats(self),
 
-            cmd_user.Register(self),
             cmd_user.SetInfo(self),
             cmd_user.Timezone(self),
             cmd_user.Twitch(self),

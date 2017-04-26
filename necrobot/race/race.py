@@ -564,7 +564,7 @@ class Race(object):
                 await self.unenter_member(racer.member, mute=mute)
 
     # Cancel the race.
-    async def cancel(self, mute=False):
+    async def cancel(self):
         self._status = RaceStatus.canceled
         await self._cancel_countdown()
         await self._cancel_finalization()

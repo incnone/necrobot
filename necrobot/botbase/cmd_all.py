@@ -6,7 +6,7 @@ class ForceCommand(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'force')
         self.help_text = '`{0} user command`: Simulate the user entering the given command in the current channel.' \
-                         .format(self.mention)
+            .format(self.mention)
 
     async def _do_execute(self, cmd):
         if len(cmd.args) < 2:
@@ -25,7 +25,7 @@ class ForceCommand(CommandType):
             )
             return
 
-        message_content = cmd.arg_string[(len(username)+1):]
+        message_content = cmd.arg_string[(len(username) + 1):]
         await self.necrobot.force_command(channel=cmd.channel, author=user, message_str=message_content)
 
 

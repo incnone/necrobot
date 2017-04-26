@@ -1,6 +1,6 @@
 import datetime
 
-from necrobot.util import console
+# from necrobot.util import console
 from necrobot.database import userdb
 from necrobot.daily import dailytype
 

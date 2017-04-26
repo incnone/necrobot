@@ -7,6 +7,7 @@ from necrobot.race import racetime
 from necrobot.daily import dailytype
 from necrobot.util import level, seedgen
 from necrobot.config import Config
+from necrobot.user import userutil
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 
@@ -187,8 +188,10 @@ class Daily(object):
         if self.has_registered(daily_number, user_id):
             return False
         else:
+            user = userutil.get_user(discord_id=user_id, register=True)
+
             dailydb.register_daily(
-                discord_id=user_id,
+                user_id=user.user_id,
                 daily_id=daily_number,
                 daily_type=self.daily_type.value)
             return True
@@ -232,8 +235,10 @@ class Daily(object):
 
     # Submit a run to the given daily number
     def submit_to_daily(self, daily_number, user, lv, time):
+        user = userutil.get_user(discord_id=int(user.id), register=True)
+
         dailydb.register_daily(
-            discord_id=int(user.id),
+            user_id=user.user_id,
             daily_id=daily_number,
             daily_type=self.daily_type.value,
             level=lv,

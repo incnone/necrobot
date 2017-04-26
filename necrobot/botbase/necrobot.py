@@ -22,6 +22,7 @@ class Necrobot(object, metaclass=Singleton):
 
         self._initted = False
         self._quitting = False
+        self._load_config_fn = None
 
     # Events
     def ready_client_events(self, client: discord.Client, load_config_fn, on_ready_fn=None):
@@ -73,6 +74,7 @@ class Necrobot(object, metaclass=Singleton):
     ):
         """Initializes object; call after client has been logged in to discord"""
         self.client = client
+        self._load_config_fn = load_config_fn
 
         # Find the correct server
         try:
@@ -92,7 +94,7 @@ class Necrobot(object, metaclass=Singleton):
             exit(1)
 
         if not self._initted:
-            await load_config_fn(self)
+            await self._load_config_fn(self)
             self._initted = True
             for manager in self._managers:
                 await manager.initialize()
@@ -106,6 +108,9 @@ class Necrobot(object, metaclass=Singleton):
             ' Server name: {1}\n'
             '-------------------------'.format(self.server.me.display_name, self.server.name)
         )
+
+    async def redo_init(self):
+        await self.post_login_init(self.client, self.server.id, self._load_config_fn)
 
     async def refresh(self):
         """Called when post_login_init() is run a second+ time"""

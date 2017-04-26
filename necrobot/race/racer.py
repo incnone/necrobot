@@ -1,54 +1,17 @@
-from enum import IntEnum
+import discord
 
 from necrobot.race import racetime
+from necrobot.race.racerstatus import RacerStatus
+from necrobot.user import userutil
+from necrobot.user.necrouser import NecroUser
 from necrobot.util import level
 
 FIELD_UNKNOWN = int(-1)
 
 
-class RacerStatus(IntEnum):
-    """The status (racing/forfeit/etc) of the current racer.
-    
-    Allowable transitions are:
-       unready <--> ready      (use ready() and unready())
-       ready    --> racing     (use begin_race())
-       racing  <--> forfeit    (use forfeit() and unforfeit())
-       racing  <--> finished   (use finish() and unfinish())
-    
-    Values
-    ------
-    unready
-        The racer is not yet ready to begin the race.
-    ready
-        The racer is ready to begin the race (but the race has not begun). Can still revert to unready.
-    racing
-        The racer is currently racing.
-    forfeit
-        The racer has forfeit the race.
-    finished
-        The racer has finished the race.     
-    """
-
-    unready = 1
-    ready = 2
-    racing = 3
-    forfeit = 4
-    finished = 5
-
-    def __str__(self):
-        status_strs = {
-            RacerStatus.unready: 'Not ready.',
-            RacerStatus.ready: 'Ready!',
-            RacerStatus.racing: 'Racing!',
-            RacerStatus.forfeit: 'Forfeit!',
-            RacerStatus.finished: ''
-        }
-        return status_strs[self]
-
-
 class Racer(object):
-    def __init__(self, member):
-        self.member = member                    # the Discord member who is this racer
+    def __init__(self, member: discord.Member):
+        self._user = userutil.get_user(discord_id=int(member.id))
         self._state = RacerStatus.unready       # see RacerState notes above
         self.time = FIELD_UNKNOWN               # hundredths of a second
         self.igt = FIELD_UNKNOWN                # hundredths of a second
@@ -56,22 +19,30 @@ class Racer(object):
         self.comment = ''                       # a comment added with .comment
 
     @property
-    def name(self):
+    def user(self) -> NecroUser:
+        return self._user
+
+    @property
+    def member(self) -> discord.Member:
+        return self.user.member
+
+    @property
+    def name(self) -> str:
         return self.member.display_name
 
     @property
-    def id(self):
-        return int(self.member.id)
+    def user_id(self) -> int:
+        return self.user.user_id
 
     @property
-    def status_str(self):
+    def status_str(self) -> str:
         return self._status_str(False)
 
     @property
-    def short_status_str(self):
+    def short_status_str(self) -> str:
         return self._status_str(True)
     
-    def _status_str(self, short):
+    def _status_str(self, short: bool) -> str:
         status = ''
         if self._state == RacerStatus.finished:
             status += racetime.to_str(self.time)
@@ -93,52 +64,52 @@ class Racer(object):
         return status
 
     @property
-    def time_str(self):
+    def time_str(self) -> str:
         return racetime.to_str(self.time)
 
     @property
-    def is_ready(self):
+    def is_ready(self) -> bool:
         return self._state == RacerStatus.ready
 
     @property
-    def has_begun(self):
+    def has_begun(self) -> bool:
         return self._state > RacerStatus.ready
 
     @property
-    def is_racing(self):
+    def is_racing(self) -> bool:
         return self._state == RacerStatus.racing
 
     @property
-    def is_forfeit(self):
+    def is_forfeit(self) -> bool:
         return self._state == RacerStatus.forfeit
 
     @property
-    def is_finished(self):
+    def is_finished(self) -> bool:
         return self._state == RacerStatus.finished
 
     @property
-    def is_done_racing(self):
+    def is_done_racing(self) -> bool:
         return self._state > RacerStatus.racing
 
-    def ready(self):
+    def ready(self) -> bool:
         if self._state == RacerStatus.unready:
             self._state = RacerStatus.ready
             return True
         return False
 
-    def unready(self):
+    def unready(self) -> bool:
         if self._state == RacerStatus.ready:
             self._state = RacerStatus.unready
             return True
         return False
 
-    def begin_race(self):
+    def begin_race(self) -> bool:
         if self._state == RacerStatus.ready:
             self._state = RacerStatus.racing
             return True
         return False
 
-    def forfeit(self, time):
+    def forfeit(self, time) -> bool:
         if self._state == RacerStatus.racing or self._state == RacerStatus.finished:
             self._state = RacerStatus.forfeit
             self.time = time
@@ -147,7 +118,7 @@ class Racer(object):
             return True
         return False
 
-    def unforfeit(self):
+    def unforfeit(self) -> bool:
         if self._state == RacerStatus.forfeit:
             self._state = RacerStatus.racing
             self.time = FIELD_UNKNOWN
@@ -156,7 +127,7 @@ class Racer(object):
             return True
         return False
 
-    def finish(self, time):
+    def finish(self, time) -> bool:
         if self._state == RacerStatus.racing or self._state == RacerStatus.forfeit:
             self._state = RacerStatus.finished
             self.time = time
@@ -164,7 +135,7 @@ class Racer(object):
             return True
         return False
             
-    def unfinish(self):
+    def unfinish(self) -> bool:
         if self._state == RacerStatus.finished:
             self._state = RacerStatus.racing
             self.time = FIELD_UNKNOWN
@@ -173,5 +144,5 @@ class Racer(object):
             return True
         return False
 
-    def add_comment(self, comment):
+    def add_comment(self, comment: str):
         self.comment = comment
