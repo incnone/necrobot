@@ -46,7 +46,7 @@ class PrivateRaceRoom(RaceRoom):
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
 
-        self.command_types.extend([
+        self.channel_commands.extend([
             cmd_privaterace.Add(self),
             cmd_privaterace.Remove(self),
             cmd_privaterace.MakeAdmin(self),

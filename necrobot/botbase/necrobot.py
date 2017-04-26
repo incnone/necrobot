@@ -24,6 +24,29 @@ class Necrobot(object, metaclass=Singleton):
         self._quitting = False
         self._load_config_fn = None
 
+    @property
+    def all_channels(self):
+        return self._bot_channels.values()
+
+    @property
+    def quitting(self):
+        """True if the bot wants to quit (i.e. if logout() has been called)"""
+        return self._quitting
+
+    @property
+    def admin_roles(self):
+        """A list of all admin roles on the server"""
+        admin_roles = []
+        for rolename in Config.ADMIN_ROLE_NAMES:
+            for role in self.server.roles:
+                if role.name == rolename:
+                    admin_roles.append(role)
+        return admin_roles
+
+    @property
+    def staff_role(self) -> discord.Role or None:
+        return self.find_role(Config.STAFF_ROLE)
+
     # Events
     def ready_client_events(self, client: discord.Client, load_config_fn, on_ready_fn=None):
         @client.event
@@ -154,25 +177,6 @@ class Necrobot(object, metaclass=Singleton):
         """Register a manager"""
         console.info('Registering a manager of type {0}.'.format(type(manager)))
         self._managers.append(manager)
-
-    @property
-    def quitting(self):
-        """True if the bot wants to quit (i.e. if logout() has been called)"""
-        return self._quitting
-
-    @property
-    def admin_roles(self):
-        """A list of all admin roles on the server"""
-        admin_roles = []
-        for rolename in Config.ADMIN_ROLE_NAMES:
-            for role in self.server.roles:
-                if role.name == rolename:
-                    admin_roles.append(role)
-        return admin_roles
-
-    @property
-    def staff_role(self) -> discord.Role or None:
-        return self.find_role(Config.STAFF_ROLE)
 
     def is_admin(self, user: discord.User):
         """True if user is a server admin"""

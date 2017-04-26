@@ -32,7 +32,7 @@ class Config(object):
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
     BOT_VERSION = '0.10.0'
-    TEST_LEVEL = TestLevel.BOT_DEBUG
+    TEST_LEVEL = TestLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff']  # list of names of roles to give admin access

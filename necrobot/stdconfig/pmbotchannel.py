@@ -11,7 +11,7 @@ from necrobot.botbase.botchannel import BotChannel
 class PMBotChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
-        self.command_types = [
+        self.channel_commands = [
             cmd_admin.Die(self),
             cmd_admin.Reboot(self),
 

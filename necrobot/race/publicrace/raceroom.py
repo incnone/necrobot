@@ -29,7 +29,7 @@ class RaceRoom(BotChannel):
         self._mentioned_users = []              # A list of users that were @mentioned when this race was created
         self._nopoke = False                    # When True, the .poke command fails
 
-        self.command_types = [
+        self.channel_commands = [
             cmd_race.Enter(self),
             cmd_race.Unenter(self),
             cmd_race.Ready(self),

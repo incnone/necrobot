@@ -48,7 +48,7 @@ class MatchRoom(BotChannel):
         self._last_begun_race_number = None
         self._current_race_contested = False
 
-        self._prematch_command_types = [
+        self._prematch_channel_commands = [
             cmd_match.Confirm(self),
             cmd_match.GetMatchInfo(self),
             cmd_match.Suggest(self),
@@ -64,7 +64,7 @@ class MatchRoom(BotChannel):
             cmd_test.TestMatch(self),
         ]
 
-        self._during_match_command_types = [
+        self._during_match_channel_commands = [
             cmd_match.CancelRace(self),
             cmd_match.ChangeWinner(self),
             cmd_match.Contest(self),
@@ -90,7 +90,7 @@ class MatchRoom(BotChannel):
             cmd_test.TestMatch(self),
         ]
 
-        self.command_types = self._prematch_command_types
+        self.channel_commands = self._prematch_channel_commands
 
 # Properties
     @property
@@ -177,9 +177,9 @@ class MatchRoom(BotChannel):
             self._current_race = None
 
         if self.current_race is None:
-            self.command_types = self._prematch_command_types
+            self.channel_commands = self._prematch_channel_commands
         else:
-            self.command_types = self._during_match_command_types
+            self.channel_commands = self._during_match_channel_commands
 
     # Change the RaceInfo for this room
     async def change_race_info(self, command_args: list):
@@ -321,7 +321,7 @@ class MatchRoom(BotChannel):
     # Begin a new race
     async def _begin_new_race(self):
         # Shift to during-match commands
-        self.command_types = self._during_match_command_types
+        self.channel_commands = self._during_match_channel_commands
 
         # Make the race
         match_race_data = matchdb.get_match_race_data(self.match.match_id)

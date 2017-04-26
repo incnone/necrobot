@@ -8,7 +8,7 @@ from necrobot.botbase.botchannel import BotChannel
 class CondorPMChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
-        self.command_types = [
+        self.channel_commands = [
             cmd_match.Vod(self),
 
             # cmd_stats.Fastest(self),

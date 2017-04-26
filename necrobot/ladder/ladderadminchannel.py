@@ -8,7 +8,7 @@ from necrobot.user import cmd_user
 class LadderAdminChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
-        self.command_types = [
+        self.channel_commands = [
             cmd_ladder.Automatch(self),
             cmd_ladder.CloseFinished(self),
             cmd_ladder.DropRacer(self),

@@ -1,4 +1,4 @@
-from necrobot.condor import cmd_condor
+from necrobot.league import cmd_league
 from necrobot.gsheet import cmd_sheet
 from necrobot.stdconfig import cmd_seedgen
 from necrobot.user import cmd_user
@@ -12,19 +12,19 @@ class CondorAdminChannel(BotChannel):
     """
     def __init__(self):
         BotChannel.__init__(self)
-        self.command_types = [
+        self.channel_commands = [
             # cmd_condor.Automatch(self),
 
-            cmd_condor.CloseAllMatches(self),
-            cmd_condor.CloseFinished(self),
-            cmd_condor.DropRacer(self),
-            cmd_condor.GetCurrentEvent(self),
-            cmd_condor.GetMatchRules(self),
-            cmd_condor.MakeMatch(self),
-            cmd_condor.RegisterCondorEvent(self),
-            cmd_condor.SetCondorEvent(self),
-            cmd_condor.SetEventName(self),
-            cmd_condor.SetMatchRules(self),
+            cmd_league.CloseAllMatches(self),
+            cmd_league.CloseFinished(self),
+            cmd_league.DropRacer(self),
+            cmd_league.GetCurrentEvent(self),
+            cmd_league.GetMatchRules(self),
+            cmd_league.MakeMatch(self),
+            cmd_league.RegisterCondorEvent(self),
+            cmd_league.SetCondorEvent(self),
+            cmd_league.SetEventName(self),
+            cmd_league.SetMatchRules(self),
 
             cmd_sheet.GetGSheet(self),
             cmd_sheet.MakeFromSheet(self),
