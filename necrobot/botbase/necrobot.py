@@ -18,7 +18,7 @@ class Necrobot(object, metaclass=Singleton):
 
         self._pm_bot_channel = None
         self._bot_channels = {}                 # maps discord.Channels onto BotChannels
-        self._managers = {}                     # these get refresh() and close() called on them
+        self._managers = []                     # these get refresh() and close() called on them
 
         self._initted = False
         self._quitting = False
@@ -94,7 +94,7 @@ class Necrobot(object, metaclass=Singleton):
         if not self._initted:
             await load_config_fn(self)
             self._initted = True
-            for manager in self._managers.values():
+            for manager in self._managers:
                 await manager.initialize()
         else:
             await self.refresh()
@@ -117,13 +117,13 @@ class Necrobot(object, metaclass=Singleton):
             bot_channel.refresh(new_channel)
         self._bot_channels = channel_pairs
 
-        for manager in self._managers.values():
-            manager.refresh()
+        for manager in self._managers:
+            await manager.refresh()
 
     async def cleanup(self):
         """Called on shutdown"""
-        for manager in self._managers.values():
-            manager.close()
+        for manager in self._managers:
+            await manager.close()
         self._bot_channels.clear()
 
     def get_bot_channel(self, discord_channel):
@@ -145,17 +145,10 @@ class Necrobot(object, metaclass=Singleton):
         """Register a BotChannel for PMs"""
         self._pm_bot_channel = pm_bot_channel
 
-    def register_manager(self, name, manager):
+    def register_manager(self, manager):
         """Register a manager"""
-        self._managers[name] = manager
-
-    def unregister_manager(self, name):
-        """Unegister a manager"""
-        del self._managers[name]
-
-    def get_manager(self, name):
-        """Get a manager"""
-        return self._managers[name]
+        console.info('Registering a manager of type {0}.'.format(type(manager)))
+        self._managers.append(manager)
 
     @property
     def quitting(self):

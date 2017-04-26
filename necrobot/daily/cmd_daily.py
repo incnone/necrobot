@@ -3,7 +3,7 @@ import datetime
 
 from necrobot.daily import dailytype
 from necrobot.botbase.commandtype import CommandType
-from necrobot.daily.dailymanager import DailyManager
+from necrobot.daily.dailymgr import DailyMgr
 
 
 class DailyCommandType(CommandType):
@@ -12,7 +12,7 @@ class DailyCommandType(CommandType):
 
     @property
     def _daily_manager(self):
-        return DailyManager()
+        return DailyMgr()
 
     @property
     def client(self):

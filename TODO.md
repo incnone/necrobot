@@ -35,8 +35,8 @@ of information
 
 - Uniformize and improve argument parsing
 - Create unit tests for all modules
-- Notifications on race entry
 - Test Necrobot
+- Update database code to be async
 
 ### Refactor
 

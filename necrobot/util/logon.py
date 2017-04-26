@@ -18,10 +18,8 @@ def logon(config_filename: str, load_config_fn, on_ready_fn=None):
     config.init(config_filename)
 
     # Asyncio debug setup-------------------------------------
-    if config.Config.full_debugging():
+    if config.Config.testing():
         asyncio.get_event_loop().set_debug(True)
-        warnings.simplefilter("always", ResourceWarning)
-    elif config.Config.testing():
         warnings.simplefilter("always", ResourceWarning)
 
     # Logging--------------------------------------------------
@@ -59,8 +57,8 @@ def logon(config_filename: str, load_config_fn, on_ready_fn=None):
         discord_level = logging.WARNING
         necrobot_level = logging.INFO
 
-    file_formatter = logging.Formatter('%(levelname)s:%(name)s: %(message)s')
-    stream_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+    stream_formatter = logging.Formatter('%(levelname)s:%(name)s: %(message)s')
+    file_formatter = logging.Formatter('[%(asctime)s] %(levelname)s:%(name)s: %(message)s')
 
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     stderr_handler = logging.StreamHandler()

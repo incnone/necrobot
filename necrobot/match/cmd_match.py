@@ -2,14 +2,16 @@ import datetime
 
 import pytz
 
-from necrobot.botbase.command import Command
-from necrobot.botbase.commandtype import CommandType
 from necrobot.database import matchdb
 from necrobot.match import matchinfo, matchutil
 from necrobot.user import userutil
 from necrobot.util import console
 from necrobot.util import timestr
 from necrobot.util.parse import dateparse
+
+from necrobot.botbase.command import Command
+from necrobot.botbase.commandtype import CommandType
+from necrobot.necroevent.necroevent import NEDispatch
 from necrobot.util.parse.exception import ParseException
 
 
@@ -119,6 +121,8 @@ class Contest(CommandType):
             contest_str = 'The previous race has been marked as contested.'
 
         await self.client.send_message(cmd.channel, contest_str)
+        contest_str = '`{0}` has contested a race in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention)
+        await NEDispatch().publish('notify', message=contest_str)
 
 
 class GetMatchInfo(CommandType):

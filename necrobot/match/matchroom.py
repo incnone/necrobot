@@ -6,7 +6,6 @@ import discord
 
 from necrobot.util import console
 from necrobot.util import ordinal
-from necrobot.config import Config
 
 from necrobot.race import cmd_race
 from necrobot.match import cmd_match
@@ -17,7 +16,9 @@ from necrobot.ladder import ratingutil
 from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.config import Config
 from necrobot.match.match import Match
+from necrobot.necroevent.necroevent import NEDispatch
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.race import Race, RaceEvent
 
@@ -202,10 +203,35 @@ class MatchRoom(BotChannel):
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write('The race will end in {} seconds.'.format(self.current_race.race_config.finalize_time_sec))
         elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
-            race_winner = self._race_winner(race_event.race)
-            self._record_race(race_event.race, race_winner)
+            race_winner = race_event.race.racers[0]
+            race_loser = race_event.race.racers[1]
+            auto_contest = (
+                race_winner.is_finished
+                and race_loser.is_finished
+                and race_loser.time - race_winner.time <= Config.MATCH_AUTOCONTEST_IF_WITHIN_HUNDREDTHS
+            )
+
+            if auto_contest:
+                self._current_race_contested = True
+                await NEDispatch().publish(
+                    'notify',
+                    message='A race has been automatically contested in channel {0}, because the finish times were '
+                            'close.'.format(self.channel.mention)
+                )
+
+            self._record_race(race_event.race, self._race_winner(race_event.race))
             # await self._record_new_ratings(race_winner)
-            await self.write('The race has ended.')
+
+            # Write end-of-race message
+            end_race_msg = 'The race has ended.'
+            if auto_contest:
+                if self.necrobot.staff_role is not None:
+                    end_race_msg += ' {0}:'.format(self.necrobot.staff_role.mention)
+                end_race_msg += ' This match has been automatically marked as contested because the finish times ' \
+                                'were close.'
+            await self.write(end_race_msg)
+
+            # Begin a new race if appropriate, or end the match.
             if self.played_all_races:
                 await self._end_match()
             else:

@@ -56,6 +56,7 @@ class Config(object):
     RATINGS_IN_NICKNAMES = True
 
     # Matches ---------------------------------------------------------------------------------
+    MATCH_AUTOCONTEST_IF_WITHIN_HUNDREDTHS = 500
     MATCH_FIRST_WARNING = datetime.timedelta(minutes=15)
     MATCH_FINAL_WARNING = datetime.timedelta(minutes=5)
 

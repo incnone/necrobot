@@ -101,13 +101,22 @@ def create_league(schema_name: str):
         )
 
         cursor.execute(
-            "CREATE TABLE `{0}`.`matches` LIKE `{1}`.`matches`".format(schema_name, Config.MYSQL_DB_NAME))
-        cursor.execute(
-            "CREATE TABLE `{0}`.`match_races` LIKE `{1}`.`match_races`".format(schema_name, Config.MYSQL_DB_NAME))
-        cursor.execute(
-            "CREATE TABLE `{0}`.`races` LIKE `{1}`.`races`".format(schema_name, Config.MYSQL_DB_NAME))
-        cursor.execute(
-            "CREATE TABLE `{0}`.`race_runs` LIKE `{1}`.`race_runs`".format(schema_name, Config.MYSQL_DB_NAME))
+            """
+            CREATE TABLE `{0}`.`entrants` (
+                `user_id` smallint unsigned NOT NULL,
+                PRIMARY KEY (`user_id`)
+            ) DEFAULT CHARSET=utf8
+            """.format(schema_name)
+        )
+
+        for tablename in ['matches', 'match_races', 'races', 'race_runs']:
+            cursor.execute(
+                "CREATE TABLE `{0}`.`{2}` LIKE `{1}`.`{2}`".format(
+                    schema_name,
+                    Config.MYSQL_DB_NAME,
+                    tablename
+                )
+            )
 
 
 def get_league(schema_name: str) -> League:

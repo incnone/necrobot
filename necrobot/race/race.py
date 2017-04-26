@@ -48,9 +48,13 @@ class RaceEvent(object):
         ADD_EXTRANEOUS = 201
         CHANGE_RULES = 202
 
-    def __init__(self, race, event: EventType):
+    def __init__(self, race, event: EventType, **kwargs):
         self.race = race
         self.event = event
+        self._kwargs = kwargs
+
+    def __getattr__(self, item):
+        return self._kwargs[item]
 
 
 # RaceStatus enum ---------------------------------------------------------
@@ -343,7 +347,7 @@ class Race(object):
         await self._write(
             mute=mute,
             text='{0} has entered the race. {1} entrants.'.format(racer_member.mention, len(self.racers)))
-        await self._process(RaceEvent.EventType.RACER_ENTER)
+        await self._process(RaceEvent.EventType.RACER_ENTER, racer_member=racer_member)
 
     # Unenters the given discord Member in the race
     async def unenter_member(self, racer_member: discord.Member, mute=False):
@@ -378,7 +382,7 @@ class Race(object):
         if racer is None:
             await self._write(mute=mute, text='Unexpected error.')
             console.warning("Unexpected error in race.race.Race.enter_and_ready_member: "
-                          "Couldn't find a Racer for the discord Member {0}.".format(racer_member.name))
+                            "Couldn't find a Racer for the discord Member {0}.".format(racer_member.name))
             return
 
         if racer.is_ready:
@@ -594,8 +598,8 @@ class Race(object):
         self.racers.sort(key=lambda r: r.time if r.is_finished else max_time)
 
     # Process an event
-    async def _process(self, event_type: RaceEvent.EventType):
-        await self.parent.process(RaceEvent(self, event_type))
+    async def _process(self, event_type: RaceEvent.EventType, **kwargs):
+        await self.parent.process(RaceEvent(self, event_type, **kwargs))
 
     # Actually enter the racer
     def _do_enter_racer(self, racer_member):

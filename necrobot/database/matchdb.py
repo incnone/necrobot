@@ -4,7 +4,7 @@ Interaction with matches and match_races tables (in the necrobot schema, or a co
 
 from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
-from necrobot.league.leaguemanager import LeagueManager
+from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
 
@@ -407,7 +407,7 @@ def _get_new_race_number(match: Match) -> int:
 
 
 def _t(tablename: str) -> str:
-    league = LeagueManager().league
+    league = LeagueMgr().league
     if league is not None:
         return '`{0}`.`{1}`'.format(league.schema_name, tablename)
     else:

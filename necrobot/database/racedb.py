@@ -3,7 +3,7 @@ Interaction with the races, race_types, and race_runs databases (necrobot or con
 """
 
 from necrobot.database.dbconnect import DBConnect
-from necrobot.league.leaguemanager import LeagueManager
+from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.race.race import Race
 from necrobot.race.raceinfo import RaceInfo
 
@@ -269,7 +269,7 @@ def get_race_info_from_type_id(race_type: int) -> RaceInfo or None:
 
 
 def _t(tablename: str) -> str:
-    league = LeagueManager().league
+    league = LeagueMgr().league
     if league is not None:
         return '`{0}`.`{1}`'.format(league.schema_name, tablename)
     else:

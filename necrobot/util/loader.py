@@ -16,8 +16,9 @@ from necrobot.condor.condorpmchannel import CondorPMChannel
 from necrobot.ladder.ladderadminchannel import LadderAdminChannel
 
 # Managers
-from necrobot.daily.dailymanager import DailyManager
-from necrobot.league.leaguemanager import LeagueManager
+from necrobot.daily.dailymgr import DailyMgr
+from necrobot.condor.condormgr import CondorMgr
+from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.matchmanager import MatchManager
 
 
@@ -40,8 +41,8 @@ async def load_necrobot_config(necrobot):
     necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
 
     # Daily Manager
-    necrobot.register_manager('daily', DailyManager())
-    necrobot.register_manager('match', MatchManager())
+    necrobot.register_manager(DailyMgr())
+    necrobot.register_manager(MatchManager())
 
     # Ratings
     ratingutil.init()
@@ -65,8 +66,9 @@ async def load_condorbot_config(necrobot):
     necrobot.register_bot_channel(condor_admin_channel, CondorAdminChannel())
 
     # Managers
-    necrobot.register_manager('league', LeagueManager())
-    necrobot.register_manager('match', MatchManager())
+    necrobot.register_manager(CondorMgr())
+    necrobot.register_manager(LeagueMgr())
+    necrobot.register_manager(MatchManager())
 
     # Ratings
     ratingutil.init()
@@ -95,8 +97,8 @@ async def load_testing_config(necrobot):
     necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
 
     # Managers
-    necrobot.register_manager('daily', DailyManager())
-    necrobot.register_manager('match', MatchManager())
+    necrobot.register_manager(DailyMgr())
+    necrobot.register_manager(MatchManager())
 
     # Ratings
     ratingutil.init()

@@ -79,6 +79,7 @@ class Fastest(CommandType):
     async def _do_execute(self, cmd):
         await self.necrobot.client.send_typing(cmd.channel)
         amplified = True
+
         # Parse arguments
         args = cmd.args
         try:

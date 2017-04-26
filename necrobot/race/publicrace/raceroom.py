@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import discord
 
 from necrobot.race import cmd_race
 from necrobot.race.publicrace import cmd_publicrace
@@ -124,15 +125,15 @@ class RaceRoom(BotChannel):
 
 # Methods -------------------------------------------------------------
     # Notifies the given user on a rematch
-    def notify(self, user):
+    def notify(self, user: discord.Member):
         if user not in self._mention_on_new_race:
             self._mention_on_new_race.append(user)
 
     # Removes notifications for the given user on rematch
-    def dont_notify(self, user):
+    def dont_notify(self, user: discord.Member):
         self._mention_on_new_race = [u for u in self._mention_on_new_race if u != user]
 
-    def refresh(self, channel):
+    def refresh(self, channel: discord.Channel):
         self._channel = channel
 
 # Coroutine methods ---------------------------------------------------
@@ -162,6 +163,10 @@ class RaceRoom(BotChannel):
         elif race_event.event == RaceEvent.EventType.RACE_CANCEL:
             await self.write('The race has been canceled.')
             await self.update()
+        elif race_event.event == RaceEvent.EventType.RACER_ENTER:
+            self.notify(race_event.racer_member)
+        elif race_event.event == RaceEvent.EventType.RACER_UNENTER:
+            self.dont_notify(race_event.racer_member)
         else:
             await self.update()
 
@@ -181,7 +186,7 @@ class RaceRoom(BotChannel):
         )
 
 # Commands ------------------------------------------------------------
-    async def set_post_result(self, do_post):
+    async def set_post_result(self, do_post: bool):
         self._race_info.post_results = do_post
         if self.current_race.before_race:
             self.current_race.race_info = raceinfo.RaceInfo.copy(self._race_info)
@@ -191,7 +196,7 @@ class RaceRoom(BotChannel):
             await self.write('Races in this necrobot will not have their results posted to the results necrobot.')
 
     # Change the RaceInfo for this room
-    async def change_race_info(self, command_args):
+    async def change_race_info(self, command_args: list):
         new_race_info = raceinfo.parse_args_modify(command_args, raceinfo.RaceInfo.copy(self._race_info))
         if new_race_info:
             self._race_info = new_race_info

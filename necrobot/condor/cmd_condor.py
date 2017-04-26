@@ -5,10 +5,11 @@ from necrobot.database import leaguedb
 from necrobot.match import cmd_match, matchinfo, matchutil
 from necrobot.user import userutil
 
-from necrobot.config import Config, TestLevel
+from necrobot.config import Config
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
-from necrobot.league.leaguemanager import LeagueManager
+from necrobot.league.leaguemgr import LeagueMgr
+from necrobot.necroevent.necroevent import NEDispatch
 from necrobot.util.parse.exception import ParseException
 
 
@@ -119,7 +120,7 @@ class GetCurrentEvent(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        league = LeagueManager().league
+        league = LeagueMgr().league
         if league is None:
             await self.client.send_message(
                 cmd.channel,
@@ -144,7 +145,7 @@ class GetMatchRules(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        league = LeagueManager().league
+        league = LeagueMgr().league
         if league is None:
             await self.client.send_message(
                 cmd.channel,
@@ -177,7 +178,7 @@ class MakeMatch(CommandType):
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        league = LeagueManager().league
+        league = LeagueMgr().league
         if league is None:
             await self.client.send_message(
                 cmd.channel,
@@ -253,7 +254,7 @@ class RegisterCondorEvent(CommandType):
 
         schema_name = cmd.args[0].lower()
         try:
-            LeagueManager().create_league(schema_name=schema_name)
+            LeagueMgr().create_league(schema_name=schema_name)
         except leaguedb.LeagueAlreadyExists as e:
             error_msg = 'Error: Schema `{0}` already exists.'.format(schema_name)
             if str(e):
@@ -298,7 +299,7 @@ class SetCondorEvent(CommandType):
 
         schema_name = cmd.args[0].lower()
         try:
-            LeagueManager().set_league(schema_name=schema_name)
+            LeagueMgr().set_league(schema_name=schema_name)
         except leaguedb.LeagueDoesNotExist:
             await self.client.send_message(
                 cmd.channel,
@@ -306,7 +307,7 @@ class SetCondorEvent(CommandType):
             )
             return
 
-        league_name = LeagueManager().league.name
+        league_name = LeagueMgr().league.name
         league_name_str = ' ({0})'.format(league_name) if league_name is not None else ''
         await self.client.send_message(
             cmd.channel,
@@ -327,7 +328,7 @@ class SetEventName(CommandType):
         return 'Change current event\'s name.'
 
     async def _do_execute(self, cmd: Command):
-        league = LeagueManager().league
+        league = LeagueMgr().league
         if league is None:
             await self.client.send_message(
                 cmd.channel,
@@ -361,7 +362,7 @@ class SetMatchRules(CommandType):
         return 'Set current event\'s default match rules.'
 
     async def _do_execute(self, cmd: Command):
-        league = LeagueManager().league
+        league = LeagueMgr().league
         if league is None:
             await self.client.send_message(
                 cmd.channel,
@@ -392,11 +393,8 @@ class StaffAlert(CommandType):
         self.help_text = 'Alert the CoNDOR Staff to a problem.'
 
     async def _do_execute(self, cmd):
-        notifications_channel = self.necrobot.find_channel('bot_notifications')
-        if notifications_channel is not None:
-            await self.client.send_message(
-                notifications_channel,
-                'Alert: `.staff` called by `{0}` in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention))
+        msg = 'Alert: `.staff` called by `{0}` in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention)
+        await NEDispatch().publish('notify', message=msg)
 
         if Config.testing():
             condor_staff_role = self.necrobot.find_role('CoNDOR Staff Fake')

@@ -15,8 +15,8 @@ The currently implemented `Race` parent classes are `race.publicrace.raceroom`, 
 mind.)
 
 `race`.`RaceEvent` is a class representing events that can happen during a race (e.g. RACE_END, RACER_FINISH). This is
-so that various parent-type objects can react to such events. (Planned TODO: allow multiple listeners to react to a 
-single race. This would be an easy change, but doesn't have a use-case yet.)
+so that various parent-type objects can react to such events. The `RaceEvent` pattern is Observer-Subject, in contrast
+to the Publish-Subscribe pattern used in the `necroevent` sub-package.
 
 `Racer` represents an individual racer in some particular race. It thus contains data like finish time or death level.
 The data from this class is written to the `race_runs` table when the race is finalized.

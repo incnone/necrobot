@@ -5,7 +5,7 @@ from necrobot.config import Config
 from necrobot.util.singleton import Singleton
 
 
-class LeagueManager(object, metaclass=Singleton):
+class LeagueMgr(object, metaclass=Singleton):
     """Manager object for the global League, if any."""
     def __init__(self):
         self.league = None

@@ -12,9 +12,8 @@ from necrobot.user.userprefs import UserPrefs
 from necrobot.config import Config
 
 
-class DailyManager(object, metaclass=Singleton):
+class DailyMgr(object, metaclass=Singleton):
     def __init__(self):
-        console.info('Initializing new DailyManager object.')
         self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
         self._cadence_daily = Daily(self, DailyType.cadence)
         self._rotating_daily = Daily(self, DailyType.rotating)
