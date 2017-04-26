@@ -1,6 +1,6 @@
-from necrobot.database import userdb
 from necrobot.stats import statfn
 from necrobot.user import userutil
+from necrobot.util import racetime
 
 from necrobot.botbase.commandtype import CommandType
 from necrobot.util.character import NDChar
@@ -121,6 +121,45 @@ class LeagueFastest(CommandType):
         infobox = '```\nFastest wins:\n{0}```'.format(
             statfn.get_fastest_times_league_infotext(20)
         )
+
+        await self.client.send_message(cmd.channel, infobox)
+
+
+class LeagueStats(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'stats')
+        self.help_text = 'Get user stats.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) == 0:
+            user = userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        else:
+            username = cmd.arg_string
+            user = userutil.get_user(any_name=username)
+            if user is None:
+                await self.client.send_message(
+                    cmd.channel,
+                    "Couldn't find the user `{0}`.".format(username)
+                )
+                return
+
+        stats = statfn.get_league_stats(user.user_id)
+        best_win = racetime.to_str(stats['best']) if stats['best'] is not None else '--'
+        avg_win = racetime.to_str(stats['average']) if stats['average'] is not None else '--'
+
+        infobox = \
+            '```\n' \
+            'Stats: {username}\n' \
+            '    Record: {wins}-{losses}\n' \
+            '  Best win: {best}\n' \
+            '  Avg. win: {avg}\n' \
+            '```'.format(
+                username=user.bot_name,
+                wins=stats['wins'],
+                losses=stats['losses'],
+                best=best_win,
+                avg=avg_win
+            )
 
         await self.client.send_message(cmd.channel, infobox)
 

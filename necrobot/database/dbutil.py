@@ -1,8 +1,8 @@
-from necrobot.league.leaguemgr import LeagueMgr
+import necrobot.league.the_league
 
 
 def tn(tablename: str) -> str:
-    league = LeagueMgr().league
+    league = necrobot.league.the_league.league
     if league is not None:
         return '`{0}`.`{1}`'.format(league.schema_name, tablename)
     else:

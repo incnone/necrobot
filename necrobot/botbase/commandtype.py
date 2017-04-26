@@ -90,6 +90,10 @@ class CommandType(object):
             await self._do_execute(command)
             console.info('Exit {0}: <ID={1}>'.format(type(self).__name__, this_id))
 
+    async def reparse_as(self, new_name: str, command: Command):
+        command.command = new_name
+        await self.bot_channel.execute(command)
+
     async def _do_execute(self, command: Command):
         """Pure virtual: determine what this CommandType should do with a given Command.
         

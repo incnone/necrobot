@@ -4,12 +4,16 @@ Interaction with the necrobot.leagues table.
 Methods
 -------
 create_league(schema_name: str) -> None 
-    Make a new league
+    Make a new league.
 get_league(schema_name: str) -> League
-    Get a registered league
+    Get a registered league.
+get_entrant_ids() -> list[int]
+    Get the NecroUser IDs of all entrants.
+register_user(user_id: int) -> None
+    Register a user in the `entrants` table.
 write_league(League) -> None
-    Write information in an already registered league to the database
-    
+    Write information in an already registered league to the database.
+
 Exceptions
 ----------
 LeagueAlreadyExists
@@ -19,6 +23,7 @@ InvalidSchemaName
 
 import re
 from necrobot.database import racedb
+from necrobot.database.dbutil import tn
 
 from necrobot.config import Config
 from necrobot.database.dbconnect import DBConnect
@@ -43,7 +48,7 @@ class InvalidSchemaName(Exception):
     pass
 
 
-def create_league(schema_name: str):
+def create_league(schema_name: str) -> League:
     """Creates a new CoNDOR event with the given schema_name as its database.
     
     Parameters
@@ -86,10 +91,10 @@ def create_league(schema_name: str):
 
         cursor.execute(
             """
-            CREATE SCHEMA `{0}` 
+            CREATE SCHEMA `{schema_name}` 
             DEFAULT CHARACTER SET = utf8 
             DEFAULT COLLATE = utf8_general_ci
-            """.format(schema_name)
+            """.format(schema_name=schema_name)
         )
         cursor.execute(
             """
@@ -102,21 +107,48 @@ def create_league(schema_name: str):
 
         cursor.execute(
             """
-            CREATE TABLE `{0}`.`entrants` (
+            CREATE TABLE `{schema_name}`.`entrants` (
                 `user_id` smallint unsigned NOT NULL,
                 PRIMARY KEY (`user_id`)
             ) DEFAULT CHARSET=utf8
-            """.format(schema_name)
+            """.format(schema_name=schema_name)
         )
 
         for tablename in ['matches', 'match_races', 'races', 'race_runs']:
             cursor.execute(
-                "CREATE TABLE `{0}`.`{2}` LIKE `{1}`.`{2}`".format(
-                    schema_name,
-                    Config.MYSQL_DB_NAME,
-                    tablename
+                "CREATE TABLE `{league_schema}`.`{table}` LIKE `{necrobot_schema}`.`{table}`".format(
+                    league_schema=schema_name,
+                    necrobot_schema=Config.MYSQL_DB_NAME,
+                    table=tablename
                 )
             )
+
+    return League(
+        commit_fn=write_league,
+        schema_name=schema_name,
+        league_name='<unnamed league>',
+        match_info=MatchInfo()
+    )
+
+
+def get_entrant_ids() -> list:
+    """Get NecroUser IDs for all entrants to the league
+    
+    Returns
+    -------
+    list[int]
+    """
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT `user_id`
+            FROM {entrants}
+            """.format(entrants=tn('entrants'))
+        )
+        to_return = []
+        for row in cursor:
+            to_return.append(int(row[0]))
+        return to_return
 
 
 def get_league(schema_name: str) -> League:
@@ -182,7 +214,29 @@ def get_league(schema_name: str) -> League:
         raise LeagueDoesNotExist()
 
 
-def write_league(league: League):
+def register_user(user_id: int) -> None:
+    """Register the user for the league
+    
+    Parameters
+    ----------
+    user_id: int
+        The user's NecroUser ID.
+    """
+    with DBConnect(commit=True) as cursor:
+        params = (user_id,)
+        cursor.execute(
+            """
+            INSERT INTO {entrants}
+                (user_id)
+            VALUES (%s)
+            ON DUPLICATE KEY UPDATE
+                user_id = VALUES(user_id)
+            """.format(entrants=tn('entrants')),
+            params
+        )
+
+
+def write_league(league: League) -> None:
     """Write the league to the database
     
     Parameters
@@ -210,7 +264,6 @@ def write_league(league: League):
             (`schema_name`, `league_name`, `number_of_races`, `is_best_of`, `ranked`, `race_type`) 
             VALUES (%s, %s, %s, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE
-            SET 
                `league_name` = VALUES(`league_name`), 
                `number_of_races` = VALUES(`number_of_races`), 
                `is_best_of` = VALUES(`is_best_of`) 

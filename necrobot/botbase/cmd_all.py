@@ -46,7 +46,7 @@ class Help(CommandType):
 
     async def _do_execute(self, cmd):
         args = cmd.args
-        # List commands if no arguments
+        # List commands
         if len(args) == 0:
             command_list_text = ''
             cmds_to_show = []
@@ -82,15 +82,21 @@ class Help(CommandType):
                 'particular command.'.format(command_list_text, self.mention)
             )
 
-        # Get help text if arguments
+        # Get help text for a particular command
         elif len(args) == 1:
             for cmd_type in self.bot_channel.all_commands:
                 if cmd_type.called_by(args[0]):
+                    alias_str = ''
+                    for alias in cmd_type.command_name_list[1:]:
+                        alias_str += '`{alias}`, '.format(alias=Config.BOT_COMMAND_PREFIX + alias)
+                    if alias_str:
+                        alias_str = '(Aliases: {})'.format(alias_str[:-2])
                     await self.client.send_message(
-                        cmd.channel, '`{0}`: {2}{1}'.format(
-                            cmd_type.mention,
-                            cmd_type.help_text,
-                            '[Admin only] ' if cmd_type.admin_only else ''
+                        cmd.channel, '`{cmd_name}`: {admin}{help_text} {aliases}'.format(
+                            cmd_name=cmd_type.mention,
+                            help_text=cmd_type.help_text,
+                            admin='[Admin only] ' if cmd_type.admin_only else '',
+                            aliases=alias_str
                         )
                     )
 

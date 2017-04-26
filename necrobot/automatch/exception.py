@@ -1,0 +1,2 @@
+class NoMatchupExistsException(Exception):
+    pass

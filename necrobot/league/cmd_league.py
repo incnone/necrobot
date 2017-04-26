@@ -266,6 +266,16 @@ class NextRace(CommandType):
         )
 
 
+class Register(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'register')
+        self.help_text = 'Register for the current event.'.format(self.mention)
+
+    async def _do_execute(self, cmd: Command):
+        user = userutil.get_user(discord_id=int(cmd.author.id))
+        leaguedb.register_user(user.user_id)
+
+
 class RegisterCondorEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'register-condor-event')

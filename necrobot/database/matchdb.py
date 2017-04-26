@@ -345,6 +345,39 @@ def get_fastest_wins_raw(limit: int = None) -> list:
         return cursor.fetchall()
 
 
+def get_matchstats_raw(user_id: int) -> list:
+    params = (user_id,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) AS wins,
+                MIN(winner_time) AS best_win,
+                AVG(winner_time) AS average_win
+            FROM {race_summary}
+            WHERE winner_id = %s
+            LIMIT 1
+            """.format(race_summary=tn('race_summary')),
+            params
+        )
+        winner_data = cursor.fetchone()
+        if winner_data is None:
+            winner_data = [0, None, None]
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS losses
+            FROM {race_summary}
+            WHERE loser_id = %s
+            LIMIT 1
+            """.format(race_summary=tn('race_summary')),
+            params
+        )
+        loser_data = cursor.fetchone()
+        if loser_data is None:
+            loser_data = [0]
+        return winner_data + loser_data
+
+
 def get_raw_match_data(match_id: int) -> list:
     params = (match_id,)
 

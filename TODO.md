@@ -6,7 +6,6 @@ Current version: 0.10
 
 ### Condorbot features
 
-- Automatching
 - Sensical commands for completed matches
 
 ### Testing
@@ -19,15 +18,17 @@ of information
 
 - Weird async bug when recording ladder ratings at end of match -- what is going on here?
 
+### Automatching
+
+- Everything
+
 #### Unimplemented commands:
 
-- cmd_stats: `.stats` 
 - Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
 `.register`, `.cancel`, `.forcerecordmatch`
 
 ### Ladderbot
 
-- Automatch feature
 - Better rankings display
 
 ### Other
@@ -39,8 +40,7 @@ of information
 
 ### Refactor
 
-- Racer should contain a NecroUser instead of a discord.Member
-- racetime could be a class and moved to util
+- racetime could be a class
 
 ## Bugs
 
@@ -67,7 +67,6 @@ just finished or the race that people are currently entering. It maybe also does
 - Configuration of `.racealert` for character-specific, etc
 - Make `.notify on` do the obvious thing
 - add comment possibility to `.death`
-- fix `.d 1-3` (and the like) causing race finish
 - add more complicated sorts to `.mostraces`
 - add `.forceunready` command
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").

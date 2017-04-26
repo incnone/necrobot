@@ -45,10 +45,10 @@ def set_rating(discord_id: int, rating: Rating):
         cursor.execute(
             """
             INSERT INTO ladder_data 
-            (discord_id, trueskill_mu, trueskill_sigma) 
+                (discord_id, trueskill_mu, trueskill_sigma) 
             VALUES (%s,%s,%s) 
             ON DUPLICATE KEY UPDATE 
-            trueskill_mu=VALUES(trueskill_mu), 
-            trueskill_sigma=VALUES(trueskill_sigma)
+                trueskill_mu=VALUES(trueskill_mu), 
+                trueskill_sigma=VALUES(trueskill_sigma)
             """,
             params)

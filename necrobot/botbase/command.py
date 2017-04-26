@@ -50,7 +50,7 @@ class Command(object):
     @property
     def arg_string(self) -> str:
         cut_len = len(Config.BOT_COMMAND_PREFIX) + len(self.command) + 1
-        return self._message.content[cut_len:]
+        return self._message.content[cut_len:].strip(' ')
 
 
 class TestCommand(Command):

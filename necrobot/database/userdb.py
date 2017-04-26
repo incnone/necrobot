@@ -345,10 +345,10 @@ def register_discord_user(user: discord.User):
         cursor.execute(
             """
             INSERT INTO users 
-            (discord_id, discord_name) 
+                (discord_id, discord_name) 
             VALUES (%s, %s) 
             ON DUPLICATE KEY UPDATE 
-            discord_name = VALUES(discord_name)
+                discord_name = VALUES(discord_name)
             """,
             params
         )

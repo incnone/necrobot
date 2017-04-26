@@ -16,7 +16,7 @@ class CondorMainChannel(BotChannel):
             cmd_match.Vod(self),
 
             cmd_stats.LeagueFastest(self),
-            # cmd_stats.LeagueStats(self),
+            cmd_stats.LeagueStats(self),
 
             cmd_user.RTMP(self),
             cmd_user.SetInfo(self),

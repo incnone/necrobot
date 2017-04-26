@@ -16,32 +16,32 @@ class CharacterStats(object):
         self.has_wins = False
 
     @property
-    def ndchar(self):
+    def ndchar(self) -> NDChar:
         return self._ndchar
 
     @property
-    def charname(self):
+    def charname(self) -> str:
         return self.ndchar.name
 
     @property
-    def stdev(self):
+    def stdev(self) -> float:
         return math.sqrt(self.var)
 
     @property
-    def mean_str(self):
+    def mean_str(self) -> str:
         if self.has_wins:
             return racetime.to_str(int(self.mean))
         else:
             return '--'
 
     @property
-    def stdev_str(self):
+    def stdev_str(self) -> str:
         if self.has_wins:
             return racetime.to_str(int(self.stdev))
         else:
             return '--'
 
-    def barf(self):
+    def barf(self) -> None:
         console.info('{0:>10}   {1:>5}   {2:>9}  {3:>9}  {4:>6}\n'.format(
             self.charname,
             self.number_of_races,
@@ -55,7 +55,7 @@ class GeneralStats(object):
         self._charstats = []
 
     @property
-    def infotext(self):
+    def infotext(self) -> str:
         info_text = '{0:>10}   {1:<5}   {2:<9}  {3:<9}  {4}\n'.format('', 'Races', 'Avg', 'Stdev', 'Clear%')
         for char in sorted(self._charstats, key=lambda c: c.number_of_races, reverse=True):
             info_text += '{0:>10}   {1:>5}   {2:>9}  {3:>9}  {4:>6}\n'.format(
@@ -66,10 +66,10 @@ class GeneralStats(object):
                 int(char.winrate*100))
         return info_text[:-1]
 
-    def insert_charstats(self, char):
+    def insert_charstats(self, char: CharacterStats) -> None:
         self._charstats.append(char)
 
-    def get_charstats(self, char):
+    def get_charstats(self, char: NDChar) -> CharacterStats:
         for c in self._charstats:
             if c.ndchar == char:
                 return c
@@ -87,7 +87,7 @@ class StatCache(object, metaclass=Singleton):
     def __init__(self):
         self._cache = {}  # Map from discord ID's to UserStats
 
-    def get_general_stats(self, user_id, amplified):
+    def get_general_stats(self, user_id, amplified) -> GeneralStats:
         last_race_number = racedb.get_largest_race_number(user_id=user_id)
 
         # Check whether we have an up-to-date cached version, and if so, return it
@@ -146,16 +146,16 @@ class StatCache(object, metaclass=Singleton):
         return general_stats
 
 
-def get_general_stats(user_id, amplified):
+def get_general_stats(user_id: int, amplified: bool) -> GeneralStats:
     return StatCache().get_general_stats(user_id, amplified)
 
 
-def get_character_stats(user_id, ndchar, amplified):
+def get_character_stats(user_id: int, ndchar: NDChar, amplified: bool) -> CharacterStats:
     general_stats = StatCache().get_general_stats(user_id, amplified)
     return general_stats.get_charstats(ndchar)
 
 
-def get_winrates(user_id_1, user_id_2, ndchar, amplified):
+def get_winrates(user_id_1: int, user_id_2: int, ndchar: NDChar, amplified: bool) -> tuple or None:
     stats_1 = get_character_stats(user_id_1, ndchar, amplified)
     stats_2 = get_character_stats(user_id_2, ndchar, amplified)
     if not stats_1.has_wins or not stats_2.has_wins:
@@ -176,7 +176,7 @@ def get_winrates(user_id_1, user_id_2, ndchar, amplified):
     return winrate_of_1, winrate_of_2, neither_finish_prob
 
 
-def get_most_races_infotext(ndchar, limit):
+def get_most_races_infotext(ndchar: NDChar, limit: int) -> str:
     most_races = racedb.get_most_races_leaderboard(str(ndchar), limit)
     infotext = '{0:>16} {1:>6} {2:>6}\n'.format('', 'Base', 'Amp')
     for row in most_races:
@@ -184,7 +184,7 @@ def get_most_races_infotext(ndchar, limit):
     return infotext
 
 
-def get_fastest_times_infotext(ndchar, amplified, limit):
+def get_fastest_times_infotext(ndchar: NDChar, amplified: bool, limit: int) -> str:
     fastest_times = racedb.get_fastest_times_leaderboard(str(ndchar), amplified, limit)
     infotext = '{0:>16} {1:<9} {2:<9} {3:<13}\n'.format('', 'Time (rta)', 'Seed', 'Date')
     for row in fastest_times:
@@ -196,7 +196,7 @@ def get_fastest_times_infotext(ndchar, amplified, limit):
     return infotext
 
 
-def get_fastest_times_league_infotext(limit):
+def get_fastest_times_league_infotext(limit: int) -> str:
     fastest_times = matchdb.get_fastest_wins_raw(limit)
     max_namelen = 0
     for row in fastest_times:
@@ -220,3 +220,13 @@ def get_fastest_times_league_infotext(limit):
                 loser=row[2]
             )
     return infotext[:-1] if infotext else ''
+
+
+def get_league_stats(user_id: int) -> dict:
+    stats = matchdb.get_matchstats_raw(user_id)
+    return {
+        'wins': stats[0],
+        'best': stats[1],
+        'average': stats[2],
+        'losses': stats[3]
+    }
