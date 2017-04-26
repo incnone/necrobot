@@ -32,7 +32,7 @@ def record_match_race(
 
         cursor.execute(
             """
-            INSERT INTO {0} 
+            INSERT INTO {match_races} 
             (match_id, race_number, race_id, winner, canceled, contested) 
             VALUES (%s, %s, %s, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE 
@@ -40,7 +40,7 @@ def record_match_race(
                winner=VALUES(winner), 
                canceled=VALUES(canceled), 
                contested=VALUES(contested)
-            """.format(tn('match_races')),
+            """.format(match_races=tn('match_races')),
             params
         )
 
@@ -59,10 +59,10 @@ def set_match_race_contested(
 
         cursor.execute(
             """
-            UPDATE {0}
+            UPDATE {match_races}
             SET `contested`=%s
             WHERE `match_id`=%s AND `race_number`=%s
-            """.format(tn('match_races')),
+            """.format(match_races=tn('match_races')),
             params
         )
 
@@ -81,10 +81,10 @@ def change_winner(match: Match, race_number: int, winner: int) -> bool:
 
         cursor.execute(
             """
-            UPDATE {0}
+            UPDATE {match_races}
             SET `winner` = %s
             WHERE `match_id` = %s AND `race_number` = %s
-            """.format(tn('match_races')),
+            """.format(match_races=tn('match_races')),
             params
         )
         return True
@@ -103,10 +103,10 @@ def cancel_race(match: Match, race_number: int) -> bool:
 
         cursor.execute(
             """
-            UPDATE {0}
+            UPDATE {match_races}
             SET `canceled` = TRUE
             WHERE `match_id` = %s AND `race_number` = %s
-            """.format(tn('match_races')),
+            """.format(match_races=tn('match_races')),
             params
         )
         return True
@@ -138,7 +138,7 @@ def write_match(match: Match):
     with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
-            UPDATE {0}
+            UPDATE {matches}
             SET
                race_type_id=%s,
                racer_1_id=%s,
@@ -154,7 +154,7 @@ def write_match(match: Match):
                cawmentator_id=%s,
                channel_id=%s
             WHERE match_id=%s
-            """.format(tn('matches')),
+            """.format(matches=tn('matches')),
             params
         )
 
@@ -164,10 +164,10 @@ def register_match_channel(match_id: int, channel_id: int or None) -> None:
     with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
-            UPDATE {0}
+            UPDATE {matches}
             SET channel_id=%s
             WHERE match_id=%s
-            """.format(tn('matches')),
+            """.format(matches=tn('matches')),
             params
         )
 
@@ -178,10 +178,10 @@ def get_match_channel_id(match_id: int) -> int:
         cursor.execute(
             """
             SELECT channel_id 
-            FROM {0} 
+            FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1
-            """.format(tn('matches')),
+            """.format(matches=tn('matches')),
             params
         )
         row = cursor.fetchone()
@@ -224,9 +224,9 @@ def get_channeled_matches_raw_data(
                 number_of_races, 
                 cawmentator_id, 
                 channel_id 
-            FROM {0} 
-            WHERE {1} {2}
-            """.format(tn('matches'), where_query, order_query), params)
+            FROM {matches} 
+            WHERE {where_query} {order_query}
+            """.format(matches=tn('matches'), where_query=where_query, order_query=order_query), params)
         return cursor.fetchall()
 
 
@@ -235,16 +235,16 @@ def delete_match(match_id: int):
     with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
-            DELETE FROM {0} 
+            DELETE FROM {match_races} 
             WHERE `match_id`=%s
-            """.format(tn('match_races')),
+            """.format(match_races=tn('match_races')),
             params
         )
         cursor.execute(
             """
-            DELETE FROM {0} 
+            DELETE FROM {matches} 
             WHERE `match_id`=%s
-            """.format(tn('matches')),
+            """.format(matches=tn('matches')),
             params
         )
 
@@ -255,9 +255,9 @@ def get_match_race_data(match_id: int) -> MatchRaceData:
         cursor.execute(
             """
             SELECT canceled, winner 
-            FROM {0} 
+            FROM {match_races} 
             WHERE match_id=%s
-            """.format(tn('match_races')),
+            """.format(match_races=tn('match_races')),
             params
         )
         finished = 0
@@ -286,25 +286,63 @@ def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int,
         cursor.execute(
             """
             SELECT match_id 
-            FROM {0} 
-            WHERE {1} 
+            FROM {matches} 
+            WHERE {where_query} 
             ORDER BY `suggested_time` DESC 
             LIMIT 1
-            """.format(tn('matches'), where_query),
+            """.format(matches=tn('matches'), where_query=where_query),
             params
         )
         row = cursor.fetchone()
         return int(row[0]) if row is not None else None
 
 
-# def get_fastest_wins(limit: int = None) -> list:
-#     with DBConnect(commit=False) as cursor:
-#         fast_wins = []
-#         cursor.execute(
-#             """
-#
-#             """.format(tn('race_runs'), tn('matches'))
-#         )
+def get_fastest_wins_raw(limit: int = None) -> list:
+    params = (limit,)
+    with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                {race_runs}.`time` AS `time`,
+                users_winner.rtmp_name AS winner_name,
+                users_loser.rtmp_name AS loser_name,
+                {matches}.suggested_time AS match_time
+            FROM 
+                {match_races}
+                INNER JOIN {matches}
+                    ON {matches}.match_id = {match_races}.match_id
+                INNER JOIN {races} 
+                    ON {races}.race_id = {match_races}.race_id
+                INNER JOIN users users_winner 
+                    ON IF(
+                        {match_races}.winner = 1,
+                        users_winner.`user_id` = {matches}.racer_1_id,
+                        users_winner.`user_id` = {matches}.racer_2_id
+                    )
+                INNER JOIN users users_loser 
+                    ON IF(
+                        {match_races}.winner = 1,
+                        users_loser.user_id = {matches}.racer_2_id,
+                        users_loser.user_id = {matches}.racer_1_id
+                    )
+                INNER JOIN {race_runs}
+                    ON ( 
+                        {race_runs}.race_id = {races}.race_id
+                        AND {race_runs}.user_id = users_winner.user_id
+                    )
+            WHERE
+                {match_races}.winner != 0
+            ORDER BY `time` ASC
+            LIMIT %s
+            """.format(
+                race_runs=tn('race_runs'),
+                matches=tn('matches'),
+                match_races=tn('match_races'),
+                races=tn('races')
+            ),
+            params
+        )
+        return cursor.fetchall()
 
 
 def get_raw_match_data(match_id: int) -> list:

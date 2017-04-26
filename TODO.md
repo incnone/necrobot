@@ -21,7 +21,7 @@ of information
 
 #### Unimplemented commands:
 
-- cmd_stats: `.fastest`, `.stats` 
+- cmd_stats: `.stats` 
 - Commands I won't re-implement:  `.remind`, `.forcetransferaccount`, `.updategsheetschedule`, `.updatecawmentary`,
 `.register`, `.cancel`, `.forcerecordmatch`
 

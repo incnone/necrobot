@@ -1,8 +1,7 @@
 import math
 
-from necrobot.database import racedb
-from necrobot.race import racetime
-from necrobot.util import console
+from necrobot.database import matchdb, racedb
+from necrobot.util import console, racetime
 from necrobot.util.character import NDChar
 from necrobot.util.singleton import Singleton
 
@@ -195,3 +194,29 @@ def get_fastest_times_infotext(ndchar, amplified, limit):
             row[2],
             row[3].strftime("%b %d, %Y"))
     return infotext
+
+
+def get_fastest_times_league_infotext(limit):
+    fastest_times = matchdb.get_fastest_wins_raw(limit)
+    max_namelen = 0
+    for row in fastest_times:
+        max_namelen = max(max_namelen, len(row[1]))
+
+    dated_format_str = '  {winner:>' + str(max_namelen) + '} -- {time:<9} (vs {loser}, {date:%b %d})\n'
+    undated_format_str = '  {winner:>' + str(max_namelen) + '} -- {time:<9} (vs {loser})\n'
+    infotext = ''
+    for row in fastest_times:
+        if row[3] is not None:
+            infotext += dated_format_str.format(
+                winner=row[1],
+                time=racetime.to_str(row[0]),
+                loser=row[2],
+                date=row[3]
+            )
+        else:
+            infotext += undated_format_str.format(
+                winner=row[1],
+                time=racetime.to_str(row[0]),
+                loser=row[2]
+            )
+    return infotext[:-1] if infotext else ''

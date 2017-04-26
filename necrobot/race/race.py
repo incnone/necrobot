@@ -9,9 +9,7 @@ import time
 from enum import IntEnum, Enum
 
 import necrobot.util.level
-from necrobot.race import racetime
-from necrobot.util import console
-from necrobot.util import seedgen
+from necrobot.util import console, seedgen, racetime
 from necrobot.util.ordinal import ordinal
 # from necrobot.util import ratelimit
 
