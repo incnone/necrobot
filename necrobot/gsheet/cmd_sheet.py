@@ -1,14 +1,15 @@
 import googleapiclient.errors
+import necrobot.exception
 
+from necrobot.gsheet import sheetlib
 from necrobot.gsheet import sheetutil
 from necrobot.match import matchutil
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
-from necrobot.config import Config
 
 from necrobot.gsheet.matchupsheet import MatchupSheet
-from necrobot.util.exception import NecroException
+from necrobot.league.leaguemgr import LeagueMgr
 
 
 class GetGSheet(CommandType):
@@ -23,7 +24,23 @@ class GetGSheet(CommandType):
         return 'Current GSheet info.'
 
     async def _do_execute(self, cmd: Command):
-        perm_info = await sheetutil.has_read_write_permissions(Config.GSHEET_ID)
+        gsheet_id = LeagueMgr().league.gsheet_id
+        if gsheet_id is None:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: GSheet for this league is not yet set. Use `.setgsheet`.'
+            )
+            return
+
+        try:
+            perm_info = await sheetutil.has_read_write_permissions(LeagueMgr().league.gsheet_id)
+        except googleapiclient.errors.Error as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: {0}'.format(e)
+            )
+            return
+
         if not perm_info[0]:
             await self.client.send_message(
                 cmd.channel,
@@ -33,9 +50,10 @@ class GetGSheet(CommandType):
         else:
             await self.client.send_message(
                 cmd.channel,
-                'The current GSheet is "{0}". <{1}>'.format(
-                    perm_info[1],
-                    'https://docs.google.com/spreadsheets/d/{0}'.format(Config.GSHEET_ID)
+                'The GSheet for `{league_name}` is "{sheet_name}". <{sheet_url}>'.format(
+                    league_name=LeagueMgr().league.schema_name,
+                    sheet_name=perm_info[1],
+                    sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(LeagueMgr().league.gsheet_id)
                 )
             )
 
@@ -67,18 +85,17 @@ class MakeFromSheet(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
-        matchup_sheet = MatchupSheet(gsheet_id=Config.GSHEET_ID, wks_name=wks_name)
-
         try:
-            await matchup_sheet.initialize()
+            matchup_sheet = await sheetlib.get_sheet(gsheet_id=LeagueMgr().league.gsheet_id, wks_name=wks_name)
             matches = await matchup_sheet.get_matches(register=False)
-        except (googleapiclient.errors.Error, NecroException) as e:
+        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
                 cmd.channel,
-                '{errortype} while making matchups: `{errorwhat}`'.format(errortype=type(e), errorwhat=e)
+                'Error while making matchups: `{0}`'.format(e)
             )
             return
 
+        not_found_matches = matchup_sheet.uncreated_matches()
         matches_with_channels = await matchutil.get_matches_with_channels()
         channeled_matchroom_names = dict()
         for match in matches_with_channels:
@@ -102,10 +119,18 @@ class MakeFromSheet(CommandType):
         for match in unchanneled_matches:
             await matchutil.make_match_room(match=match, register=True)
 
-        await self.client.send_message(
-            cmd.channel,
-            'Done creating matches.'
-        )
+        uncreated_str = ''
+        for match_str in not_found_matches:
+            uncreated_str += match_str + ', '
+        if uncreated_str:
+            uncreated_str = uncreated_str[:-2]
+
+        if uncreated_str:
+            report_str = 'Done creating matches. The following matches were not made: {0}'.format(uncreated_str)
+        else:
+            report_str = 'All matches created successfully.'
+
+        await self.client.send_message(cmd.channel, report_str)
 
 
 class SetGSheet(CommandType):
@@ -140,8 +165,8 @@ class SetGSheet(CommandType):
             )
             return
 
-        Config.GSHEET_ID = sheet_id
-        Config.write()
+        LeagueMgr().league.gsheet_id = sheet_id
+        LeagueMgr().league.commit()
         await self.client.send_message(
             cmd.channel,
             'Set default GSheet to "{0}". <{1}>'.format(

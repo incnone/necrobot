@@ -2,6 +2,7 @@ import string
 # import unittest
 
 import googleapiclient.errors
+import necrobot.exception
 
 from necrobot.gsheet.makerequest import make_request
 from necrobot.gsheet.spreadsheets import Spreadsheets
@@ -40,7 +41,10 @@ async def has_read_write_permissions(gsheet_id: str) -> (bool, str):
     str
         The name of the sheet if the bot has permissions, or an error message otherwise
     """
-    with Spreadsheets() as spreadsheets:
+    if gsheet_id is None:
+        raise necrobot.exception.BadInputException('Failed to provide a GSheet ID.')
+
+    async with Spreadsheets() as spreadsheets:
         request = spreadsheets.get(spreadsheetId=gsheet_id)
         try:
             spreadsheet = await make_request(request)

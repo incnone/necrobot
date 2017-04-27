@@ -133,6 +133,8 @@ async def write_match(match: Match):
         match.number_of_races,
         match.cawmentator_id,
         match.channel_id,
+        match.sheet_id,
+        match.sheet_row,
         match.match_id,
     )
 
@@ -153,7 +155,9 @@ async def write_match(match: Match):
                is_best_of=%s,
                number_of_races=%s,
                cawmentator_id=%s,
-               channel_id=%s
+               channel_id=%s,
+               sheet_id=%s,
+               sheet_row=%s
             WHERE match_id=%s
             """.format(matches=tn('matches')),
             params
@@ -211,20 +215,22 @@ async def get_channeled_matches_raw_data(
         cursor.execute(
             """
             SELECT 
-                match_id, 
-                race_type_id, 
-                racer_1_id, 
-                racer_2_id, 
-                suggested_time, 
-                r1_confirmed, 
-                r2_confirmed, 
-                r1_unconfirmed, 
-                r2_unconfirmed, 
-                ranked, 
-                is_best_of, 
-                number_of_races, 
-                cawmentator_id, 
-                channel_id 
+                 match_id, 
+                 race_type_id, 
+                 racer_1_id, 
+                 racer_2_id, 
+                 suggested_time, 
+                 r1_confirmed, 
+                 r2_confirmed, 
+                 r1_unconfirmed, 
+                 r2_unconfirmed, 
+                 ranked, 
+                 is_best_of, 
+                 number_of_races, 
+                 cawmentator_id, 
+                 channel_id,
+                 sheet_id,
+                 sheet_row
             FROM {matches} 
             WHERE {where_query} {order_query}
             """.format(matches=tn('matches'), where_query=where_query, order_query=order_query), params)
@@ -421,23 +427,25 @@ async def get_raw_match_data(match_id: int) -> list:
         cursor.execute(
             """
             SELECT 
-               match_id, 
-               race_type_id, 
-               racer_1_id, 
-               racer_2_id, 
-               suggested_time, 
-               r1_confirmed, 
-               r2_confirmed, 
-               r1_unconfirmed, 
-               r2_unconfirmed, 
-               ranked, 
-               is_best_of, 
-               number_of_races, 
-               cawmentator_id 
-            FROM {0} 
+                match_id, 
+                race_type_id, 
+                racer_1_id, 
+                racer_2_id, 
+                suggested_time, 
+                r1_confirmed, 
+                r2_confirmed, 
+                r1_unconfirmed, 
+                r2_unconfirmed, 
+                ranked, 
+                is_best_of, 
+                number_of_races, 
+                cawmentator_id,
+                sheet_id,
+                sheet_info
+            FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1
-            """.format(tn('matches')),
+            """.format(matches=tn('matches')),
             params
         )
         return cursor.fetchone()

@@ -1,7 +1,7 @@
+import necrobot.exception
 from necrobot.gsheet.makerequest import make_request
 from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.spreadsheets import Spreadsheets
-from necrobot.util import console
 
 
 class MatchupSheetIndexData(object):
@@ -10,9 +10,10 @@ class MatchupSheetIndexData(object):
     Call init() to read these indicies automatically from searching the sheet.
     """
 
-    def __init__(self, gsheet_id: str, wks_name: str = None):
+    def __init__(self, gsheet_id: str):
         self.gsheet_id = gsheet_id
-        self.wks_name = wks_name
+        self.wks_name = None
+        self.wks_id = None
 
         # Column indicies
         self._racer_1 = None
@@ -33,30 +34,49 @@ class MatchupSheetIndexData(object):
         self.header_row = None
         self.footer_row = None
 
-    async def initalize(self) -> None:
+    async def initalize(self, wks_name: str) -> None:
         """Read the GSheet and store the indicies of columns
+        
+        Parameters
+        ----------
+        wks_name: str
+            The name of the worksheet to initialize from.
         
         Raises
         ------
-
+        googleapiclient.error.Error
+            Uncaught Google API error.
+        AlreadyInitializedException
+            If we've already called initialize() on this object
+        NotFoundException
+            If cannot find a worksheet with name wks_name
         """
-        with Spreadsheets() as spreadsheets:
+        if self.wks_id is not None:
+            raise necrobot.exception.AlreadyInitializedExecption(
+                'MatchupSheet already initialized; wks_name = {], wks_id = {}'.format(self.wks_name, self.wks_id)
+            )
+
+        async with Spreadsheets() as spreadsheets:
             # Find the size of the worksheet
             sheet_size = None
             request = spreadsheets.get(spreadsheetId=self.gsheet_id)
             sheet_data = await make_request(request)
             for sheet in sheet_data['sheets']:
                 props = sheet['properties']
-                if props['title'] == self.wks_name:
+                if props['title'] == wks_name:
+                    self.wks_name = wks_name
+                    self.wks_id = props['sheetId']
                     sheet_size = (int(props['gridProperties']['rowCount']),
                                   int(props['gridProperties']['columnCount']),)
                     break
 
-            if sheet_size is None:
-                console.warning(
-                    'Couldn\'t find a worksheet. '
-                    'GSheetID: {0}, Worksheet Name: {1}.'.format(self.gsheet_id, self.wks_name))
-                return
+            if self.wks_id is None:
+                raise necrobot.exception.NotFoundException(
+                    "No worksheet with name {wks_name} on GSheet {gsheetid}".format(
+                        wks_name=wks_name,
+                        gsheetid=self.gsheet_id
+                    )
+                )
 
             # Find the header row and the column indicies
             row_query_min = 1

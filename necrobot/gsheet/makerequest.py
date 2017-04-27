@@ -1,7 +1,8 @@
 import asyncio
 import googleapiclient.errors
+import necrobot.exception
+
 from necrobot.util.backoff import ExponentialBackoff
-from necrobot.util.exception import TimeoutException
 
 
 async def make_request(request):
@@ -16,7 +17,7 @@ async def make_request(request):
             if error_type in backoff_errors:
                 try:
                     await asyncio.sleep(backoff.delay())
-                except TimeoutException:
+                except necrobot.exception.TimeoutException:
                     raise e
             else:
                 raise

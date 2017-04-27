@@ -175,7 +175,7 @@ class Necrobot(object, metaclass=Singleton):
 
     def register_manager(self, manager):
         """Register a manager"""
-        console.info('Registering a manager of type {0}.'.format(type(manager)))
+        console.info('Registering a manager of type {0}.'.format(type(manager).__name__))
         self._managers.append(manager)
 
     def is_admin(self, user: discord.User):

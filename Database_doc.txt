@@ -80,6 +80,8 @@ necrobot (schema)
             The discord ID of this match's channel, if one exists.
         ranked: bit(1)
             Whether this match is ranked (the racer's ladder rankings will update).
+        sheet_id: bigint
+            If the match was created from a GSheet, the sheetID of the worksheet it was created from.
 
     match_races -- For each match, a list of races in that match, and data about the relationship.
         match_id: int UN PK
@@ -164,7 +166,7 @@ league_name (schema) -- the tables here mirror the corresponding tables in necro
             The user's unique Necrobot ID
 
     # These tables follow the Necrobot format
-    matches-- matches in this event
+    matches -- matches in this event
     match_races -- races in this event, and data about how they relate to the match they're in
     races -- races in this event, all non-match-related data
     race_runs -- each row is a racer's data for an individual race

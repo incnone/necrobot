@@ -1,8 +1,8 @@
+import necrobot.exception
 from necrobot.race import raceinfo, raceutil
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
 
 from necrobot.botbase.commandtype import CommandType
-from necrobot.util.exception import ParseException
 
 
 class Make(CommandType):
@@ -19,7 +19,7 @@ class Make(CommandType):
     async def _do_execute(self, cmd):
         try:
             race_info = raceinfo.parse_args(cmd.args)
-        except ParseException as e:
+        except necrobot.exception.ParseException as e:
             await self.client.send_message(
                 cmd.channel,
                 'Error parsing inputs: {0}'.format(e)

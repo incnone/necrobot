@@ -1,8 +1,8 @@
+import necrobot.exception
 from necrobot.util.parse import matchparse
 from necrobot.race import raceinfo
 
 from necrobot.race.raceinfo import RaceInfo
-from necrobot.util.exception import ParseException
 
 
 class MatchInfo(object):
@@ -88,13 +88,13 @@ def parse_args_modify(args: list, match_info: MatchInfo) -> MatchInfo:
             try:
                 new_match_info.max_races = int(params[0])
             except ValueError:
-                raise ParseException("Couldn't interpret {0} as a number of races.".format(params[0]))
+                raise necrobot.exception.ParseException("Couldn't interpret {0} as a number of races.".format(params[0]))
             new_match_info.is_best_of = True
         elif keyword == 'repeat':
             try:
                 new_match_info.max_races = int(params[0])
             except ValueError:
-                raise ParseException("Couldn't interpret {0} as a number of races.".format(params[0]))
+                raise necrobot.exception.ParseException("Couldn't interpret {0} as a number of races.".format(params[0]))
             new_match_info.is_best_of = False
         elif keyword == 'ranked':
             new_match_info.ranked = True

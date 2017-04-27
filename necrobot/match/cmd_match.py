@@ -2,6 +2,7 @@ import datetime
 
 import pytz
 
+import necrobot.exception
 from necrobot.database import matchdb
 from necrobot.match import matchinfo, matchutil, matchfindparse
 from necrobot.user import userutil
@@ -12,7 +13,6 @@ from necrobot.util.parse import dateparse
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.necroevent.necroevent import NEDispatch
-from necrobot.util.exception import NecroException, ParseException
 
 
 # Match-related main-channel commands
@@ -54,9 +54,42 @@ class Vod(CommandType):
         return 'Add a link to a vod.'
 
     async def _do_execute(self, cmd):
-        # TODO
+        # Parse arguments
+        if len(cmd.args) < 3:
+            await self.client.send_message(
+                cmd.channel,
+                'Not enough arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        url = cmd.args[len(cmd.args) - 1]
+        cmd.args.pop(len(cmd.args) - 1)
+        arg_string = ''
+        for arg in cmd.args:
+            arg_string += arg + ' '
+
+        try:
+            match = await matchfindparse.find_match(arg_string)
+        except necrobot.exception.NecroException as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: {0}.'.format(e)
+            )
+            return
+
+        author_user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        if match.cawmentator_id is None or match.cawmentator_id != author_user.user_id:
+            await self.client.send_message(
+                cmd.channel,
+                '{0}: You are not the cawmentator for the match {1} (and so cannot add a vod).'
+                .format(cmd.author.mention, match.matchroom_name)
+            )
+            return
+
+        await NEDispatch().publish(event_type='set_vod', match=match, url=url)
         await self.client.send_message(
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+            cmd.channel,
+            'Added a vod for the match {0}.'.format(match.matchroom_name)
         )
 
 
@@ -214,7 +247,7 @@ class Suggest(CommandType):
         # Parse the inputs as a datetime
         try:
             suggested_time_utc = dateparse.parse_datetime(cmd.arg_string, author_as_necrouser.timezone)
-        except ParseException as e:
+        except necrobot.exception.ParseException as e:
             await self.client.send_message(
                 cmd.channel,
                 'Failed to parse your input as a time ({0}).'.format(e))
@@ -353,7 +386,7 @@ class CancelRace(CommandType):
                 )
                 return
 
-            success = await matchdb.cancel_race(self.bot_channel.match, race_number)
+            success = await self.bot_channel.cancel_race(race_number)
             if success:
                 await self.client.send_message(
                     cmd.channel,
@@ -501,10 +534,7 @@ class ForceRecordRace(CommandType):
             )
             return
 
-        await matchdb.record_match_race(
-            match=match,
-            winner=winner
-        )
+        await self.bot_channel.force_record_race(winner=winner)
         await self.client.send_message(
             cmd.channel,
             "Force-recorded a race with winner {0}.".format(winner_name)
@@ -528,7 +558,7 @@ class ForceReschedule(CommandType):
         # Parse the inputs as a datetime
         try:
             suggested_time_utc = dateparse.parse_datetime(cmd.arg_string, pytz.utc)
-        except ParseException as e:
+        except necrobot.exception.ParseException as e:
             await self.client.send_message(
                 cmd.channel,
                 'Failed to parse your input as a time ({0}).'.format(e))
@@ -668,8 +698,9 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     # Parse arguments
     try:
         match = await matchfindparse.find_match(cmd.arg_string)
-    except NecroException as e:
+    except necrobot.exception.NecroException as e:
         await cmd_type.client.send_message(
+            cmd.channel,
             'Error: {0}.'.format(e)
         )
         return
@@ -710,7 +741,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     # Add/delete the cawmentary
     if add:
         match.set_cawmentator_id(author_user.user_id)
-        await NEDispatch().publish(event_type='add_cawmentary', match=match, cawmentator=author_user)
+        await NEDispatch().publish(event_type='set_cawmentary', match=match)
         await cmd_type.client.send_message(
             cmd.channel,
             'Added {0} as cawmentary for the match {1}.'.format(
@@ -719,7 +750,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         )
     else:
         match.set_cawmentator_id(None)
-        await NEDispatch().publish(event_type='remove_cawmentary', match=match)
+        await NEDispatch().publish(event_type='set_cawmentary', match=match)
         await cmd_type.client.send_message(
             cmd.channel,
             'Removed {0} as cawmentary from the match {1}.'.format(

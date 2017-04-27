@@ -1,7 +1,7 @@
 import datetime
 import pytz
 
-import necrobot.util.exception
+import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
@@ -9,7 +9,6 @@ from necrobot.database import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match import matchutil, cmd_match, matchinfo
 from necrobot.user import userutil
-from necrobot.util.exception import ParseException
 
 
 class CloseAllMatches(CommandType):
@@ -220,7 +219,7 @@ class SetCondorEvent(CommandType):
         schema_name = cmd.args[0].lower()
         try:
             await LeagueMgr().set_league(schema_name=schema_name)
-        except necrobot.util.exception.LeagueDoesNotExist:
+        except necrobot.exception.LeagueDoesNotExist:
             await self.client.send_message(
                 cmd.channel,
                 'Error: Event `{0}` does not exist.'
@@ -300,7 +299,7 @@ class RegisterCondorEvent(CommandType):
         schema_name = cmd.args[0].lower()
         try:
             await LeagueMgr().create_league(schema_name=schema_name)
-        except necrobot.util.exception.LeagueAlreadyExists as e:
+        except necrobot.exception.LeagueAlreadyExists as e:
             error_msg = 'Error: Schema `{0}` already exists.'.format(schema_name)
             if str(e):
                 error_msg += ' (It is registered to the event "{0}".)'.format(e)
@@ -309,7 +308,7 @@ class RegisterCondorEvent(CommandType):
                 error_msg
             )
             return
-        except necrobot.util.exception.InvalidSchemaName:
+        except necrobot.exception.InvalidSchemaName:
             await self.client.send_message(
                 cmd.channel,
                 'Error: `{0}` is an invalid schema name. (`a-z`, `A-Z`, `0-9`, `_` and `$` are allowed characters.)'
@@ -380,7 +379,7 @@ class SetMatchRules(CommandType):
 
         try:
             match_info = matchinfo.parse_args(cmd.args)
-        except ParseException as e:
+        except necrobot.exception.ParseException as e:
             await self.client.send_message(
                 cmd.channel,
                 'Error parsing inputs: {0}'.format(e)

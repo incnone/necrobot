@@ -1,4 +1,4 @@
-from necrobot.util.exception import DoubledArgException, NumParametersException
+import necrobot.exception
 
 
 class Keyword(object):
@@ -80,7 +80,7 @@ def parse(args: list, keyword_set: set) -> dict:
             keyword_name = keyword.keyword_name
 
             if keyword_name in parsed_dict:
-                raise DoubledArgException(keyword=keyword.keyword)
+                raise necrobot.exception.DoubledArgException(keyword=keyword.keyword)
 
             if keyword.param_for is not None:
                 parsed_dict[keyword_name] = [keyword.keyword]
@@ -89,7 +89,7 @@ def parse(args: list, keyword_set: set) -> dict:
                 num_args_pulled = 0
                 while num_args_pulled < keyword.num_args:
                     if not args:
-                        raise NumParametersException(
+                        raise necrobot.exception.NumParametersException(
                             keyword=keyword,
                             num_expected=keyword.num_args,
                             num_given=num_args_pulled

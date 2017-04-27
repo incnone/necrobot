@@ -342,7 +342,7 @@ class Daily(object):
 
         # PM users with the daily_alert preference
         auto_pref = UserPrefs(daily_alert=True, race_alert=None)
-        for member_id in await userdb.get_all_ids_matching_prefs(auto_pref):
+        for member_id in await userdb.get_all_discord_ids_matching_prefs(auto_pref):
             member = self.necrobot.find_member(discord_id=member_id)
             if member is not None:
                 await self.register(self.today_number, member.id)

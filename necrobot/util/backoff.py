@@ -2,8 +2,7 @@
 
 import random
 import time
-
-from necrobot.util.exception import TimeoutException
+import necrobot.exception
 
 
 class ExponentialBackoff:
@@ -59,7 +58,7 @@ class ExponentialBackoff:
         self._last_invocation = invocation
 
         if interval > self._timeout:
-            raise TimeoutException()
+            raise necrobot.exception.TimeoutException()
 
         self._exp = min(self._exp + 1, self._max)
         return self._randfunc(0, self._base * 2 ** self._exp)

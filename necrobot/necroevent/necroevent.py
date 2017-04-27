@@ -19,7 +19,7 @@ class NEDispatch(object, metaclass=Singleton):
         if 'ne_process' not in type(subscriber).__dict__:
             console.warning(
                 "Object of type {0} tried to subscribe to NEDispatch, but doesn't implement ne_process.".format(
-                    type(subscriber)
+                    type(subscriber).__name__
                 )
             )
             return

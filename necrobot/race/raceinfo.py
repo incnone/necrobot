@@ -1,8 +1,8 @@
+import necrobot.exception
 from necrobot.util import seedgen
 from necrobot.util.parse import matchparse
 
 from necrobot.util.character import NDChar
-from necrobot.util.exception import ParseException
 
 
 class RaceInfo(object):
@@ -156,11 +156,11 @@ def parse_from_dict(args_dict: dict, race_info: RaceInfo) -> RaceInfo:
             try:
                 new_race_info.seed = int(params[0])
             except ValueError:
-                raise ParseException("Couldn't parse {0} as a seed.".format(params[0]))
+                raise necrobot.exception.ParseException("Couldn't parse {0} as a seed.".format(params[0]))
         elif keyword == 'character':
             character_ = NDChar.fromstr(params[0])
             if character_ is None:
-                raise ParseException("Couldn't parse {0} as a character.".format(params[0]))
+                raise necrobot.exception.ParseException("Couldn't parse {0} as a character.".format(params[0]))
             new_race_info.character = character_
         elif keyword == 'nodlc':
                 new_race_info.amplified = False

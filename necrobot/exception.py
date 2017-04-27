@@ -1,5 +1,12 @@
 class NecroException(Exception):
-    pass
+    def __init__(self, err_str: str = None):
+        self._err_str = err_str
+
+    def __str__(self):
+        if self._err_str is None:
+            return type(self)
+        else:
+            return '{type}: {what}'.format(type=type(self).__name__, what=self._err_str)
 
 
 class NoMatchupExistsException(NecroException):
@@ -7,11 +14,11 @@ class NoMatchupExistsException(NecroException):
 
 
 class DuplicateUserException(NecroException):
-    def __init__(self, err_str):
-        self._err_str = err_str
+    pass
 
-    def __str__(self):
-        return self._err_str
+
+class BadInputException(NecroException):
+    pass
 
 
 class NotFoundException(NecroException):
@@ -22,6 +29,14 @@ class TimeoutException(NecroException):
     pass
 
 
+class AlreadyInitializedExecption(NecroException):
+    pass
+
+
+class IncorrectWksException(NecroException):
+    pass
+
+
 # DatabaseException -------------------------------------
 
 class DatabaseException(NecroException):
@@ -29,11 +44,7 @@ class DatabaseException(NecroException):
 
 
 class LeagueAlreadyExists(DatabaseException):
-    def __init__(self, exc_str=None):
-        self._exc_str = exc_str
-
-    def __str__(self):
-        return self._exc_str if self._exc_str is not None else ''
+    pass
 
 
 class LeagueDoesNotExist(DatabaseException):
@@ -46,11 +57,7 @@ class InvalidSchemaName(DatabaseException):
 
 # ParseException ------------------------------------------------------
 class ParseException(NecroException):
-    def __init__(self, err_str):
-        self._err_str = err_str
-
-    def __str__(self):
-        return self._err_str
+    pass
 
 
 class DoubledArgException(ParseException):

@@ -54,8 +54,7 @@ def parse_matchtype_args(args: list) -> dict:
 class TestMatchParse(unittest.TestCase):
     def test_parse(self):
         import shlex
-        from necrobot.util.exception import NumParametersException
-        from necrobot.util.exception import DoubledArgException
+        from necrobot.exception import DoubledArgException, NumParametersException
 
         parse_string_fail_num = 'cadence bestof'
         parse_string_fail_dup = 'cadence diamond s'

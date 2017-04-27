@@ -2,13 +2,13 @@
 import pytz
 import shlex
 
+import necrobot.exception
 from necrobot.util.parse import dateparse
 from necrobot.database import matchdb
 from necrobot.match import matchutil
 from necrobot.user import userutil
 
 from necrobot.match.match import Match
-from necrobot.util.exception import NotFoundException, ParseException
 
 
 async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
@@ -35,16 +35,16 @@ async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
     """
     args = shlex.split(input_str)
     if len(args) < 2:
-        raise ParseException('Need at least two arguments to find a match.')
+        raise necrobot.exception.ParseException('Need at least two arguments to find a match.')
 
     racer_1 = await userutil.get_user(any_name=args[0])
     if racer_1 is None:
-        raise NotFoundException("Can't find any racer by the name `{0}`.".format(args[0]))
+        raise necrobot.exception.NotFoundException("Can't find any racer by the name `{0}`.".format(args[0]))
     args.pop(0)
 
     racer_2 = await userutil.get_user(any_name=args[0])
     if racer_2 is None:
-        raise NotFoundException("Can't find any racer by the name `{0}`.".format(args[0]))
+        raise necrobot.exception.NotFoundException("Can't find any racer by the name `{0}`.".format(args[0]))
     args.pop(0)
 
     match_date = None
@@ -61,7 +61,7 @@ async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
         scheduled_time=match_date
     )
     if match_id is None:
-        raise NotFoundException(
+        raise necrobot.exception.NotFoundException(
             "Can't find any match between `{0}` and `{1}`.".format(racer_1.bot_name, racer_2.bot_name)
         )
 

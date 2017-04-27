@@ -6,6 +6,7 @@ from necrobot.database import matchdb, racedb
 from necrobot.util import console, timestr, writechannel
 
 from necrobot.botbase.necrobot import Necrobot
+from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.match.matchroom import MatchRoom
@@ -50,6 +51,8 @@ async def make_match(*args, register=False, **kwargs) -> Match:
         The types of races to be run in this match.
     cawmentator_id: int
         The DB unique ID of the cawmentator for this match.
+    sheet_id: int
+        The sheetID of the worksheet the match was created from, if any.
     register: bool
         Whether to register the match in the database. 
         
@@ -201,7 +204,7 @@ async def delete_all_match_channels(log=False, completed_only=False) -> None:
         if channel is not None:
             if completed_only:
                 match_room = Necrobot().get_bot_channel(channel)
-                if match_room is None or not await match_room.played_all_races():
+                if match_room is None or not match_room.played_all_races:
                     delete_this = False
 
             if delete_this:
@@ -345,6 +348,10 @@ async def make_match_from_raw_db_data(row: list) -> Match:
         max_races=int(row[11])
     )
 
+    sheet_info = MatchGSheetInfo()
+    sheet_info.wks_id = row[14]
+    sheet_info.row = row[15]
+
     new_match = Match(
         commit_fn=matchdb.write_match,
         match_id=match_id,
@@ -357,7 +364,8 @@ async def make_match_from_raw_db_data(row: list) -> Match:
         r1_unconfirmed=bool(row[7]),
         r2_unconfirmed=bool(row[8]),
         cawmentator_id=row[12],
-        channel_id=int(row[13]) if row[13] is not None else None
+        channel_id=int(row[13]) if row[13] is not None else None,
+        gsheet_info=sheet_info
     )
 
     await new_match.initialize()

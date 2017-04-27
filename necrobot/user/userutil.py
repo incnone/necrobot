@@ -1,11 +1,11 @@
+import necrobot.exception
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.database import userdb
 from necrobot.user.necrouser import NecroUser
 from necrobot.user.userprefs import UserPrefs
 from necrobot.util import console
-# A library of all NecroUsers that have been checked out from the database, indexed by user ID
-from necrobot.util.exception import DuplicateUserException
 
+# Libraries of checked out users
 user_library_by_uid = {}
 user_library_by_did = {}
 user_library_by_rtmp = {}
@@ -88,7 +88,7 @@ async def get_user(
 
     # If more than one user is found, raise an exception
     elif len(raw_db_data) > 1:
-        raise DuplicateUserException(
+        raise necrobot.exception.DuplicateUserException(
             'Two or more users found satisfying discord_id={0}, discord_name={1}, twitch_name={2}, '
             'rtmp_name={3}, user_id={4}.'.format(discord_id, discord_name, twitch_name, rtmp_name, user_id))
 

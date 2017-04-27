@@ -16,16 +16,18 @@ class League(object):
             commit_fn: types.FunctionType,
             schema_name: str,
             league_name: str,
-            match_info: MatchInfo
+            match_info: MatchInfo,
+            gsheet_id: str = None
     ):
         self._commit = commit_fn
         self._schema_name = schema_name
         self.name = league_name
         self.match_info = match_info
+        self.gsheet_id = gsheet_id
 
     @property
     def schema_name(self):
         return self._schema_name
 
     def commit(self):
-        asyncio.ensure_future(self._commit())
+        asyncio.ensure_future(self._commit(self))

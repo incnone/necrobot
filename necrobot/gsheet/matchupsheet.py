@@ -2,17 +2,19 @@ import asyncio
 import datetime
 import unittest
 
+import necrobot.exception
 from necrobot.gsheet.makerequest import make_request
+from necrobot.match import matchutil
+from necrobot.user import userutil
+from necrobot.util import console
+
+from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.matchupsheetindexdata import MatchupSheetIndexData
 from necrobot.gsheet.sheetcell import SheetCell
 from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.spreadsheets import Spreadsheets
-from necrobot.match import matchutil
 from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
-from necrobot.user import userutil
-from necrobot.util import console
-from necrobot.util.asynctest import async_test
 
 
 class MatchupSheet(object):
@@ -20,13 +22,37 @@ class MatchupSheet(object):
     Represents a single worksheet with matchup & scheduling data.
     """
 
-    def __init__(self, gsheet_id: str, wks_name: str = None):
+    def __init__(self, gsheet_id: str):
+        """
+        Parameters
+        ----------
+        gsheet_id: str
+            The ID of the GSheet on which this worksheet exists.
+        """
         self.gsheet_id = gsheet_id
-        self.wks_name = wks_name
-        self.column_data = MatchupSheetIndexData(self.gsheet_id, self.wks_name)
+        self.column_data = MatchupSheetIndexData(gsheet_id=self.gsheet_id)
 
-    async def initialize(self):
-        await self.column_data.initalize()
+        self._not_found_matches = []
+
+    @property
+    def wks_name(self):
+        return self.column_data.wks_name
+
+    @property
+    def wks_id(self):
+        return self.column_data.wks_id
+
+    def uncreated_matches(self):
+        """All matches that failed to make from the most recent call to get_matches
+        
+        Returns
+        -------
+        list[str]
+        """
+        return self._not_found_matches
+
+    async def initialize(self, wks_name: str):
+        await self.column_data.initalize(wks_name=wks_name)
 
     async def get_matches(self, **kwargs):
         """Read racer names and match types from the GSheet; create corresponding matches.
@@ -43,13 +69,14 @@ class MatchupSheet(object):
         """
 
         matches = []
-        with Spreadsheets() as spreadsheets:
+        self._not_found_matches = []
+        async with Spreadsheets() as spreadsheets:
             value_range = await self.column_data.get_values(spreadsheets)
 
             if 'values' not in value_range:
                 return matches
 
-            for row_values in value_range['values']:
+            for row_idx, row_values in enumerate(value_range['values']):
                 racer_1_name = row_values[self.column_data.racer_1].rstrip(' ')
                 racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
                 racer_1 = await userutil.get_user(any_name=racer_1_name, register=True)
@@ -58,11 +85,17 @@ class MatchupSheet(object):
                     console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
                         racer_1_name, racer_2_name
                     ))
+                    self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
                     continue
+
+                sheet_info = MatchGSheetInfo()
+                sheet_info.wks_id = self.wks_id
+                sheet_info.row = row_idx
 
                 new_match = await matchutil.make_match(
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,
+                    gsheet_info=sheet_info,
                     **kwargs
                 )
                 matches.append(new_match)
@@ -92,7 +125,7 @@ class MatchupSheet(object):
             raw_input=False
         )
 
-    async def add_vod(self, match: Match, vod_link: str):
+    async def set_vod(self, match: Match, vod_link: str):
         """Add a vod link to the GSheet.
         
         Parameters
@@ -116,7 +149,7 @@ class MatchupSheet(object):
             raw_input=False
         )
 
-    async def add_cawmentary(self, match: Match):
+    async def set_cawmentary(self, match: Match):
         """Add a cawmentator to the GSheet.
         
         Parameters
@@ -185,8 +218,26 @@ class MatchupSheet(object):
         -------
         Optional[int]
             The row index (from 0) of the Match, or None if nothing found.
+            
+        Raises
+        ------
+        IncorrectWksException
+            If the sheetID for this sheet doesn't match the match's sheetID
         """
-        with Spreadsheets() as spreadsheets:
+        if match.sheet_id is not None and match.sheet_id != self.wks_id:
+            raise necrobot.exception.IncorrectWksException(
+                'Trying to find match {matchname}, but using incorrect MatchupSheet object '
+                '(sheetID: {sheetid}, name: {sheetname})'.format(
+                    matchname=match.matchroom_name,
+                    sheetid=self.wks_id,
+                    sheetname=self.wks_name
+                )
+            )
+
+        if match.sheet_id is not None and match.sheet_row is not None:
+            return match.sheet_row
+
+        async with Spreadsheets() as spreadsheets:
             value_range = await self.column_data.get_values(spreadsheets)
             if 'values' not in value_range:
                 return None
@@ -234,7 +285,7 @@ class MatchupSheet(object):
         range_str = str(SheetCell(row, col, wks_name=self.wks_name))
         value_input_option = 'RAW' if raw_input else 'USER_ENTERED'
         value_range_body = {'values': [[value]]}
-        with Spreadsheets() as spreadsheets:
+        async with Spreadsheets() as spreadsheets:
             request = spreadsheets.values().update(
                 spreadsheetId=self.gsheet_id,
                 range=range_str,
@@ -268,7 +319,7 @@ class MatchupSheet(object):
         range_str = str(sheet_range)
         value_input_option = 'RAW' if raw_input else 'USER_ENTERED'
         value_range_body = {'values': values}
-        with Spreadsheets() as spreadsheets:
+        async with Spreadsheets() as spreadsheets:
             request = spreadsheets.values().update(
                 spreadsheetId=self.gsheet_id,
                 range=range_str,
@@ -280,17 +331,19 @@ class MatchupSheet(object):
 
 
 class TestMatchupSheet(unittest.TestCase):
+    from necrobot.test.asynctest import async_test
+
     loop = asyncio.new_event_loop()
     the_gsheet_id = '1JbwqUsX1ibHVVtcRVpOmaFJcfQz2ncBAOwb1nV1PsPA'
 
     @classmethod
     def setUpClass(cls):
         pass
-        cls.sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet1')
-        cls.sheet_2 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id, wks_name='Sheet2')
+        cls.sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id)
+        cls.sheet_2 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id)
 
-        cls.loop.run_until_complete(cls.sheet_1.initialize())
-        cls.loop.run_until_complete(cls.sheet_2.initialize())
+        cls.loop.run_until_complete(cls.sheet_1.initialize(wks_name='Sheet1'))
+        cls.loop.run_until_complete(cls.sheet_2.initialize(wks_name='Sheet2'))
 
         cls.match_1 = TestMatchupSheet.loop.run_until.complete(
             cls._get_match(
@@ -356,8 +409,8 @@ class TestMatchupSheet(unittest.TestCase):
 
     @async_test(loop)
     def test_update_cawmentary_and_vod(self):
-        yield from self.sheet_1.add_cawmentary(self.match_1)
-        yield from self.sheet_1.add_vod(self.match_1, 'http://www.youtube.com/')
+        yield from self.sheet_1.set_cawmentary(self.match_1)
+        yield from self.sheet_1.set_vod(self.match_1, 'http://www.youtube.com/')
 
     @staticmethod
     async def _get_match(

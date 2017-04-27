@@ -25,7 +25,8 @@ class Match(object):
             r2_unconfirmed=False,
             match_info=MatchInfo(),
             cawmentator_id=None,
-            channel_id=None
+            channel_id=None,
+            gsheet_info=None
     ):
         """Create a `Match` object. There should be no need to call this directly; use `matchutil.make_match` instead, 
         since this needs to interact with the database.
@@ -56,6 +57,8 @@ class Match(object):
             The DB unique ID of the cawmentator for this match.
         channel_id: int
             The discord.ID of the channel for this match, if any.
+        gsheet_info: MatchGSheetInfo
+            If this match was created from a GSheet, the worksheet and row it was created from.
         """
         self._match_id = match_id
 
@@ -76,11 +79,10 @@ class Match(object):
         # Format data
         self._match_info = match_info
 
-        # Viewer data
+        # Other
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None
-
-        # Channel data
         self._channel_id = channel_id
+        self._gsheet_info = gsheet_info
 
         # Commit function
         self._commit = commit_fn
@@ -177,6 +179,14 @@ class Match(object):
     @property
     def channel_id(self):
         return self._channel_id
+
+    @property
+    def sheet_id(self):
+        return self._gsheet_info.wks_id if self._gsheet_info is not None else None
+
+    @property
+    def sheet_row(self):
+        return self._gsheet_info.row if self._gsheet_info is not None else None
 
     @property
     def matchroom_name(self) -> str:

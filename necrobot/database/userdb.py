@@ -1,5 +1,13 @@
 """
 Interaction with the users table.
+
+Methods
+-------
+write_user
+get_users_with_any
+get_users_with_all
+get_all_discord_ids_matching_prefs
+register_discord_user
 """
 import discord
 import mysql.connector
@@ -8,10 +16,38 @@ from necrobot.util import console
 
 from necrobot.database.dbconnect import DBConnect
 from necrobot.user.necrouser import NecroUser
+from necrobot.user.userprefs import UserPrefs
+
+# For making returns from these functions more friendly. Need async generators, so will be useful when this runs
+# in py-3.6
+# class UserRow(object):
+#     """Raw data necessary to create a NecroUser object."""
+#     select_params = """
+#         user_id,
+#         discord_id,
+#         discord_name,
+#         twitch_name,
+#         rtmp_name,
+#         timezone,
+#         user_info,
+#         daily_alert,
+#         race_alert
+#         """
+#
+#     def __init__(self, db_row):
+#         self.user_id = db_row[0]            # type: int
+#         self.discord_id = db_row[1]         # type: int
+#         self.discord_name = db_row[2]       # type: str
+#         self.twitch_name = db_row[3]        # type: str
+#         self.rtmp_name = db_row[4]          # type: str
+#         self.timezone = db_row[5]           # type: str
+#         self.user_info = db_row[6]          # type: str
+#         self.daily_alert = bool(db_row[7])  # type: bool
+#         self.race_alert = bool(db_row[8])   # type: bool
 
 
 # Commit function
-async def write_user(necro_user: NecroUser):
+async def write_user(necro_user: NecroUser) -> None:
     if necro_user.user_id is None:
         await _register_user(necro_user)
         return
@@ -63,13 +99,13 @@ async def write_user(necro_user: NecroUser):
 
 # Search
 async def get_users_with_any(
-        discord_id=None,
-        discord_name=None,
-        twitch_name=None,
-        rtmp_name=None,
-        timezone=None,
-        user_id=None,
-        case_sensitive=False
+        discord_id: int = None,
+        discord_name: str = None,
+        twitch_name: str = None,
+        rtmp_name: str = None,
+        timezone: str = None,
+        user_id: int = None,
+        case_sensitive: bool = False
 ):
     return await _get_users_helpfn(
         discord_id=discord_id,
@@ -84,13 +120,13 @@ async def get_users_with_any(
 
 
 async def get_users_with_all(
-        discord_id=None,
-        discord_name=None,
-        twitch_name=None,
-        rtmp_name=None,
-        timezone=None,
-        user_id=None,
-        case_sensitive=False
+        discord_id: int = None,
+        discord_name: int = None,
+        twitch_name: str = None,
+        rtmp_name: str = None,
+        timezone: str = None,
+        user_id: int = None,
+        case_sensitive: bool = False
 ):
     return await _get_users_helpfn(
         discord_id=discord_id,
@@ -104,7 +140,7 @@ async def get_users_with_all(
     )
 
 
-async def get_all_ids_matching_prefs(user_prefs):
+async def get_all_discord_ids_matching_prefs(user_prefs: UserPrefs) -> list:
     if user_prefs.is_empty:
         return []
 
@@ -256,12 +292,18 @@ async def _register_user(necro_user: NecroUser):
 
 
 async def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:
-    """
-    Returns the user_id of any entry in the DB with the same rtmp_name as necro_user, a NULL discord_id,
-    and a different user_id, or None if no such entry exists.
-    Transfers all records referencing the "from" user_id to the "to" user_id.
-    WARNING: Possible severe loss of information. Cannot be undone. Use with caution!
-    :param necro_user: NecroUser
+    """Returns the user ID of any entry in the DB with the same rtmp_name as necro_user, a NULL discord_id,
+    and a different user ID, or None if no such entry exists.
+    
+    Parameters
+    ----------
+    necro_user: NecroUser
+        The user to check for an already existing entry
+
+    Returns
+    -------
+    Optional[int]
+        The ID that can be overwritten, if any.
     """
     if necro_user.rtmp_name is None:
         return None
@@ -271,9 +313,9 @@ async def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or No
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
-            SELECT user_id, discord_id 
-            FROM users 
-            WHERE rtmp_name=%s
+            SELECT `user_id`, `discord_id` 
+            FROM `users` 
+            WHERE `rtmp_name`=%s
             """,
             rtmp_params
         )
@@ -282,36 +324,58 @@ async def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or No
         if data is None:
             return None
 
-        user_id = int(data[0]) if data[0] is not None else None
-        discord_id = int(data[1]) if data[1] is not None else None
-        if discord_id is None and discord_id != necro_user.discord_id and user_id != necro_user.user_id:
+        user_id = int(data[0])
+        discord_id = data[1]
+        if discord_id is None and user_id != necro_user.user_id:
             return user_id
         else:
             return None
 
 
 async def _transfer_user_id(from_user_id: int, to_user_id: int):
-    params = (to_user_id, from_user_id,)
+    """For all matches featuring the "from" user ID, update these racers to be the "to" user ID.   
+    
+    Updates the `matches` tables for the core necrobot, and the `matches` and `entrants` tables for all leagues.
+    
+    Does not update `race_runs` or `daily_runs` tables, since these should not contain entries with user IDs that
+    are unregistered to discord IDs, and so there should be no records attached to `from_user_id` in those tables
+    unless this coroutine is being called in error.
+    
+    WARNING: Possible severe loss of information. Use with caution! If used in error, consider trying to restore
+    the `matches` and `entrants` tables by reading user IDs from the `race_runs` tables.
+    
+    Parameters
+    ----------
+    from_user_id: int
+        The ID to search for in all match databases.
+    to_user_id: int
+        The ID to change to.
+    """
+    params = {
+        'to_uid': to_user_id,
+        'from_uid': from_user_id,
+    }
+
     async with DBConnect(commit=True) as cursor:
         # Update main-database matches
         cursor.execute(
             """
             UPDATE matches 
-            SET racer_1_id=%s 
-            WHERE racer_1_id=%s
+            SET racer_1_id=%(to_uid)s 
+            WHERE racer_1_id=%(from_uid)s
             """,
             params
         )
         cursor.execute(
             """
             UPDATE matches 
-            SET racer_2_id=%s 
-            WHERE racer_2_id=%s
+            SET racer_2_id=%(to_uid)s 
+            WHERE racer_2_id=%(from_uid)s
             """,
             params
         )
 
-        # Update CoNDOR events
+        # Update leagues
         cursor.execute(
             """
             SELECT `schema_name` 
@@ -323,17 +387,25 @@ async def _transfer_user_id(from_user_id: int, to_user_id: int):
             schema_name = row[0]
             cursor.execute(
                 """
-                UPDATE {0}.matches 
-                SET racer_1_id=%s 
-                WHERE racer_1_id=%s
-                """.format(schema_name),
+                UPDATE {schema_name}.entrants 
+                SET user_id=%(to_uid)s 
+                WHERE user_id=%(from_uid)s
+                """.format(schema_name=schema_name),
                 params
             )
             cursor.execute(
                 """
-                UPDATE {0}.matches 
-                SET racer_2_id=%s 
-                WHERE racer_2_id=%s.format(schema_name)
-                """,
+                UPDATE {schema_name}.matches 
+                SET racer_1_id=%(to_uid)s 
+                WHERE racer_1_id=%(from_uid)s
+                """.format(schema_name=schema_name),
+                params
+            )
+            cursor.execute(
+                """
+                UPDATE {schema_name}.matches 
+                SET racer_2_id=%(to_uid)s 
+                WHERE racer_2_id=%(from_uid)
+                """.format(schema_name=schema_name),
                 params
             )

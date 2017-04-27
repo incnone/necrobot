@@ -16,9 +16,6 @@ DISCOVERY_URL = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 
-_sheet_lock = asyncio.Lock()
-
-
 class Spreadsheets(object):
     """
     Context manager; Returns a spreadsheets() majig 
@@ -28,6 +25,7 @@ class Spreadsheets(object):
     initted = False
     credentials = None
     sheet_service = None
+    _sheet_lock = asyncio.Lock()
 
     def __init__(self):
         if not Spreadsheets.initted:
@@ -35,11 +33,12 @@ class Spreadsheets(object):
             self._build_service()
             Spreadsheets.initted = True
 
-    def __enter__(self):
+    async def __aenter__(self):
+        await Spreadsheets._sheet_lock.acquire()
         return Spreadsheets.sheet_service.spreadsheets()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        Spreadsheets._sheet_lock.release()
 
     @staticmethod
     def _get_credentials():
@@ -56,17 +55,11 @@ class Spreadsheets(object):
             'sheets', 'v4', http=http, discoveryServiceUrl=DISCOVERY_URL)
 
 
-def sheet_locked(func):
-    """
-    Decorator; obtains the _sheet_lock Lock before running the function
-    """
-    def func_wrapper(*args, **kwargs):
-        with (yield from _sheet_lock):
-            func(*args, **kwargs)
-    return func_wrapper
-
-
 class TestSpreadsheets(unittest.TestCase):
-    def test_get(self):
-        with Spreadsheets():
+    from necrobot.test.asynctest import async_test
+    loop = asyncio.new_event_loop()
+
+    @async_test(loop)
+    async def test_get(self):
+        async with Spreadsheets():
             pass

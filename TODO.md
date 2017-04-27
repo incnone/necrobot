@@ -2,42 +2,28 @@
 
 Current version: 0.10
 
-## To be done soon
+## Condorbot
 
-### Condorbot features
-
-- Sensical commands for completed matches
+- All TODOs
 
 ### Testing
 
-- Rigorously test the user-ID-transferring in database.userdb, since errors could lead to massive losses 
-of information
+- Test new user registration
 - Create unit tests for all modules
 
-#### Things to test
-
-- New user registration
-
-### Bugs
-
-- Update database code to be async
-
-### Automatching
+## Automatching
 
 - Everything
 
-### Ladderbot
+## Ladderbot
 
+- Lots of things here
 - Better rankings display
 
-### Refactor
+## Refactor
 
 - Uniformize and improve argument parsing
 - racetime could be a class
-
-## Daily
-
-- Needs a big overhaul
 
 ## Bugs
 
@@ -61,6 +47,7 @@ just finished or the race that people are currently entering. It maybe also does
 
 ## Features
 
+- Daily needs a big overhaul
 - Configuration of `.racealert` for character-specific, etc
 - Make `.notify on` do the obvious thing
 - add comment possibility to `.death`

@@ -7,10 +7,10 @@
 #     - change_race_info is only required for ChangeRace
 #     - write is only required for Time
 
+import necrobot.exception
 from necrobot.util import level, racetime
 
 from necrobot.botbase.commandtype import CommandType
-from necrobot.util.exception import ParseException
 
 
 class Enter(CommandType):
@@ -234,7 +234,7 @@ class ChangeRules(CommandType):
     async def _do_execute(self, cmd):
         try:
             await self.bot_channel.change_race_info(cmd.args)
-        except ParseException as e:
+        except necrobot.exception.ParseException as e:
             await self.client.send_message(
                 cmd.channel,
                 "Couldn't parse input: `{0}`.".format(e)

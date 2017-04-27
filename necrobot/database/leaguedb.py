@@ -22,6 +22,7 @@ InvalidSchemaName
 """
 
 import re
+import necrobot.exception
 
 from necrobot.config import Config
 from necrobot.database import racedb
@@ -30,7 +31,6 @@ from necrobot.database.dbutil import tn
 from necrobot.league.league import League
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo
-from necrobot.util.exception import LeagueAlreadyExists, LeagueDoesNotExist, InvalidSchemaName
 
 
 async def create_league(schema_name: str) -> League:
@@ -48,7 +48,7 @@ async def create_league(schema_name: str) -> League:
     """
     table_name_validator = re.compile(r'^[0-9a-zA-Z_$]+$')
     if not table_name_validator.match(schema_name):
-        raise InvalidSchemaName()
+        raise necrobot.exception.InvalidSchemaName()
 
     params = (schema_name,)
     async with DBConnect(commit=True) as cursor:
@@ -61,7 +61,7 @@ async def create_league(schema_name: str) -> League:
             params
         )
         for row in cursor:
-            raise LeagueAlreadyExists(row[0])
+            raise necrobot.exception.LeagueAlreadyExists(row[0])
 
         cursor.execute(
             """
@@ -72,7 +72,7 @@ async def create_league(schema_name: str) -> League:
             params
         )
         for _ in cursor:
-            raise LeagueAlreadyExists('Schema exists, but is not a CoNDOR event.')
+            raise necrobot.exception.LeagueAlreadyExists('Schema exists, but is not a CoNDOR event.')
 
         cursor.execute(
             """
@@ -157,6 +157,7 @@ async def get_league(schema_name: str) -> League:
                `leagues`.`number_of_races`, 
                `leagues`.`is_best_of`, 
                `leagues`.`ranked`, 
+               `leagues`.`gsheet_id`,
                `race_types`.`character`, 
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
@@ -171,16 +172,16 @@ async def get_league(schema_name: str) -> League:
         )
         for row in cursor:
             race_info = RaceInfo()
-            if row[3] is not None:
-                race_info.set_char(row[4])
-            if row[4] is not None:
-                race_info.descriptor = row[5]
             if row[5] is not None:
-                race_info.seeded = bool(row[6])
+                race_info.set_char(row[5])
             if row[6] is not None:
-                race_info.amplified = bool(row[7])
+                race_info.descriptor = row[6]
             if row[7] is not None:
-                race_info.seed_fixed = bool(row[8])
+                race_info.seeded = bool(row[7])
+            if row[8] is not None:
+                race_info.amplified = bool(row[8])
+            if row[9] is not None:
+                race_info.seed_fixed = bool(row[9])
 
             match_info = MatchInfo(
                 max_races=int(row[1]) if row[1] is not None else None,
@@ -193,10 +194,11 @@ async def get_league(schema_name: str) -> League:
                 commit_fn=write_league,
                 schema_name=schema_name,
                 league_name=row[0],
-                match_info=match_info
+                match_info=match_info,
+                gsheet_id=row[4]
             )
 
-        raise LeagueDoesNotExist()
+        raise necrobot.exception.LeagueDoesNotExist()
 
 
 async def register_user(user_id: int) -> None:
@@ -237,6 +239,7 @@ async def write_league(league: League) -> None:
         params = (
             league.schema_name,
             league.name,
+            league.gsheet_id,
             match_info.max_races,
             match_info.is_best_of,
             match_info.ranked,
@@ -246,13 +249,14 @@ async def write_league(league: League) -> None:
         cursor.execute(
             """
             INSERT INTO `leagues` 
-            (`schema_name`, `league_name`, `number_of_races`, `is_best_of`, `ranked`, `race_type`) 
-            VALUES (%s, %s, %s, %s, %s, %s) 
+            (`schema_name`, `league_name`, `gsheet_id`, `number_of_races`, `is_best_of`, `ranked`, `race_type`) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE
                `league_name` = VALUES(`league_name`), 
+               `gsheet_id` = VALUES(`gsheet_id`),
                `number_of_races` = VALUES(`number_of_races`), 
-               `is_best_of` = VALUES(`is_best_of`) 
-               `ranked` = VALUES(`ranked`) 
+               `is_best_of` = VALUES(`is_best_of`), 
+               `ranked` = VALUES(`ranked`), 
                `race_type` = VALUES(`race_type`)
             """,
             params

@@ -1,8 +1,8 @@
 import datetime
 import pytz
 
+import necrobot.exception
 from dateutil import parser
-from necrobot.util.exception import ParseException
 
 
 class CustomParserInfo(parser.parserinfo):
@@ -32,4 +32,4 @@ def parse_datetime(parse_str: str, timezone: pytz.timezone = pytz.utc) -> dateti
         else:
             return timezone.localize(dateutil_parse).astimezone(pytz.utc)
     except ValueError:
-        raise ParseException('Couldn\'t parse {0} as a time.'.format(parse_str))
+        raise necrobot.exception.ParseException('Couldn\'t parse {0} as a time.'.format(parse_str))
