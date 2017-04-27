@@ -2,7 +2,7 @@ from necrobot.race import raceinfo, raceutil
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
 
 from necrobot.botbase.commandtype import CommandType
-from necrobot.util.parse.exception import ParseException
+from necrobot.util.exception import ParseException
 
 
 class Make(CommandType):

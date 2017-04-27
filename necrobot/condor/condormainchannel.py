@@ -13,7 +13,6 @@ class CondorMainChannel(BotChannel):
 
             cmd_match.Cawmentate(self),
             cmd_match.Uncawmentate(self),
-            cmd_match.Vod(self),
 
             cmd_stats.LeagueFastest(self),
             cmd_stats.LeagueStats(self),

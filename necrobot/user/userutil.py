@@ -1,23 +1,14 @@
-from necrobot.database import userdb
-from necrobot.util import console
-
 from necrobot.botbase.necrobot import Necrobot
+from necrobot.database import userdb
 from necrobot.user.necrouser import NecroUser
 from necrobot.user.userprefs import UserPrefs
-
-
+from necrobot.util import console
 # A library of all NecroUsers that have been checked out from the database, indexed by user ID
+from necrobot.util.exception import DuplicateUserException
+
 user_library_by_uid = {}
 user_library_by_did = {}
 user_library_by_rtmp = {}
-
-
-class DuplicateUserException(Exception):
-    def __init__(self, err_str):
-        self._err_str = err_str
-
-    def __str__(self):
-        return self._err_str
 
 
 async def get_user(

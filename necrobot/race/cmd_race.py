@@ -10,7 +10,7 @@
 from necrobot.util import level, racetime
 
 from necrobot.botbase.commandtype import CommandType
-from necrobot.util.parse.exception import ParseException
+from necrobot.util.exception import ParseException
 
 
 class Enter(CommandType):

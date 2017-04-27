@@ -1,4 +1,4 @@
-from necrobot.util.parse.exception import DoubledArgException, NumParametersException
+from necrobot.util.exception import DoubledArgException, NumParametersException
 
 
 class Keyword(object):

@@ -1,5 +1,5 @@
 import random
-from necrobot.automatch.exception import NoMatchupExistsException
+from necrobot.util.exception import NoMatchupExistsException
 
 rand = random.Random()
 rand.seed()

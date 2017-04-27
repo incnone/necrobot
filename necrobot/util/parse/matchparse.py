@@ -54,8 +54,12 @@ def parse_matchtype_args(args: list) -> dict:
 class TestMatchParse(unittest.TestCase):
     def test_parse(self):
         import shlex
+        from necrobot.util.exception import NumParametersException
+        from necrobot.util.exception import DoubledArgException
 
-        parse_string = 'Cadence s bestof 3 ranked custom "Custom description"'
+        parse_string_fail_num = 'cadence bestof'
+        parse_string_fail_dup = 'cadence diamond s'
+        parse_string_success = 'cadence s bestof 3 ranked custom "Custom description"'
         parsed_dict = {
             'character': ['cadence'],
             'seeded': [],
@@ -64,6 +68,8 @@ class TestMatchParse(unittest.TestCase):
             'custom': ['Custom description'],
             '': []
         }
-        parsed_args = parse_matchtype_args(shlex.split(parse_string))
+        parsed_args = parse_matchtype_args(shlex.split(parse_string_success))
 
         self.assertEqual(parsed_args, parsed_dict)
+        self.assertRaises(parse_matchtype_args, DoubledArgException, parse_string_fail_dup)
+        self.assertRaises(parse_matchtype_args, NumParametersException, parse_string_fail_num)

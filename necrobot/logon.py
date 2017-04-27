@@ -1,3 +1,10 @@
+"""
+Primary function for logging on to Discord. 
+
+logon() blocks until the bot is logged out; any code to be run after bot log-on 
+should be placed in a coroutine and passed to logon in the on_ready_fn parameter.
+"""
+
 import aiohttp
 import asyncio
 import datetime
@@ -5,6 +12,7 @@ import discord
 import logging
 import os
 import sys
+import types
 import warnings
 import websockets
 
@@ -13,7 +21,19 @@ from necrobot.util import backoff, console, seedgen
 from necrobot.botbase.necrobot import Necrobot
 
 
-def logon(config_filename: str, load_config_fn, on_ready_fn=None):
+def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn: types.FunctionType = None) -> None:
+    """Log on to Discord. Block until logout.
+    
+    Parameters
+    ----------
+    config_filename: str
+        The filename of the config file to use.
+    load_config_fn: [coro] (Necrobot) -> None
+        A coroutine to be called after first login, which should set up the Necrobot with the desired
+        BotChannels and Managers.
+    on_ready_fn: [coro] (Necrobot) -> None
+        A coroutine to be called after every login. Useful for unit testing.
+    """
     # Initialize config file----------------------------------
     config.init(config_filename)
 

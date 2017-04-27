@@ -72,7 +72,8 @@ class ViewPrefs(CommandType):
         self.help_text = "See your current user preferences."
 
     async def _do_execute(self, cmd):
-        prefs = await userutil.get_user(discord_id=int(cmd.author.id)).user_prefs
+        user = await userutil.get_user(discord_id=int(cmd.author.id))
+        prefs = user.user_prefs
         prefs_string = ''
         for pref_str in prefs.pref_strings:
             prefs_string += ' ' + pref_str
@@ -173,7 +174,8 @@ class Timezone(CommandType):
 
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
-            await userutil.get_user(discord_id=int(cmd.author.id), register=True).set(timezone=tz_name, commit=True)
+            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user.set(timezone=tz_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
                 '{0}: Timezone set as {1}.'.format(cmd.author.mention, tz_name))

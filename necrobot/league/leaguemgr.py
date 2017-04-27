@@ -1,4 +1,5 @@
 import necrobot.league.the_league
+import necrobot.util.exception
 
 from necrobot.database import leaguedb
 from necrobot.util import console
@@ -12,11 +13,15 @@ class LeagueMgr(object, metaclass=Singleton):
     def __init__(self):
         pass
 
+    @property
+    def league(self):
+        return necrobot.league.the_league.league
+
     async def initialize(self):
         if Config.LEAGUE_NAME:
             try:
                 await self.set_league(schema_name=Config.LEAGUE_NAME, save_to_config=False)
-            except leaguedb.LeagueDoesNotExist:
+            except necrobot.util.exception.LeagueDoesNotExist:
                 console.warning(
                     'League "{0}" does not exist.'.format(Config.LEAGUE_NAME)
                 )

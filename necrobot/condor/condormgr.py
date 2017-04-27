@@ -1,4 +1,6 @@
 from necrobot.condor import cmd_condor
+from necrobot.gsheet.matchupsheet import MatchupSheet
+
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
 from necrobot.util.singleton import Singleton
@@ -31,3 +33,9 @@ class CondorMgr(object, metaclass=Singleton):
 
         if ev.event_type == 'notify':
             await self._client.send_message(self._notifications_channel, ev.message)
+        elif ev.event_type == 'add_cawmentary':
+            pass    # TODO
+        elif ev.event_type == 'remove_cawmentary':
+            pass    # TODO
+        elif ev.event_type == 'add_vod':
+            pass    # TODO

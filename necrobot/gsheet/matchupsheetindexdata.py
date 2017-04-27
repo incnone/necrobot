@@ -33,7 +33,13 @@ class MatchupSheetIndexData(object):
         self.header_row = None
         self.footer_row = None
 
-    async def initalize(self):
+    async def initalize(self) -> None:
+        """Read the GSheet and store the indicies of columns
+        
+        Raises
+        ------
+
+        """
         with Spreadsheets() as spreadsheets:
             # Find the size of the worksheet
             sheet_size = None

@@ -19,22 +19,6 @@ class LadderDropMyMatches(CommandType):
         )
 
 
-class LadderFastest(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladder-fastest')
-        self.help_text = 'Get a list of the fastest ranked ladder clears.'
-
-    @property
-    def short_help_text(self):
-        return 'Fastest ranked clears.'
-
-    async def _do_execute(self, cmd):
-        # TODO
-        await self.client.send_message(
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
-        )
-
-
 class LadderRegister(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'ladder-register')
@@ -48,36 +32,6 @@ class LadderRegister(CommandType):
         # TODO
         await self.client.send_message(
             cmd.channel,
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
-        )
-
-
-class LadderStats(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladder-stats')
-        self.help_text = 'Display racer stats. Usage is `.stats rtmp_name`. If no racer is given, will display ' \
-                         'stats for the command caller.'
-
-    @property
-    def short_help_text(self):
-        return 'Display racer stats.'
-
-    async def _do_execute(self, cmd):
-        # TODO
-        await self.client.send_message(
-            cmd.channel,
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
-        )
-
-
-class NextRace(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'next')
-        self.help_text = 'Display upcoming ladder matches.'
-
-    async def _do_execute(self, cmd):
-        # TODO
-        await self.client.send_message(
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 

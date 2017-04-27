@@ -1,6 +1,7 @@
 import asyncio
 import googleapiclient.errors
-from necrobot.util.backoff import ExponentialBackoff, TimeoutException
+from necrobot.util.backoff import ExponentialBackoff
+from necrobot.util.exception import TimeoutException
 
 
 async def make_request(request):

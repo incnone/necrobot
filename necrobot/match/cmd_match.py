@@ -3,7 +3,7 @@ import datetime
 import pytz
 
 from necrobot.database import matchdb
-from necrobot.match import matchinfo, matchutil
+from necrobot.match import matchinfo, matchutil, matchfindparse
 from necrobot.user import userutil
 from necrobot.util import console
 from necrobot.util import timestr
@@ -12,7 +12,7 @@ from necrobot.util.parse import dateparse
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.necroevent.necroevent import NEDispatch
-from necrobot.util.parse.exception import ParseException
+from necrobot.util.exception import NecroException, ParseException
 
 
 # Match-related main-channel commands
@@ -548,13 +548,17 @@ class ForceReschedule(CommandType):
                         '{0}: This match is suggested to be scheduled for {1}. Please confirm with '
                         '`.confirm`.'.format(
                             racer.member.mention,
-                            timestr.str_full_12h(racer.timezone.normalize(suggested_time_utc))))
+                            timestr.str_full_12h(racer.timezone.normalize(suggested_time_utc))
+                        )
+                    )
                 else:
                     await self.client.send_message(
                         cmd.channel,
                         '{0}: A match time has been suggested; please confirm with `.confirm`. I also suggest '
                         'you register a timezone (use `.timezone`), so I can convert to your local time.'.format(
-                            racer.member.mention))
+                            racer.member.mention
+                        )
+                    )
 
         await self.bot_channel.update()
 
@@ -595,7 +599,8 @@ class RebootRoom(CommandType):
         await matchutil.make_match_room(match=self.bot_channel.match)
         await self.client.send_message(
             cmd.channel,
-            'Room rebooted.')
+            'Room rebooted.'
+        )
 
 
 class SetMatchType(CommandType):
@@ -661,52 +666,15 @@ class Update(CommandType):
 
 async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
     # Parse arguments
-    if len(cmd.args) != 2:
+    try:
+        match = await matchfindparse.find_match(cmd.arg_string)
+    except NecroException as e:
         await cmd_type.client.send_message(
-            cmd.channel,
-            'Error: Exactly two RTMP names required for `{0}` (you provided {1}).'.format(
-                cmd_type.mention, len(cmd.args)
-            )
+            'Error: {0}.'.format(e)
         )
         return
 
-    rtmp_names = [cmd.args[0], cmd.args[1]]
-
-    # Find the author as NecroUser
-    author_user = await userutil.get_user(discord_id=int(cmd.author.id))
-    if author_user is None or author_user.twitch_name is None:
-        await cmd_type.client.send_message(
-            cmd.channel,
-            'Please register a twitch stream in order to cawmentate (`.twitch`).'
-        )
-        return
-
-    # Find the racers as NecroUsers
-    racers = []
-    for name in rtmp_names:
-        racer = await userutil.get_user(any_name=name)
-        if racer is None:
-            await cmd_type.client.send_message(
-                cmd.channel,
-                'Couldn\'t find user {0}.'.format(name)
-            )
-            return
-        racers.append(racer)
-
-    # Find the match
-    match = await matchutil.get_match_from_id(
-        match_id=await matchdb.get_most_recent_scheduled_match_id_between(
-            racers[0].user_id,
-            racers[1].user_id,
-            channeled=True
-        )
-    )
-    if match is None:
-        await cmd_type.client.send_message(
-            cmd.channel,
-            'Couldn\'t find a match between {0} and {1}.'.format(rtmp_names[0], rtmp_names[1])
-        )
-        return
+    author_user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
 
     # Check if the match already has cawmentary
     if add and match.cawmentator_id is not None:
@@ -727,16 +695,14 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         if match.cawmentator_id is None:
             await cmd_type.client.send_message(
                 cmd.channel,
-                'No one is registered for cawmentary for the match {0}-{1}.'.format(
-                    racers[0].rtmp_name, racers[1].rtmp_name
-                )
+                'No one is registered for cawmentary for the match {0}.'.format(match.matchroom_name)
             )
             return
         elif match.cawmentator_id != int(cmd.author.id):
             await cmd_type.client.send_message(
                 cmd.channel,
-                'Error: {0}: You are not the registered cawmentator for {1}-{2}.'.format(
-                    cmd.author.mention, racers[0].rtmp_name, racers[1].rtmp_name
+                'Error: {0}: You are not the registered cawmentator for {1}.'.format(
+                    cmd.author.mention, match.matchroom_name
                 )
             )
             return
@@ -744,18 +710,20 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     # Add/delete the cawmentary
     if add:
         match.set_cawmentator_id(author_user.user_id)
+        await NEDispatch().publish(event_type='add_cawmentary', match=match, cawmentator=author_user)
         await cmd_type.client.send_message(
             cmd.channel,
-            'Added {0} as cawmentary for the match {1}-{2}.'.format(
-                cmd.author.mention, racers[0].rtmp_name, racers[1].rtmp_name
+            'Added {0} as cawmentary for the match {1}.'.format(
+                cmd.author.mention, match.matchroom_name
             )
         )
     else:
         match.set_cawmentator_id(None)
+        await NEDispatch().publish(event_type='remove_cawmentary', match=match)
         await cmd_type.client.send_message(
             cmd.channel,
-            'Removed {0} as cawmentary for the match {1}-{2}.'.format(
-                cmd.author.mention, racers[0].rtmp_name, racers[1].rtmp_name
+            'Removed {0} as cawmentary from the match {1}.'.format(
+                cmd.author.mention, match.matchroom_name
             )
         )
 
@@ -818,4 +786,3 @@ async def make_match_from_cmd(
         cmd.channel,
         'Match created in channel {0}.'.format(
             match_room.channel.mention))
-

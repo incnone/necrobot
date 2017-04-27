@@ -2,7 +2,7 @@ import datetime
 import pytz
 
 from dateutil import parser
-from necrobot.util.parse.exception import ParseException
+from necrobot.util.exception import ParseException
 
 
 class CustomParserInfo(parser.parserinfo):

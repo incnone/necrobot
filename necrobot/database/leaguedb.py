@@ -22,30 +22,15 @@ InvalidSchemaName
 """
 
 import re
-from necrobot.database import racedb
-from necrobot.database.dbutil import tn
 
 from necrobot.config import Config
+from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
+from necrobot.database.dbutil import tn
 from necrobot.league.league import League
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo
-
-
-class LeagueAlreadyExists(Exception):
-    def __init__(self, exc_str=None):
-        self._exc_str = exc_str
-
-    def __str__(self):
-        return self._exc_str if self._exc_str is not None else ''
-
-
-class LeagueDoesNotExist(Exception):
-    pass
-
-
-class InvalidSchemaName(Exception):
-    pass
+from necrobot.util.exception import LeagueAlreadyExists, LeagueDoesNotExist, InvalidSchemaName
 
 
 async def create_league(schema_name: str) -> League:

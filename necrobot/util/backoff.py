@@ -3,9 +3,7 @@
 import random
 import time
 
-
-class TimeoutException(Exception):
-    pass
+from necrobot.util.exception import TimeoutException
 
 
 class ExponentialBackoff:

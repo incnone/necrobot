@@ -1,12 +1,12 @@
 necrobot (schema)
     leagues -- A list of CoNDOR events run on this bot, and information about each.
-        # Info about the event -- should remain the same for a whole event; "const" data
+        # Info about the league -- should remain the same for a whole league; "const" data
         schema_name: varchar(25) PK
             The name of the schema with the event's data (e.g. season5)
         league_name: tinytext
             A descriptive name of the event (e.g. "CoNDOR Season 5")
 
-        # Info about the default match -- can change mid-event; "mutable" data
+        # Info about the default match -- can change mid-league; "mutable" data
         race_type: mediumint UN
             The default race type for a match
         number_of_races: tinyint
@@ -15,9 +15,6 @@ necrobot (schema)
             Whether matches are best-of-X by default
         ranked: bit(1)
             Whether matches are ranked
-
-        # Info about the type of tournament
-        # TODO: weekly vs tourney? automatching algorithm index?
 
     dailies -- each row represents a Daily
         daily_id: int PK
@@ -162,16 +159,9 @@ necrobot (schema)
             Whether the user receives PMs when a new race room opens.
 
 league_name (schema) -- the tables here mirror the corresponding tables in necrobot
-    # TODO
-    tournaments -- info about "bracketed" sub-tourneys in this event (e.g. a final tourney)
-        tournament_id: smallint UN AI PK
-            The tournament's unique ID.
-        number_of_entrants: tinyint UN
-            The number of racers in the bracket.
-        double_elim: bit(1)
-            Whether the tourney is double-elimination.
-
-    tournament_matches -- for each tourney, info about which matches are in it (and where)
+    entrants -- A list of entrants for the league
+        user_id: smallint UN AI PK
+            The user's unique Necrobot ID
 
     # These tables follow the Necrobot format
     matches-- matches in this event

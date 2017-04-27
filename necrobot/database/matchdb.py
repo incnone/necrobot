@@ -1,6 +1,7 @@
 """
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
+import datetime
 
 from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
@@ -276,22 +277,57 @@ async def get_match_race_data(match_id: int) -> MatchRaceData:
         return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)
 
 
-async def get_most_recent_scheduled_match_id_between(racer_1_id: int, racer_2_id: int, channeled=True) -> int or None:
-    params = (racer_1_id, racer_2_id, racer_2_id, racer_1_id)
-    where_query = '((racer_1_id=%s AND racer_2_id=%s) OR (racer_1_id=%s AND racer_2_id=%s))'
-    if channeled:
-        where_query += ' AND `channel_id` IS NOT NULL'
+async def get_match_id(
+        racer_1_id: int,
+        racer_2_id: int,
+        scheduled_time: datetime.datetime = None
+) -> int or None:
+    """Attempt to find a match between the two racers
+    
+    If multiple matches are found, prioritize as follows: 
+        1. Prefer matches closer to scheduled_time, if scheduled_time is not None
+        2. Prefer channeled matches
+        3. Prefer the most recent scheduled match
+        4. Randomly
+    
+    Parameters
+    ----------
+    racer_1_id: int
+        The user ID of the first racer
+    racer_2_id: int
+        The user ID of the second racer
+    scheduled_time: datetime.datetime or None
+        The approximate time to search around, or None to skip this priority
+
+    Returns
+    -------
+    Optional[int]
+        The match ID, if one is found.
+    """
+    param_dict = {
+        'racer1': racer_1_id,
+        'racer2': racer_2_id,
+        'time': scheduled_time
+    }
 
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
-            SELECT match_id 
-            FROM {matches} 
-            WHERE {where_query} 
-            ORDER BY `suggested_time` DESC 
+            SELECT 
+                match_id, 
+                suggested_time, 
+                channel_id,
+                ABS(`suggested_time` - '2017-23-04 12:00:00') AS abs_del
+            FROM {matches}
+            WHERE 
+                (racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)
+            ORDER BY
+                IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
+                `channel_id` IS NULL ASC, 
+                `suggested_time` DESC
             LIMIT 1
-            """.format(matches=tn('matches'), where_query=where_query),
-            params
+            """.format(matches=tn('matches')),
+            param_dict
         )
         row = cursor.fetchone()
         return int(row[0]) if row is not None else None

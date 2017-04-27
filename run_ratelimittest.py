@@ -1,7 +1,9 @@
 import asyncio
 import sys
 
-from necrobot.util import loader, logon, ratelimit
+import run_condorbot
+from necrobot import logon
+from necrobot.util import ratelimit
 
 
 async def on_ready_fn(necrobot):
@@ -24,6 +26,6 @@ async def on_ready_fn(necrobot):
 if __name__ == "__main__":
     logon.logon(
         config_filename='data/condorbot_config',
-        load_config_fn=loader.load_condorbot_config,
+        load_config_fn=run_condorbot.load_condorbot_config,
         on_ready_fn=on_ready_fn
     )

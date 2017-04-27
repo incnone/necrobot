@@ -2,7 +2,7 @@ from necrobot.util.parse import matchparse
 from necrobot.race import raceinfo
 
 from necrobot.race.raceinfo import RaceInfo
-from necrobot.util.parse.exception import ParseException
+from necrobot.util.exception import ParseException
 
 
 class MatchInfo(object):

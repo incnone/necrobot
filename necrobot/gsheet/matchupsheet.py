@@ -60,9 +60,6 @@ class MatchupSheet(object):
                     ))
                     continue
 
-                # type_str = row_values[self.column_data.match_type]  # TODO
-                # tier = row_values[self.column_data.tier]  # TODO
-
                 new_match = await matchutil.make_match(
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,

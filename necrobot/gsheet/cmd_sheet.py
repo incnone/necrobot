@@ -1,3 +1,5 @@
+import googleapiclient.errors
+
 from necrobot.gsheet import sheetutil
 from necrobot.match import matchutil
 
@@ -6,6 +8,7 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 
 from necrobot.gsheet.matchupsheet import MatchupSheet
+from necrobot.util.exception import NecroException
 
 
 class GetGSheet(CommandType):
@@ -64,11 +67,18 @@ class MakeFromSheet(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
-        # TODO error checking somewhere
         matchup_sheet = MatchupSheet(gsheet_id=Config.GSHEET_ID, wks_name=wks_name)
-        await matchup_sheet.initialize()
 
-        matches = await matchup_sheet.get_matches(register=False)
+        try:
+            await matchup_sheet.initialize()
+            matches = await matchup_sheet.get_matches(register=False)
+        except (googleapiclient.errors.Error, NecroException) as e:
+            await self.client.send_message(
+                cmd.channel,
+                '{errortype} while making matchups: `{errorwhat}`'.format(errortype=type(e), errorwhat=e)
+            )
+            return
+
         matches_with_channels = await matchutil.get_matches_with_channels()
         channeled_matchroom_names = dict()
         for match in matches_with_channels:

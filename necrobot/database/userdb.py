@@ -104,21 +104,6 @@ async def get_users_with_all(
     )
 
 
-# TODO These have code smell
-async def get_discord_id(discord_name):
-    async with DBConnect(commit=False) as cursor:
-        params = (discord_name,)
-        cursor.execute(
-            """
-            SELECT discord_id 
-            FROM users 
-            WHERE discord_name=%s
-            """,
-            params)
-        row = cursor.fetchone()
-        return int(row[0]) if row is not None else None
-
-
 async def get_all_ids_matching_prefs(user_prefs):
     if user_prefs.is_empty:
         return []
