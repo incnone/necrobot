@@ -15,7 +15,7 @@ from necrobot import logon
 
 TEST_CONFIG = False
 TEST_PARSE = False
-TEST_SHEETS = False
+TEST_SHEETS = True
 TEST_USER = False
 
 if TEST_CONFIG:

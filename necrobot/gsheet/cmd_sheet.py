@@ -92,7 +92,7 @@ class MakeFromSheet(CommandType):
                     gsheet_id=LeagueMgr().league.gsheet_id,
                     wks_name=wks_name
                 )  # type: MatchupSheet
-            matches = await matchup_sheet.get_matches(register=False)
+            matches = await matchup_sheet.get_matches(register=True)
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
                 cmd.channel,
@@ -122,7 +122,7 @@ class MakeFromSheet(CommandType):
         unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
 
         for match in unchanneled_matches:
-            new_room = await matchutil.make_match_room(match=match, register=True)
+            new_room = await matchutil.make_match_room(match=match, register=False)
             await new_room.send_channel_start_text()
 
         uncreated_str = ''

@@ -17,6 +17,8 @@ class MatchupSheetIndexData(object):
         self._sheet_size = None
 
         # Column indicies
+        self._match_id = None
+
         self._racer_1 = None
         self._racer_2 = None
 
@@ -93,6 +95,10 @@ class MatchupSheetIndexData(object):
         return self.header_row is not None and self.min_column is not None
 
     @property
+    def match_id(self):
+        return self._match_id - self.min_column if self._match_id is not None else None
+
+    @property
     def racer_1(self):
         return self._racer_1 - self.min_column if self._racer_1 is not None else None
 
@@ -129,12 +135,26 @@ class MatchupSheetIndexData(object):
         return self._winner - self.min_column if self._winner is not None else None
 
     @property
+    def bottom_idx(self):
+        return self.footer_row - self.header_row - 2
+
+    @property
     def full_range(self):
         return SheetRange(
             ul_cell=(self.header_row + 1, self.min_column,),
             lr_cell=(self.footer_row - 1, self.max_column,),
             wks_name=self.wks_name
         )
+
+    def get_range(self, left, right, top, bottom) -> SheetRange:
+        return SheetRange(
+            ul_cell=(self.header_row + top + 1, self.min_column + left,),
+            lr_cell=(self.header_row + bottom + 1, self.min_column + right,),
+            wks_name=self.wks_name
+        )
+
+    def get_range_for_column(self, col_idx):
+        return self.get_range(left=col_idx, right=col_idx, top=0, bottom=self.footer_row - 1)
 
     async def get_values(self, spreadsheets):
         range_to_get = self.full_range
@@ -228,7 +248,8 @@ class MatchupSheetIndexData(object):
                     row += 1
                     if self.header_row is None:
                         for col, cell_value in enumerate(row_values):
-                            if self._make_index(cell_value, col + 1):
+                            col += 1
+                            if self._make_index(cell_value, col):
                                 self.header_row = row
                                 col_vals.append(col)
 
@@ -246,7 +267,10 @@ class MatchupSheetIndexData(object):
 
     def _make_index(self, cell_value: str, col: int) -> bool:
         cell_value = cell_value.lower()
-        if cell_value.startswith('racer 1'):
+        if cell_value.startswith('match id'):
+            self._match_id = col
+            return True
+        elif cell_value.startswith('racer 1'):
             self._racer_1 = col
             return True
         elif cell_value.startswith('racer 2'):

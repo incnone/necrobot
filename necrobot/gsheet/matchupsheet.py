@@ -70,6 +70,8 @@ class MatchupSheet(object):
 
         matches = []
         self._not_found_matches = []
+        write_match_ids = self.column_data.match_id is not None and 'register' in kwargs and kwargs['register']
+        match_ids = []
         async with Spreadsheets() as spreadsheets:
             value_range = await self.column_data.get_values(spreadsheets)
 
@@ -99,6 +101,14 @@ class MatchupSheet(object):
                     **kwargs
                 )
                 matches.append(new_match)
+
+                if write_match_ids:
+                    match_ids.append([new_match.match_id])
+
+        if write_match_ids:
+            ids_range = self.column_data.get_range_for_column(self.column_data.match_id)
+            await self._update_cells(sheet_range=ids_range, values=match_ids, raw_input=True)
+
         return matches
 
     async def schedule_match(self, match: Match):
@@ -196,11 +206,10 @@ class MatchupSheet(object):
             console.warning("Can't record score; algorithm assumes the score column is one right of the winner column.")
             return
 
-        sheet_range = SheetRange(
-            ul_cell=(row, self.column_data.winner,),
-            lr_cell=(row, self.column_data.score,),
-            wks_name=self.wks_name
+        sheet_range = self.column_data.get_range(
+            top=row, bottom=row, left=self.column_data.winner, right=self.column_data.score
         )
+
         await self._update_cells(
             sheet_range=sheet_range,
             values=[[winner, '{0}-{1}'.format(winner_wins, loser_wins)]],
@@ -315,7 +324,6 @@ class MatchupSheet(object):
         if not self.column_data.valid:
             raise RuntimeError('Trying to update cells on an invalid MatchupSheet.')
 
-        sheet_range = sheet_range.get_offset_by(self.column_data.header_row + 1, self.column_data.min_column)
         range_str = str(sheet_range)
         value_input_option = 'RAW' if raw_input else 'USER_ENTERED'
         value_range_body = {'values': values}
@@ -345,7 +353,7 @@ class TestMatchupSheet(unittest.TestCase):
         cls.loop.run_until_complete(cls.sheet_1.initialize(wks_name='Sheet1'))
         cls.loop.run_until_complete(cls.sheet_2.initialize(wks_name='Sheet2'))
 
-        cls.match_1 = TestMatchupSheet.loop.run_until.complete(
+        cls.match_1 = TestMatchupSheet.loop.run_until_complete(
             cls._get_match(
                 r1_name='yjalexis',
                 r2_name='macnd',
@@ -353,7 +361,7 @@ class TestMatchupSheet(unittest.TestCase):
                 cawmentator_name='incnone'
             )
         )
-        cls.match_2 = TestMatchupSheet.loop.run_until.complete(
+        cls.match_2 = TestMatchupSheet.loop.run_until_complete(
             cls._get_match(
                 r1_name='elad',
                 r2_name='wilarseny',
@@ -378,7 +386,9 @@ class TestMatchupSheet(unittest.TestCase):
         self.assertEqual(col_data.score, 7)
         self.assertEqual(col_data.vod, 10)
         self.assertEqual(col_data.header_row, 3)
-        self.assertEqual(col_data.footer_row, 8)
+        self.assertEqual(col_data.footer_row, 9)
+        self.assertEqual(col_data.min_column, 1)
+        self.assertEqual(col_data.max_column, 11)
 
         bad_col_data = self.sheet_2.column_data
         self.assertIsNone(bad_col_data.header_row)
@@ -387,7 +397,7 @@ class TestMatchupSheet(unittest.TestCase):
     def test_get_matches(self):
         matches = yield from self.sheet_1.get_matches()
         # noinspection PyTypeChecker
-        self.assertEqual(len(matches), 4)
+        self.assertEqual(len(matches), 5)
         match = matches[0]
         self.assertEqual(match.racer_1.rtmp_name, 'yjalexis')
         self.assertEqual(match.racer_2.rtmp_name, 'macnd')
