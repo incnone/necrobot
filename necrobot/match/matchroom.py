@@ -121,10 +121,6 @@ class MatchRoom(BotChannel):
         return self._channel
 
     @property
-    def client(self) -> discord.Client:
-        return self.necrobot.client
-
-    @property
     def match(self) -> Match:
         return self._match
 

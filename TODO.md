@@ -2,20 +2,10 @@
 
 Current version: 0.10
 
-## Condorbot
-
-- Write match ID to GSheet
-- Auto-register users on match creation
-- Better timezone parsing
-
-### Testing
-
-- Test new user registration
-- Create unit tests for all modules
-
 ## Automatching
 
 - Everything
+- Auto-register users on match creation
 
 ## Ladderbot
 
@@ -27,6 +17,7 @@ Current version: 0.10
 - Uniformize and improve argument parsing
 - level and racetime could be classes
 - Fix circular imports between Necrobot and BotChannel
+- Create unit tests for all modules
 
 ## Bugs
 
@@ -37,6 +28,7 @@ Current version: 0.10
  
 ### Vague or not urgent
 
+- Better timezone parsing
 - More friendly parsing of spaces in command arguments
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - Daily leaderboards will break due to post length if more than ~45 people participate
@@ -46,14 +38,10 @@ Current version: 0.10
 
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?
-- `.notify off` followed by `.e` causes the user to be on the notify list, which may be unintuitive.
 
 ## Features
 
-- Daily needs a big overhaul
 - Configuration of `.racealert` for character-specific, etc
-- Make `.notify on` do the obvious thing
-- add comment possibility to `.death`
 - add more complicated sorts to `.mostraces`
 - add `.forceunready` command
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").

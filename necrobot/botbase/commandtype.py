@@ -9,12 +9,12 @@ from necrobot.config import Config
 
 
 class CommandType(object):
-    execution_id = 0
-    execution_id_lock = asyncio.Lock()
-
     """Abstract base class; a particular command that the bot can interpret, and how to interpret it.
     (For instance, racemodule has a CommandType object called make, for the `.make` command.)
     """
+    execution_id = 0
+    execution_id_lock = asyncio.Lock()
+
     def __init__(self, bot_channel, *args):
         self.command_name_list = args               # the string that calls this command (e.g. 'make')
         self.help_text = 'This command has no help text.'
@@ -24,6 +24,7 @@ class CommandType(object):
 
     @property
     def show_in_help(self) -> bool:
+        """If False, this command type will not show up in the .help list"""
         return not self.testing_command or Config.testing()
 
     @property
@@ -63,7 +64,7 @@ class CommandType(object):
         """
         return name in self.command_name_list
 
-    async def execute(self, command: Command):
+    async def execute(self, command: Command) -> None:
         """If the Command's command is this object's command, calls the (virtual) method _do_execute on it
         
         Parameters
@@ -90,11 +91,20 @@ class CommandType(object):
             await self._do_execute(command)
             console.info('Exit {0}: <ID={1}>'.format(type(self).__name__, this_id))
 
-    async def reparse_as(self, new_name: str, command: Command):
+    async def reparse_as(self, new_name: str, command: Command) -> None:
+        """Make the bot channel re-execute the given Command with a different command name
+        
+        Parameters
+        ----------
+        new_name: str
+            The new name to assign to the command
+        command: Command
+            The command to be reinterpreted
+        """
         command.command = new_name
         await self.bot_channel.execute(command)
 
-    async def _do_execute(self, command: Command):
+    async def _do_execute(self, command: Command) -> None:
         """Pure virtual: determine what this CommandType should do with a given Command.
         
         Parameters

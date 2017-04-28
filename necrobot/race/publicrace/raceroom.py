@@ -70,10 +70,6 @@ class RaceRoom(BotChannel):
     def channel(self):
         return self._channel
 
-    @property
-    def client(self):
-        return self.necrobot.client
-
     # The currently active race. Is not None.
     @property
     def current_race(self):
@@ -208,7 +204,7 @@ class RaceRoom(BotChannel):
             await self.write('Changed rules for the next race.')
             await self.update()
 
-    # Close the necrobot.
+    # Close the channel.
     async def close(self):
         self.necrobot.unregister_bot_channel(self._channel)
         await self.necrobot.client.delete_channel(self._channel)

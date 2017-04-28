@@ -28,20 +28,27 @@ class BotChannel(object):
     def all_commands(self):
         return self.channel_commands + self.default_commands
 
-    def refresh(self, channel):
+    def refresh(self, channel: discord.Channel) -> None:
+        """Called on Necrobot.refresh()
+        
+        Parameters
+        ----------
+        channel
+            The discord.Channel that now points to this BotChannel
+        """
         pass
 
-    # Returns whether the user has access to admin commands for this necrobot
-    def is_admin(self, discord_member) -> bool:
+    def is_admin(self, discord_member: discord.Member) -> bool:
+        """Whether the user can access admin commands for this channel"""
         return self.necrobot.is_admin(discord_member) or self._virtual_is_admin(discord_member)
 
-    # Override to add more admins
-    def _virtual_is_admin(self, discord_member) -> bool:
-        return False
-
-    # Attempts to execute the given command (if a command of its type is in channel_commands)
     async def execute(self, command) -> None:
+        """Attempts to execute the given command (if a command of its type is in channel_commands)"""
         for cmd_type in self.channel_commands:
             await cmd_type.execute(command)
         for cmd_type in self.default_commands:
             await cmd_type.execute(command)
+
+    def _virtual_is_admin(self, discord_member: discord.Member) -> bool:
+        """Override this to add channel-specific admins."""
+        return False
