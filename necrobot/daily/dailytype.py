@@ -4,8 +4,14 @@ from enum import Enum
 # Remark: The value of this enum is used for storing results in the database, and so
 # old values should never be changed or reused.
 class DailyType(Enum):
-    cadence = 0
-    rotating = 1
+    CADENCE = 0
+    ROTATING = 1
+
+    def __str__(self):
+        if self == DailyType.CADENCE:
+            return 'Cadence'
+        elif self == DailyType.ROTATING:
+            return 'rotating-character'
 
 rotating_daily_chars = [
     'Eli',
@@ -22,22 +28,22 @@ rotating_daily_chars = [
 
 
 def character(daily_type, daily_number):
-    if daily_type == DailyType.cadence:
+    if daily_type == DailyType.CADENCE:
         return 'Cadence'
-    elif daily_type == DailyType.rotating:
+    elif daily_type == DailyType.ROTATING:
         return rotating_daily_chars[daily_number % len(rotating_daily_chars)]
 
 
 def leaderboard_header(daily_type, daily_number):
-    if daily_type == DailyType.cadence:
+    if daily_type == DailyType.CADENCE:
         return 'Cadence Speedrun Daily'
-    elif daily_type == DailyType.rotating:
+    elif daily_type == DailyType.ROTATING:
         return 'Rotating Speedrun Daily ({0})'.format(character(daily_type, daily_number))
 
 
 def days_until(charname, daily_number):
     days = 0
-    today_char = character(DailyType.rotating, daily_number)
+    today_char = character(DailyType.ROTATING, daily_number)
 
     found_start = False
     for char in rotating_daily_chars:
@@ -54,33 +60,33 @@ def days_until(charname, daily_number):
             return days
 
 
-def parse_out_type(command_args, daily_number):
+def parse_out_type(command_args: list):
     arg_to_cull = None
     parsed_args = []
     for i, arg in enumerate(command_args):
-        parg = _parse_dailytype_arg(arg, daily_number)
+        parg = _parse_dailytype_arg(arg)
         if parg:
             arg_to_cull = i
             parsed_args.append(parg)
 
     if not parsed_args:
-        return DailyType.cadence
+        return DailyType.CADENCE
     elif len(parsed_args) == 1:
-        del command_args[arg_to_cull]
+        command_args.pop(arg_to_cull)
         parg = parsed_args[0]
         if parg == 'cadence':
-            return DailyType.cadence
+            return DailyType.CADENCE
         elif parg == 'rotating':
-            return DailyType.rotating
+            return DailyType.ROTATING
     else:
         return None
 
 
-def _parse_dailytype_arg(arg, daily_number):
+def _parse_dailytype_arg(arg):
     sarg = arg.lstrip('-').lower()
     if sarg == 'cadence':
         return 'cadence'
-    elif sarg == 'rot' or sarg == 'rotating' or sarg == character(DailyType.rotating, daily_number).lower():
+    elif sarg == 'rot' or sarg == 'rotating':
         return 'rotating'
     else:
         return None

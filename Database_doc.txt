@@ -1,0 +1,172 @@
+necrobot (schema)
+    leagues -- A list of CoNDOR events run on this bot, and information about each.
+        # Info about the league -- should remain the same for a whole league; "const" data
+        schema_name: varchar(25) PK
+            The name of the schema with the event's data (e.g. season5)
+        league_name: tinytext
+            A descriptive name of the event (e.g. "CoNDOR Season 5")
+
+        # Info about the default match -- can change mid-league; "mutable" data
+        race_type: mediumint UN
+            The default race type for a match
+        number_of_races: tinyint
+            The default number of races for a match
+        is_best_of: bit(1)
+            Whether matches are best-of-X by default
+        ranked: bit(1)
+            Whether matches are ranked
+
+    dailies -- each row represents a Daily
+        daily_id: int PK
+            The unique ID for this daily
+        type: tinyint UN PK
+            The 'type' of daily this is (daily types are enumerated in Necrobot code)
+        seed: int
+            The seed for this daily
+        msg_id: bigint UN		# RDBC
+            The discord ID for the leaderboard message
+
+    daily_runs -- each row represents an individual 'run' of a Daily
+        daily_id: int PK (ref daily_data.daily_id)
+            The unique ID for the daily
+        type: tinyint UN PK (ref daily_data.type) 	# RDBC
+            The 'type' of daily
+        discord_id: bigint PK
+            The discord_id of the racer for this daily
+        level: tinyint
+            The level the racer died on (or -2 for a finish, 0 for unknown death, -1 for NOS)
+        time: int
+            The final time of the racer, if applicable
+
+    ladder_data -- information relevant to the Necrobot ranked 1v1 ladder
+        user_id: smallint UN PK 	# RDBC
+            The Necrobot user ID of the racer
+        trueskill_mu: float
+            The racer's TrueSkill mu.
+        trueskill_sigma: float
+            The racer's TrueSkill sigma.
+        default_num_automatches: tinyint UN
+            The default number of automatches the racer wants each week
+        next_num_automatches: tinyint UN
+            The number of automatches the racer wants on the next automatch
+
+    matches -- A list of matches, which are sets of races between the same two players.
+                      CoNDOR-event matches do not go here.
+        match_id: int UN AI PK
+            The unique ID of the match.
+        race_type_id: mediumint UN (ref race_types.race_type_id)
+            The type of races in the match.
+        racer_1_id: smallint UN
+            The first racer's Necrobot UID.
+        racer_2_id: smallint UN
+            The second racer's Necrobot UID.
+        suggested_time: datetime
+            The current suggestion for a time to have the match (or the time of the match, if confirmed).
+        r1_confirmed: bit(1)
+            Whether racer_1 has confirmed the suggested time.
+        r2_confirmed: bit(1)
+            Whether racer_2 has confirmed the suggested time.
+        r1_unconfirmed: bit(1)
+            Whether racer_1 wishes to unconfirm the suggested time.
+        r2_unconfirmed: bit(1)
+            Whether racer_2 wishes to unconfirm the suggested time.
+        is_best_of: bit(1)
+            Whether the match is a best-of-X or a repeat-X.
+        number_of_races: tinyint
+            This is X where the match is a best-of-X or a repeat-X.
+        cawmentator_id: bigint UN
+            The discord ID of the cawmentator for the match.
+        channel_id: bigint UN
+            The discord ID of this match's channel, if one exists.
+        ranked: bit(1)
+            Whether this match is ranked (the racer's ladder rankings will update).
+        sheet_id: bigint
+            If the match was created from a GSheet, the sheetID of the worksheet it was created from.
+
+    match_races -- For each match, a list of races in that match, and data about the relationship.
+        match_id: int UN PK
+            The unique ID for the match for this race.
+        race_number: smallint UN PK
+            The race number for this race (within the match).
+        race_id: int UN (ref races.race_id)
+            The unique ID for this race.
+        winner: tinyint
+            The racer number of the winner of this race (1 or 2, or 0 for NOS). (This is derivable from other data,
+            but is here for convenience.)
+        canceled: bit(1)
+            Whether this race has been canceled.
+        contested: bit(1)
+            Whether this race has been contested.
+
+    races -- A list of races, and data about the kind of race
+        race_id: int UN PK
+            The unique ID for this race.
+        timestamp: datetime
+            The time this race was begun.
+        seed: int
+            The seed for this race, if applicable.
+        condor: bit(1)
+            Whether this race is an official CoNDOR race.
+        private: bit(1)
+            Whether this race was private (not open to everyone). True for all 1v1 match races.
+        type_id: mediumint (ref race_types.type_id)
+            The unique ID for the race type.
+
+    race_runs -- A list of all runs within races (one row per racer per race)
+        race_id: int UN PK
+            The unique ID for the race.
+        discord_id: bigint UN PK
+            The discord ID of the racer.
+        time: int
+            The racer's time, in hundredths of a second (-1 is NOS).
+        rank: tinyint
+            The racer's rank (first, second, third) within the race.
+        igt: int
+            The racer's in-game-time in hundredths of a second, if supplied by the racer (-1 is NOS).
+        level: tinyintuser_
+            The racer the level died on, or: -2 for finish, 0 for unknown death, -1 for NOS.
+        comment: text
+            A comment about the race, if supplied by the racer.
+
+    race_types -- A list of different kinds of races (e.g. "Cadence seeded amplified")
+        type_id: mediumint UN AI PK
+            The unique ID for this race type.
+        character: varchar(50)
+            The name of the character (e.g. "Cadence").
+        descriptor: varchar(100)
+            A custom descriptor for this race type (e.g. "5-shrine")
+        seeded: bit(1)
+            Whether the race is seeded.
+        amplified: bit(1)
+            Whether the race uses the Amplified DLC.
+        seed_fixed: bit(1)
+            Whether the seed for the race was specified (as opposed to randomly generated by the bot).
+
+    users -- Information about the Necrobot's users. At least one of discord_id and rtmp_name should be non-null.
+        user_id: smallint UN AI PK
+            The user's unique Necrobot ID.
+        discord_id: bigint UN (unique)
+            The user's discord ID, if applicable.
+        rtmp_name: varchar(25) (unique)
+            The user's RTMP name, if applicable. Should not be treated as case-sensitive.
+        twitch_name: tinytext
+            The user's twitch name. Should not be treated as case-sensitive.
+        timezone: tinytext
+            A string representing the user's timezone (e.g. 'America/New_York').
+        user_info: text
+            Custom user information, entered by the user.
+        daily_alert: bit(1)
+            Whether the user receives Necrobot Daily alert PMs.
+        race_alert: bit(1)
+            Whether the user receives PMs when a new race room opens.
+
+league_name (schema) -- the tables here mirror the corresponding tables in necrobot
+    entrants -- A list of entrants for the league
+        user_id: smallint UN AI PK
+            The user's unique Necrobot ID
+
+    # These tables follow the Necrobot format
+    matches -- matches in this event
+    match_races -- races in this event, and data about how they relate to the match they're in
+    races -- races in this event, all non-match-related data
+    race_runs -- each row is a racer's data for an individual race

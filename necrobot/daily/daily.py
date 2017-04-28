@@ -1,12 +1,18 @@
-from enum import Enum
 import asyncio
 import datetime
+import discord
+from enum import Enum
 
-from . import dailytype
-from ..race import racetime
-from ..util import level, seedgen
-from ..util.config import Config
-from ..necrodb import NecroDB
+from necrobot.database import dailydb, userdb
+from necrobot.daily import dailytype
+from necrobot.util import level, seedgen, racetime
+from necrobot.user import userutil
+
+from necrobot.config import Config
+from necrobot.daily.dailytype import DailyType
+from necrobot.botbase.necrobot import Necrobot
+from necrobot.user.userprefs import UserPrefs
+from necrobot.util import timestr
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 
@@ -19,78 +25,92 @@ class DailyUserStatus(Enum):
 
 
 class Daily(object):
+    """
+    Represents a kind of speedrun daily, e.g. the Cadence daily, or the Rotating-char daily. (Is not anchored to
+    a particular day.)
+    """
+
     @staticmethod
-    def daily_to_date(daily_number):
+    def daily_to_date(daily_number: int) -> datetime.date:
         return DATE_ZERO + datetime.timedelta(days=daily_number)
 
     @staticmethod
-    def daily_to_datestr(daily_number):
+    def daily_to_datestr(daily_number: int) -> str:
         return Daily.daily_to_date(daily_number).strftime("%d %B %Y")
 
     @staticmethod
-    def daily_to_shortstr(daily_number):
+    def daily_to_shortstr(daily_number: int) -> str:
         return Daily.daily_to_date(daily_number).strftime("%d %b")
 
-    def __init__(self, daily_manager, daily_type):
-        self._daily_manager = daily_manager
+    def __init__(self, daily_type: DailyType):
         self._daily_type = daily_type
         self._daily_update_future = asyncio.ensure_future(self._daily_update())
+        self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
 
     def close(self):
         self._daily_update_future.cancel()
 
     @property
-    def daily_type(self):
+    def client(self) -> discord.Client:
+        return Necrobot().client
+
+    @property
+    def daily_type(self) -> DailyType:
+        """The type of this Daily"""
         return self._daily_type
 
     @property
     def necrobot(self):
-        return self._daily_manager.necrobot
+        return Necrobot()
 
-    # Return today's daily number
     @property
-    def today_number(self):
-        return self._daily_manager.today_number
+    def today_number(self) -> int:
+        """The number for today's daily (days since DATE_ZERO)"""
+        return (self.today_date - DATE_ZERO).days
 
-    # Return the date for today's daily (as a datetime.datetime)
     @property
-    def today_date(self):
-        return self._daily_manager.today_date
+    def today_date(self) -> datetime.date:
+        """The date for today's daily"""
+        return datetime.datetime.utcnow().date()
 
-    # Return a datetime.timedelta giving the time until the next daily
     @property
-    def time_until_next(self):
+    def time_until_next(self) -> datetime.timedelta:
+        """The time until the next daily begins"""
         now = datetime.datetime.utcnow()
         tomorrow = datetime.datetime.replace(now + datetime.timedelta(days=1), hour=0, minute=0, second=0)
         return tomorrow - now
 
     # Returns whether we're in the grace period between daily rollouts
     @property
-    def within_grace_period(self):
+    def within_grace_period(self) -> bool:
+        """Whether we're in the grace period after a new daily begins, but before the old has stopped accepting
+        submissions"""
         utc_now = datetime.datetime.utcnow()
-        return (utc_now.time().hour * 60) + utc_now.time().minute <= Config.DAILY_GRACE_PERIOD
+        utc_rollover = utc_now.replace(hour=0, minute=0, second=0)
+        return utc_now - utc_rollover <= Config.DAILY_GRACE_PERIOD
 
-    # Returns a string giving the remaining time in the grace period
     @property
-    def daily_grace_timestr(self):
+    def daily_grace_timestr(self) -> str:
+        """The remaining time in the grace period"""
         utc_now = datetime.datetime.utcnow()
-        return self._format_as_timestr(0, Config.DAILY_GRACE_PERIOD - utc_now.hour * 60 - utc_now.minute)
+        utc_grace_end = utc_now.replace(hour=0, minute=0, second=0) + Config.DAILY_GRACE_PERIOD
+        return self._format_as_timestr(utc_grace_end - utc_now)
 
-    # Returns a string giving the time until the next daily
     @property
-    def next_daily_timestr(self):
+    def next_daily_timestr(self) -> str:
+        """Time until the next daily"""
+        return self._format_as_timestr(self.time_until_next)
+
+    @property
+    def daily_close_timestr(self) -> str:
+        """Time until the current daily closes"""
         utc_now = datetime.datetime.utcnow()
-        return self._format_as_timestr(23 - utc_now.hour, 60 - utc_now.minute)
+        utc_tomorrow = (utc_now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0)
+        return self._format_as_timestr(utc_tomorrow - utc_now)
 
-    # Returns a string giving the time until the current daily closes
     @property
-    def daily_close_timestr(self):
-        utc_now = datetime.datetime.utcnow()
-        return self._format_as_timestr(24 - utc_now.hour, 60 - utc_now.minute)
-
-    # Returns a string with the current daily's date and time until the next daily.
-    @property
-    def daily_time_info_str(self):
+    def daily_time_info_str(self) -> str:
+        """Current daily's date and time until next daily"""
         date_str = datetime.datetime.utcnow().strftime("%B %d")
         if self.within_grace_period:
             return 'The {0} daily is currently active. Yesterday\'s daily is still open for submissions, ' \
@@ -99,26 +119,24 @@ class Daily(object):
             return 'The {0} daily is currently active. The next daily will become available in {1}. Today\'s ' \
                    'daily will close in {2}.'.format(date_str, self.next_daily_timestr, self.daily_close_timestr)
 
-    # Returns true if the given daily is still open for submissions.
-    def is_open(self, daily_number):
+    def is_open(self, daily_number: int) -> bool:
+        """True if the given daily is still accepting submissions"""
         today = self.today_number
         return today == daily_number or (today == int(daily_number)+1 and self.within_grace_period)
 
-    # Returns the header for the daily leaderboard, given the type
-    def leaderboard_header(self, daily_number):
+    def leaderboard_header(self, daily_number: int) -> str:
+        """The header for the leaderboard"""
         return "{0} -- {1}".format(
             dailytype.leaderboard_header(self.daily_type, daily_number),
             self.daily_to_datestr(daily_number))
 
-    # Return the text for the daily with the given daily number
-    def leaderboard_text(self, daily_number, display_seed=False):
+    async def leaderboard_text(self, daily_number: int, display_seed=False):
+        """The text (results) for the leaderboard"""
         text = "``` \n"
         text += self.leaderboard_header(daily_number) + '\n'
 
-        params = (daily_number, self.daily_type.value)
-
         if display_seed:
-            for row in NecroDB().get_daily_seed(params):
+            for row in await dailydb.get_daily_seed(daily_id=daily_number, daily_type=self.daily_type.value):
                 text += "Seed: {}\n".format(row[0])
                 break
 
@@ -129,7 +147,7 @@ class Daily(object):
         rank_to_display = int(1)
         reverse_levelsort = dailytype.character(daily_type=self.daily_type, daily_number=daily_number) == 'Aria'
         daily_times = sorted(
-                NecroDB().get_daily_times(params),
+                await dailydb.get_daily_times(daily_id=daily_number, daily_type=self.daily_type.value),
                 key=lambda x: level.level_sortval(int(x[1]), reverse=reverse_levelsort),
                 reverse=True)
 
@@ -165,47 +183,54 @@ class Daily(object):
         text += '```'
         return text
 
-    # True if the given user has submitted for the given daily
-    def has_submitted(self, daily_number, user_id):
-        params = (user_id, daily_number, self.daily_type.value)
-        return NecroDB().has_submitted_daily(params)
+    async def has_submitted(self, daily_number: int, user_id: int) -> bool:
+        """True if the given user has submitted for the given daily"""
+        return await dailydb.has_submitted_daily(
+            user_id=user_id,
+            daily_id=daily_number,
+            daily_type=self.daily_type.value)
 
-    # True if the given user has registered for the given daily
-    # DB_acc
-    def has_registered(self, daily_number, user_id):
-        params = (user_id, daily_number, self.daily_type.value)
-        return NecroDB().has_registered_daily(params)
+    async def has_registered(self, daily_number: int, user_id: int) -> bool:
+        """True if the given user has registered for the given daily"""
+        return await dailydb.has_registered_daily(
+            user_id=user_id,
+            daily_id=daily_number,
+            daily_type=self.daily_type.value)
 
-    # Attempts to register the given user for the given daily
-    # DB_acc
-    def register(self, daily_number, user_id):
-        if self.has_registered(daily_number, user_id):
+    async def register(self, daily_number: int, user_id: int) -> bool:
+        """Attempts to register the given user for the given daily
+        
+        Returns
+        -------
+        bool
+            True if the registration was successful
+        """
+        if await self.has_registered(daily_number, user_id):
             return False
         else:
-            params = (user_id, daily_number, self.daily_type.value, -1, -1)
-            NecroDB().register_daily(params)
+            user = await userutil.get_user(user_id=user_id, register=True)
+
+            await dailydb.register_daily(
+                user_id=user.user_id,
+                daily_id=daily_number,
+                daily_type=self.daily_type.value)
             return True
 
-    # Returns the most recent daily for which the user is registered (or 0 if no such)
-    # DB_acc
-    def registered_daily(self, user_id):
-        params = (user_id, self.daily_type.value)
-        for row in NecroDB().registered_daily(params):
-            return row[0]
-        return 0
+    async def registered_daily(self, user_id: int) -> int:
+        """Returns the most recent daily for which the user is registered (or 0 if no such)"""
+        return await dailydb.registered_daily(user_id=user_id, daily_type=self.daily_type.value)
 
-    # Returns the most recent daily for which the user has submitted (or 0 if no such)
-    # DB_acc
-    def submitted_daily(self, user_id):
-        params = (user_id, self.daily_type.value,)
-        for row in NecroDB().submitted_daily(params):
-            if row[1] != -1:
-                return row[0]
-        return 0
+    async def submitted_daily(self, user_id: int) -> int:
+        """Returns the most recent daily for which the user has submitted (or 0 if no such)"""
+        return await dailydb.submitted_daily(user_id=user_id, daily_type=self.daily_type.value)
 
-    # Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.
-    # Returns a string whose content confirms parse, or the empty string if parse fails.
-    def parse_submission(self, daily_number, user, args):
+    async def parse_submission(self, daily_number: int, user_id: int, args: list) -> str:
+        """Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.
+
+        Returns
+        -------
+            A string whose content confirms parse, or the empty string if parse fails.
+        """
         lv = level.LEVEL_NOS
         time = -1
         ret_str = ''
@@ -225,84 +250,121 @@ class Daily(object):
                     ret_str = 'finished in {}'.format(racetime.to_str(time))
 
         if not lv == level.LEVEL_NOS:    # parse succeeded
-            self.submit_to_daily(daily_number, user, lv, time)
+            await self.submit_to_daily(daily_number, user_id, lv, time)
             return ret_str
         else:
             return ''
 
-    # Submit a run to the given daily number
-    def submit_to_daily(self, daily_number, user, lv, time):
-        params = (user.id, daily_number, self.daily_type.value, lv, time,)
-        NecroDB().register_daily(params)
+    async def submit_to_daily(self, daily_number: int, user_id: int, lv: int, time: int) -> None:
+        """Submit a run to the given daily number"""
+        await dailydb.register_daily(
+            user_id=user_id,
+            daily_id=daily_number,
+            daily_type=self.daily_type.value,
+            level=lv,
+            time=time)
 
-    # Delete a run from the daily
-    def delete_from_daily(self, daily_number, user):
-        params = (-1, user.id, daily_number, self.daily_type.value)
-        NecroDB().delete_from_daily(params)
+    async def delete_from_daily(self, daily_number: int, user_id: int) -> None:
+        """Delete a run from the daily"""
+        await dailydb.delete_from_daily(
+            user_id=user_id,
+            daily_id=daily_number,
+            daily_type=self.daily_type.value)
 
-    # Return the seed for the given daily number. Create seed if it doesn't already exist.
-    def get_seed(self, daily_number):
-        params = (daily_number, self.daily_type.value)
-
-        for row in NecroDB().get_daily_seed(params):
+    async def get_seed(self, daily_number: int) -> int:
+        """Return the seed for the given daily number. (Creates seed if it doesn't already exist.)"""
+        for row in await dailydb.get_daily_seed(daily_id=daily_number, daily_type=self.daily_type.value):
             return row[0]
 
         # if we made it here, there was no entry in the table, so make one
         today_seed = seedgen.get_new_seed()
-        values = (daily_number, self.daily_type.value, today_seed, 0,)
-        NecroDB().create_daily(values)
+        await dailydb.create_daily(
+            daily_id=daily_number,
+            daily_type=self.daily_type.value,
+            seed=today_seed)
         return today_seed
 
-    # Registers the given Message ID in the database for the given daily number
-    def register_message(self, daily_number, message_id):
-        params = (daily_number, self.daily_type.value)
-        for _ in NecroDB().get_daily_seed(params):
+    async def register_message(self, daily_number: int, message_id: int) -> None:
+        """Registers the given Message ID in the database for the given daily number"""
+        for _ in await dailydb.get_daily_seed(daily_id=daily_number, daily_type=self.daily_type.value):
             # if here, there was an entry in the table, so we will update it
-            values = (message_id, daily_number, self.daily_type.value)
-            NecroDB().update_daily(values)
+            await dailydb.register_daily_message(
+                daily_id=daily_number,
+                daily_type=self.daily_type.value,
+                message_id=message_id)
             return
 
-        # else, there was no entry, so make one
+        # else, there was no entry, so make a new daily
         today_seed = seedgen.get_new_seed()
-        values = (daily_number, self.daily_type.value, today_seed, message_id,)
-        NecroDB().create_daily(values)
+        await dailydb.create_daily(
+            daily_id=daily_number,
+            daily_type=self.daily_type.value,
+            seed=today_seed,
+            message_id=message_id)
 
-    # Returns the Discord Message ID for the leaderboard entry for the given daily number
-    def get_message_id(self, daily_number):
-        params = (daily_number, self.daily_type.value)
-        for row in NecroDB().get_daily_message_id(params):
-            return int(row[0])
-        return None
+    async def get_message_id(self, daily_number) -> int:
+        """Returns the Discord Message ID for the leaderboard entry for the given daily number"""
+        return await dailydb.get_daily_message_id(daily_id=daily_number, daily_type=self.daily_type.value)
 
-    # Return a DailyUserStatus corresponding to the status of the current daily for the given user
-    def user_status(self, user_id, daily_number):
+    async def user_status(self, user_id: int, daily_number: int) -> DailyUserStatus:
+        """Return a DailyUserStatus corresponding to the status of the current daily for the given user"""
         if not self.is_open(daily_number):
             return DailyUserStatus.closed
-        elif self.has_submitted(daily_number, user_id):
+        elif await self.has_submitted(daily_number, user_id):
             return DailyUserStatus.submitted
-        elif self.has_registered(daily_number, user_id):
+        elif await self.has_registered(daily_number, user_id):
             return DailyUserStatus.registered
         else:
             return DailyUserStatus.unregistered
 
-    # Coroutine running in the background; after it becomes a new daily, will automatically PM out the seeds to
-    # users that have that preference.
-    async def _daily_update(self):
+    async def update_leaderboard(self, daily_number: int, display_seed: bool = False) -> None:
+        """Update an existing leaderboard message for the given daily number"""
+        msg_id = await self.get_message_id(daily_number)
+
+        # If no message, make one
+        if not msg_id:
+            text = await self.leaderboard_text(daily_number, display_seed)
+            msg = await self.client.send_message(self._leaderboard_channel, text)
+            await self.register_message(daily_number, msg.id)
+        else:
+            async for msg in self.client.logs_from(self._leaderboard_channel, limit=10):
+                if int(msg.id) == msg_id:
+                    await self.client.edit_message(msg, await self.leaderboard_text(daily_number, display_seed))
+
+    async def on_new_daily(self) -> None:
+        """Run when a new daily happens"""
+        # Make the leaderboard message
+        text = await self.leaderboard_text(self.today_number, display_seed=False)
+        msg = await self.client.send_message(self._leaderboard_channel, text)
+        await self.register_message(self.today_number, msg.id)
+
+        # Update yesterday's leaderboard with the seed
+        await self.update_leaderboard(self.today_number - 1, display_seed=True)
+
+        # PM users with the daily_alert preference
+        auto_pref = UserPrefs(daily_alert=True, race_alert=None)
+        for member_id in await userdb.get_all_discord_ids_matching_prefs(auto_pref):
+            member = self.necrobot.find_member(discord_id=member_id)
+            if member is not None:
+                await self.register(self.today_number, member.id)
+                await self.client.send_message(
+                    member,
+                    "({0}) Today's {2} speedrun seed: {1}".format(
+                        self.today_date.strftime("%d %b"),
+                        await self.get_seed(self.today_number),
+                        dailytype.character(self.daily_type, self.today_number)))
+
+    async def _daily_update(self) -> None:
+        """Call DailyManager's on_new_daily coroutine when this daily rolls over"""
         while True:
             await asyncio.sleep(self.time_until_next.total_seconds() + 1)  # sleep until next daily
-            await self._daily_manager.on_new_daily(self)
+            await self.on_new_daily()
             await asyncio.sleep(120)  # buffer b/c i'm worried for some reason about idk
 
-    # Formats the given hours, minutes into a string
     @staticmethod
-    def _format_as_timestr(hours, minutes):
-        while minutes >= 60:
-            minutes -= 60
-            hours += 1
-
-        if minutes == 0 and hours == 0:
+    def _format_as_timestr(td: datetime.timedelta) -> str:
+        """Format the given timedelta into a string"""
+        if td < datetime.timedelta(minutes=1):
             return 'under a minute'
         else:
-            min_str = 'minute' if minutes == 1 else 'minutes'
-            hr_str = 'hour' if hours == 1 else 'hours'
-            return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)
+            return timestr.timedelta_to_str(td)
