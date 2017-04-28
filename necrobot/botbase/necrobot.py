@@ -3,7 +3,6 @@ import typing
 
 from necrobot.test import msgqueue
 
-from necrobot.database import userdb
 from necrobot.util import console
 
 from necrobot.config import Config
@@ -55,6 +54,17 @@ class Necrobot(object, metaclass=Singleton):
     def staff_role(self) -> typing.Optional[discord.Role]:
         return self.find_role(Config.STAFF_ROLE)
 
+    def clean_init(self):
+        self.client = None
+        self.server = None
+        self._main_discord_channel = None
+        self._pm_bot_channel = None
+        self._bot_channels.clear()
+        self._managers.clear()
+        self._initted = False
+        self._quitting = False
+        self._load_config_fn = None
+
     def ready_client_events(self, client: discord.Client, load_config_fn, on_ready_fn=None):
         """Set the code for event-handling in the discord.Client"""
         @client.event
@@ -80,28 +90,28 @@ class Necrobot(object, metaclass=Singleton):
             if Config.testing():
                 await msgqueue.send_message(message)
 
-        @client.event
-        async def on_member_join(member: discord.Member):
-            """Called when anyone joins the server"""
-            if not self._initted:
-                return
-
-            await userdb.register_discord_user(member)
-
-        @client.event
-        async def on_member_update(member_before: discord.Member, member_after: discord.Member):
-            """Called when anyone updates their discord profile"""
-            if not self._initted:
-                return
-
-            if member_before.display_name != member_after.display_name:
-                await userdb.register_discord_user(member_after)
+        # @client.event
+        # async def on_member_join(member: discord.Member):
+        #     """Called when anyone joins the server"""
+        #     if not self._initted:
+        #         return
+        #
+        #     await userdb.register_discord_user(member)
+        #
+        # @client.event
+        # async def on_member_update(member_before: discord.Member, member_after: discord.Member):
+        #     """Called when anyone updates their discord profile"""
+        #     if not self._initted:
+        #         return
+        #
+        #     if member_before.display_name != member_after.display_name:
+        #         await userdb.register_discord_user(member_after)
 
     def set_main_channel(self, discord_channel: discord.Channel) -> None:
         """Sets the bots "main" channel (returned by main_channel)"""
         self._main_discord_channel = discord_channel
 
-    def get_bot_channel(self, discord_channel) -> None:
+    def get_bot_channel(self, discord_channel):
         """Returns the BotChannel corresponding to the given discord.Channel, if one exists"""
         if discord_channel.is_private:
             return self._pm_bot_channel
@@ -164,7 +174,8 @@ class Necrobot(object, metaclass=Singleton):
 
         if discord_name is not None:
             for member in self.server.members:
-                if member.display_name.lower() == discord_name.lower():
+                if member.display_name.lower() == discord_name.lower() \
+                        or member.name.lower() == discord_name.lower():
                     return member
         elif discord_id is not None:
             for member in self.server.members:
@@ -257,7 +268,6 @@ class Necrobot(object, metaclass=Singleton):
         """Called on shutdown"""
         for manager in self._managers:
             await manager.close()
-        self._bot_channels.clear()
 
     async def logout(self) -> None:
         """Log out of discord"""
@@ -266,7 +276,7 @@ class Necrobot(object, metaclass=Singleton):
         await self.client.logout()
 
     async def reboot(self) -> None:
-        """Log out of discord without setting self._quitting flag"""
+        """Log out of discord without cleaning up or setting self._quitting flag"""
         await self.cleanup()
         await self.client.logout()
 

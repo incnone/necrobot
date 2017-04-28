@@ -628,6 +628,7 @@ class Race(object):
                 num_still_racing += 1
 
         if num_still_racing <= self._config.auto_forfeit:
+            await self.forfeit_all_remaining(mute=True)
             await self._end_race()
 
     # Ends the race, and begins a countdown until the results are 'finalized'

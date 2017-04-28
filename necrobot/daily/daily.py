@@ -12,6 +12,7 @@ from necrobot.config import Config
 from necrobot.daily.dailytype import DailyType
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.user.userprefs import UserPrefs
+from necrobot.util import timestr
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 
@@ -185,14 +186,14 @@ class Daily(object):
     async def has_submitted(self, daily_number: int, user_id: int) -> bool:
         """True if the given user has submitted for the given daily"""
         return await dailydb.has_submitted_daily(
-            discord_id=user_id,
+            user_id=user_id,
             daily_id=daily_number,
             daily_type=self.daily_type.value)
 
     async def has_registered(self, daily_number: int, user_id: int) -> bool:
         """True if the given user has registered for the given daily"""
         return await dailydb.has_registered_daily(
-            discord_id=user_id,
+            user_id=user_id,
             daily_id=daily_number,
             daily_type=self.daily_type.value)
 
@@ -204,10 +205,10 @@ class Daily(object):
         bool
             True if the registration was successful
         """
-        if self.has_registered(daily_number, user_id):
+        if await self.has_registered(daily_number, user_id):
             return False
         else:
-            user = await userutil.get_user(discord_id=user_id, register=True)
+            user = await userutil.get_user(user_id=user_id, register=True)
 
             await dailydb.register_daily(
                 user_id=user.user_id,
@@ -217,13 +218,13 @@ class Daily(object):
 
     async def registered_daily(self, user_id: int) -> int:
         """Returns the most recent daily for which the user is registered (or 0 if no such)"""
-        return await dailydb.registered_daily(discord_id=user_id, daily_type=self.daily_type.value)
+        return await dailydb.registered_daily(user_id=user_id, daily_type=self.daily_type.value)
 
     async def submitted_daily(self, user_id: int) -> int:
         """Returns the most recent daily for which the user has submitted (or 0 if no such)"""
-        return await dailydb.submitted_daily(discord_id=user_id, daily_type=self.daily_type.value)
+        return await dailydb.submitted_daily(user_id=user_id, daily_type=self.daily_type.value)
 
-    def parse_submission(self, daily_number: int, user_id: int, args: list) -> str:
+    async def parse_submission(self, daily_number: int, user_id: int, args: list) -> str:
         """Attempt to parse args as a valid daily submission, and submits for the daily if sucessful.
 
         Returns
@@ -246,10 +247,10 @@ class Daily(object):
                 time = racetime.from_str(args[0])
                 if not time == -1:
                     lv = level.LEVEL_FINISHED
-                    ret_str = 'finished in {}'.format(racetime)
+                    ret_str = 'finished in {}'.format(racetime.to_str(time))
 
         if not lv == level.LEVEL_NOS:    # parse succeeded
-            self.submit_to_daily(daily_number, user_id, lv, time)
+            await self.submit_to_daily(daily_number, user_id, lv, time)
             return ret_str
         else:
             return ''
@@ -266,7 +267,7 @@ class Daily(object):
     async def delete_from_daily(self, daily_number: int, user_id: int) -> None:
         """Delete a run from the daily"""
         await dailydb.delete_from_daily(
-            discord_id=user_id,
+            user_id=user_id,
             daily_id=daily_number,
             daily_type=self.daily_type.value)
 
@@ -363,16 +364,7 @@ class Daily(object):
     @staticmethod
     def _format_as_timestr(td: datetime.timedelta) -> str:
         """Format the given timedelta into a string"""
-        seconds = td.total_seconds()
-        hours, rem = divmod(seconds, 3600)
-        minutes, seconds = divmod(rem, 60)
-
-        if minutes == 0 and hours == 0:
+        if td < datetime.timedelta(minutes=1):
             return 'under a minute'
         else:
-            min_str = 'minute' if minutes == 1 else 'minutes'
-            hr_str = 'hour' if hours == 1 else 'hours'
-            if hours == 0:
-                return '{0} {1}'.format(minutes, min_str)
-            else:
-                return '{0} {1}, {2} {3}'.format(hours, hr_str, minutes, min_str)
+            return timestr.timedelta_to_str(td)

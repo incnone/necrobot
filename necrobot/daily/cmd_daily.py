@@ -6,6 +6,7 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.daily.dailymgr import DailyMgr
 from necrobot.daily.daily import Daily
 from necrobot.daily.dailytype import DailyType
+from necrobot.user import userutil
 
 
 class DailyCommandType(CommandType):
@@ -59,7 +60,8 @@ class DailyResubmit(DailyCommandType):
         return 'Resubmit for daily.'
 
     async def _daily_do_execute(self, cmd, daily):
-        last_submitted = await daily.submitted_daily(cmd.author.id)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        last_submitted = await daily.submitted_daily(user.user_id)
         character = dailytype.character(daily.daily_type, last_submitted)
 
         if last_submitted == 0:
@@ -74,7 +76,9 @@ class DailyResubmit(DailyCommandType):
                     daily.daily_to_shortstr(last_submitted),
                     character))
         else:
-            submission_string = await daily.parse_submission(last_submitted, cmd.author, cmd.args)
+            submission_string = await daily.parse_submission(
+                daily_number=last_submitted, user_id=user.user_id, args=cmd.args
+            )
             if submission_string:   # parse succeeded
                 await daily.update_leaderboard(last_submitted)
                 await self.client.send_message(
@@ -109,33 +113,6 @@ class DailyRules(DailyCommandType):
                 character))
 
 
-class DailySchedule(DailyCommandType):
-    def __init__(self, daily_module):
-        DailyCommandType.__init__(self, daily_module, 'dailyschedule')
-        self.help_text = 'See the upcoming scheduled characters.'
-
-    async def _daily_do_execute(self, cmd, _):
-        char_list_str = ''
-        today_number = DailyMgr().daily(DailyType.ROTATING).today_number
-        today_char = dailytype.character(DailyType.ROTATING, today_number)
-        char_found = False
-        for charname in dailytype.rotating_daily_chars:
-            if charname == today_char:
-                char_found = True
-            if char_found:
-                char_list_str += charname + ' -- '
-        for charname in dailytype.rotating_daily_chars:
-            if charname == today_char:
-                break
-            else:
-                char_list_str += charname + ' -- '
-        char_list_str = char_list_str[:-4]
-        await self.client.send_message(
-            cmd.channel,
-            'Upcoming characters, starting today: {0}.'.format(char_list_str)
-        )
-
-
 class DailySeed(DailyCommandType):
     def __init__(self, daily_module):
         DailyCommandType.__init__(self, daily_module, 'dailyseed')
@@ -147,19 +124,19 @@ class DailySeed(DailyCommandType):
         return 'Get daily seed.'
 
     async def _daily_do_execute(self, cmd, daily):
-        user_id = int(cmd.author.id)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
 
         today = daily.today_number
         today_date = daily.daily_to_date(today)
 
         character = dailytype.character(daily.daily_type, today)
 
-        if await daily.has_submitted(today, user_id):
+        if await daily.has_submitted(today, user.user_id):
             await self.client.send_message(
                 cmd.channel,
                 "{0}: You have already submitted for today's {1} daily.".format(cmd.author.mention, character))
         else:
-            await daily.register(today, user_id)
+            await daily.register(today, user.user_id)
             seed = await daily.get_seed(today)
             await self.client.send_message(
                 cmd.author,
@@ -177,6 +154,7 @@ class DailyStatus(DailyCommandType):
         return "Your status for today's dailies."
 
     async def _daily_do_execute(self, cmd, _):
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
         status = ''
 
         for dtype in DailyType:
@@ -184,9 +162,9 @@ class DailyStatus(DailyCommandType):
             today_number = daily.today_number
             character = dailytype.character(dtype, today_number)
             old_char = dailytype.character(dtype, today_number - 1)
-            last_registered = await daily.registered_daily(cmd.author.id)
+            last_registered = await daily.registered_daily(user.user_id)
             days_since_registering = today_number - last_registered
-            submitted = await daily.has_submitted(last_registered, cmd.author.id)
+            submitted = await daily.has_submitted(last_registered, user.user_id)
 
             if days_since_registering == 1 and not submitted and daily.within_grace_period:
                 status += "You have not gotten today's {1} seed. You may still submit for yesterday's {2} daily, " \
@@ -219,7 +197,9 @@ class DailySubmit(DailyCommandType):
         return 'Submit daily result.'
 
     async def _daily_do_execute(self, cmd, daily):
-        daily_number = await daily.registered_daily(cmd.author.id)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+
+        daily_number = await daily.registered_daily(user.user_id)
         character = dailytype.character(daily.daily_type, daily_number)
 
         if daily_number == 0:
@@ -239,7 +219,7 @@ class DailySubmit(DailyCommandType):
                     character))
             return
 
-        if await daily.has_submitted(daily_number, cmd.author.id):
+        if await daily.has_submitted(daily_number, user.user_id):
             await self.client.send_message(
                 cmd.channel,
                 "{0}: You have already submitted for the {1} {2} daily. "
@@ -249,7 +229,7 @@ class DailySubmit(DailyCommandType):
                     character))
             return
 
-        submission_string = await daily.parse_submission(daily_number, cmd.author, cmd.args)
+        submission_string = await daily.parse_submission(daily_number=daily_number, user_id=user.user_id, args=cmd.args)
         if not submission_string:
             await self.client.send_message(
                 cmd.channel,
@@ -283,7 +263,9 @@ class DailyUnsubmit(DailyCommandType):
         return 'Retract most recent submission.'
 
     async def _daily_do_execute(self, cmd, daily):
-        daily_number = await daily.submitted_daily(cmd.author.id)
+        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+
+        daily_number = await daily.submitted_daily(user.user_id)
         character = dailytype.character(daily.daily_type, daily_number)
 
         if daily_number == 0:
@@ -304,7 +286,7 @@ class DailyUnsubmit(DailyCommandType):
             )
             return
 
-        await daily.delete_from_daily(daily_number, cmd.author)
+        await daily.delete_from_daily(daily_number, user.user_id)
         await self.client.send_message(
             cmd.channel,
             "Deleted your daily submission for {0}, {1}.".format(
@@ -317,18 +299,13 @@ class DailyUnsubmit(DailyCommandType):
 
 class DailyWhen(DailyCommandType):
     def __init__(self, daily_module):
-        DailyCommandType.__init__(self, daily_module, 'dailywhen', 'dailyinfo')
-        self.help_text = 'Get the date for the current Cadence daily, and the time until the next daily opens. Use ' \
-                         'the `-rot` flag to get information (including character) for the rotating-character daily.' \
-                         'Calling `.dailywhen coda` will tell you when the next Coda daily is (likewise for other ' \
-                         'characters).'
-
-    @property
-    def short_help_text(self):
-        return 'Daily time info.'
+        DailyCommandType.__init__(self, daily_module, 'dailywhen', 'dailyschedule')
+        self.help_text = 'Get upcoming daily characters. Use `.{0} charname` to find out when the next daily for ' \
+                         'the given character is.'
 
     async def _daily_do_execute(self, cmd, daily):
         today_number = daily.today_number
+
         for arg in cmd.args:
             charname = arg.lstrip('-').capitalize()
             if charname in dailytype.rotating_daily_chars:
@@ -357,10 +334,26 @@ class DailyWhen(DailyCommandType):
                     )
                     return
 
-        if daily.daily_type == DailyType.ROTATING:
-            await self.client.send_message(
-                cmd.channel,
-                "Today's rotating character is {0}.".format(dailytype.character(daily.daily_type, today_number)))
+        # If here, there were no args, so get a schedule
+        char_list_str = ''
+        today_number = DailyMgr().daily(DailyType.ROTATING).today_number
+        today_char = dailytype.character(DailyType.ROTATING, today_number)
+        char_found = False
+        for charname in dailytype.rotating_daily_chars:
+            if charname == today_char:
+                char_found = True
+            if char_found:
+                char_list_str += charname + ' -- '
+        for charname in dailytype.rotating_daily_chars:
+            if charname == today_char:
+                break
+            else:
+                char_list_str += charname + ' -- '
+        char_list_str = char_list_str[:-4]
+        await self.client.send_message(
+            cmd.channel,
+            'Upcoming characters, starting today: {0}.'.format(char_list_str)
+        )
 
 
 # For debugging/testing

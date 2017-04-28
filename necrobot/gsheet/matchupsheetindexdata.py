@@ -14,6 +14,7 @@ class MatchupSheetIndexData(object):
         self.gsheet_id = gsheet_id
         self.wks_name = None
         self.wks_id = None
+        self._sheet_size = None
 
         # Column indicies
         self._racer_1 = None
@@ -34,7 +35,7 @@ class MatchupSheetIndexData(object):
         self.header_row = None
         self.footer_row = None
 
-    async def initalize(self, wks_name: str) -> None:
+    async def initalize(self, wks_name: str, wks_id: int) -> None:
         """Read the GSheet and store the indicies of columns
         
         Parameters
@@ -58,16 +59,21 @@ class MatchupSheetIndexData(object):
 
         async with Spreadsheets() as spreadsheets:
             # Find the size of the worksheet
-            sheet_size = None
             request = spreadsheets.get(spreadsheetId=self.gsheet_id)
             sheet_data = await make_request(request)
             for sheet in sheet_data['sheets']:
                 props = sheet['properties']
-                if props['title'] == wks_name:
+                if wks_name is not None and props['title'] == wks_name:
                     self.wks_name = wks_name
                     self.wks_id = props['sheetId']
-                    sheet_size = (int(props['gridProperties']['rowCount']),
-                                  int(props['gridProperties']['columnCount']),)
+                    self._sheet_size = (int(props['gridProperties']['rowCount']),
+                                        int(props['gridProperties']['columnCount']),)
+                    break
+                elif wks_id is not None and props['sheetId'] == wks_id:
+                    self.wks_name = props['title']
+                    self.wks_id = wks_id
+                    self._sheet_size = (int(props['gridProperties']['rowCount']),
+                                        int(props['gridProperties']['columnCount']),)
                     break
 
             if self.wks_id is None:
@@ -78,51 +84,7 @@ class MatchupSheetIndexData(object):
                     )
                 )
 
-            # Find the header row and the column indicies
-            row_query_min = 1
-            row_query_max = 10
-            col_vals = []
-            while self.footer_row is None and row_query_min <= sheet_size[0]:
-                # Get the cells
-                range_to_get = SheetRange(
-                    ul_cell=(row_query_min, 1,),
-                    lr_cell=(row_query_max, sheet_size[1],),
-                    wks_name=self.wks_name
-                )
-                request = spreadsheets.values().get(
-                    spreadsheetId=self.gsheet_id,
-                    range=range_to_get,
-                    majorDimension='ROWS'
-                )
-                value_range = await make_request(request)
-
-                # Check if the cells we got are completely empty
-                if 'values' not in value_range:
-                    if self.header_row is not None:
-                        self.footer_row = row_query_min
-
-                # If there are values in the cells, find header and footers
-                else:
-                    values = value_range['values']
-                    for row, row_values in enumerate(values):
-                        row += 1
-                        if self.header_row is None:
-                            for col, cell_value in enumerate(row_values):
-                                if self._make_index(cell_value, col + 1):
-                                    self.header_row = row
-                                    col_vals.append(col)
-
-                    # If we got fewer than the requested number of rows, we've found the footer
-                    if len(values) < row_query_max - row_query_min + 1:
-                        self.footer_row = row_query_min + len(values)
-
-                # Prepare for next loop
-                row_query_min = row_query_max + 1
-                row_query_max = min(2*row_query_max, sheet_size[0])
-
-            if col_vals:
-                self.min_column = min(self.min_column, min(col_vals)) if self.min_column is not None else min(col_vals)
-                self.max_column = max(self.max_column, max(col_vals)) if self.max_column is not None else max(col_vals)
+            await self._refresh_all(spreadsheets)
 
     @property
     def valid(self):
@@ -180,6 +142,106 @@ class MatchupSheetIndexData(object):
             majorDimension='ROWS'
         )
         return await make_request(request)
+
+    async def refresh_all(self):
+        """Refresh all data"""
+        async with Spreadsheets() as spreadsheets:
+            # Find the size of the worksheet
+            request = spreadsheets.get(spreadsheetId=self.gsheet_id)
+            sheet_data = await make_request(request)
+            for sheet in sheet_data['sheets']:
+                props = sheet['properties']
+                if props['sheetId'] == self.wks_id:
+                    self.wks_name = props['title']
+                    self._sheet_size = (int(props['gridProperties']['rowCount']),
+                                        int(props['gridProperties']['columnCount']),)
+                    break
+
+            await self._refresh_all(spreadsheets)
+
+    async def refresh_footer(self):
+        """Refresh the self.footer_row property from the GSheet"""
+        async with Spreadsheets() as spreadsheets:
+            # Find the header row and the column indicies
+            row_query_min = 1
+            row_query_max = 10
+            col_vals = []
+            while self.footer_row is None and row_query_min <= self._sheet_size[0]:
+                # Get the cells
+                range_to_get = SheetRange(
+                    ul_cell=(row_query_min, 1,),
+                    lr_cell=(row_query_max, sheet_size[1],),
+                    wks_name=self.wks_name
+                )
+                request = spreadsheets.values().get(
+                    spreadsheetId=self.gsheet_id,
+                    range=range_to_get,
+                    majorDimension='ROWS'
+                )
+                value_range = await make_request(request)
+
+                # Check if the cells we got are completely empty
+                if 'values' not in value_range:
+                    if self.header_row is not None:
+                        self.footer_row = row_query_min
+
+                # If there are values in the cells, find header and footers
+                else:
+                    values = value_range['values']
+                    # If we got fewer than the requested number of rows, we've found the footer
+                    if len(values) < row_query_max - row_query_min + 1:
+                        self.footer_row = row_query_min + len(values)
+
+                # Prepare for next loop
+                row_query_min = row_query_max + 1
+                row_query_max = min(2*row_query_max, self._sheet_size[0])
+
+    async def _refresh_all(self, spreadsheets):
+        # Find the header row and the column indicies
+        row_query_min = 1
+        row_query_max = 10
+        col_vals = []
+        while self.footer_row is None and row_query_min <= self._sheet_size[0]:
+            # Get the cells
+            range_to_get = SheetRange(
+                ul_cell=(row_query_min, 1,),
+                lr_cell=(row_query_max, self._sheet_size[1],),
+                wks_name=self.wks_name
+            )
+            request = spreadsheets.values().get(
+                spreadsheetId=self.gsheet_id,
+                range=range_to_get,
+                majorDimension='ROWS'
+            )
+            value_range = await make_request(request)
+
+            # Check if the cells we got are completely empty
+            if 'values' not in value_range:
+                if self.header_row is not None:
+                    self.footer_row = row_query_min
+
+            # If there are values in the cells, find header and footers
+            else:
+                values = value_range['values']
+                for row, row_values in enumerate(values):
+                    row += 1
+                    if self.header_row is None:
+                        for col, cell_value in enumerate(row_values):
+                            if self._make_index(cell_value, col + 1):
+                                self.header_row = row
+                                col_vals.append(col)
+
+                # If we got fewer than the requested number of rows, we've found the footer
+                if len(values) < row_query_max - row_query_min + 1:
+                    self.footer_row = row_query_min + len(values)
+
+            # Prepare for next loop
+            row_query_min = row_query_max + 1
+            row_query_max = min(2 * row_query_max, self._sheet_size[0])
+
+        if col_vals:
+            self.min_column = min(self.min_column, min(col_vals)) if self.min_column is not None else min(col_vals)
+            self.max_column = max(self.max_column, max(col_vals)) if self.max_column is not None else max(col_vals)
 
     def _make_index(self, cell_value: str, col: int) -> bool:
         cell_value = cell_value.lower()

@@ -18,13 +18,15 @@ async def make_private_room(race_private_info, discord_member):
     permit_read = discord.PermissionOverwrite(read_messages=True)
 
     # Make a channel for the room
+    # noinspection PyUnresolvedReferences
     race_channel = await necrobot.client.create_channel(
         necrobot.server,
         get_raceroom_name(necrobot.server, race_private_info.race_info),
         discord.ChannelPermissions(target=necrobot.server.default_role, overwrite=deny_read),
         discord.ChannelPermissions(target=necrobot.server.me, overwrite=permit_read),
         discord.ChannelPermissions(target=discord_member, overwrite=permit_read),
-        type='text')
+        type=discord.ChannelType.text
+    )
 
     if race_channel is not None:
         new_room = PrivateRaceRoom(

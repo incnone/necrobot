@@ -1,8 +1,5 @@
-import necrobot.stats.leaguestats
-
 from necrobot.stats import statfn
 from necrobot.user import userutil
-from necrobot.util import racetime
 
 from necrobot.botbase.commandtype import CommandType
 from necrobot.util.character import NDChar

@@ -6,13 +6,13 @@ from necrobot.util.backoff import ExponentialBackoff
 
 
 async def make_request(request):
-    backoff = ExponentialBackoff(base=1, timeout=30)
+    backoff = ExponentialBackoff(base=1, timeout=15)
 
     while True:
         try:
             return request.execute()
         except googleapiclient.errors.HttpError as e:
-            backoff_errors = [403, 429]
+            backoff_errors = [429]
             error_type = e.resp.status
             if error_type in backoff_errors:
                 try:

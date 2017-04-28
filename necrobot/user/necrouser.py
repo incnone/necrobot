@@ -7,6 +7,7 @@ import unittest
 
 from necrobot.util import console
 
+from necrobot.botbase.necrobot import Necrobot
 from necrobot.user.userprefs import UserPrefs
 
 
@@ -21,6 +22,8 @@ class NecroUser(object):
             This should write the NecroUser to the database.
         """
         self._user_id = None
+        self._discord_id = None
+        self._discord_name = None
         self._discord_member = None
         self._twitch_name = None
         self._rtmp_name = None
@@ -33,8 +36,8 @@ class NecroUser(object):
     def __eq__(self, other):
         return self.user_id == other.user_id
 
-    def commit(self):
-        asyncio.ensure_future(self._commit(self))
+    async def commit(self):
+        await self._commit(self)
 
     @property
     def user_id(self) -> int:
@@ -72,7 +75,7 @@ class NecroUser(object):
 
     @property
     def discord_id(self) -> int:
-        return self.discord_member.id if self.discord_member is not None else None
+        return self.discord_member.id if self.discord_member is not None else self._discord_id
 
     @property
     def discord_member(self) -> discord.Member:
@@ -80,7 +83,7 @@ class NecroUser(object):
 
     @property
     def discord_name(self) -> str:
-        return self.discord_member.display_name if self.discord_member is not None else None
+        return self.discord_member.display_name if self.discord_member is not None else self._discord_name
 
     @property
     def display_name(self) -> str:
@@ -99,8 +102,8 @@ class NecroUser(object):
         return self._timezone
 
     @property
-    def timezone_str(self) -> str:
-        return str(self._timezone)
+    def timezone_str(self) -> str or None:
+        return str(self._timezone) if self._timezone is not None else None
 
     @property
     def twitch_name(self) -> str:
@@ -155,6 +158,8 @@ class NecroUser(object):
 
     def set(self,
             discord_member: discord.Member = None,
+            discord_id: int = None,
+            discord_name: str = None,
             twitch_name: str = None,
             rtmp_name: str = None,
             timezone: str = None,
@@ -168,6 +173,10 @@ class NecroUser(object):
         ----------
         discord_member: discord.Member
             The discord.Member corresponding to this necrobot user.
+        discord_id: int
+            The user's discord ID. Not necessary if discord_member is not None.
+        discord_name: str
+            The user's discord name. Not necessary if discord_member is not None.
         twitch_name: str
             This user's twitch name. Case-insensitive.
         rtmp_name: str
@@ -183,9 +192,27 @@ class NecroUser(object):
         """
 
         changed_any = False
-        if discord_member is not None and discord_member != self._discord_member:
+        if discord_member is not None and discord_member != self.discord_member:
+            self._discord_id = int(discord_member.id)
+            self._discord_name = discord_member.display_name
             self._discord_member = discord_member
             changed_any = True
+        elif discord_id is not None and discord_id != self.discord_id:
+            self._discord_id = discord_id
+            member = Necrobot().find_member(discord_id=discord_id)
+            if member is not None:
+                self._discord_member = member
+                self._discord_name = member.display_name
+            elif discord_name is not None:
+                self._discord_name = discord_name
+            changed_any = True
+        elif discord_name is not None and discord_name != self.discord_name:
+            self._discord_name = discord_name
+            member = Necrobot().find_member(discord_name=discord_name)
+            if member is not None:
+                self._discord_id = int(member.id)
+            changed_any = True
+
         if twitch_name is not None and twitch_name != self._twitch_name:
             self._twitch_name = twitch_name
             changed_any = True
@@ -202,11 +229,11 @@ class NecroUser(object):
             self._user_info = user_info
             changed_any = True
         if user_prefs is not None and user_prefs != self._user_prefs:
-            self._user_prefs = user_prefs
+            self._user_prefs.merge_prefs(user_prefs)
             changed_any = True
 
         if changed_any and commit:
-            self.commit()
+            asyncio.ensure_future(self.commit())
 
 
 class TestNecroUser(unittest.TestCase):

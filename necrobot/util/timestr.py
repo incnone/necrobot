@@ -6,8 +6,8 @@ def timedelta_to_str(td, punctuate=False):
     if punctuate and td < datetime.timedelta(minutes=1):
         return 'Right now! :runner: :checkered_flag:'
 
-    hrs = td.seconds // 3600
-    mins = (td.seconds - hrs * 3600) // 60
+    hrs = int(td.seconds // 3600)
+    mins = int((td.seconds - hrs * 3600) // 60)
 
     output_str = ''
     if td.days > 0:

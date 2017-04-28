@@ -21,7 +21,6 @@ class MatchupSheet(object):
     """
     Represents a single worksheet with matchup & scheduling data.
     """
-
     def __init__(self, gsheet_id: str):
         """
         Parameters
@@ -51,8 +50,8 @@ class MatchupSheet(object):
         """
         return self._not_found_matches
 
-    async def initialize(self, wks_name: str):
-        await self.column_data.initalize(wks_name=wks_name)
+    async def initialize(self, wks_name: str = None, wks_id: int = None):
+        await self.column_data.initalize(wks_name=wks_name, wks_id=wks_id)
 
     async def get_matches(self, **kwargs):
         """Read racer names and match types from the GSheet; create corresponding matches.
@@ -67,6 +66,7 @@ class MatchupSheet(object):
         list[Match]
             The list of created Matches.
         """
+        await self.column_data.refresh_footer()
 
         matches = []
         self._not_found_matches = []
@@ -169,7 +169,7 @@ class MatchupSheet(object):
         await self._update_cell(
             row=row,
             col=self.column_data.cawmentary,
-            value=cawmentator.twitch_name if cawmentator is not None else None,
+            value=cawmentator.twitch_name if cawmentator is not None else '',
             raw_input=False
         )
 

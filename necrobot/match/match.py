@@ -208,9 +208,9 @@ class Match(object):
     def time_until_match(self) -> datetime.timedelta or None:
         return (self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow())) if self.is_scheduled else None
 
-    def commit(self):
+    async def commit(self):
         """Write the match to the database."""
-        asyncio.ensure_future(self._commit(self))
+        await self._commit(self)
 
     async def get_cawmentator(self):
         if self._cawmentator_id is None:

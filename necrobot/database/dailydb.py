@@ -34,27 +34,27 @@ async def get_daily_times(daily_id, daily_type):
         return cursor.fetchall()
 
 
-async def has_submitted_daily(discord_id, daily_id, daily_type):
+async def has_submitted_daily(user_id, daily_id, daily_type):
     async with DBConnect(commit=False) as cursor:
-        params = (discord_id, daily_id, daily_type,)
+        params = (user_id, daily_id, daily_type,)
         cursor.execute(
             """
-            SELECT discord_id
+            SELECT user_id
             FROM daily_runs_uinfo
-            WHERE discord_id=%s AND daily_id=%s AND type=%s AND level != -1
+            WHERE user_id=%s AND daily_id=%s AND type=%s AND level != -1
             """,
             params)
         return cursor.fetchone() is not None
 
 
-async def has_registered_daily(discord_id, daily_id, daily_type):
+async def has_registered_daily(user_id, daily_id, daily_type):
     async with DBConnect(commit=False) as cursor:
-        params = (discord_id, daily_id, daily_type,)
+        params = (user_id, daily_id, daily_type,)
         cursor.execute(
             """
-            SELECT discord_id
+            SELECT user_id
             FROM daily_runs_uinfo
-            WHERE discord_id=%s AND daily_id=%s AND type=%s
+            WHERE user_id=%s AND daily_id=%s AND type=%s
             """,
             params)
         return cursor.fetchone() is not None
@@ -78,14 +78,14 @@ async def register_daily(user_id, daily_id, daily_type, level=necrobot.util.leve
             params)
 
 
-async def registered_daily(discord_id, daily_type):
+async def registered_daily(user_id, daily_type):
     async with DBConnect(commit=False) as cursor:
-        params = (discord_id, daily_type,)
+        params = (user_id, daily_type,)
         cursor.execute(
             """
             SELECT daily_id
             FROM daily_runs_uinfo
-            WHERE discord_id=%s AND type=%s
+            WHERE user_id=%s AND type=%s
             ORDER BY daily_id DESC
             LIMIT 1
             """,
@@ -94,14 +94,14 @@ async def registered_daily(discord_id, daily_type):
         return int(row[0]) if row is not None else 0
 
 
-async def submitted_daily(discord_id, daily_type):
+async def submitted_daily(user_id, daily_type):
     async with DBConnect(commit=False) as cursor:
-        params = (discord_id, daily_type,)
+        params = (user_id, daily_type,)
         cursor.execute(
             """
             SELECT daily_id 
             FROM daily_runs_uinfo 
-            WHERE discord_id=%s AND type=%s AND level != -1
+            WHERE user_id=%s AND type=%s AND level != -1
             ORDER BY daily_id DESC 
             LIMIT 1
             """,
@@ -110,14 +110,14 @@ async def submitted_daily(discord_id, daily_type):
         return int(row[0]) if row is not None else 0
 
 
-async def delete_from_daily(discord_id, daily_id, daily_type):
+async def delete_from_daily(user_id, daily_id, daily_type):
     async with DBConnect(commit=True) as cursor:
-        params = (discord_id, daily_id, daily_type,)
+        params = (user_id, daily_id, daily_type,)
         cursor.execute(
             """
             UPDATE daily_runs_uinfo 
             SET level=-1 
-            WHERE discord_id=%s AND daily_id=%s AND type=%s
+            WHERE user_id=%s AND daily_id=%s AND type=%s
             """,
             params)
 

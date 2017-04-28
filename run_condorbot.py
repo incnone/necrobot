@@ -4,7 +4,7 @@ from necrobot.condor.condormgr import CondorMgr
 from necrobot.condor.condorpmchannel import CondorPMChannel
 from necrobot.ladder import ratingutil
 from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.match.matchmanager import MatchManager
+from necrobot.match.matchmgr import MatchMgr
 from necrobot.util import console
 from necrobot import logon
 
@@ -22,10 +22,10 @@ async def load_condorbot_config(necrobot):
         console.warning('Could not find the "{0}" channel.'.format('adminchat'))
     necrobot.register_bot_channel(condor_admin_channel, CondorAdminChannel())
 
-    # Managers
-    necrobot.register_manager(CondorMgr())
+    # Managers (Order is very important!)
     necrobot.register_manager(LeagueMgr())
-    necrobot.register_manager(MatchManager())
+    necrobot.register_manager(MatchMgr())
+    necrobot.register_manager(CondorMgr())
 
     # Ratings
     ratingutil.init()

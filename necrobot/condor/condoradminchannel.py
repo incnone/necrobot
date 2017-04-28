@@ -34,6 +34,7 @@ class CondorAdminChannel(BotChannel):
 
             cmd_seedgen.RandomSeed(self),
 
+            cmd_user.ForceRTMP(self),
             cmd_user.RTMP(self),
             cmd_user.UserInfo(self),
         ]

@@ -191,7 +191,9 @@ class TestRace(TestCommandType):
         await send(carol, '.d', wait_for='has finished')
         await send(bob, '.d 5-4 i can\'t deep blues', wait_for='has forfeit')
         await send(bob, '.notify off', wait_for='not be alerted')
-        await send(alice, '.d', wait_for='The race is over')
+        await send(carol, '.undone', wait_for='continues to race')
+        await send(alice, '.d', wait_for='has finished')
+        await send(carol, '.d', wait_for='The race is over')
 
         # Race 3
         await send(alice, '.re', wait_for='Race number')

@@ -708,6 +708,8 @@ class Update(CommandType):
 
 
 async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
+    await cmd_type.client.send_typing(cmd.channel)
+
     # Parse arguments
     try:
         match = await matchfindparse.find_match(cmd.arg_string)
@@ -722,7 +724,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Check if the match already has cawmentary
     if add and match.cawmentator_id is not None:
-        cawmentator_user = await userutil.get_user(discord_id=match.cawmentator_id)
+        cawmentator_user = await userutil.get_user(user_id=match.cawmentator_id)
         if cawmentator_user is not None:
             await cmd_type.client.send_message(
                 cmd.channel,
@@ -742,7 +744,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
                 'No one is registered for cawmentary for the match {0}.'.format(match.matchroom_name)
             )
             return
-        elif match.cawmentator_id != int(cmd.author.id):
+        elif match.cawmentator_id != author_user.user_id:
             await cmd_type.client.send_message(
                 cmd.channel,
                 'Error: {0}: You are not the registered cawmentator for {1}.'.format(

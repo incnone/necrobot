@@ -15,20 +15,18 @@ class MainBotChannel(BotChannel):
         self.channel_commands = [
             cmd_admin.Die(self),
             cmd_admin.Reboot(self),
-            cmd_admin.RedoInit(self),
 
             cmd_color.ColorMe(self),
 
             cmd_daily.DailyChar(self),
             cmd_daily.DailyRules(self),
-            cmd_daily.DailySchedule(self),
             cmd_daily.DailySeed(self),
             cmd_daily.DailyWhen(self),
 
-            cmd_ladder.ForceRanked(self),
-            cmd_ladder.Ranked(self),
-            cmd_ladder.Rating(self),
-            cmd_ladder.Unranked(self),
+            # cmd_ladder.ForceRanked(self),
+            # cmd_ladder.Ranked(self),
+            # cmd_ladder.Rating(self),
+            # cmd_ladder.Unranked(self),
 
             cmd_racemake.Make(self),
             cmd_racemake.MakeCondor(self),

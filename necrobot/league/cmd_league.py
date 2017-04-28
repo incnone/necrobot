@@ -98,7 +98,7 @@ class Deadline(CommandType):
         await self.client.send_message(
             cmd.channel,
             'The current league deadline is "{deadline_str}". As of now, this is '
-            '{deadline:%b %d (%A) at %I:%M %p}.'
+            '{deadline:%b %d (%A) at %I:%M %p} (UTC).'
             .format(
                 deadline_str=deadline_str,
                 deadline=deadline
@@ -126,7 +126,7 @@ class DropRacer(CommandType):
         if user is None:
             await self.client.send_message(
                 cmd.channel,
-                "Couldn't find a user with name `{0}`.".format(self.mention)
+                "Couldn't find a user with name `{0}`.".format(cmd.args[0])
             )
             return
 
@@ -232,48 +232,6 @@ class MakeMatch(CommandType):
             match_info=league.match_info
         )
 
-        await self.client.send_message(
-            cmd.channel,
-            'Match created.'
-        )
-
-
-class SetCondorEvent(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'set-condor-event')
-        self.help_text = '`{0} schema_name`: Set the bot\'s current event to `schema_name`.' \
-            .format(self.mention)
-        self.admin_only = True
-
-    @property
-    def short_help_text(self):
-        return 'Set the bot\'s current CoNDOR event.'
-
-    async def _do_execute(self, cmd: Command):
-        if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
-                'Wrong number of arguments for `{0}`.'.format(self.mention)
-            )
-            return
-
-        schema_name = cmd.args[0].lower()
-        try:
-            await LeagueMgr().set_league(schema_name=schema_name)
-        except necrobot.exception.LeagueDoesNotExist:
-            await self.client.send_message(
-                cmd.channel,
-                'Error: Event `{0}` does not exist.'
-            )
-            return
-
-        league_name = LeagueMgr().league.name
-        league_name_str = ' ({0})'.format(league_name) if league_name is not None else ''
-        await self.client.send_message(
-            cmd.channel,
-            'Set the current CoNDOR event to `{0}`{1}.'.format(schema_name, league_name_str)
-        )
-
 
 class NextRace(CommandType):
     def __init__(self, bot_channel):
@@ -341,12 +299,9 @@ class RegisterCondorEvent(CommandType):
         try:
             await LeagueMgr().create_league(schema_name=schema_name)
         except necrobot.exception.LeagueAlreadyExists as e:
-            error_msg = 'Error: Schema `{0}` already exists.'.format(schema_name)
-            if str(e):
-                error_msg += ' (It is registered to the event "{0}".)'.format(e)
             await self.client.send_message(
                 cmd.channel,
-                error_msg
+                'Error: Schema `{0}`: {1}'.format(schema_name, e)
             )
             return
         except necrobot.exception.InvalidSchemaName:
@@ -360,6 +315,43 @@ class RegisterCondorEvent(CommandType):
         await self.client.send_message(
             cmd.channel,
             'Registered new CoNDOR event `{0}`, and set it to be the bot\'s current event.'.format(schema_name)
+        )
+
+
+class SetCondorEvent(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'set-condor-event')
+        self.help_text = '`{0} schema_name`: Set the bot\'s current event to `schema_name`.' \
+            .format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Set the bot\'s current CoNDOR event.'
+
+    async def _do_execute(self, cmd: Command):
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        schema_name = cmd.args[0].lower()
+        try:
+            await LeagueMgr().set_league(schema_name=schema_name)
+        except necrobot.exception.LeagueDoesNotExist:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Event `{0}` does not exist.'.format(schema_name)
+            )
+            return
+
+        league_name = LeagueMgr().league.name
+        league_name_str = ' ({0})'.format(league_name) if league_name is not None else ''
+        await self.client.send_message(
+            cmd.channel,
+            'Set the current CoNDOR event to `{0}`{1}.'.format(schema_name, league_name_str)
         )
 
 

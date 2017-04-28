@@ -121,7 +121,7 @@ async def get_users_with_any(
 
 async def get_users_with_all(
         discord_id: int = None,
-        discord_name: int = None,
+        discord_name: str = None,
         twitch_name: str = None,
         rtmp_name: str = None,
         timezone: str = None,
@@ -268,7 +268,8 @@ async def _register_user(necro_user: NecroUser):
                     params
                 )
                 cursor.execute("SELECT LAST_INSERT_ID()")
-                necro_user.set_user_id(int(cursor.fetchone()[0]))
+                uid = int(cursor.fetchone()[0])
+                necro_user.set_user_id(uid)
             except mysql.connector.IntegrityError:
                 console.warning('Tried to insert a duplicate racer entry. Params: {0}'.format(params))
                 raise
@@ -405,7 +406,7 @@ async def _transfer_user_id(from_user_id: int, to_user_id: int):
                 """
                 UPDATE {schema_name}.matches 
                 SET racer_2_id=%(to_uid)s 
-                WHERE racer_2_id=%(from_uid)
+                WHERE racer_2_id=%(from_uid)s
                 """.format(schema_name=schema_name),
                 params
             )

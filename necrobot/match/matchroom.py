@@ -152,13 +152,14 @@ class MatchRoom(BotChannel):
 
     async def contest_last_begun_race(self) -> None:
         """Mark the last begun race as contested."""
-        if self._last_begun_race is None:
-            contest_race_number = self._current_race_number - 1
-        else:
-            if not self._last_begun_race.final:
-                self._current_race_contested = True
-                return
-            contest_race_number = self._last_begun_race_number
+        if self._last_begun_race is not None and not self._last_begun_race.final:
+            self._current_race_contested = True
+            return
+
+        if self._last_begun_race_number == 0:
+            return
+
+        contest_race_number = self._last_begun_race_number
 
         await matchdb.set_match_race_contested(
             match=self.match,
@@ -172,6 +173,9 @@ class MatchRoom(BotChannel):
             self._countdown_to_match_future.cancel()
         self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start(warn=True))
         self._match_race_data = await matchdb.get_match_race_data(self.match.match_id)
+        self._current_race_number = self._match_race_data.num_finished + self._match_race_data.num_canceled
+        self._last_begun_race_number = self._current_race_number
+        self._set_channel_commands()
 
     async def update(self) -> None:
         if self.match.is_scheduled and self.current_race is None:
@@ -181,13 +185,7 @@ class MatchRoom(BotChannel):
         elif not self.match.is_scheduled:
             self._current_race = None
 
-        if self.current_race is None:
-            if self.played_all_races:
-                self.channel_commands = self._postmatch_channel_commands
-            else:
-                self.channel_commands = self._prematch_channel_commands
-        else:
-            self.channel_commands = self._during_match_channel_commands
+        self._set_channel_commands()
 
     async def change_race_info(self, command_args: list) -> None:
         """Change the RaceInfo for this room by parsing the input args"""
@@ -208,12 +206,12 @@ class MatchRoom(BotChannel):
             self._last_begun_race = self._current_race
             self._last_begun_race_number = self._current_race_number
         elif race_event.event == RaceEvent.EventType.RACE_BEGIN_COUNTDOWN:
-            NEDispatch().publish(event_type='begin_match_race', match=self.match)
+            await NEDispatch().publish(event_type='begin_match_race', match=self.match)
         elif race_event.event == RaceEvent.EventType.RACE_END:
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write('The race will end in {} seconds.'.format(self.current_race.race_config.finalize_time_sec))
         elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
-            NEDispatch().publish(event_type='end_match_race', match=self.match)
+            await NEDispatch().publish(event_type='end_match_race', match=self.match)
 
             race_winner = race_event.race.racers[0]
             race_loser = race_event.race.racers[1]
@@ -333,7 +331,7 @@ class MatchRoom(BotChannel):
             if time_until_match > Config.MATCH_FIRST_WARNING:
                 await asyncio.sleep((time_until_match - Config.MATCH_FIRST_WARNING).total_seconds())
                 await self.alert_racers()
-                NEDispatch().publish('match_alert', match=self.match, final=False)
+                await NEDispatch().publish('match_alert', match=self.match, final=False)
 
             # Wait until the final warning
             time_until_match = self.match.time_until_match
@@ -343,7 +341,7 @@ class MatchRoom(BotChannel):
             # At this time, we've either just passed the FINAL_MATCH_WARNING or the function was just called
             # (happens if the call comes sometime after the FINAL_MATCH_WARNING but before the match).
             await self.alert_racers()
-            NEDispatch().publish('match_alert', match=self.match, final=True)
+            await NEDispatch().publish('match_alert', match=self.match, final=True)
 
             await asyncio.sleep(self.match.time_until_match.total_seconds())
             await self._begin_new_race()
@@ -415,6 +413,15 @@ class MatchRoom(BotChannel):
         #         member = pair[0].member
         #         nick = '{0} ({1})'.format(pair[0].member.name, pair[1].displayed_rating)
         #         await self.client.change_nickname(member=member, nickname=nick)
+
+    def _set_channel_commands(self) -> None:
+        if self.current_race is None:
+            if self.played_all_races:
+                self.channel_commands = self._postmatch_channel_commands
+            else:
+                self.channel_commands = self._prematch_channel_commands
+        else:
+            self.channel_commands = self._during_match_channel_commands
 
     def _race_winner(self, race: Race) -> int:
         """Get the number of the race's winner (1 or 2, for match.racer_1 or match.racer_2)"""

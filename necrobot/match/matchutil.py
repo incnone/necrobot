@@ -67,7 +67,7 @@ async def make_match(*args, register=False, **kwargs) -> Match:
     match = Match(*args, commit_fn=matchdb.write_match, **kwargs)
     await match.initialize()
     if register:
-        match.commit()
+        await match.commit()
         match_library[match.match_id] = match
     return match
 
@@ -240,7 +240,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
     # Check to see the match is registered
     if not match.is_registered:
         if register:
-            match.commit()
+            await match.commit()
         else:
             console.warning('Tried to make a MatchRoom for an unregistered Match ({0}).'.format(match.matchroom_name))
             return None
@@ -260,6 +260,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
                 racer_permissions.append(discord.ChannelPermissions(target=racer.member, overwrite=permit_read))
 
         # Make a channel for the room
+        # noinspection PyUnresolvedReferences
         match_channel = await necrobot.client.create_channel(
             necrobot.server,
             get_matchroom_name(necrobot.server, match),

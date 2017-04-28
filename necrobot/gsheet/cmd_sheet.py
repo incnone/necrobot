@@ -24,6 +24,8 @@ class GetGSheet(CommandType):
         return 'Current GSheet info.'
 
     async def _do_execute(self, cmd: Command):
+        await self.client.send_typing(cmd.channel)
+
         gsheet_id = LeagueMgr().league.gsheet_id
         if gsheet_id is None:
             await self.client.send_message(
@@ -86,7 +88,10 @@ class MakeFromSheet(CommandType):
         await self.client.send_typing(cmd.channel)
 
         try:
-            matchup_sheet = await sheetlib.get_sheet(gsheet_id=LeagueMgr().league.gsheet_id, wks_name=wks_name)
+            matchup_sheet = await sheetlib.get_sheet(
+                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    wks_name=wks_name
+                )  # type: MatchupSheet
             matches = await matchup_sheet.get_matches(register=False)
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
@@ -158,6 +163,7 @@ class SetGSheet(CommandType):
 
         sheet_id = cmd.args[0]
         perm_info = await sheetutil.has_read_write_permissions(sheet_id)
+
         if not perm_info[0]:
             await self.client.send_message(
                 cmd.channel,

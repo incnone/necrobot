@@ -4,6 +4,9 @@ Current version: 0.10
 
 ## Condorbot
 
+- Auto-register users on match creation
+- Better timezone parsing
+
 ### Testing
 
 - Test new user registration

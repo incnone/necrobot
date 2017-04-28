@@ -40,7 +40,7 @@ class BotChannel(object):
         return False
 
     # Attempts to execute the given command (if a command of its type is in channel_commands)
-    async def execute(self, command):
+    async def execute(self, command) -> None:
         for cmd_type in self.channel_commands:
             await cmd_type.execute(command)
         for cmd_type in self.default_commands:

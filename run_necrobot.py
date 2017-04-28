@@ -2,7 +2,7 @@ from necrobot.config import Config
 from necrobot.daily.dailymgr import DailyMgr
 from necrobot.ladder import ratingutil
 from necrobot.ladder.ladderadminchannel import LadderAdminChannel
-from necrobot.match.matchmanager import MatchManager
+from necrobot.match.matchmgr import MatchMgr
 from necrobot.stdconfig.mainchannel import MainBotChannel
 from necrobot.stdconfig.pmbotchannel import PMBotChannel
 from necrobot.util import console
@@ -22,18 +22,18 @@ async def load_necrobot_config(necrobot):
     necrobot.set_main_channel(main_discord_channel)
     necrobot.register_bot_channel(necrobot.main_channel, MainBotChannel())
 
-    # Ladder Channel
-    ladder_admin_channel = necrobot.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)
-    if ladder_admin_channel is None:
-        console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_ADMIN_CHANNEL_NAME))
-    necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
+    # # Ladder Channel
+    # ladder_admin_channel = necrobot.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)
+    # if ladder_admin_channel is None:
+    #     console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_ADMIN_CHANNEL_NAME))
+    # necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
 
-    # Daily Manager
+    # Managers
     necrobot.register_manager(DailyMgr())
-    necrobot.register_manager(MatchManager())
+    # necrobot.register_manager(MatchManager())
 
-    # Ratings
-    ratingutil.init()
+    # # Ratings
+    # ratingutil.init()
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from necrobot.condor.condoradminchannel import CondorAdminChannel
 from necrobot.daily.dailymgr import DailyMgr
 from necrobot.ladder import ratingutil
 from necrobot.ladder.ladderadminchannel import LadderAdminChannel
-from necrobot.match.matchmanager import MatchManager
+from necrobot.match.matchmgr import MatchMgr
 from necrobot.stdconfig.mainchannel import MainBotChannel
 from necrobot.stdconfig.pmbotchannel import PMBotChannel
 from necrobot.util import console
@@ -47,6 +47,7 @@ async def on_ready_fn(necrobot):
     await asyncio.sleep(1)
 
     try:
+        # print(necrobot.server.me)
         unittest.main(verbosity=2)
     except SystemExit:
         pass
@@ -78,7 +79,7 @@ async def load_testing_config(necrobot):
 
     # Managers
     necrobot.register_manager(DailyMgr())
-    necrobot.register_manager(MatchManager())
+    necrobot.register_manager(MatchMgr())
 
     # Ratings
     ratingutil.init()

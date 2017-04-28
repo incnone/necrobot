@@ -36,14 +36,8 @@ async def get_sheet(gsheet_id: str, wks_name: Optional[str] = None, wks_id: Opti
     if wks_name is not None and (gsheet_id, wks_name,) in _matchup_sheet_lib:
         return _matchup_sheet_lib[(gsheet_id, wks_name,)]
 
-    if wks_name is None:
-        raise necrobot.exception.NotFoundException(
-            "Called sheetlib.get_sheet with a wks_id={}, but no sheet of that ID found.".format(wks_id)
-        )
-
     sheet = MatchupSheet(gsheet_id=gsheet_id)
-    # noinspection PyTypeChecker
-    await sheet.initialize(wks_name=wks_name)
+    await sheet.initialize(wks_name=wks_name, wks_id=wks_id)
 
     # Check for name changes
     if (gsheet_id, sheet.wks_id,) in _sheets_by_id_lib:

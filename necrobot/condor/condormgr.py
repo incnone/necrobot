@@ -35,9 +35,6 @@ class CondorMgr(object, metaclass=Singleton):
         pass
 
     async def ne_process(self, ev: NecroEvent):
-        if self._notifications_channel is None:
-            return
-
         if ev.event_type == 'begin_match_race':
             await VodRecorder().start_record(ev.match.racer_1.rtmp_name)
             await VodRecorder().start_record(ev.match.racer_2.rtmp_name)
@@ -47,18 +44,22 @@ class CondorMgr(object, metaclass=Singleton):
         elif ev.event_type == 'match_alert':
             await self.match_alert(ev.match) if ev.final else self.cawmentator_alert(ev.match)
         elif ev.event_type == 'notify':
-            await self._client.send_message(self._notifications_channel, ev.message)
+            if self._notifications_channel is not None:
+                await self._client.send_message(self._notifications_channel, ev.message)
         elif ev.event_type == 'set_cawmentary':
-            sheet = await self.get_gsheet()
-            sheet.set_cawmentary(match=ev.match)
+            if ev.match.sheet_id is not None:
+                sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
+                await sheet.set_cawmentary(match=ev.match)
         elif ev.event_type == 'set_vod':
-            sheet = await self.get_gsheet()
-            sheet.set_vod(match=ev.match, vod_link=ev.url)
+            if ev.match.sheet_id is not None:
+                sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
+                await sheet.set_vod(match=ev.match, vod_link=ev.url)
 
-    async def get_gsheet(self):
+    @staticmethod
+    async def get_gsheet(wks_id: str):
         return await sheetlib.get_sheet(
             gsheet_id=LeagueMgr().league.gsheet_id,
-            wks_name=LeagueMgr().league.wks_name
+            wks_id=wks_id
         )
 
     async def cawmentator_alert(self, match: Match):
@@ -119,4 +120,3 @@ class CondorMgr(object, metaclass=Singleton):
                 stream=stream
             )
         )
-

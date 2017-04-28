@@ -7,7 +7,7 @@ class ForceCommand(CommandType):
         CommandType.__init__(self, bot_channel, 'force')
         self.help_text = '`{0} user command`: Simulate the user entering the given command in the current channel.' \
             .format(self.mention)
-        self.testing_command = True
+        # self.testing_command = True
         self.admin_only = True
 
     @property

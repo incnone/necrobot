@@ -1,15 +1,18 @@
+import discord
+
 from necrobot.util import console
 from necrobot.database import matchdb
 from necrobot.match import matchutil
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match.matchroom import MatchRoom
+from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
 from necrobot.util.singleton import Singleton
 
 
-class MatchManager(object, metaclass=Singleton):
+class MatchMgr(object, metaclass=Singleton):
     def __init__(self):
-        pass
+        NEDispatch().subscribe(self)
 
     async def initialize(self):
         await self._recover_stored_match_rooms()
@@ -19,6 +22,20 @@ class MatchManager(object, metaclass=Singleton):
 
     async def close(self):
         pass
+
+    async def ne_process(self, ev: NecroEvent):
+        if ev.event_type == 'rtmp_name_change':
+            for row in await matchdb.get_channeled_matches_raw_data():
+                if int(row[2]) == ev.user.user_id or int(row[3]) == ev.user.user_id:
+                    channel_id = int(row[13])
+                    channel = Necrobot().find_channel_with_id(channel_id)
+                    if channel is not None:
+                        read_perms = discord.PermissionOverwrite(read_messages=True)
+                        await Necrobot().client.edit_channel_permissions(
+                            channel=channel,
+                            target=ev.user.member,
+                            overwrite=read_perms
+                        )
 
     @staticmethod
     async def _recover_stored_match_rooms() -> None:

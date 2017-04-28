@@ -76,14 +76,16 @@ async def get_user(
             return None
         elif rtmp_name is not None:
             user = NecroUser(commit_fn=userdb.write_user)
-            user.set(rtmp_name=rtmp_name, commit=True)
+            user.set(rtmp_name=rtmp_name, commit=False)
+            await user.commit()
             _cache_user(user)
             return user
         elif discord_id is not None:
             discord_member = Necrobot().find_member(discord_id=discord_id)
             if discord_member is not None:
                 user = NecroUser(commit_fn=userdb.write_user)
-                user.set(discord_member=discord_member, commit=True)
+                user.set(discord_member=discord_member, commit=False)
+                await user.commit()
                 _cache_user(user)
                 return user
         else:
@@ -156,7 +158,8 @@ async def _get_user_any_name(name: str, register: bool) -> NecroUser or None:
             return None
         else:
             user = NecroUser(commit_fn=userdb.write_user)
-            user.set(rtmp_name=name, commit=True)
+            user.set(rtmp_name=name, commit=False)
+            await user.commit()
             _cache_user(user)
             return user
     elif len(raw_db_data) > 1:
@@ -172,8 +175,10 @@ async def _get_user_any_name(name: str, register: bool) -> NecroUser or None:
 
 
 def _set_user_from_db_row(user: NecroUser, row):
+    console.debug('Getting user from data: {}'.format(row))
     user.set(
-        discord_member=Necrobot().find_member(discord_id=int(row[0])),
+        discord_id=row[0],
+        discord_name=row[1],
         twitch_name=row[2],
         rtmp_name=row[3],
         timezone=row[4],

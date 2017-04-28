@@ -14,11 +14,11 @@ class PMBotChannel(BotChannel):
         self.channel_commands = [
             cmd_admin.Die(self),
             cmd_admin.Reboot(self),
+            cmd_admin.RedoInit(self),
 
             cmd_daily.DailyChar(self),
             cmd_daily.DailyResubmit(self),
             cmd_daily.DailyRules(self),
-            cmd_daily.DailySchedule(self),
             cmd_daily.DailySeed(self),
             cmd_daily.DailyStatus(self),
             cmd_daily.DailySubmit(self),
