@@ -14,7 +14,7 @@ from necrobot.util.parse import dateparse
 
 class CloseAllMatches(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'closeallmatches')
+        CommandType.__init__(self, bot_channel, 'closeall', 'closeallmatches')
         self.help_text = 'Close all match rooms. Use `{0} nolog` to close all rooms without writing ' \
                          'logs (much faster, but no record will be kept of room chat).' \
             .format(self.mention)
@@ -153,7 +153,7 @@ class DropRacer(CommandType):
 
 class GetCurrentEvent(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'get-current-event')
+        CommandType.__init__(self, bot_channel, 'eventinfo')
         self.help_text = 'Get the identifier and name of the current CoNDOR event.' \
             .format(self.mention)
         self.admin_only = True
@@ -179,7 +179,7 @@ class GetCurrentEvent(CommandType):
 
 class GetMatchRules(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'get-match-rules')
+        CommandType.__init__(self, bot_channel, 'rules')
         self.help_text = "Get the current event's default match rules."
         self.admin_only = True
 
@@ -320,7 +320,7 @@ class RegisterCondorEvent(CommandType):
 
 class SetCondorEvent(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'set-condor-event')
+        CommandType.__init__(self, bot_channel, 'setevent', 'setleague')
         self.help_text = '`{0} schema_name`: Set the bot\'s current event to `schema_name`.' \
             .format(self.mention)
         self.admin_only = True
@@ -397,7 +397,7 @@ class SetDeadline(CommandType):
 
 class SetEventName(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'set-event-name')
+        CommandType.__init__(self, bot_channel, 'setname')
         self.help_text = '`{0} league_name`: Set the name of bot\'s current event. Note: This does not ' \
                          'change or create a new event! Use `.register-condor-event` and `.set-condor-event`.' \
             .format(self.mention)
@@ -427,7 +427,7 @@ class SetEventName(CommandType):
 
 class SetMatchRules(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'set-match-rules')
+        CommandType.__init__(self, bot_channel, 'setrules')
         self.help_text = \
             'Set the current event\'s default match rules. Flags:\n' \
             '`-bestof X | -repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \

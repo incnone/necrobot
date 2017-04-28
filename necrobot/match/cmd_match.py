@@ -504,7 +504,7 @@ class ForceConfirm(CommandType):
 
 class ForceNewRace(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-newrace')
+        CommandType.__init__(self, bot_channel, 'newrace')
         self.help_text = 'Force the bot to make a new race (the current race will be canceled).'
         self.admin_only = True
 
@@ -518,7 +518,7 @@ class ForceNewRace(CommandType):
 
 class ForceRecordRace(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-recordrace')
+        CommandType.__init__(self, bot_channel, 'recordrace')
         self.help_text = '`{0} winner`: Manually record a race with `winner` as the winner.'
         self.admin_only = True
 

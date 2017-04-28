@@ -14,7 +14,7 @@ from necrobot.league.leaguemgr import LeagueMgr
 
 class GetGSheet(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'getgsheet')
+        CommandType.__init__(self, bot_channel, 'gsheet', 'getgsheet')
         self.help_text = 'Return the name of the current GSheet, and a link to it, if the bot has ' \
                          'permissions; otherwise, returns an error message.'
         self.admin_only = True
@@ -62,7 +62,7 @@ class GetGSheet(CommandType):
 
 class MakeFromSheet(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'makefromsheet')
+        CommandType.__init__(self, bot_channel, 'makematches', 'makefromsheet', 'makeweek')
         self.help_text = '`{0} sheetname`: make races from the worksheet `sheetname`. (Note that the ' \
                          'bot must be pointed at the correct GSheet for this to work; this can be set via the bot\'s ' \
                          'config file, or by calling `.setgsheet`.'.format(self.mention)
