@@ -108,6 +108,44 @@ async def create_league(schema_name: str) -> League:
                 )
             )
 
+        cursor.execute(
+            """
+            CREATE VIEW {race_summary} AS
+                SELECT 
+                    {matches}.`match_id` AS `match_id`,
+                    {match_races}.`race_number` AS `race_number`,
+                    `users_winner`.`user_id` AS `winner_id`,
+                    `users_loser`.`user_id` AS `loser_id`,
+                    `race_runs_winner`.`time` AS `winner_time`,
+                    `race_runs_loser`.`time` AS `loser_time`
+                FROM
+                    {matches}
+                    JOIN {match_races} ON {matches}.`match_id` = {match_races}.`match_id`
+                    JOIN `users` `users_winner` ON 
+                        IF( {match_races}.`winner` = 1, 
+                            `users_winner`.`user_id` = {matches}.`racer_1_id`, 
+                            `users_winner`.`user_id` = {matches}.`racer_2_id`
+                        )
+                    JOIN `users` `users_loser` ON 
+                        IF( {match_races}.`winner` = 1, 
+                            `users_loser`.`user_id` = {matches}.`racer_2_id`, 
+                            `users_loser`.`user_id` = {matches}.`racer_1_id`
+                        )
+                    LEFT JOIN {race_runs} `race_runs_winner` ON 
+                        `race_runs_winner`.`user_id` = `users_winner`.`user_id`
+                        AND `race_runs_winner`.`race_id` = {match_races}.`race_id`
+                    LEFT JOIN {race_runs} `race_runs_loser` ON 
+                        `race_runs_loser`.`user_id` = `users_loser`.`user_id`
+                        AND `race_runs_loser`.`race_id` = {match_races}.`race_id`
+                WHERE NOT {match_races}.`canceled`
+            """.format(
+                matches=tn('matches'),
+                match_races=tn('match_races'),
+                race_runs=tn('race_runs'),
+                race_summary=tn('race_summary')
+            )
+        )
+
     return League(
         commit_fn=write_league,
         schema_name=schema_name,

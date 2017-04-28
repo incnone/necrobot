@@ -89,7 +89,7 @@ class TestMatch(TestCommandType):
 
         # Race 3:
         await send(admin, '.cancelrace 1', wait_for='')
-        await send(admin, '.f-recordrace "{0}"'.format(racer_2.display_name), wait_for='')
+        await send(admin, '.recordrace "{0}"'.format(racer_2.display_name), wait_for='')
         await send(admin, '.changewinner 2 "{0}"'.format(racer_1.display_name), wait_for='')
         await send(admin, '.postpone', wait_for='has been postponed')
         await send(admin, '.f-begin', wait_for='Please input')
@@ -106,14 +106,14 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.r', wait_for='is ready')
         await send(racer_2, '.r', wait_for='GO!')
         await send(admin, '.pause', wait_for='Race paused')
-        await send(admin, '.f-newrace', wait_for='Please input')
+        await send(admin, '.newrace', wait_for='Please input')
 
         # Race 5:
         await send(racer_1, '.r', wait_for='is ready')
         await send(racer_2, '.r', wait_for='GO!')
         await send(racer_1, '.d', wait_for='The match has ended')
         await send(admin, '.matchinfo', wait_for='')
-        await send(admin, '.f-newrace', wait_for='Please input')
+        await send(admin, '.newrace', wait_for='Please input')
 
         # Race 6:
         await send(racer_1, '.r', wait_for='is ready')

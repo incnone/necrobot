@@ -4,6 +4,7 @@ Current version: 0.10
 
 ## Condorbot
 
+- Write match ID to GSheet
 - Auto-register users on match creation
 - Better timezone parsing
 
