@@ -3,10 +3,12 @@
 import asyncio
 import datetime
 import discord
+import pytz
 import typing
 
 from necrobot.util import console
 from necrobot.util import ordinal
+from necrobot.util import timestr
 
 from necrobot.race import cmd_race
 from necrobot.match import cmd_match
@@ -176,6 +178,53 @@ class MatchRoom(BotChannel):
         self._current_race_number = self._match_race_data.num_finished + self._match_race_data.num_canceled
         self._last_begun_race_number = self._current_race_number
         self._set_channel_commands()
+
+    async def send_channel_start_text(self) -> None:
+        msg = '\n \N{BULLET} To suggest a time, use `.suggest`. (See `.help suggest` for more info.) Give the time ' \
+              'in your own local timezone (which you\'ve registered using `.timezone`).\n' \
+              '\N{BULLET} Confirm a suggested time with `.confirm`. You may remove a confirmation with ' \
+              '`.unconfirm`.\n' \
+              '\N{BULLET} To reschedule a time both racers have confirmed, both racers must call `.unconfirm`.\n' \
+              '\N{BULLET} You may alert CoNDOR staff at any time by calling `.staff`.\n'
+
+        if self.match.racer_1.timezone is not None and self.match.racer_2.timezone is not None:
+            utcnow = pytz.utc.localize(datetime.datetime.utcnow())
+            r1off = utcnow.astimezone(self.match.racer_1.timezone).utcoffset()
+            r2off = utcnow.astimezone(self.match.racer_2.timezone).utcoffset()
+
+            if r1off > r2off:
+                ahead_racer_name = self.match.racer_1.display_name
+                behind_racer_name = self.match.racer_2.display_name
+                diff_str = timestr.timedelta_to_str(r1off - r2off)
+                msg += '\N{BULLET} {0} is currently {1} ahead of {2}.'.format(
+                    ahead_racer_name, diff_str, behind_racer_name
+                )
+            elif r1off < r2off:
+                ahead_racer_name = self.match.racer_2.display_name
+                behind_racer_name = self.match.racer_1.display_name
+                diff_str = timestr.timedelta_to_str(r2off - r1off)
+                msg += '\N{BULLET} {0} is currently {1} ahead of {2}.'.format(
+                    ahead_racer_name, diff_str, behind_racer_name
+                )
+            else:
+                msg += '\N{BULLET} The two racers in this match currently have the same UTC offset.'
+
+        else:
+            if self.match.racer_1.timezone is None and self.match.racer_2.timezone is not None:
+                msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.'.format(
+                    self.match.racer_1.display_name
+                )
+            elif self.match.racer_1.timezone is not None and self.match.racer_2.timezone is None:
+                msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.'.format(
+                    self.match.racer_2.display_name
+                )
+            else:
+                msg += '\N{BULLET} {0} and {1} have not registered a timezone. Please call `.timezone`.'.format(
+                    self.match.racer_1.display_name,
+                    self.match.racer_2.display_name
+                )
+
+        await self.client.send_message(self.channel, msg)
 
     async def update(self) -> None:
         if self.match.is_scheduled and self.current_race is None:

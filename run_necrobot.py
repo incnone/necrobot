@@ -1,8 +1,8 @@
 from necrobot.config import Config
 from necrobot.daily.dailymgr import DailyMgr
-from necrobot.ladder import ratingutil
-from necrobot.ladder.ladderadminchannel import LadderAdminChannel
-from necrobot.match.matchmgr import MatchMgr
+# from necrobot.ladder import ratingutil
+# from necrobot.ladder.ladderadminchannel import LadderAdminChannel
+# from necrobot.match.matchmgr import MatchMgr
 from necrobot.stdconfig.mainchannel import MainBotChannel
 from necrobot.stdconfig.pmbotchannel import PMBotChannel
 from necrobot.util import console

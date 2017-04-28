@@ -826,6 +826,7 @@ async def make_match_from_cmd(
 
     # Create the match room
     match_room = await matchutil.make_match_room(new_match)
+    await match_room.send_channel_start_text()
 
     # Output success
     await cmd_type.client.send_message(

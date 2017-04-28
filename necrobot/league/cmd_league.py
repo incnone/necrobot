@@ -430,11 +430,11 @@ class SetMatchRules(CommandType):
         CommandType.__init__(self, bot_channel, 'setrules')
         self.help_text = \
             'Set the current event\'s default match rules. Flags:\n' \
-            '`-bestof X | -repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \
-            '`-c charname`: Set the default match character.\n' \
-            '`-u | -s | -seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
-            '`-custom desc`: Give the matches a custom description.\n' \
-            '`-nodlc`: Matches are marked as being without the Amplified DLC.'
+            '`bestof X | repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \
+            '`charname`: Set the default match character.\n' \
+            '`u | s | seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
+            '`custom desc`: Give the matches a custom description.\n' \
+            '`nodlc`: Matches are marked as being without the Amplified DLC.'
         self.admin_only = True
 
     @property

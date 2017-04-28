@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import discord
 import pytz
 import re
@@ -98,7 +97,7 @@ class NecroUser(object):
         return self._rtmp_name
 
     @property
-    def timezone(self) -> datetime.datetime:
+    def timezone(self) -> pytz.timezone:
         return self._timezone
 
     @property

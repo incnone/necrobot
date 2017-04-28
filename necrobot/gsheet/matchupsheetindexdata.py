@@ -42,6 +42,8 @@ class MatchupSheetIndexData(object):
         ----------
         wks_name: str
             The name of the worksheet to initialize from.
+        wks_id: int
+            The ID of the worksheet to initialize from.
         
         Raises
         ------
@@ -165,12 +167,11 @@ class MatchupSheetIndexData(object):
             # Find the header row and the column indicies
             row_query_min = 1
             row_query_max = 10
-            col_vals = []
             while self.footer_row is None and row_query_min <= self._sheet_size[0]:
                 # Get the cells
                 range_to_get = SheetRange(
                     ul_cell=(row_query_min, 1,),
-                    lr_cell=(row_query_max, sheet_size[1],),
+                    lr_cell=(row_query_max, self._sheet_size[1],),
                     wks_name=self.wks_name
                 )
                 request = spreadsheets.values().get(

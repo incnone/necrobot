@@ -122,7 +122,8 @@ class MakeFromSheet(CommandType):
         unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
 
         for match in unchanneled_matches:
-            await matchutil.make_match_room(match=match, register=True)
+            new_room = await matchutil.make_match_room(match=match, register=True)
+            await new_room.send_channel_start_text()
 
         uncreated_str = ''
         for match_str in not_found_matches:

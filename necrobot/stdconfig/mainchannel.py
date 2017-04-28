@@ -1,6 +1,6 @@
 from necrobot.botbase import cmd_admin
 from necrobot.daily import cmd_daily
-from necrobot.ladder import cmd_ladder
+# from necrobot.ladder import cmd_ladder
 from necrobot.stdconfig import cmd_seedgen, cmd_color
 from necrobot.race import cmd_racemake
 from necrobot.stats import cmd_stats
