@@ -232,7 +232,7 @@ class Daily(object):
 
     # Submit a run to the given daily number
     def submit_to_daily(self, daily_number, user, lv, time):
-        params = (user.id, daily_number, self.daily_type.value, lv, time,)
+        params = (user.id, daily_number, self.daily_type.value, lv, time)
         NecroDB().register_daily(params)
 
     # Delete a run from the daily
