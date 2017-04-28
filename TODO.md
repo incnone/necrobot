@@ -4,8 +4,6 @@ Current version: 0.10
 
 ## Condorbot
 
-- All TODOs
-
 ### Testing
 
 - Test new user registration
@@ -23,7 +21,7 @@ Current version: 0.10
 ## Refactor
 
 - Uniformize and improve argument parsing
-- racetime could be a class
+- level and racetime could be classes
 - Fix circular imports between Necrobot and BotChannel
 
 ## Bugs

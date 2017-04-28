@@ -6,7 +6,6 @@ import re
 import unittest
 
 from necrobot.util import console
-from necrobot.util import strutil
 
 from necrobot.user.userprefs import UserPrefs
 
@@ -144,14 +143,6 @@ class NecroUser(object):
                '{1}```'.format(
                     self.infoname,
                     self.infotext)
-
-    @property
-    def escaped_twitch_name(self) -> str:
-        return strutil.escaped(self.twitch_name)
-
-    @property
-    def escaped_rtmp_name(self) -> str:
-        return strutil.escaped(self.rtmp_name)
 
     def set_user_id(self, user_id):
         """

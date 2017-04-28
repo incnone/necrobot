@@ -207,10 +207,14 @@ class MatchRoom(BotChannel):
         if race_event.event == RaceEvent.EventType.RACE_BEGIN:
             self._last_begun_race = self._current_race
             self._last_begun_race_number = self._current_race_number
+        elif race_event.event == RaceEvent.EventType.RACE_BEGIN_COUNTDOWN:
+            NEDispatch().publish(event_type='begin_match_race', match=self.match)
         elif race_event.event == RaceEvent.EventType.RACE_END:
             await asyncio.sleep(1)  # Waiting for a short time feels good UI-wise
             await self.write('The race will end in {} seconds.'.format(self.current_race.race_config.finalize_time_sec))
         elif race_event.event == RaceEvent.EventType.RACE_FINALIZE:
+            NEDispatch().publish(event_type='end_match_race', match=self.match)
+
             race_winner = race_event.race.racers[0]
             race_loser = race_event.race.racers[1]
             auto_contest = (

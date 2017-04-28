@@ -4,7 +4,7 @@ import pytz
 
 from necrobot.user import userutil
 from necrobot.util import console
-from necrobot.util.commitdec import commits
+from necrobot.util.decorators import commits
 
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo

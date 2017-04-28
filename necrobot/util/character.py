@@ -18,16 +18,16 @@ class NDChar(Enum):
     Diamond = 13
     Multichar = 14
 
-    @staticmethod
-    def fromstr(char_name):
-        for ndchar in NDChar:
-            if ndchar.name == char_name.capitalize():
-                return ndchar
-        return None
-
     def __str__(self):
         return self.name
 
     @property
     def levels_reversed(self):
         return self == NDChar.Aria
+
+    @staticmethod
+    def fromstr(char_name):
+        for ndchar in NDChar:
+            if ndchar.name == char_name.capitalize():
+                return ndchar
+        return None

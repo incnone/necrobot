@@ -7,6 +7,7 @@ from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.match import Match
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
+from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util.singleton import Singleton
 
 
@@ -37,11 +38,14 @@ class CondorMgr(object, metaclass=Singleton):
         if self._notifications_channel is None:
             return
 
-        if ev.event_type == 'match_alert':
-            if ev.final:
-                await self.match_alert(ev.match)
-            else:
-                await self.cawmentator_alert(ev.match)
+        if ev.event_type == 'begin_match_race':
+            await VodRecorder().start_record(ev.match.racer_1.rtmp_name)
+            await VodRecorder().start_record(ev.match.racer_2.rtmp_name)
+        elif ev.event_type == 'end_match_race':
+            await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
+            await VodRecorder().end_record(ev.match.racer_2.rtmp_name)
+        elif ev.event_type == 'match_alert':
+            await self.match_alert(ev.match) if ev.final else self.cawmentator_alert(ev.match)
         elif ev.event_type == 'notify':
             await self._client.send_message(self._notifications_channel, ev.message)
         elif ev.event_type == 'set_cawmentary':

@@ -1,4 +1,4 @@
-# Credit to Hornwitser -- https://gist.github.com/Hornwitser/93aceb86533ed3538b6f
+"""Credit to Hornwitser -- https://gist.github.com/Hornwitser/93aceb86533ed3538b6f"""
 
 import random
 import time

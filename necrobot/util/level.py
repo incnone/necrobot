@@ -1,4 +1,4 @@
-# from enum import IntEnum
+from enum import IntEnum
 
 LEVEL_UNKNOWN_DEATH = int(0)
 LEVEL_NOS = int(-1)
@@ -34,7 +34,7 @@ TOTAL_ZONES = 5
 #             level: int = None,
 #             total_level: int = None,
 #             level_special: LevelSpecial = None
-#     ):
+#     ) -> None:
 #         if total_level is not None:
 #             self.zone = min(((total_level - 1) // LEVELS_PER_ZONE) + 1, TOTAL_ZONES)
 #             self.level = total_level - LEVELS_PER_ZONE * (self.zone - 1)
@@ -43,13 +43,13 @@ TOTAL_ZONES = 5
 #         self.level = level
 #         self.level_special = level_special
 #
-#     def __int__(self):
+#     def __int__(self) -> int:
 #         if self.is_normal_level:
 #             return 4*(self.zone - 1) + self.level
 #         else:
 #             return int(self.level_special)
 #
-#     def __str__(self):
+#     def __str__(self) -> str:
 #         if self.is_normal_level is None:
 #             return '{0}-{1}'.format(self.zone, self.level)
 #         elif self.is_normal_level == LevelSpecial.UNKNOWN_DEATH:
@@ -60,17 +60,16 @@ TOTAL_ZONES = 5
 #             return 'finished'
 #
 #     @property
-#     def is_normal_level(self):
+#     def is_normal_level(self) -> bool:
 #         return self.level_special is not None
 #
-#     # noinspection PyTypeChecker
-#     def sortval(self, reverse=False) -> int:
+#     def sortval(self, reverse: bool = False) -> int:
 #         if self.level_special == LevelSpecial.FINISHED:
 #             return LEVEL_MAX + 1
 #         elif reverse:
-#             return LEVEL_MAX - int(self) if int(self) > 0 else 0
+#             return LEVEL_MAX - self.__int__() if self.__init__() > 0 else 0
 #         else:
-#             return int(self)
+#             return self.__int__()
 
 
 def from_str(level_str: str) -> int:
