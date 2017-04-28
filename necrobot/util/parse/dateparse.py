@@ -33,3 +33,8 @@ def parse_datetime(parse_str: str, timezone: pytz.timezone = pytz.utc) -> dateti
             return timezone.localize(dateutil_parse).astimezone(pytz.utc)
     except ValueError:
         raise necrobot.exception.ParseException('Couldn\'t parse {0} as a time.'.format(parse_str))
+    except OverflowError:
+        raise necrobot.exception.ParseException(
+            'That date is really just too big. (Like, so big it doesn\'t fit in an int value on this system.) '
+            'Congratulations! Please try again.'
+        )

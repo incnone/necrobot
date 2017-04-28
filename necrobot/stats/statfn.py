@@ -1,6 +1,7 @@
 import math
 
 from necrobot.database import matchdb, racedb
+from necrobot.stats.leaguestats import LeagueStats
 from necrobot.util import console, racetime
 from necrobot.util.character import NDChar
 from necrobot.util.singleton import Singleton
@@ -222,11 +223,11 @@ async def get_fastest_times_league_infotext(limit: int) -> str:
     return infotext[:-1] if infotext else ''
 
 
-async def get_league_stats(user_id: int) -> dict:
+async def get_league_stats(user_id: int) -> LeagueStats:
     stats = await matchdb.get_matchstats_raw(user_id)
-    return {
-        'wins': stats[0],
-        'best': stats[1],
-        'average': stats[2],
-        'losses': stats[3]
-    }
+    return LeagueStats(
+        wins=stats[0],
+        best=stats[1],
+        average=stats[2],
+        losses=stats[3]
+    )

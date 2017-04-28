@@ -24,6 +24,7 @@ Current version: 0.10
 
 - Uniformize and improve argument parsing
 - racetime could be a class
+- Fix circular imports between Necrobot and BotChannel
 
 ## Bugs
 

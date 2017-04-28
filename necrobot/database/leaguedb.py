@@ -158,6 +158,7 @@ async def get_league(schema_name: str) -> League:
                `leagues`.`is_best_of`, 
                `leagues`.`ranked`, 
                `leagues`.`gsheet_id`,
+               `leagues`.`deadline`,
                `race_types`.`character`, 
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
@@ -172,16 +173,16 @@ async def get_league(schema_name: str) -> League:
         )
         for row in cursor:
             race_info = RaceInfo()
-            if row[5] is not None:
-                race_info.set_char(row[5])
             if row[6] is not None:
-                race_info.descriptor = row[6]
+                race_info.set_char(row[6])
             if row[7] is not None:
-                race_info.seeded = bool(row[7])
+                race_info.descriptor = row[7]
             if row[8] is not None:
-                race_info.amplified = bool(row[8])
+                race_info.seeded = bool(row[8])
             if row[9] is not None:
-                race_info.seed_fixed = bool(row[9])
+                race_info.amplified = bool(row[9])
+            if row[10] is not None:
+                race_info.seed_fixed = bool(row[10])
 
             match_info = MatchInfo(
                 max_races=int(row[1]) if row[1] is not None else None,
@@ -195,7 +196,8 @@ async def get_league(schema_name: str) -> League:
                 schema_name=schema_name,
                 league_name=row[0],
                 match_info=match_info,
-                gsheet_id=row[4]
+                gsheet_id=row[4],
+                deadline=row[5]
             )
 
         raise necrobot.exception.LeagueDoesNotExist()
@@ -240,6 +242,7 @@ async def write_league(league: League) -> None:
             league.schema_name,
             league.name,
             league.gsheet_id,
+            league.deadline,
             match_info.max_races,
             match_info.is_best_of,
             match_info.ranked,
@@ -249,11 +252,21 @@ async def write_league(league: League) -> None:
         cursor.execute(
             """
             INSERT INTO `leagues` 
-            (`schema_name`, `league_name`, `gsheet_id`, `number_of_races`, `is_best_of`, `ranked`, `race_type`) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s) 
+            (
+                `schema_name`, 
+                `league_name`, 
+                `gsheet_id`, 
+                `deadline`, 
+                `number_of_races`, 
+                `is_best_of`, 
+                `ranked`, 
+                `race_type`
+            ) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE
                `league_name` = VALUES(`league_name`), 
                `gsheet_id` = VALUES(`gsheet_id`),
+               `deadline` = VALUES(`deadline`),
                `number_of_races` = VALUES(`number_of_races`), 
                `is_best_of` = VALUES(`is_best_of`), 
                `ranked` = VALUES(`ranked`), 

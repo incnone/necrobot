@@ -17,13 +17,15 @@ class League(object):
             schema_name: str,
             league_name: str,
             match_info: MatchInfo,
-            gsheet_id: str = None
+            gsheet_id: str = None,
+            deadline: str = None
     ):
         self._commit = commit_fn
         self._schema_name = schema_name
         self.name = league_name
         self.match_info = match_info
         self.gsheet_id = gsheet_id
+        self.deadline = deadline
 
     @property
     def schema_name(self):

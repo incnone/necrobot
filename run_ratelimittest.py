@@ -13,8 +13,8 @@ async def on_ready_fn(necrobot):
     try:
         msg_rl_pair = await ratelimit.send_and_get_rate_limit(
             necrobot.client,
-            necrobot.find_channel('season5'),
-            'hi'
+            necrobot.main_channel,
+            'testing rate limit'
         )
         print(msg_rl_pair[1])
     except SystemExit:

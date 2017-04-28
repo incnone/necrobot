@@ -14,10 +14,7 @@ async def load_condorbot_config(necrobot):
     necrobot.register_pm_channel(CondorPMChannel())
 
     # Main Channel
-    main_discord_channel = necrobot.find_channel('season5')
-    if main_discord_channel is None:
-        console.warning('Could not find the "{0}" channel.'.format('season5'))
-    necrobot.register_bot_channel(main_discord_channel, CondorMainChannel())
+    necrobot.register_bot_channel(necrobot.main_channel, CondorMainChannel())
 
     # Admin channel
     condor_admin_channel = necrobot.find_channel('adminchat')

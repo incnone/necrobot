@@ -205,7 +205,7 @@ class Match(object):
             return self.race_info.raceroom_name
 
     @property
-    def time_until_match(self) -> datetime.datetime or None:
+    def time_until_match(self) -> datetime.timedelta or None:
         return (self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow())) if self.is_scheduled else None
 
     def commit(self):

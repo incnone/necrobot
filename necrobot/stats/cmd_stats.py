@@ -1,3 +1,5 @@
+import necrobot.stats.leaguestats
+
 from necrobot.stats import statfn
 from necrobot.user import userutil
 from necrobot.util import racetime
@@ -144,23 +146,7 @@ class LeagueStats(CommandType):
                 return
 
         stats = await statfn.get_league_stats(user.user_id)
-        best_win = racetime.to_str(stats['best']) if stats['best'] is not None else '--'
-        avg_win = racetime.to_str(stats['average']) if stats['average'] is not None else '--'
-
-        infobox = \
-            '```\n' \
-            'Stats: {username}\n' \
-            '    Record: {wins}-{losses}\n' \
-            '  Best win: {best}\n' \
-            '  Avg. win: {avg}\n' \
-            '```'.format(
-                username=user.bot_name,
-                wins=stats['wins'],
-                losses=stats['losses'],
-                best=best_win,
-                avg=avg_win
-            )
-
+        infobox = '```\nStats: {username}\n{stats}\n```'.format(username=user.display_name, stats=stats.infotext)
         await self.client.send_message(cmd.channel, infobox)
 
 

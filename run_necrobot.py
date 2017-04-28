@@ -19,7 +19,8 @@ async def load_necrobot_config(necrobot):
     main_discord_channel = necrobot.find_channel(Config.MAIN_CHANNEL_NAME)
     if main_discord_channel is None:
         console.warning('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
-    necrobot.register_bot_channel(main_discord_channel, MainBotChannel())
+    necrobot.set_main_channel(main_discord_channel)
+    necrobot.register_bot_channel(necrobot.main_channel, MainBotChannel())
 
     # Ladder Channel
     ladder_admin_channel = necrobot.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)

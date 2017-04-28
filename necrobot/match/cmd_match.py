@@ -12,6 +12,7 @@ from necrobot.util.parse import dateparse
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
+from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.necroevent.necroevent import NEDispatch
 
 
@@ -263,7 +264,19 @@ class Suggest(CommandType):
                     cmd.author.mention))
             return
 
-        # TODO: Code to check for "deadlines" on suggested times.
+        # Check for deadlines on suggested times.
+        league = LeagueMgr().league
+        if league is not None:
+            deadline_str = league.deadline
+            if deadline_str is not None:
+                deadline = dateparse.parse_datetime(deadline_str)
+                if suggested_time_utc - deadline > datetime.timedelta(seconds=0):
+                    await self.client.send_message(
+                        cmd.channel,
+                        'Matches must be scheduled before {deadline:%b %d (%A) at %I:%M %p}'
+                        .format(deadline=deadline)
+                    )
+                    return
 
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)

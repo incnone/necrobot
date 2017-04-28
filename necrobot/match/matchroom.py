@@ -1,4 +1,4 @@
-# Room for scheduling and running a "match", a series of games between a pair of racers.
+"""Room for scheduling and running a "match", a series of games between a pair of racers."""
 
 import asyncio
 import datetime
@@ -37,18 +37,18 @@ class MatchRoom(BotChannel):
             The Match object for the match.
         """
         BotChannel.__init__(self)
-        self._channel = match_discord_channel   # The necrobot in which this match is taking place
-        self._match = match                     # The match for this room
+        self._channel = match_discord_channel   # type: discord.Channel
+        self._match = match                     # type: Match
 
-        self._current_race = None               # The current race
-        self._last_begun_race = None            # The last race to begin
+        self._current_race = None               # type: Race
+        self._last_begun_race = None            # type: Race
 
-        self._countdown_to_match_future = None  # Future that waits until the match start, then begins match
+        self._countdown_to_match_future = None  # type: asyncio.Future
 
-        self._current_race_number = None
+        self._current_race_number = None        # type: typing.Optional[int]
 
-        self._last_begun_race_number = None
-        self._current_race_contested = False
+        self._last_begun_race_number = None     # type: typing.Optional[int]
+        self._current_race_contested = False    # type: bool
 
         self._match_race_data = None            # type: typing.Optional[MatchRaceData]
 
@@ -127,37 +127,31 @@ class MatchRoom(BotChannel):
         return self._match
 
     @property
-    def current_race(self) -> Race:
-        """
-        Returns
-        -------
-        Race
-            The "main" Race; the one that most commands should apply to. Not None if self.before_races is False.
-        """
+    def current_race(self) -> typing.Optional[Race]:
+        """The "main" Race; the one that most commands should apply to. Not None if self.before_races is False."""
         return self._current_race
 
     @property
-    def last_begun_race(self) -> Race or None:
-        """
-        Returns
-        -------
-        Race
-            The last race to begin (sent a RaceEvent.RACE_BEGIN to this room). Useful for allowing commands to apply
-            to a finished race during the ready-up phase of the subsequent race.
+    def last_begun_race(self) -> typing.Optional[Race]:
+        """The last race to begin (sent a RaceEvent.RACE_BEGIN to this room). Useful for allowing commands to apply
+        to a finished race during the ready-up phase of the subsequent race.
         """
         return self._last_begun_race
 
     @property
     def played_all_races(self) -> bool:
+        """True if the match is over."""
         if self.match.is_best_of:
             return self._match_race_data.leader_wins > self.match.number_of_races // 2
         else:
             return self._match_race_data.num_finished >= self.match.number_of_races
 
-    async def during_races(self):
+    async def during_races(self) -> bool:
+        """True if the match has started but not finished."""
         return self.current_race is not None and not self.played_all_races
 
-    async def contest_last_begun_race(self):
+    async def contest_last_begun_race(self) -> None:
+        """Mark the last begun race as contested."""
         if self._last_begun_race is None:
             contest_race_number = self._current_race_number - 1
         else:
@@ -172,23 +166,14 @@ class MatchRoom(BotChannel):
             contested=True
         )
 
-    def _race_winner(self, race: Race) -> int:
-        race_winner_id = int(race.winner.member.id)
-        if race_winner_id == int(self.match.racer_1.member.id):
-            return 1
-        elif race_winner_id == int(self.match.racer_2.member.id):
-            return 2
-        else:
-            return 0
-
-# Public coroutine methods
-    async def initialize(self):
+    async def initialize(self) -> None:
+        """Async initialization method"""
         if self._countdown_to_match_future is not None:
             self._countdown_to_match_future.cancel()
         self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start(warn=True))
         self._match_race_data = await matchdb.get_match_race_data(self.match.match_id)
 
-    async def update(self):
+    async def update(self) -> None:
         if self.match.is_scheduled and self.current_race is None:
             if self._countdown_to_match_future is not None:
                 self._countdown_to_match_future.cancel()
@@ -204,8 +189,8 @@ class MatchRoom(BotChannel):
         else:
             self.channel_commands = self._during_match_channel_commands
 
-    # Change the RaceInfo for this room
-    async def change_race_info(self, command_args: list):
+    async def change_race_info(self, command_args: list) -> None:
+        """Change the RaceInfo for this room by parsing the input args"""
         new_race_info = raceinfo.parse_args_modify(
             command_args,
             raceinfo.RaceInfo.copy(self.match.race_info)
@@ -217,8 +202,8 @@ class MatchRoom(BotChannel):
             await self.write('Changed rules for the next race.')
             await self.update()
 
-    # Process a RaceEvent
-    async def process(self, race_event: RaceEvent):
+    async def process(self, race_event: RaceEvent) -> None:
+        """Process a RaceEvent"""
         if race_event.event == RaceEvent.EventType.RACE_BEGIN:
             self._last_begun_race = self._current_race
             self._last_begun_race_number = self._current_race_number
@@ -264,12 +249,12 @@ class MatchRoom(BotChannel):
             if not self.played_all_races:
                 await self._begin_new_race()
 
-    # Write to the channel
-    async def write(self, text: str):
+    async def write(self, text: str) -> None:
+        """Write text to the channel"""
         await self.client.send_message(self.channel, text)
 
-    # Post an alert pinging all racers in the match
-    async def alert_racers(self):
+    async def alert_racers(self) -> None:
+        """Post an alert pinging both racers in the match"""
         member_1 = self.match.racer_1.member
         member_2 = self.match.racer_2.member
 
@@ -284,23 +269,44 @@ class MatchRoom(BotChannel):
             await self.write('{0}: The match is scheduled to begin in {1} minutes.'.format(
                 alert_str[:-2], minutes_until_match))
 
-    async def force_new_race(self):
+    async def force_new_race(self) -> None:
+        """Begin a new race, canceling the old one if necessary"""
         if not self.current_race.complete:
             await self.current_race.cancel()
 
         if self.current_race.final:
             await self._begin_new_race()
 
-    # PM an alert to the match cawmentator, if any
-    async def alert_cawmentator(self):
-        pass  # TODO
+    async def cancel_race(self, race_number: int) -> bool:
+        """Mark a race as canceled
+        
+        Parameters
+        ----------
+        race_number: int
+            The number of the race to cancel, counting only uncanceled races.
+        """
+        race_number = race_number - self._match_race_data.num_canceled
+        success = await matchdb.cancel_race(self.match, race_number)
+        if success:
+            self._match_race_data.num_finished -= 1
+            self._match_race_data.num_canceled += 1
+        return success
 
-    # Post a match alert in the main channel
-    async def post_match_alert(self):
-        pass  # TODO
+    async def force_record_race(self, winner: int) -> None:
+        """Record a "fake" race with the given winner"""
+        await matchdb.record_match_race(
+            match=self.match,
+            winner=winner
+        )
+        self._update_race_data(race_winner=winner)
 
-# Race start/end
-    async def _countdown_to_match_start(self, warn: bool = False):
+    async def _countdown_to_match_start(self, warn: bool = False) -> None:
+        """Does things at certain times before the match
+        
+        Posts alerts to racers in this channel, and sends NecroEvents at alert times. Begins the match
+        at the appropriate time. This is stored as a future in this object, and is meant to be canceled
+        if this object closes.
+        """
         try:
             if not self.match.is_scheduled:
                 return
@@ -323,7 +329,7 @@ class MatchRoom(BotChannel):
             if time_until_match > Config.MATCH_FIRST_WARNING:
                 await asyncio.sleep((time_until_match - Config.MATCH_FIRST_WARNING).total_seconds())
                 await self.alert_racers()
-                await self.alert_cawmentator()
+                NEDispatch().publish('match_alert', match=self.match, final=False)
 
             # Wait until the final warning
             time_until_match = self.match.time_until_match
@@ -333,7 +339,7 @@ class MatchRoom(BotChannel):
             # At this time, we've either just passed the FINAL_MATCH_WARNING or the function was just called
             # (happens if the call comes sometime after the FINAL_MATCH_WARNING but before the match).
             await self.alert_racers()
-            await self.post_match_alert()
+            NEDispatch().publish('match_alert', match=self.match, final=True)
 
             await asyncio.sleep(self.match.time_until_match.total_seconds())
             await self._begin_new_race()
@@ -341,8 +347,8 @@ class MatchRoom(BotChannel):
             console.info('MatchRoom._countdown_to_match_start() was cancelled.')
             raise
 
-    # Begin a new race
     async def _begin_new_race(self):
+        """Begin a new race"""
         # Shift to during-match commands
         self.channel_commands = self._during_match_channel_commands
 
@@ -368,27 +374,13 @@ class MatchRoom(BotChannel):
             self._countdown_to_match_future.cancel()
 
     async def _end_match(self):
+        """End the match"""
         self._current_race = None
         self.channel_commands = self._postmatch_channel_commands
         await self.write('Match complete.')
 
-
-# Database recording
-    async def cancel_race(self, race_number: int) -> bool:
-        success = await matchdb.cancel_race(self.match, race_number)
-        if success:
-            self._match_race_data.num_finished -= 1
-            self._match_race_data.num_canceled += 1
-        return success
-
-    async def force_record_race(self, winner: int) -> None:
-        await matchdb.record_match_race(
-            match=self.match,
-            winner=winner
-        )
-        self._update_race_data(race_winner=winner)
-
     async def _record_race(self, race: Race, race_winner: int) -> None:
+        """Record the given race as part of this match"""
         await racedb.record_race(race)
         await matchdb.record_match_race(
             match=self.match,
@@ -401,6 +393,7 @@ class MatchRoom(BotChannel):
         self._update_race_data(race_winner=race_winner)
 
     async def _record_new_ratings(self, race_winner: int) -> None:
+        """Get new ratings for the racers in this match and record them"""
         racer_1 = self.match.racer_1
         racer_2 = self.match.racer_2
 
@@ -412,14 +405,25 @@ class MatchRoom(BotChannel):
         await ratingsdb.set_rating(racer_1.discord_id, new_ratings[0])
         await ratingsdb.set_rating(racer_2.discord_id, new_ratings[1])
 
-        # TODO: this isn't working
+        # this isn't working
         # if Config.RATINGS_IN_NICKNAMES:
         #     for pair in [(racer_1, rating_1,), (racer_2, rating_2,)]:
         #         member = pair[0].member
         #         nick = '{0} ({1})'.format(pair[0].member.name, pair[1].displayed_rating)
         #         await self.client.change_nickname(member=member, nickname=nick)
 
+    def _race_winner(self, race: Race) -> int:
+        """Get the number of the race's winner (1 or 2, for match.racer_1 or match.racer_2)"""
+        race_winner_id = int(race.winner.member.id)
+        if race_winner_id == int(self.match.racer_1.member.id):
+            return 1
+        elif race_winner_id == int(self.match.racer_2.member.id):
+            return 2
+        else:
+            return 0
+
     def _update_race_data(self, race_winner: int) -> None:
+        """Update this object's MatchRaceData"""
         self._match_race_data.num_finished += 1
         if race_winner == 1:
             self._match_race_data.r1_wins += 1

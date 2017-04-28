@@ -9,6 +9,7 @@ from necrobot.database import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match import matchutil, cmd_match, matchinfo
 from necrobot.user import userutil
+from necrobot.util.parse import dateparse
 
 
 class CloseAllMatches(CommandType):
@@ -62,6 +63,46 @@ class CloseFinished(CommandType):
         await self.client.send_message(
             cmd.channel,
             'Done closing all completed match channels.'
+        )
+
+
+class Deadline(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'deadline')
+        self.help_text = 'Get the deadline for scheduling matches.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        if LeagueMgr().league is None:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: No league set.'
+            )
+            return
+
+        deadline_str = LeagueMgr().league.deadline
+
+        if deadline_str is None:
+            await self.client.send_message(
+                cmd.channel,
+                'No deadline is set for the current league.'
+            )
+            return
+
+        try:
+            deadline = dateparse.parse_datetime(deadline_str)
+        except necrobot.exception.ParseException as e:
+            await self.client.send_message(cmd.channel, str(e))
+            return
+
+        await self.client.send_message(
+            cmd.channel,
+            'The current league deadline is "{deadline_str}". As of now, this is '
+            '{deadline:%b %d (%A) at %I:%M %p}.'
+            .format(
+                deadline_str=deadline_str,
+                deadline=deadline
+            )
         )
 
 
@@ -319,6 +360,46 @@ class RegisterCondorEvent(CommandType):
         await self.client.send_message(
             cmd.channel,
             'Registered new CoNDOR event `{0}`, and set it to be the bot\'s current event.'.format(schema_name)
+        )
+
+
+class SetDeadline(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'setdeadline')
+        self.help_text = '`{0} time`: Set a deadline for scheduling matches (e.g. "friday 12:00"). The given time ' \
+                         'will be interpreted in UTC.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Set match scheduling deadline.'
+
+    async def _do_execute(self, cmd: Command):
+        if LeagueMgr().league is None:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: No league set.'
+            )
+            return
+
+        try:
+            deadline = dateparse.parse_datetime(cmd.arg_string)
+        except necrobot.exception.ParseException as e:
+            await self.client.send_message(cmd.channel, str(e))
+            return
+
+        LeagueMgr().league.deadline = cmd.arg_string
+        LeagueMgr().league.commit()
+
+        await self.client.send_message(
+            cmd.channel,
+            'Set the current league\'s deadline to "{deadline_str}". As of now, this is '
+            '{deadline:%b %d (%A) at %I:%M %p}.'
+            .format(
+                deadline_str=cmd.arg_string,
+                deadline=deadline
+            )
         )
 
 

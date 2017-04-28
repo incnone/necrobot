@@ -17,12 +17,14 @@ class CondorAdminChannel(BotChannel):
 
             cmd_league.CloseAllMatches(self),
             cmd_league.CloseFinished(self),
+            cmd_league.Deadline(self),
             cmd_league.DropRacer(self),
             cmd_league.GetCurrentEvent(self),
             cmd_league.GetMatchRules(self),
             cmd_league.MakeMatch(self),
             cmd_league.RegisterCondorEvent(self),
             cmd_league.SetCondorEvent(self),
+            cmd_league.SetDeadline(self),
             cmd_league.SetEventName(self),
             cmd_league.SetMatchRules(self),
 

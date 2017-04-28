@@ -15,6 +15,7 @@ class LadderDropMyMatches(CommandType):
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
+            cmd.channel,
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -138,6 +139,7 @@ class Automatch(CommandType):
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
+            cmd.channel,
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -151,6 +153,7 @@ class CloseFinished(CommandType):
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
+            cmd.channel,
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -169,6 +172,7 @@ class DropRacer(CommandType):
     async def _do_execute(self, cmd):
         # TODO
         await self.client.send_message(
+            cmd.channel,
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
