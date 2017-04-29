@@ -6,10 +6,11 @@
 simple, generic, package-wide utility functions. (In certain places, `util` modules could likely use
 some refactoring.) However, there are many utility-like modules in other sub-packages.
 
-In general, modules implementing derived  classes of `BotChannel` are highest-level. These should
-be added to the necrobot via an out-of-package function; see `botconfigs.py`.
+In general, modules implementing derived classes of `BotChannel` are highest-level. These should
+be added to the necrobot via an out-of-package function. See `run_necrobot.py` and `run_condorbot.py`
+for examples.
 
-`BotChannel` modules import `cmd_*` classes to achieve their various functions. The `cmd_*` classes
+`BotChannel` modules import `cmd_*` modules to achieve their various functions. The `cmd_*` modules
 give implementations of various `CommandType` objects.
 
 A `CommandType` object is intended to deal with the UI involved in interpreting a `Command`. In

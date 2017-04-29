@@ -116,7 +116,7 @@ class RaceRoom(BotChannel):
         if room_rider:
             room_rider = ' ' + room_rider
 
-        seed_str = self.race_info.seed_str
+        seed_str = self._current_race.race_info.seed_str
         if seed_str:
             seed_str = '\n' + seed_str
 

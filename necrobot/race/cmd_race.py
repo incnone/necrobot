@@ -184,8 +184,8 @@ class ForceForfeit(CommandType):
 
 class ForceForfeitAll(CommandType):
     def __init__(self, race_room):
-        CommandType.__init__(self, race_room, 'forceforfeitall')
-        self.help_text = 'Force all unfinished racers to forfeit the race.'
+        CommandType.__init__(self, race_room, 'endrace', 'forceforfeitall')
+        self.help_text = 'Force all unfinished racers to forfeit the race and end the race.'
         self.admin_only = True
 
     async def _do_execute(self, cmd):

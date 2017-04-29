@@ -15,35 +15,34 @@ Current version: 0.10
 ## Refactor
 
 - Uniformize and improve argument parsing
-- level and racetime could be classes
-- Fix circular imports between Necrobot and BotChannel
+- `util.level.py` and `util.racetime.py` might work better as classes
 - Create unit tests for all modules
+- Replace NoneType returns with exceptions where appropriate
 
 ## Bugs
-
-### Fixable/precise but not urgent
-
-- `.dailywhen` is not working as advertised.
-- Deal with duplicated Discord names in commands like `.add`
  
-### Vague or not urgent
+### QoL UI Improvements
 
+- Deal with duplicated Discord names in commands like `.add` (allow for discriminator)
 - Better timezone parsing
 - More friendly parsing of spaces in command arguments
+
+### Unclear issues
+
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
-- Daily leaderboards will break due to post length if more than ~45 people participate
-- It's technically possible for the daily seed to be the same as a previous seed
-
-### Unclear sort-of-buggy behavior
-
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?
+
+### Likely will never fix
+
+- Daily leaderboards will break due to post length if more than ~45 people participate
+- It's technically possible for the daily seed to be the same as a previous seed
 
 ## Features
 
 - Configuration of `.racealert` for character-specific, etc
-- add more complicated sorts to `.mostraces`
-- add `.forceunready` command
+- Add more complicated sorts to `.mostraces`
+- Add `.forceunready` command
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
 
 ### Different race modes

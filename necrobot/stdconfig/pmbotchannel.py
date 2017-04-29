@@ -39,5 +39,10 @@ class PMBotChannel(BotChannel):
 
             cmd_user.DailyAlert(self),
             cmd_user.RaceAlert(self),
+            cmd_user.RTMP(self),
+            cmd_user.SetInfo(self),
+            cmd_user.Timezone(self),
+            cmd_user.Twitch(self),
             cmd_user.ViewPrefs(self),
+            cmd_user.UserInfo(self),
         ]

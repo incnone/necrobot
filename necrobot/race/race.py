@@ -211,7 +211,8 @@ class Race(object):
     # Returns true if all racers are ready and there's enough racers
     @property
     def all_racers_ready(self) -> bool:
-        return self.num_not_ready == 0 and (self.race_info.can_be_solo or len(self.racers) > 1)
+        min_length = 1 if self.race_info.can_be_solo else 2
+        return self.num_not_ready == 0 and len(self.racers) >= min_length
 
     # Returns the number of racers not in the 'ready' state
     @property
@@ -513,6 +514,7 @@ class Race(object):
                     await self._do_forfeit_racer(racer)
             if forfeit_any:
                 await self._write(mute=mute, text='All remaining racers forfeit.')
+            await self._end_race()
 
     # Adds the given string as a comment
     async def add_comment_for_member(self, racer_member: discord.Member, comment_str: str):
