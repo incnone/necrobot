@@ -275,13 +275,13 @@ def init(config_filename):
     Config.LEAGUE_NAME = defaults['league_name']
     Config.GSHEET_ID = defaults['gsheet_id']
 
-    if defaults['test_level'] == 0:
+    if defaults['test_level'] == '0':
         Config.DEBUG_LEVEL = DebugLevel.FULL_DEBUG
-    elif defaults['test_level'] == 1:
+    elif defaults['test_level'] == '1':
         Config.DEBUG_LEVEL = DebugLevel.BOT_DEBUG
-    elif defaults['test_level'] == 2:
+    elif defaults['test_level'] == '2':
         Config.DEBUG_LEVEL = DebugLevel.TEST
-    elif defaults['test_level'] == 3:
+    elif defaults['test_level'] == '3':
         Config.DEBUG_LEVEL = DebugLevel.RUN
 
     Config.CONFIG_FILE = config_filename

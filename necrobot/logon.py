@@ -164,3 +164,4 @@ def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn:
     finally:
         asyncio.get_event_loop().close()
         VodRecorder().end_all_async_unsafe()
+        config.Config.write()
