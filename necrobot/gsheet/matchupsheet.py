@@ -66,6 +66,7 @@ class MatchupSheet(object):
         list[Match]
             The list of created Matches.
         """
+        console.debug('get_matches begin...')
         await self.column_data.refresh_footer()
 
         matches = []
@@ -74,13 +75,19 @@ class MatchupSheet(object):
         match_ids = []
         async with Spreadsheets() as spreadsheets:
             value_range = await self.column_data.get_values(spreadsheets)
+            console.debug('get_matches: Got values from spreadsheets.')
 
             if 'values' not in value_range:
+                console.debug('get_matches: Values is empty.')
                 return matches
+            else:
+                console.debug('get_matches: Values: {0}'.format(value_range['values']))
 
             for row_idx, row_values in enumerate(value_range['values']):
                 racer_1_name = row_values[self.column_data.racer_1].rstrip(' ')
                 racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
+                console.debug('get_matches: Creating {0}-{1}'.format(racer_1_name, racer_2_name))
+
                 racer_1 = await userutil.get_user(any_name=racer_1_name, register=True)
                 racer_2 = await userutil.get_user(any_name=racer_2_name, register=True)
                 if racer_1 is None or racer_2 is None:
@@ -101,6 +108,9 @@ class MatchupSheet(object):
                     **kwargs
                 )
                 matches.append(new_match)
+                console.debug('get_matches: Created {0}-{1}'.format(
+                    new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
+                )
 
                 if write_match_ids:
                     match_ids.append([new_match.match_id])
@@ -109,6 +119,7 @@ class MatchupSheet(object):
             ids_range = self.column_data.get_range_for_column(self.column_data.match_id)
             await self._update_cells(sheet_range=ids_range, values=match_ids, raw_input=True)
 
+        console.debug('get_matches: Returning Matches=<{}>'.format(matches))
         return matches
 
     async def schedule_match(self, match: Match):
