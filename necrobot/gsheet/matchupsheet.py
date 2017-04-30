@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import pytz
 import unittest
 
 import necrobot.exception
@@ -142,7 +143,7 @@ class MatchupSheet(object):
         if match.suggested_time is None:
             value = ''
         else:
-            value = match.suggested_time.strftime('%Y-%m-%d %H:%M:%S')
+            value = match.suggested_time.astimezone(pytz.timezone('US/Eastern')).strftime('%Y-%m-%d %H:%M:%S')
 
         await self._update_cell(
             row=row,
