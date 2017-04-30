@@ -84,8 +84,13 @@ class MatchupSheet(object):
                 console.debug('get_matches: Values: {0}'.format(value_range['values']))
 
             for row_idx, row_values in enumerate(value_range['values']):
-                racer_1_name = row_values[self.column_data.racer_1].rstrip(' ')
-                racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
+                try:
+                    racer_1_name = row_values[self.column_data.racer_1].rstrip(' ')
+                    racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
+                except IndexError:
+                    console.warning('Failed to make match from sheet row: <{}>'.format(row_values))
+                    continue
+
                 console.debug('get_matches: Creating {0}-{1}'.format(racer_1_name, racer_2_name))
 
                 racer_1 = await userutil.get_user(any_name=racer_1_name, register=True)
