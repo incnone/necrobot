@@ -1,4 +1,5 @@
 from necrobot.condor import cmd_condor
+from necrobot.gsheet import cmd_sheet
 from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
@@ -6,6 +7,7 @@ from necrobot.user import userutil
 
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.match import Match
+from necrobot.match.matchroom import MatchRoom
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
 from necrobot.stream.vodrecord import VodRecorder
@@ -27,9 +29,6 @@ class CondorMgr(object, metaclass=Singleton):
         self._schedule_channel = Necrobot().find_channel('schedule')
         self._client = Necrobot().client
 
-        for bot_channel in Necrobot().all_channels:
-            bot_channel.default_commands.append(cmd_condor.StaffAlert(bot_channel))
-
         await self.update_schedule_channel()
 
     async def refresh(self):
@@ -40,6 +39,11 @@ class CondorMgr(object, metaclass=Singleton):
 
     async def close(self):
         pass
+
+    def on_botchannel_create(self, channel, bot_channel):
+        bot_channel.default_commands.append(cmd_condor.StaffAlert(bot_channel))
+        if isinstance(bot_channel, MatchRoom):
+            bot_channel.default_commands.append(cmd_sheet.PushMatchToSheet(bot_channel))
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':

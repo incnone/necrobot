@@ -496,6 +496,7 @@ class ForceConfirm(CommandType):
             return
 
         match.force_confirm()
+        await NEDispatch().publish('schedule_match', match=match)
 
         await self.client.send_message(
             cmd.channel,
@@ -583,7 +584,6 @@ class ForceReschedule(CommandType):
 
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)
-        await NEDispatch().publish('schedule_match', match=match)
 
         # Output what we did
         for racer in match.racers:

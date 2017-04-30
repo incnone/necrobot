@@ -23,6 +23,9 @@ class MatchMgr(object, metaclass=Singleton):
     async def close(self):
         pass
 
+    def on_botchannel_create(self, channel, bot_channel):
+        pass
+
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'rtmp_name_change':
             for row in await matchdb.get_channeled_matches_raw_data():

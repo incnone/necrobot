@@ -8,7 +8,8 @@ from necrobot.match import matchutil
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
-
+from necrobot.match.match import Match
+from necrobot.match.matchracedata import MatchRaceData
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.league.leaguemgr import LeagueMgr
 
@@ -145,6 +146,79 @@ class MakeFromSheet(CommandType):
             report_str = 'All matches created successfully.'
 
         await self.client.send_message(cmd.channel, report_str)
+
+
+class PushMatchToSheet(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'updategsheet')
+        self.help_text = 'Update the match\'s info on the GSheet.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        match = self.bot_channel.match      # type: Match
+        wks_id = match.sheet_id
+        if wks_id is None:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: No worksheet is assigned to this match (contact incnone).'
+            )
+            return
+
+        match_row = match.sheet_row
+        if match_row is None:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: This match doesn\'t have a designated sheet row (contact incnone).'
+            )
+            return
+
+        try:
+            matchup_sheet = await sheetlib.get_sheet(
+                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    wks_id=wks_id
+                )  # type: MatchupSheet
+        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error accessing GSheet: `{0}`'.format(e)
+            )
+            return
+
+        # TODO after combining MatchRaceData with match, simplify (code duping with MatchRoom)
+        if match.is_scheduled:
+            await matchup_sheet.schedule_match(match)
+        await matchup_sheet.set_cawmentary(match)
+        match_race_data = await matchutil.get_race_data(match)    # type: MatchRaceData
+
+        if match.is_best_of:
+            played_all = match_race_data.leader_wins > match.number_of_races // 2
+        else:
+            played_all = match_race_data.num_finished >= match.number_of_races
+
+        if played_all:
+            # Send event
+            if match_race_data.r1_wins > match_race_data.r2_wins:
+                winner = match.racer_1.display_name
+                winner_wins = match_race_data.r1_wins
+                loser_wins = match_race_data.r2_wins
+            elif match_race_data.r2_wins > match_race_data.r1_wins:
+                winner = match.racer_2.display_name
+                winner_wins = match_race_data.r2_wins
+                loser_wins = match_race_data.r1_wins
+            else:
+                winner = '[Tied]'
+                winner_wins = match_race_data.r1_wins
+                loser_wins = match_race_data.r2_wins
+
+            await matchup_sheet.record_score(
+                match=match, winner=winner, winner_wins=winner_wins, loser_wins=loser_wins
+            )
+
+        await self.client.send_message(
+            cmd.channel,
+            'Sheet updated.'
+        )
+
 
 
 class SetGSheet(CommandType):

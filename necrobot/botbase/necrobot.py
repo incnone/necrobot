@@ -124,6 +124,8 @@ class Necrobot(object, metaclass=Singleton):
     def register_bot_channel(self, discord_channel: discord.Channel, bot_channel) -> None:
         """Register a BotChannel"""
         self._bot_channels[discord_channel] = bot_channel
+        for mgr in self._managers:
+            mgr.on_botchannel_create(discord_channel, bot_channel)
 
     def unregister_bot_channel(self, discord_channel: discord.Channel) -> None:
         """Unegister a BotChannel"""

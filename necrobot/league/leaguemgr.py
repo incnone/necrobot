@@ -32,6 +32,9 @@ class LeagueMgr(object, metaclass=Singleton):
     async def close(self):
         pass
 
+    def on_botchannel_create(self, channel, bot_channel):
+        pass
+
     @staticmethod
     async def create_league(schema_name: str, save_to_config=True):
         """Registers a new league

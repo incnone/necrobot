@@ -139,6 +139,9 @@ class MatchRoom(BotChannel):
     @property
     def played_all_races(self) -> bool:
         """True if the match is over."""
+        if self._match_race_data is None:
+            return False
+
         if self.match.is_best_of:
             return self._match_race_data.leader_wins > self.match.number_of_races // 2
         else:

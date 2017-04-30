@@ -402,3 +402,7 @@ async def get_schedule_infotext():
     schedule_text += '```'
 
     return schedule_text
+
+
+async def get_race_data(match: Match):
+    return await matchdb.get_match_race_data(match.match_id)

@@ -18,6 +18,9 @@ class DailyMgr(object, metaclass=Singleton):
         self._cadence_daily.close()
         self._rotating_daily.close()
 
+    def on_botchannel_create(self, channel, bot_channel):
+        pass
+
     def daily(self, daily_type: DailyType) -> Daily:
         """The Daily for the given DailyType"""
         if daily_type == DailyType.CADENCE:
