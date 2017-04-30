@@ -134,6 +134,7 @@ class Confirm(CommandType):
                 timestr.str_full_12h(match.suggested_time.astimezone(author_as_necrouser.timezone))))
 
         if match.is_scheduled:
+            await NEDispatch().publish('schedule_match', match=match)
             await self.client.send_message(
                 cmd.channel,
                 'The match has been officially scheduled.')
@@ -190,11 +191,12 @@ class GetMatchInfo(CommandType):
 class Suggest(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'suggest')
+        # noinspection PyUnresolvedReferences
         self.help_text = 'Suggest a time to schedule a match (your local time). Examples:\n' \
-                         '   `{0} Feb 18 17:30`' \
-                         '   `{0} Thursday 8p`' \
-                         '   `{0} today 9:15pm`' \
-                         '   `{0} now'.format(self.mention)
+                         '\N{BULLET} `{0} Feb 18 17:30`\n' \
+                         '\N{BULLET} `{0} Thursday 8p`\n' \
+                         '\N{BULLET} `{0} today 9:15pm`\n' \
+                         '\N{BULLET} `{0} now`\n'.format(self.mention)
 
     @property
     def short_help_text(self):
@@ -581,6 +583,7 @@ class ForceReschedule(CommandType):
 
         # Suggest the time and confirm
         match.suggest_time(suggested_time_utc)
+        await NEDispatch().publish('schedule_match', match=match)
 
         # Output what we did
         for racer in match.racers:

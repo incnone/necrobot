@@ -39,6 +39,7 @@ class TestMatch(TestCommandType):
                          "WARNING: This takes several minutes and is only for debugging."
 
     async def _do_execute(self, cmd: Command):
+        fancy = len(cmd.args) == 1 and cmd.args[0] == 'fancy'
         send = self.get_send_func(cmd.channel)
 
         match = self.bot_channel.match
@@ -88,39 +89,44 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.d', wait_for='Please input')
 
         # Race 3:
-        await send(admin, '.cancelrace 1', wait_for='')
-        await send(admin, '.recordrace "{0}"'.format(racer_2.display_name), wait_for='')
-        await send(admin, '.changewinner 2 "{0}"'.format(racer_1.display_name), wait_for='')
-        await send(admin, '.postpone', wait_for='has been postponed')
-        await send(admin, '.f-begin', wait_for='Please input')
-        await send(admin, '.changerules diamond u', wait_for='Changed rules')
-        await send(admin, '.matchinfo', wait_for='')
-        await send(admin, '.changerules cadence s', wait_for='Changed rules')
-        await send(admin, '.matchinfo', wait_for='')
-        await send(racer_1, '.r', wait_for='is ready')
-        await send(racer_2, '.r', wait_for='GO!')
-        await send(admin, '.pause', wait_for='Race paused')
-        await send(admin, '.cancelrace', wait_for='Please input')
+        if not fancy:
+            await send(racer_1, '.ready', wait_for='is ready')
+            await send(racer_2, '.ready', wait_for='GO!')
+            await send(racer_1, '.d', wait_for='Match complete')
+        else:
+            await send(admin, '.cancelrace 1', wait_for='')
+            await send(admin, '.recordrace "{0}"'.format(racer_2.display_name), wait_for='')
+            await send(admin, '.changewinner 2 "{0}"'.format(racer_1.display_name), wait_for='')
+            await send(admin, '.postpone', wait_for='has been postponed')
+            await send(admin, '.f-begin', wait_for='Please input')
+            await send(admin, '.changerules diamond u', wait_for='Changed rules')
+            await send(admin, '.matchinfo', wait_for='')
+            await send(admin, '.changerules cadence s', wait_for='Changed rules')
+            await send(admin, '.matchinfo', wait_for='')
+            await send(racer_1, '.r', wait_for='is ready')
+            await send(racer_2, '.r', wait_for='GO!')
+            await send(admin, '.pause', wait_for='Race paused')
+            await send(admin, '.cancelrace', wait_for='Please input')
 
-        # Race 4:
-        await send(racer_1, '.r', wait_for='is ready')
-        await send(racer_2, '.r', wait_for='GO!')
-        await send(admin, '.pause', wait_for='Race paused')
-        await send(admin, '.newrace', wait_for='Please input')
+            # Race 4:
+            await send(racer_1, '.r', wait_for='is ready')
+            await send(racer_2, '.r', wait_for='GO!')
+            await send(admin, '.pause', wait_for='Race paused')
+            await send(admin, '.newrace', wait_for='Please input')
 
-        # Race 5:
-        await send(racer_1, '.r', wait_for='is ready')
-        await send(racer_2, '.r', wait_for='GO!')
-        await send(racer_1, '.d', wait_for='The match has ended')
-        await send(admin, '.matchinfo', wait_for='')
-        await send(admin, '.newrace', wait_for='Please input')
+            # Race 5:
+            await send(racer_1, '.r', wait_for='is ready')
+            await send(racer_2, '.r', wait_for='GO!')
+            await send(racer_1, '.d', wait_for='Match complete')
+            await send(admin, '.matchinfo', wait_for='')
+            await send(admin, '.newrace', wait_for='Please input')
 
-        # Race 6:
-        await send(racer_1, '.r', wait_for='is ready')
-        await send(racer_2, '.r', wait_for='GO!')
-        await send(racer_2, '.d', wait_for='Match complete')
+            # Race 6:
+            await send(racer_1, '.r', wait_for='is ready')
+            await send(racer_2, '.r', wait_for='GO!')
+            await send(racer_2, '.d', wait_for='Match complete')
 
-        await send(admin, '.cancelrace 3')
+            await send(admin, '.cancelrace 3')
 
 
 class TestRace(TestCommandType):

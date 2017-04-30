@@ -84,11 +84,14 @@ class Necrobot(object, metaclass=Singleton):
             if not self._initted:
                 return
 
-            cmd = Command(message)
-            await self._execute(cmd)
-
             if Config.testing():
                 await msgqueue.send_message(message)
+
+            if message.author.id == self.client.user.id:
+                return
+
+            cmd = Command(message)
+            await self._execute(cmd)
 
         # @client.event
         # async def on_member_join(member: discord.Member):
@@ -160,7 +163,7 @@ class Necrobot(object, metaclass=Singleton):
     def find_admin(self, ignore=list()) -> typing.Optional[discord.Member]:
         """Returns a random bot admin (for testing purposes)"""
         for member in self.server.members:
-            if member.display_name in ignore:
+            if member.display_name in ignore or member.id == self.client.user.id:
                 continue
             for role in member.roles:
                 if role in self.admin_roles:
@@ -293,10 +296,6 @@ class Necrobot(object, metaclass=Singleton):
         """Execute a command"""
         # Don't care about bad commands
         if cmd.command is None:
-            return
-
-        # Don't reply to self
-        if cmd.author == self.client.user:
             return
 
         # Handle the command with the appropriate BotChannel

@@ -192,6 +192,7 @@ class MatchRoom(BotChannel):
                 ahead_racer_name = self.match.racer_1.display_name
                 behind_racer_name = self.match.racer_2.display_name
                 diff_str = timestr.timedelta_to_str(r1off - r2off)
+                # noinspection PyUnresolvedReferences
                 msg += '\N{BULLET} {0} is currently {1} ahead of {2}.'.format(
                     ahead_racer_name, diff_str, behind_racer_name
                 )
@@ -199,22 +200,27 @@ class MatchRoom(BotChannel):
                 ahead_racer_name = self.match.racer_2.display_name
                 behind_racer_name = self.match.racer_1.display_name
                 diff_str = timestr.timedelta_to_str(r2off - r1off)
+                # noinspection PyUnresolvedReferences
                 msg += '\N{BULLET} {0} is currently {1} ahead of {2}.'.format(
                     ahead_racer_name, diff_str, behind_racer_name
                 )
             else:
+                # noinspection PyUnresolvedReferences
                 msg += '\N{BULLET} The two racers in this match currently have the same UTC offset.'
 
         else:
             if self.match.racer_1.timezone is None and self.match.racer_2.timezone is not None:
+                # noinspection PyUnresolvedReferences
                 msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.'.format(
                     self.match.racer_1.display_name
                 )
             elif self.match.racer_1.timezone is not None and self.match.racer_2.timezone is None:
+                # noinspection PyUnresolvedReferences
                 msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.'.format(
                     self.match.racer_2.display_name
                 )
             else:
+                # noinspection PyUnresolvedReferences
                 msg += '\N{BULLET} {0} and {1} have not registered a timezone. Please call `.timezone`.'.format(
                     self.match.racer_1.display_name,
                     self.match.racer_2.display_name
@@ -231,6 +237,9 @@ class MatchRoom(BotChannel):
             self._current_race = None
 
         self._set_channel_commands()
+
+        if self.played_all_races:
+            self._end_match()
 
     async def change_race_info(self, command_args: list) -> None:
         """Change the RaceInfo for this room by parsing the input args"""
@@ -318,11 +327,10 @@ class MatchRoom(BotChannel):
 
     async def force_new_race(self) -> None:
         """Begin a new race, canceling the old one if necessary"""
-        if not self.current_race.complete:
+        if self.current_race is not None and not self.current_race.complete:
             await self.current_race.cancel()
 
-        if self.current_race.final:
-            await self._begin_new_race()
+        await self._begin_new_race()
 
     async def cancel_race(self, race_number: int) -> bool:
         """Mark a race as canceled
@@ -424,6 +432,25 @@ class MatchRoom(BotChannel):
         """End the match"""
         self._current_race = None
         self.channel_commands = self._postmatch_channel_commands
+
+        # Send event
+        if self._match_race_data.r1_wins > self._match_race_data.r2_wins:
+            winner = self.match.racer_1.display_name
+            winner_wins = self._match_race_data.r1_wins
+            loser_wins = self._match_race_data.r2_wins
+        elif self._match_race_data.r2_wins > self._match_race_data.r1_wins:
+            winner = self.match.racer_2.display_name
+            winner_wins = self._match_race_data.r2_wins
+            loser_wins = self._match_race_data.r1_wins
+        else:
+            winner = '[Tied]'
+            winner_wins = self._match_race_data.r1_wins
+            loser_wins = self._match_race_data.r2_wins
+
+        await NEDispatch().publish(
+            'end_match', match=self.match, winner=winner, winner_wins=winner_wins, loser_wins=loser_wins
+        )
+
         await self.write('Match complete.')
 
     async def _record_race(self, race: Race, race_winner: int) -> None:

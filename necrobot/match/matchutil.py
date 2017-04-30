@@ -372,3 +372,33 @@ async def make_match_from_raw_db_data(row: list) -> Match:
     await new_match.initialize()
     match_library[new_match.match_id] = new_match
     return new_match
+
+
+async def get_schedule_infotext():
+    utcnow = pytz.utc.localize(datetime.datetime.utcnow())
+    matches = await get_upcoming_and_current()
+
+    max_r1_len = 0
+    max_r2_len = 0
+    for match in matches:
+        max_r1_len = max(max_r1_len, len(match.racer_1.display_name))
+        max_r2_len = max(max_r2_len, len(match.racer_2.display_name))
+
+    schedule_text = '``` \nUpcoming matches: \n'
+    for match in matches:
+        if len(schedule_text) > 1800:
+            break
+        schedule_text += '{r1:>{w1}} v {r2:<{w2}} : '.format(
+            r1=match.racer_1.display_name,
+            w1=max_r1_len,
+            r2=match.racer_2.display_name,
+            w2=max_r2_len
+        )
+        if match.suggested_time - utcnow < datetime.timedelta(minutes=0):
+            schedule_text += 'Right now!'
+        else:
+            schedule_text += timestr.str_full_24h(match.suggested_time)
+        schedule_text += '\n'
+    schedule_text += '```'
+
+    return schedule_text

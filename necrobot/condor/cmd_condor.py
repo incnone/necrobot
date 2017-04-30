@@ -1,5 +1,6 @@
 from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
+# from necrobot.condor.condormgr import CondorMgr
 from necrobot.necroevent.necroevent import NEDispatch
 
 
@@ -25,3 +26,13 @@ class StaffAlert(CommandType):
                     condor_staff_role.mention
                 )
             )
+
+
+# class UpdateSchedule(CommandType):
+#     def __init__(self, bot_channel):
+#         CommandType.__init__(self, bot_channel, 'updateschedule')
+#         self.help_text = 'Update the #schedule channel.'
+#         self.admin_only = True
+#
+#     async def _do_execute(self, cmd):
+#         await CondorMgr().update_schedule_channel()

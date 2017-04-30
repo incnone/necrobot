@@ -146,6 +146,16 @@ async def create_league(schema_name: str) -> League:
             )
         )
 
+        cursor.execute(
+            """
+            CREATE VIEW {league_info} AS
+                SELECT *
+                FROM `leagues`
+                WHERE (`leagues`.`schema_name` = %s)
+            """.format(league_info=tn('league_info')),
+            params
+        )
+
     return League(
         commit_fn=write_league,
         schema_name=schema_name,

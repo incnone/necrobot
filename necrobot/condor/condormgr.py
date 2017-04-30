@@ -1,4 +1,5 @@
 from necrobot.condor import cmd_condor
+from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
 from necrobot.user import userutil
@@ -16,20 +17,26 @@ class CondorMgr(object, metaclass=Singleton):
     def __init__(self):
         self._main_channel = None
         self._notifications_channel = None
+        self._schedule_channel = None
         self._client = None
         NEDispatch().subscribe(self)
 
     async def initialize(self):
         self._main_channel = Necrobot().main_channel
         self._notifications_channel = Necrobot().find_channel('bot_notifications')
+        self._schedule_channel = Necrobot().find_channel('schedule')
         self._client = Necrobot().client
 
         for bot_channel in Necrobot().all_channels:
             bot_channel.default_commands.append(cmd_condor.StaffAlert(bot_channel))
 
+        await self.update_schedule_channel()
+
     async def refresh(self):
         self._notifications_channel = Necrobot().find_channel('bot_notifications')
+        self._schedule_channel = Necrobot().find_channel('schedule')
         self._client = Necrobot().client
+        await self.update_schedule_channel()
 
     async def close(self):
         pass
@@ -38,6 +45,11 @@ class CondorMgr(object, metaclass=Singleton):
         if ev.event_type == 'begin_match_race':
             await VodRecorder().start_record(ev.match.racer_1.rtmp_name)
             await VodRecorder().start_record(ev.match.racer_2.rtmp_name)
+        elif ev.event_type == 'end_match':
+            sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
+            await sheet.record_score(
+                match=ev.match, winner=ev.winner, winner_wins=ev.winner_wins, loser_wins=ev.loser_wins
+            )
         elif ev.event_type == 'end_match_race':
             await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
             await VodRecorder().end_record(ev.match.racer_2.rtmp_name)
@@ -46,6 +58,10 @@ class CondorMgr(object, metaclass=Singleton):
         elif ev.event_type == 'notify':
             if self._notifications_channel is not None:
                 await self._client.send_message(self._notifications_channel, ev.message)
+        elif ev.event_type == 'schedule_match':
+            sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
+            await sheet.schedule_match(ev.match)
+            await self.update_schedule_channel()
         elif ev.event_type == 'set_cawmentary':
             if ev.match.sheet_id is not None:
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
@@ -120,3 +136,24 @@ class CondorMgr(object, metaclass=Singleton):
                 stream=stream
             )
         )
+
+    async def update_schedule_channel(self):
+        infotext = await matchutil.get_schedule_infotext()
+
+        # Find the message:
+        the_msg = None
+        async for msg in Necrobot().client.logs_from(self._schedule_channel):
+            if msg.author.id == Necrobot().client.user.id:
+                the_msg = msg
+                break
+
+        if the_msg is None:
+            await Necrobot().client.send_message(
+                self._schedule_channel,
+                infotext
+            )
+        else:
+            await Necrobot().client.edit_message(
+                message=the_msg,
+                new_content=infotext
+            )
