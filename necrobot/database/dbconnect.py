@@ -68,5 +68,5 @@ class LoggingCursor(object):
         return self.cursor.__iter__()
 
     def execute(self, operation, *args, **kwargs):
-        console.debug(operation)
+        console.debug('Execute SQL: <{0}> <args={1}> <kwargs={2}>'.format(operation, args, kwargs))
         return self.cursor.execute(operation, *args, **kwargs)
