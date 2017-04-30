@@ -146,6 +146,8 @@ necrobot (schema)
             The user's unique Necrobot ID.
         discord_id: bigint UN (unique)
             The user's discord ID, if applicable.
+        discord_name: tinytext
+            The user's discord nickname for this server.
         rtmp_name: varchar(25) (unique)
             The user's RTMP name, if applicable. Should not be treated as case-sensitive.
         twitch_name: tinytext

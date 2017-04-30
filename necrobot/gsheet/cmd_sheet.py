@@ -1,6 +1,7 @@
 import googleapiclient.errors
 import necrobot.exception
 
+from necrobot.util import console
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet import sheetutil
 from necrobot.match import matchutil
@@ -87,12 +88,13 @@ class MakeFromSheet(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
+        console.info('MakeFromSheet: Getting GSheet info...')
         try:
             matchup_sheet = await sheetlib.get_sheet(
                     gsheet_id=LeagueMgr().league.gsheet_id,
                     wks_name=wks_name
                 )  # type: MatchupSheet
-            matches = await matchup_sheet.get_matches(register=True)
+            matches = await matchup_sheet.get_matches(register=False)
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
                 cmd.channel,
@@ -100,6 +102,7 @@ class MakeFromSheet(CommandType):
             )
             return
 
+        console.info('MakeFromSheet: Creating Match objects...')
         not_found_matches = matchup_sheet.uncreated_matches()
         matches_with_channels = await matchutil.get_matches_with_channels()
         channeled_matchroom_names = dict()
@@ -109,6 +112,7 @@ class MakeFromSheet(CommandType):
             else:
                 channeled_matchroom_names[match.matchroom_name] = 1
 
+        console.info('MakeFromSheet: Removing duplicate matches...')
         # Remove matches that have the same name as current channels (but only one per channel)
         unchanneled_matches = []
         for match in matches:
@@ -118,11 +122,15 @@ class MakeFromSheet(CommandType):
             if channeled_name:
                 channeled_matchroom_names[match.matchroom_name] -= 1
 
+        console.info('MakeFromSheet: Sorting matches...')
         # Sort the remaining matches
         unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
 
+        console.debug('MakeFromSheet: Matches to make: {0}'.format(unchanneled_matches))
+        console.info('MakeFromSheet: Creating match channels...')
         for match in unchanneled_matches:
-            new_room = await matchutil.make_match_room(match=match, register=False)
+            console.info('MakeFromSheet: Creating {0}...'.format(match.matchroom_name))
+            new_room = await matchutil.make_match_room(match=match, register=True)
             await new_room.send_channel_start_text()
 
         uncreated_str = ''

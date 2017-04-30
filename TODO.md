@@ -14,6 +14,7 @@ Current version: 0.10
 
 ## Refactor
 
+- Solve circular import Necrobot -> userdb -> NecroUser -> Necrobot
 - Uniformize and improve argument parsing
 - `util.level.py` and `util.racetime.py` might work better as classes
 - Create unit tests for all modules
