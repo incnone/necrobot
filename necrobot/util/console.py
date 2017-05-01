@@ -1,5 +1,8 @@
 import inspect
 import logging
+import sys
+import traceback
+import typing
 
 
 def debug(info_str: str):
@@ -19,9 +22,9 @@ def warning(error_str: str):
 
 def error(error_str: str):
     caller_mod_name = inspect.getmodule(inspect.stack()[1][0]).__name__
-    logging.getLogger('necrobot').error('[{0}] {1}'.format(caller_mod_name, error_str))
+    logging.getLogger('necrobot').error('[{0}] {1}'.format(caller_mod_name, error_str), exc_info=True)
 
 
 def critical(error_str: str):
     caller_mod_name = inspect.getmodule(inspect.stack()[1][0]).__name__
-    logging.getLogger('necrobot').critical('[{0}] {1}'.format(caller_mod_name, error_str))
+    logging.getLogger('necrobot').critical('[{0}] {1}'.format(caller_mod_name, error_str), exc_info=True)

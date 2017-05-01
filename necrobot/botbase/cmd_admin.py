@@ -1,3 +1,4 @@
+import necrobot.exception
 from necrobot.botbase.commandtype import CommandType
 
 
@@ -29,3 +30,14 @@ class RedoInit(CommandType):
 
     async def _do_execute(self, cmd):
         await self.necrobot.redo_init()
+
+
+class RaiseException(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'raiseexception')
+        self.help_text = 'Raise an exception.'
+        self.admin_only = True
+        self.testing_command = True
+
+    async def _do_execute(self, cmd):
+        raise necrobot.exception.NecroException('Raised by RaiseException.')

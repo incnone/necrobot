@@ -1,4 +1,5 @@
 import discord
+import sys
 import typing
 
 from necrobot.test import msgqueue
@@ -93,6 +94,16 @@ class Necrobot(object, metaclass=Singleton):
 
             cmd = Command(message)
             await self._execute(cmd)
+
+        @client.event
+        async def on_error(event: str, *args, **kwargs):
+            """Called when an event raises an uncaught exception"""
+            exc_info = sys.exc_info()
+            exc_type = exc_info[0].__name__ if exc_info[0] is not None else '<no exception>'
+            exc_what = str(exc_info[1]) if exc_info[1] is not None else ''
+            console.error(
+                'Uncaught exception {exc_type}: {exc_what}'.format(exc_type=exc_type, exc_what=exc_what)
+            )
 
         # @client.event
         # async def on_member_join(member: discord.Member):
