@@ -451,7 +451,13 @@ class MatchRoom(BotChannel):
             loser_wins = self._match_race_data.r2_wins
 
         await NEDispatch().publish(
-            'end_match', match=self.match, winner=winner, winner_wins=winner_wins, loser_wins=loser_wins
+            'end_match',
+            match=self.match,
+            winner=winner,
+            winner_wins=winner_wins,
+            loser_wins=loser_wins,
+            r1_wins=self._match_race_data.r1_wins,
+            r2_wins=self._match_race_data.r2_wins
         )
 
         await self.write('Match complete.')

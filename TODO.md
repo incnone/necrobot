@@ -2,6 +2,8 @@
 
 Current version: 0.10
 
+- Update standings!
+
 ## Automatching
 
 - Everything
@@ -14,13 +16,13 @@ Current version: 0.10
 
 ## Refactor
 
-- create Manager superclass
 - combine MatchRaceData and Match in a friendly way
 - Solve circular import Necrobot -> userdb -> NecroUser -> Necrobot
 - Uniformize and improve argument parsing
 - `util.level.py` and `util.racetime.py` might work better as classes
 - Create unit tests for all modules
 - Replace NoneType returns with exceptions where appropriate
+- better standings update code
 
 ## Bugs
  

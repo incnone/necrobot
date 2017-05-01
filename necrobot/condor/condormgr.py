@@ -5,6 +5,9 @@ from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
 from necrobot.user import userutil
 
+from necrobot.botbase.manager import Manager
+from necrobot.gsheet.matchupsheet import MatchupSheet
+from necrobot.gsheet.standingssheet import StandingsSheet
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.match import Match
 from necrobot.match.matchroom import MatchRoom
@@ -14,7 +17,7 @@ from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util.singleton import Singleton
 
 
-class CondorMgr(object, metaclass=Singleton):
+class CondorMgr(Manager, metaclass=Singleton):
     """Manager object for the CoNDOR Events server"""
     def __init__(self):
         self._main_channel = None
@@ -52,7 +55,16 @@ class CondorMgr(object, metaclass=Singleton):
         elif ev.event_type == 'end_match':
             sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
             await sheet.record_score(
-                match=ev.match, winner=ev.winner, winner_wins=ev.winner_wins, loser_wins=ev.loser_wins
+                match=ev.match,
+                winner=ev.winner,
+                winner_wins=ev.winner_wins,
+                loser_wins=ev.loser_wins
+            )
+            standings = await self.get_standings_sheet()
+            await standings.update_standings(
+                match=ev.match,
+                r1_wins=ev.r1_wins,
+                r2_wins=ev.r2_wins
             )
         elif ev.event_type == 'end_match_race':
             await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
@@ -76,10 +88,19 @@ class CondorMgr(object, metaclass=Singleton):
                 await sheet.set_vod(match=ev.match, vod_link=ev.url)
 
     @staticmethod
-    async def get_gsheet(wks_id: str):
+    async def get_gsheet(wks_id: str) -> MatchupSheet:
         return await sheetlib.get_sheet(
             gsheet_id=LeagueMgr().league.gsheet_id,
-            wks_id=wks_id
+            wks_id=wks_id,
+            sheet_type=sheetlib.SheetType.MATCHUP
+        )
+
+    @staticmethod
+    async def get_standings_sheet() -> StandingsSheet:
+        return await sheetlib.get_sheet(
+            gsheet_id=LeagueMgr().league.gsheet_id,
+            wks_name='Standings',
+            sheet_type=sheetlib.SheetType.STANDINGS
         )
 
     async def cawmentator_alert(self, match: Match):

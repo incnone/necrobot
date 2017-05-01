@@ -1,14 +1,27 @@
-from typing import Optional
+from typing import Optional, Union
+from enum import Enum
+
 import necrobot.exception
 from necrobot.gsheet.matchupsheet import MatchupSheet
+from necrobot.gsheet.standingssheet import StandingsSheet
 
 
 _matchup_sheet_lib = {}
 _sheets_by_id_lib = {}
 
 
-async def get_sheet(gsheet_id: str, wks_name: Optional[str] = None, wks_id: Optional[str] = None) -> MatchupSheet:
-    """Get the MatchupSheet representing the specified Google Worksheet
+class SheetType(Enum):
+    MATCHUP = 0
+    STANDINGS = 1
+
+
+async def get_sheet(
+        gsheet_id: str,
+        wks_name: Optional[str] = None,
+        wks_id: Optional[str] = None,
+        sheet_type: SheetType = SheetType.MATCHUP
+) -> Union[MatchupSheet, StandingsSheet]:
+    """Get the Sheet representing the specified Google Worksheet
     
     Can specify either the worksheet name or the worksheet ID.
     
@@ -20,10 +33,12 @@ async def get_sheet(gsheet_id: str, wks_name: Optional[str] = None, wks_id: Opti
         The name of the worksheet
     wks_id: Optional[str]
         The gid of the worksheet
+    sheet_type: SheetType
+        The type of worksheet (if one is to be created)
 
     Returns
     -------
-    MatchupSheet
+    Union[MatchupSheet, StandingsSheet]
     """
     if wks_name is None and wks_id is None:
         raise necrobot.exception.NotFoundException(
@@ -36,7 +51,13 @@ async def get_sheet(gsheet_id: str, wks_name: Optional[str] = None, wks_id: Opti
     if wks_name is not None and (gsheet_id, wks_name,) in _matchup_sheet_lib:
         return _matchup_sheet_lib[(gsheet_id, wks_name,)]
 
-    sheet = MatchupSheet(gsheet_id=gsheet_id)
+    if sheet_type == SheetType.MATCHUP:
+        sheet = MatchupSheet(gsheet_id=gsheet_id)
+    elif sheet_type == SheetType.STANDINGS:
+        sheet = StandingsSheet(gsheet_id=gsheet_id)
+    else:
+        raise necrobot.exception.BadInputException('get_sheet: Not a recognized sheet type.')
+
     await sheet.initialize(wks_name=wks_name, wks_id=wks_id)
 
     # Check for name changes

@@ -8,9 +8,10 @@ from necrobot.botbase.necrobot import Necrobot
 from necrobot.match.matchroom import MatchRoom
 from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
 from necrobot.util.singleton import Singleton
+from necrobot.botbase.manager import Manager
 
 
-class MatchMgr(object, metaclass=Singleton):
+class MatchMgr(Manager, metaclass=Singleton):
     def __init__(self):
         NEDispatch().subscribe(self)
 

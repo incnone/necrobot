@@ -6,7 +6,7 @@ import asyncio
 import httplib2
 import unittest
 
-from apiclient import discovery
+from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 
 from necrobot.config import Config

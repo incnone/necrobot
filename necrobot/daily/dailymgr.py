@@ -1,9 +1,10 @@
 from necrobot.util.singleton import Singleton
+from necrobot.botbase.manager import Manager
 from necrobot.daily.daily import Daily
 from necrobot.daily.dailytype import DailyType
 
 
-class DailyMgr(object, metaclass=Singleton):
+class DailyMgr(Manager, metaclass=Singleton):
     def __init__(self):
         self._cadence_daily = Daily(DailyType.CADENCE)
         self._rotating_daily = Daily(DailyType.ROTATING)

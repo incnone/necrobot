@@ -7,6 +7,7 @@ from necrobot.util import console
 
 from necrobot.config import Config
 from necrobot.botbase.command import Command, TestCommand
+from necrobot.botbase.manager import Manager
 from necrobot.util.singleton import Singleton
 
 
@@ -19,7 +20,7 @@ class Necrobot(object, metaclass=Singleton):
 
         self._pm_bot_channel = None             # The special BotChannel for PM command handling
         self._bot_channels = {}                 # Map discord.Channel -> BotChannel
-        self._managers = []                     # these get refresh() and close() called on them
+        self._managers = []                     # type: typing.List[Manager]
 
         self._initted = False                   # type: bool
         self._quitting = False                  # type: bool
@@ -135,7 +136,7 @@ class Necrobot(object, metaclass=Singleton):
         """Register a BotChannel for PMs"""
         self._pm_bot_channel = pm_bot_channel
 
-    def register_manager(self, manager) -> None:
+    def register_manager(self, manager: Manager) -> None:
         """Register a manager"""
         console.info('Registering a manager of type {0}.'.format(type(manager).__name__))
         self._managers.append(manager)

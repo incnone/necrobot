@@ -30,11 +30,11 @@ if TEST_SHEETS:
     # noinspection PyUnresolvedReferences
     from necrobot.gsheet.spreadsheets import TestSpreadsheets
     # noinspection PyUnresolvedReferences
-    from necrobot.gsheet.matchupsheet import TestMatchupSheet
+    # from necrobot.gsheet.matchupsheet import TestMatchupSheet
     # noinspection PyUnresolvedReferences
     from necrobot.gsheet.sheetrange import TestSheetRange
     # noinspection PyUnresolvedReferences
-    # from necrobot.gsheet.sheetutil import TestSheetUtil
+    from necrobot.gsheet.standingssheet import TestStandingsSheet
 
 if TEST_USER:
     # noinspection PyUnresolvedReferences

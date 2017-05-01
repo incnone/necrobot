@@ -4,18 +4,35 @@ import pytz
 import unittest
 
 import necrobot.exception
-from necrobot.gsheet.makerequest import make_request
 from necrobot.match import matchutil
 from necrobot.user import userutil
 from necrobot.util import console
 
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
-from necrobot.gsheet.matchupsheetindexdata import MatchupSheetIndexData
-from necrobot.gsheet.sheetcell import SheetCell
-from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
+from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
+
+
+class MatchupSheetIndexData(WorksheetIndexData):
+    def __init__(self, gsheet_id: str):
+        WorksheetIndexData.__init__(
+            self,
+            gsheet_id=gsheet_id,
+            columns=[
+                'match id',
+                'racer 1',
+                'racer 2',
+                'cawmentary',
+                'date',
+                'match type',
+                'score',
+                'tier',
+                'vod',
+                'winner',
+            ]
+        )
 
 
 class MatchupSheet(object):
@@ -51,8 +68,8 @@ class MatchupSheet(object):
         """
         return self._not_found_matches
 
-    async def initialize(self, wks_name: str = None, wks_id: int = None):
-        await self.column_data.initalize(wks_name=wks_name, wks_id=wks_id)
+    async def initialize(self, wks_name: str = None, wks_id: str = None):
+        await self.column_data.initialize(wks_name=wks_name, wks_id=wks_id)
 
     async def get_matches(self, **kwargs):
         """Read racer names and match types from the GSheet; create corresponding matches.
@@ -123,7 +140,7 @@ class MatchupSheet(object):
 
         if write_match_ids:
             ids_range = self.column_data.get_range_for_column(self.column_data.match_id)
-            await self._update_cells(sheet_range=ids_range, values=match_ids, raw_input=True)
+            await self.column_data.update_cells(sheet_range=ids_range, values=match_ids, raw_input=True)
 
         console.debug('get_matches: Returning Matches=<{}>'.format(matches))
         return matches
@@ -145,7 +162,7 @@ class MatchupSheet(object):
         else:
             value = match.suggested_time.astimezone(pytz.timezone('US/Eastern')).strftime('%Y-%m-%d %H:%M:%S')
 
-        await self._update_cell(
+        await self.column_data.update_cell(
             row=row,
             col=self.column_data.date,
             value=value,
@@ -169,7 +186,7 @@ class MatchupSheet(object):
             console.warning('No Vod column on GSheet.')
             return
 
-        await self._update_cell(
+        await self.column_data.update_cell(
             row=row,
             col=self.column_data.vod,
             value=vod_link,
@@ -193,7 +210,7 @@ class MatchupSheet(object):
 
         cawmentator = await userutil.get_user(user_id=match.cawmentator_id)
 
-        await self._update_cell(
+        await self.column_data.update_cell(
             row=row,
             col=self.column_data.cawmentary,
             value=cawmentator.twitch_name if cawmentator is not None else '',
@@ -227,7 +244,7 @@ class MatchupSheet(object):
             top=row, bottom=row, left=self.column_data.winner, right=self.column_data.score
         )
 
-        await self._update_cells(
+        await self.column_data.update_cells(
             sheet_range=sheet_range,
             values=[[winner, '{0}-{1}'.format(winner_wins, loser_wins)]],
             raw_input=False
@@ -283,76 +300,6 @@ class MatchupSheet(object):
                 match.racer_2.rtmp_name
             ))
             return None
-
-    async def _update_cell(self, row: int, col: int, value: str, raw_input: bool = True) -> bool:
-        """Update a single cell.
-        
-        Parameters
-        ----------
-        row: int
-            The row index (begins at 0).
-        col: int
-            The column index (begins at 0).
-        value: str
-            The cell value.
-        raw_input: bool
-            If False, GSheets will auto-format the input.
-
-        Returns
-        -------
-        bool
-            True if the update was successful.
-        """
-        if not self.column_data.valid:
-            raise RuntimeError('Trying to update a cell on an invalid MatchupSheet.')
-
-        row += self.column_data.header_row + 1
-        col += self.column_data.min_column
-        range_str = str(SheetCell(row, col, wks_name=self.wks_name))
-        value_input_option = 'RAW' if raw_input else 'USER_ENTERED'
-        value_range_body = {'values': [[value]]}
-        async with Spreadsheets() as spreadsheets:
-            request = spreadsheets.values().update(
-                spreadsheetId=self.gsheet_id,
-                range=range_str,
-                valueInputOption=value_input_option,
-                body=value_range_body
-            )
-            response = await make_request(request)
-            return response is not None
-
-    async def _update_cells(self, sheet_range: SheetRange, values: list, raw_input=True) -> bool:
-        """Update all cells in a range.
-        
-        Parameters
-        ----------
-        sheet_range: SheetRange
-            The range to update.
-        values: list[list[str]]
-            An array of values; one of the inner lists is a row, so values[i][j] is the ith row, jth column value.
-        raw_input
-            If False, GSheets will auto-format the input.
-            
-        Returns
-        -------
-        bool
-            True if the update was successful.
-        """
-        if not self.column_data.valid:
-            raise RuntimeError('Trying to update cells on an invalid MatchupSheet.')
-
-        range_str = str(sheet_range)
-        value_input_option = 'RAW' if raw_input else 'USER_ENTERED'
-        value_range_body = {'values': values}
-        async with Spreadsheets() as spreadsheets:
-            request = spreadsheets.values().update(
-                spreadsheetId=self.gsheet_id,
-                range=range_str,
-                valueInputOption=value_input_option,
-                body=value_range_body
-            )
-            response = await make_request(request)
-            return response is not None
 
 
 class TestMatchupSheet(unittest.TestCase):
@@ -421,11 +368,11 @@ class TestMatchupSheet(unittest.TestCase):
 
     @async_test(loop)
     def test_schedule(self):
-        try:
-            yield from self.sheet_2._update_cell(row=4, col=4, value='Test update')
-            self.assertTrue(False)
-        except RuntimeError:
-            pass
+        # try:
+        #     yield from self.sheet_2._update_cell(row=4, col=4, value='Test update')
+        #     self.assertTrue(False)
+        # except RuntimeError:
+        #     pass
         yield from self.sheet_1.schedule_match(self.match_1)
         yield from self.sheet_1.schedule_match(self.match_2)
 

@@ -5,10 +5,11 @@ from necrobot.database import leaguedb
 from necrobot.util import console
 
 from necrobot.config import Config
+from necrobot.botbase.manager import Manager
 from necrobot.util.singleton import Singleton
 
 
-class LeagueMgr(object, metaclass=Singleton):
+class LeagueMgr(Manager, metaclass=Singleton):
     """Manager object for the global League, if any."""
     def __init__(self):
         pass

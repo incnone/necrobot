@@ -93,7 +93,8 @@ class MakeFromSheet(CommandType):
         try:
             matchup_sheet = await sheetlib.get_sheet(
                     gsheet_id=LeagueMgr().league.gsheet_id,
-                    wks_name=wks_name
+                    wks_name=wks_name,
+                    sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
             matches = await matchup_sheet.get_matches(register=False)
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
@@ -175,7 +176,13 @@ class PushMatchToSheet(CommandType):
         try:
             matchup_sheet = await sheetlib.get_sheet(
                     gsheet_id=LeagueMgr().league.gsheet_id,
-                    wks_id=wks_id
+                    wks_id=wks_id,
+                    sheet_type=sheetlib.SheetType.MATCHUP
+                )  # type: MatchupSheet
+            standings_sheet = await sheetlib.get_sheet(
+                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    wks_name='Standings',
+                    sheet_type=sheetlib.SheetType.STANDINGS
                 )  # type: MatchupSheet
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
@@ -213,12 +220,16 @@ class PushMatchToSheet(CommandType):
             await matchup_sheet.record_score(
                 match=match, winner=winner, winner_wins=winner_wins, loser_wins=loser_wins
             )
+            await standings_sheet.update_standings(
+                match=match,
+                r1_wins=match_race_data.r1_wins,
+                r2_wins=match_race_data.r2_wins
+            )
 
         await self.client.send_message(
             cmd.channel,
             'Sheet updated.'
         )
-
 
 
 class SetGSheet(CommandType):
