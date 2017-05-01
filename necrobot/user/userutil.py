@@ -165,10 +165,13 @@ async def _get_user_any_name(name: str, register: bool) -> NecroUser or None:
     elif len(raw_db_data) > 1:
         def sort_fn(row):
             return \
-                32*int(row[3] == name) + 16*int(row[3].lower() == name.lower()) + \
-                8*int(row[1] == name) + 4*int(row[1].lower() == name.lower()) + \
-                2*int(row[2] == name) + 1*int(row[2].lower() == name.lower())
-        raw_db_data = sorted(raw_db_data, key=lambda x: sort_fn(x))
+                32*int(row[3] == name) \
+                + 16*int(row[3].lower() == name.lower() if row[3] is not None else 0) + \
+                8*int(row[1] == name) \
+                + 4*int(row[1].lower() == name.lower() if row[1] is not None else 0) + \
+                2*int(row[2] == name) \
+                + 1*int(row[2].lower() == name.lower() if row[2] is not None else 0)
+        raw_db_data = sorted(raw_db_data, key=lambda x: sort_fn(x), reverse=True)
 
     for user_row in raw_db_data:
         return _get_user_from_db_row(user_row)
