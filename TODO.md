@@ -2,27 +2,32 @@
 
 Current version: 0.10
 
-- Update standings!
-
 ## Automatching
 
 - Everything
 - Auto-register users on match creation
 
-## Ladderbot
+## Ladderbot and Leagues
 
 - Lots of things here
 - Better rankings display
+- Add match entrants to the `entrants` table in a league database
 
 ## Refactor
 
-- combine MatchRaceData and Match in a friendly way
 - Solve circular import Necrobot -> userdb -> NecroUser -> Necrobot
-- Uniformize and improve argument parsing
 - `util.level.py` and `util.racetime.py` might work better as classes
-- Create unit tests for all modules
 - Replace NoneType returns with exceptions where appropriate
+- Gather argument parsing code
+
+### Cleaner lib classes
+
+- combine MatchRaceData and Match in a friendly way
 - better standings update code
+
+### Testing
+
+- Make more small/unit tests (may wish to use a mock DB and/or a mock discord client)
 
 ## Bugs
  
@@ -37,11 +42,6 @@ Current version: 0.10
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?
-
-### Likely will never fix
-
-- Daily leaderboards will break due to post length if more than ~45 people participate
-- It's technically possible for the daily seed to be the same as a previous seed
 
 ## Features
 

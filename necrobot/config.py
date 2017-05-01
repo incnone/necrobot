@@ -48,8 +48,6 @@ MYSQL_DB_NAME: str
 
 GSheet
 ------
-GSHEET_ID: str
-    The string identifier for the GSheet to access.
 OAUTH_CREDENTIALS_JSON: str
     The filename where GSheet OAuth credentials are stored.
 
@@ -161,7 +159,6 @@ class Config(object):
     DAILY_GRACE_PERIOD = datetime.timedelta(minutes=60)
 
     # GSheet ----------------------------------------------------------------------------------
-    GSHEET_ID = ''
     OAUTH_CREDENTIALS_JSON = 'data/necrobot-service-acct.json'
 
     # Ladder ----------------------------------------------------------------------------------
@@ -212,10 +209,9 @@ class Config(object):
 
             ['vodrecord_username', Config.VODRECORD_USERNAME],
             ['vodrecord_passwd', Config.VODRECORD_PASSWD],
+            ['activate_vodrecord', Config.RECORDING_ACTIVATED],
 
             ['league_name', Config.LEAGUE_NAME],
-
-            ['gsheet_id', Config.GSHEET_ID],
         ]
 
         with open(Config.CONFIG_FILE, 'w') as file:
@@ -245,7 +241,7 @@ def init(config_filename):
         'mysql_db_name': 'necrobot',
         'vodrecord_username': '',
         'vodrecord_passwd': '',
-        'gsheet_id': '',
+        'activate_vodrecord': 'false',
         'league_name': '',
         'test_level': '',
         }
@@ -271,9 +267,9 @@ def init(config_filename):
 
     Config.VODRECORD_USERNAME = defaults['vodrecord_username']
     Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
+    Config.RECORDING_ACTIVATED = defaults['activate_vodrecord'].lower() == 'true'
 
     Config.LEAGUE_NAME = defaults['league_name']
-    Config.GSHEET_ID = defaults['gsheet_id']
 
     if defaults['test_level'] == '0':
         Config.DEBUG_LEVEL = DebugLevel.FULL_DEBUG
