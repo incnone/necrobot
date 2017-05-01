@@ -11,6 +11,7 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
 from necrobot.gsheet.matchupsheet import MatchupSheet
+from necrobot.gsheet.standingssheet import StandingsSheet
 from necrobot.league.leaguemgr import LeagueMgr
 
 
@@ -183,7 +184,7 @@ class PushMatchToSheet(CommandType):
                     gsheet_id=LeagueMgr().league.gsheet_id,
                     wks_name='Standings',
                     sheet_type=sheetlib.SheetType.STANDINGS
-                )  # type: MatchupSheet
+                )  # type: StandingsSheet
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
                 cmd.channel,

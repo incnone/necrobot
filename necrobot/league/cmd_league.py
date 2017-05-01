@@ -249,8 +249,8 @@ class NextRace(CommandType):
                 'Didn\'t find any scheduled matches!')
             return
 
-        if len(matches) < num_to_show:
-            latest_shown = matches[len(matches) - 1]
+        if len(matches) >= num_to_show:
+            latest_shown = matches[num_to_show - 1]
             upcoming_matches = []
             for match in matches:
                 if match.suggested_time - latest_shown.suggested_time < datetime.timedelta(minutes=10) \
