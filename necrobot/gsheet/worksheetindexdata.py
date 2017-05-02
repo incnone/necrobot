@@ -37,6 +37,7 @@ class WorksheetIndexData(object):
         return self._col_indicies
 
     def getcol(self, colname) -> int or None:
+        colname = self._convert_colname(colname)
         if colname in self._col_indicies:
             return self._col_indicies[colname] - self.min_column
         else:

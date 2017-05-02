@@ -28,7 +28,7 @@ class NEDispatch(object, metaclass=Singleton):
 
     async def publish(self, event_type: str, **kwargs):
         ev = NecroEvent(event_type, **kwargs)
-        console.debug('Processing event of type {0}.'.format(ev.event_type))
+        console.info('Processing event of type {0}.'.format(ev.event_type))
 
         for subber in self._subscribers:
             await subber.ne_process(ev)
