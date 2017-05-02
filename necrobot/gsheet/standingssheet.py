@@ -79,9 +79,9 @@ class StandingsSheet(object):
     async def update_standings(self, match: Match, r1_wins: int, r2_wins: int) -> None:
         row_1, col_1, row_2, col_2 = await self._get_match_cells(match)
         if row_1 is not None and col_1 is not None:
-            await self.column_data.update_cell(row_1, col_1 - self._offset, str(r1_wins))
+            await self.column_data.update_cell(row_1, col_1 - self._offset, str(r1_wins), raw_input=False)
         if row_2 is not None and col_2 is not None:
-            await self.column_data.update_cell(row_2, col_2 - self._offset, str(r2_wins))
+            await self.column_data.update_cell(row_2, col_2 - self._offset, str(r2_wins), raw_input=False)
 
     async def _get_match_cells(self, match: Match) \
             -> typing.Tuple[typing.Optional[int], typing.Optional[int], typing.Optional[int], typing.Optional[int]]:
