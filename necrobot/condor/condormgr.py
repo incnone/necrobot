@@ -1,9 +1,13 @@
+import asyncio
+import unittest
+
 from necrobot.botbase import server
 from necrobot.condor import cmd_condor
 from necrobot.gsheet import cmd_sheet
 from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
+from necrobot.user import userlib
 
 from necrobot.botbase.manager import Manager
 from necrobot.gsheet.matchupsheet import MatchupSheet
@@ -78,7 +82,10 @@ class CondorMgr(Manager, metaclass=Singleton):
             await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
             await VodRecorder().end_record(ev.match.racer_2.rtmp_name)
         elif ev.event_type == 'match_alert':
-            await self.match_alert(ev.match) if ev.final else self.cawmentator_alert(ev.match)
+            if ev.final:
+                await self.match_alert(ev.match)
+            else:
+                await self.cawmentator_alert(ev.match)
         elif ev.event_type == 'notify':
             if self._notifications_channel is not None:
                 await self._client.send_message(self._notifications_channel, ev.message)
@@ -120,7 +127,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         """
         # PM a cawmentator alert
         cawmentator = await match.get_cawmentator()
-        if cawmentator is None:
+        if cawmentator is None or match.time_until_match is None:
             return
 
         alert_format_str = 'Reminder: You\'re scheduled to cawmentate **{racer_1}** - **{racer_2}**, ' \
@@ -128,14 +135,14 @@ class CondorMgr(Manager, metaclass=Singleton):
         alert_text = alert_format_str.format(
             racer_1=match.racer_1.display_name,
             racer_2=match.racer_2.display_name,
-            minutes=(match.time_until_match.total_seconds() + 30) // 60
+            minutes=int((match.time_until_match.total_seconds() + 30) // 60)
         )
 
         racer_1_stats = await statfn.get_league_stats(match.racer_1.user_id)
         racer_2_stats = await statfn.get_league_stats(match.racer_2.user_id)
 
-        alert_text += await match.racer_1.get_big_infotext(racer_1_stats) + '\n'
-        alert_text += await match.racer_2.get_big_infotext(racer_2_stats) + '\n'
+        alert_text += '```' + await match.racer_1.get_big_infotext(racer_1_stats) + '\n```'
+        alert_text += '```' + await match.racer_2.get_big_infotext(racer_2_stats) + '\n```'
 
         await self._client.send_message(cawmentator.member, alert_text)
 
@@ -190,3 +197,32 @@ class CondorMgr(Manager, metaclass=Singleton):
                 message=the_msg,
                 new_content=infotext
             )
+
+
+class TestCondorMgr(unittest.TestCase):
+    from necrobot.test.asynctest import async_test
+
+    loop = asyncio.new_event_loop()
+    fake_match = None
+
+    @classmethod
+    def setUpClass(cls):
+        import datetime
+        from necrobot.test import testmatch
+
+        utcnow = datetime.datetime.utcnow()
+
+        cls.fake_match = TestCondorMgr.loop.run_until_complete(testmatch.get_match(
+            r1_name='incnone',
+            r2_name='incnone_testing',
+            time=utcnow + datetime.timedelta(minutes=5),
+            cawmentator_name='incnone'
+        ))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.loop.close()
+
+    @async_test(asyncio.get_event_loop())
+    async def test_cawmentary_pm(self):
+        await CondorMgr().cawmentator_alert(self.fake_match)

@@ -15,10 +15,15 @@ from necrobot.stdconfig.pmbotchannel import PMBotChannel
 from necrobot.util import console
 from necrobot import logon
 
+TEST_CONDOR = True
 TEST_CONFIG = False
 TEST_PARSE = False
-TEST_SHEETS = True
+TEST_SHEETS = False
 TEST_USER = False
+
+if TEST_CONDOR:
+    # noinspection PyUnresolvedReferences
+    from necrobot.condor.condormgr import TestCondorMgr
 
 if TEST_CONFIG:
     # noinspection PyUnresolvedReferences

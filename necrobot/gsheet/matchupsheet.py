@@ -322,7 +322,8 @@ class TestMatchupSheet(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        pass
+        from necrobot.test import testmatch
+
         cls.sheet_1 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id)
         cls.sheet_2 = MatchupSheet(gsheet_id=TestMatchupSheet.the_gsheet_id)
 
@@ -330,7 +331,7 @@ class TestMatchupSheet(unittest.TestCase):
         cls.loop.run_until_complete(cls.sheet_2.initialize(wks_name='Sheet2'))
 
         cls.match_1 = TestMatchupSheet.loop.run_until_complete(
-            cls._get_match(
+            testmatch.get_match(
                 r1_name='yjalexis',
                 r2_name='macnd',
                 time=datetime.datetime(year=2069, month=4, day=20, hour=4, minute=20),
@@ -338,7 +339,7 @@ class TestMatchupSheet(unittest.TestCase):
             )
         )
         cls.match_2 = TestMatchupSheet.loop.run_until_complete(
-            cls._get_match(
+            testmatch.get_match(
                 r1_name='elad',
                 r2_name='wilarseny',
                 time=None,
@@ -397,25 +398,3 @@ class TestMatchupSheet(unittest.TestCase):
     def test_update_cawmentary_and_vod(self):
         yield from self.sheet_1.set_cawmentary(self.match_1)
         yield from self.sheet_1.set_vod(self.match_1, 'http://www.youtube.com/')
-
-    @staticmethod
-    async def _get_match(
-            r1_name: str,
-            r2_name: str,
-            time: datetime.datetime or None,
-            cawmentator_name: str or None
-            ) -> Match:
-        racer_1 = await userlib.get_user(any_name=r1_name, register=False)
-        racer_2 = await userlib.get_user(any_name=r2_name, register=False)
-        cawmentator = await userlib.get_user(rtmp_name=cawmentator_name)
-        cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
-
-        match_info = MatchInfo(ranked=True)
-        return await matchutil.make_match(
-            racer_1_id=racer_1.user_id,
-            racer_2_id=racer_2.user_id,
-            match_info=match_info,
-            suggested_time=time,
-            cawmentator_id=cawmentator_id,
-            register=False
-        )
