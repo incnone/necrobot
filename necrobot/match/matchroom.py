@@ -6,6 +6,7 @@ import discord
 import pytz
 import typing
 
+from necrobot.botbase import server
 from necrobot.util import console
 from necrobot.util import ordinal
 from necrobot.util import timestr
@@ -292,8 +293,8 @@ class MatchRoom(BotChannel):
             # Write end-of-race message
             end_race_msg = 'The race has ended.'
             if auto_contest:
-                if self.necrobot.staff_role is not None:
-                    end_race_msg += ' {0}:'.format(self.necrobot.staff_role.mention)
+                if server.staff_role is not None:
+                    end_race_msg += ' {0}:'.format(server.staff_role.mention)
                 end_race_msg += ' This match has been automatically marked as contested because the finish times ' \
                                 'were close.'
             await self.write(end_race_msg)
@@ -326,7 +327,8 @@ class MatchRoom(BotChannel):
         if alert_str:
             minutes_until_match = int((self.match.time_until_match.total_seconds() + 30) // 60)
             await self.write('{0}: The match is scheduled to begin in {1} minutes.'.format(
-                alert_str[:-2], minutes_until_match))
+                alert_str[:-2], int(minutes_until_match))
+            )
 
     async def force_new_race(self) -> None:
         """Begin a new race, canceling the old one if necessary"""

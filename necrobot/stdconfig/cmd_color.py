@@ -3,6 +3,7 @@ import random
 
 import discord
 
+from necrobot.botbase import server
 from necrobot.botbase.commandtype import CommandType
 
 PROTECTED_ROLENAMES = ['Necrobot']
@@ -30,9 +31,9 @@ ROLES_COLORS = {
     }
 
 
-async def color_user(member, client, server):
+async def color_user(member):
     protected_colors = []
-    for role in server.roles:
+    for role in server.server.roles:
         if role.name in PROTECTED_ROLENAMES:
             protected_colors.append(role.colour)            
 
@@ -43,22 +44,22 @@ async def color_user(member, client, server):
             protected_colors.append(role.colour)
 
     for role in roles_to_remove:
-        await client.remove_roles(member, role)
+        await server.client.remove_roles(member, role)
 
     new_colorname = get_random_colorname(protected_colors)
     role_to_use = None
-    for role in server.roles:
+    for role in server.server.roles:
         if role.name == new_colorname:
             role_to_use = role
 
     if role_to_use is None:
-        role_to_use = await client.create_role(
+        role_to_use = await server.client.create_role(
             server,
             name=new_colorname,
             color=ROLES_COLORS[new_colorname],
             hoist=False)
 
-    await client.add_roles(member, role_to_use)
+    await server.client.add_roles(member, role_to_use)
 
 
 def get_random_colorname(protected_colors):
@@ -76,5 +77,5 @@ class ColorMe(CommandType):
         return False
 
     async def _do_execute(self, command):
-        asyncio.ensure_future(color_user(command.author, self.client, self.necrobot.server))
+        asyncio.ensure_future(color_user(command.author))
         asyncio.ensure_future(self.client.delete_message(command.message))

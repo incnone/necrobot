@@ -136,7 +136,7 @@ class Config(object):
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.10.1'
+    BOT_VERSION = '0.10.2'
     DEBUG_LEVEL = DebugLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
@@ -279,6 +279,7 @@ def init(config_filename):
         Config.DEBUG_LEVEL = DebugLevel.TEST
     elif defaults['test_level'] == '3':
         Config.DEBUG_LEVEL = DebugLevel.RUN
+        Config.STAFF_ROLE = 'CoNDOR Staff'
 
     Config.CONFIG_FILE = config_filename
 

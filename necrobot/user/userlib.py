@@ -1,11 +1,8 @@
-import textwrap
-
 import necrobot.exception
-from necrobot.botbase.necrobot import Necrobot
+from necrobot.botbase import server
 from necrobot.database import userdb
 from necrobot.util import console
 
-from necrobot.stats.leaguestats import LeagueStats
 from necrobot.user.necrouser import NecroUser
 from necrobot.user.userprefs import UserPrefs
 
@@ -81,7 +78,7 @@ async def get_user(
             _cache_user(user)
             return user
         elif discord_id is not None:
-            discord_member = Necrobot().find_member(discord_id=discord_id)
+            discord_member = server.find_member(discord_id=discord_id)
             if discord_member is not None:
                 user = NecroUser(commit_fn=userdb.write_user)
                 user.set(discord_member=discord_member, commit=False)
@@ -110,34 +107,20 @@ async def commit_all_checked_out_users():
         await user.commit()
 
 
-async def get_big_infotext(user: NecroUser, stats: LeagueStats) -> str:
-    return textwrap.dedent(
-        """
-        {discord_name} ({userinfo})
-               RTMP: {rtmp_name}
-             Twitch: {twitch_name}
-           Timezone: {timezone}
-             Record: {wins}-{losses}
-           Best win: {best_win}
-           Avg. win: {avg_win}
-        """
-        .format(
-            discord_name=user.discord_name,
-            userinfo=user.user_info,
-            rtmp_name=user.rtmp_name,
-            twitch_name=user.twitch_name,
-            timezone=user.timezone,
-            wins=stats.wins,
-            losses=stats.losses,
-            best_win=stats.best_win_str,
-            avg_win=stats.avg_win_str
-        )
-    )
-
-
 def _get_user_from_db_row(user_row):
     user = NecroUser(commit_fn=userdb.write_user)
-    _set_user_from_db_row(user, user_row)
+    console.debug('Getting user from data: {}'.format(user_row))
+    user.set(
+        discord_id=user_row[0],
+        discord_name=user_row[1],
+        twitch_name=user_row[2],
+        rtmp_name=user_row[3],
+        timezone=user_row[4],
+        user_info=user_row[5],
+        user_prefs=UserPrefs(daily_alert=bool(user_row[6]), race_alert=bool(user_row[7])),
+        commit=False
+    )
+    user.set_user_id(int(user_row[8]))
     _cache_user(user)
     return user
 
@@ -177,22 +160,11 @@ async def _get_user_any_name(name: str, register: bool) -> NecroUser or None:
         return _get_user_from_db_row(user_row)
 
 
-def _set_user_from_db_row(user: NecroUser, row):
-    console.debug('Getting user from data: {}'.format(row))
-    user.set(
-        discord_id=row[0],
-        discord_name=row[1],
-        twitch_name=row[2],
-        rtmp_name=row[3],
-        timezone=row[4],
-        user_info=row[5],
-        user_prefs=UserPrefs(daily_alert=bool(row[6]), race_alert=bool(row[7])),
-        commit=False
-    )
-    user.set_user_id(int(row[8]))
-
-
 def _cache_user(user: NecroUser):
+    if user.user_id is None:
+        console.warning('Trying to cache a user with no user ID.')
+        return
+
     user_library_by_uid[user.user_id] = user
     if user.discord_id is not None:
         user_library_by_did[user.discord_id] = user

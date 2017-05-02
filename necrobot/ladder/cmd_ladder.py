@@ -1,6 +1,6 @@
 from necrobot.database import ratingsdb
 from necrobot.match import cmd_match
-from necrobot.user import userutil
+from necrobot.user import userlib
 
 from necrobot.botbase.commandtype import CommandType
 from necrobot.match.matchinfo import MatchInfo
@@ -79,7 +79,7 @@ class Rating(CommandType):
             user_name = cmd.author.display_name
             discord_id = int(cmd.author.id)
         elif len(cmd.args) == 1:
-            necro_user = await userutil.get_user(any_name=cmd.args[0])
+            necro_user = await userlib.get_user(any_name=cmd.args[0])
             if necro_user is None:
                 await self.client.send_message(
                     cmd.channel,

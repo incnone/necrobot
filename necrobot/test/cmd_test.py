@@ -1,8 +1,10 @@
 import asyncio
 import discord
 
+from necrobot.botbase import server
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
+from necrobot.botbase.necrobot import Necrobot
 from necrobot.test import msgqueue
 
 
@@ -18,7 +20,7 @@ class TestCommandType(CommandType):
                 wait_ev = await self.wait_event(wait_for)
 
             await self.client.send_message(channel, "`{0}` {1}".format(author.display_name, msg))
-            await self.necrobot.force_command(channel=channel, author=author, message_str=msg)
+            await Necrobot().force_command(channel=channel, author=author, message_str=msg)
 
             if wait_for is not None:
                 # noinspection PyUnboundLocalVariable
@@ -45,7 +47,7 @@ class TestMatch(TestCommandType):
         match = self.bot_channel.match
         racer_1 = match.racer_1.member
         racer_2 = match.racer_2.member
-        admin = self.necrobot.find_admin(ignore=[racer_1.display_name, racer_2.display_name])
+        admin = server.find_admin(ignore=[racer_1.display_name, racer_2.display_name])
         if racer_1 is None or racer_2 is None or admin is None:
             await self.client.send_message(
                 cmd.channel,
@@ -138,10 +140,10 @@ class TestRace(TestCommandType):
     async def _do_execute(self, cmd: Command):
         send = self.get_send_func(cmd.channel)
 
-        alice = self.necrobot.find_member(discord_name='incnone_testing')
-        bob = self.necrobot.find_member(discord_name='condorbot_alpha')
-        carol = self.necrobot.find_member(discord_name='condorbot')
-        admin = self.necrobot.find_member(discord_name='incnone')
+        alice = server.find_member(discord_name='incnone_testing')
+        bob = server.find_member(discord_name='condorbot_alpha')
+        carol = server.find_member(discord_name='condorbot')
+        admin = server.find_member(discord_name='incnone')
 
         if alice is None or bob is None or carol is None or admin is None:
             await self.client.send_message(

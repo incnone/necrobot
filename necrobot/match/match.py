@@ -1,11 +1,14 @@
 import datetime
 import pytz
+from typing import Callable
 
-from necrobot.user import userutil
+from necrobot.user import userlib
 from necrobot.util import console
 from necrobot.util.decorators import commits
 
+from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.match.matchinfo import MatchInfo
+# from necrobot.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.necrouser import NecroUser
 
@@ -23,6 +26,7 @@ class Match(object):
             r1_unconfirmed=False,
             r2_unconfirmed=False,
             match_info=MatchInfo(),
+            # race_data=MatchRaceData(),
             cawmentator_id=None,
             channel_id=None,
             gsheet_info=None
@@ -62,33 +66,34 @@ class Match(object):
         self._match_id = match_id
 
         # Racers in the match
-        self._racer_1_id = racer_1_id
-        self._racer_1 = None
-        self._racer_2_id = racer_2_id
-        self._racer_2 = None
+        self._racer_1_id = racer_1_id                       # type: int
+        self._racer_1 = None                                # type: NecroUser
+        self._racer_2_id = racer_2_id                       # type: int
+        self._racer_2 = None                                # type: NecroUser
 
         # Scheduling data
-        self._suggested_time = None
+        self._suggested_time = None                         # type: datetime
         self._set_suggested_time(suggested_time)
-        self._confirmed_by_r1 = r1_confirmed
-        self._confirmed_by_r2 = r2_confirmed
-        self._r1_wishes_to_unconfirm = r1_unconfirmed
-        self._r2_wishes_to_unconfirm = r2_unconfirmed
+        self._confirmed_by_r1 = r1_confirmed                # type: bool
+        self._confirmed_by_r2 = r2_confirmed                # type: bool
+        self._r1_wishes_to_unconfirm = r1_unconfirmed       # type: bool
+        self._r2_wishes_to_unconfirm = r2_unconfirmed       # type: bool
 
-        # Format data
-        self._match_info = match_info
+        # Format and race data
+        self._match_info = match_info                       # type: MatchInfo
+        # self._race_data = race_data                         # type: MatchRaceData
 
         # Other
-        self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None
-        self._channel_id = channel_id
-        self._gsheet_info = gsheet_info
+        self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None  # type: int
+        self._channel_id = channel_id                       # type: int
+        self._gsheet_info = gsheet_info                     # type: MatchGSheetInfo
 
         # Commit function
-        self._commit = commit_fn
+        self._commit = commit_fn                            # type: Callable[[], None]
 
     async def initialize(self):
-        self._racer_1 = await userutil.get_user(user_id=self._racer_1_id)
-        self._racer_2 = await userutil.get_user(user_id=self._racer_2_id)
+        self._racer_1 = await userlib.get_user(user_id=self._racer_1_id)
+        self._racer_2 = await userlib.get_user(user_id=self._racer_2_id)
         if self._racer_1 is None or self._racer_2 is None:
             raise RuntimeError('Attempted to make a Match object with an unregistered racer.')
 
@@ -172,19 +177,19 @@ class Match(object):
         return self._match_info
 
     @property
-    def cawmentator_id(self):
+    def cawmentator_id(self) -> int:
         return self._cawmentator_id
 
     @property
-    def channel_id(self):
+    def channel_id(self) -> int:
         return self._channel_id
 
     @property
-    def sheet_id(self):
+    def sheet_id(self) -> int:
         return self._gsheet_info.wks_id if self._gsheet_info is not None else None
 
     @property
-    def sheet_row(self):
+    def sheet_row(self) -> int:
         return self._gsheet_info.row if self._gsheet_info is not None else None
 
     @property
@@ -207,14 +212,14 @@ class Match(object):
     def time_until_match(self) -> datetime.timedelta or None:
         return (self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow())) if self.is_scheduled else None
 
-    async def commit(self):
+    async def commit(self) -> None:
         """Write the match to the database."""
         await self._commit(self)
 
-    async def get_cawmentator(self):
+    async def get_cawmentator(self) -> NecroUser or None:
         if self._cawmentator_id is None:
             return None
-        return await userutil.get_user(user_id=self._cawmentator_id)
+        return await userlib.get_user(user_id=self._cawmentator_id)
 
     def racing_in_match(self, user) -> bool:
         """        
@@ -248,12 +253,12 @@ class Match(object):
         else:
             return False
 
-    def set_match_id(self, match_id: int):
+    def set_match_id(self, match_id: int) -> None:
         """Sets the match ID. There should be no need to call this yourself."""
         self._match_id = match_id
 
     @commits
-    def suggest_time(self, time: datetime.datetime):
+    def suggest_time(self, time: datetime.datetime) -> None:
         """Unconfirms all previous times and suggests a new time for the match.
         
         Parameters
@@ -265,7 +270,7 @@ class Match(object):
         self._set_suggested_time(time)
 
     @commits
-    def confirm_time(self, racer: NecroUser):
+    def confirm_time(self, racer: NecroUser) -> None:
         """Confirms the current suggested time by the given racer. (The match is scheduled after
         both racers have confirmed.)
         
@@ -280,7 +285,7 @@ class Match(object):
 
     # Unconfirm
     @commits
-    def unconfirm_time(self, racer: NecroUser):
+    def unconfirm_time(self, racer: NecroUser) -> None:
         """Attempts to unconfirm the current suggested time by the given racer. This deletes the 
         suggested time if either the match is not already scheduled or the other racer has also 
         indicated a desire to unconfirm.
@@ -301,7 +306,7 @@ class Match(object):
                 self._r2_wishes_to_unconfirm = True
 
     @commits
-    def force_confirm(self):
+    def force_confirm(self) -> None:
         """Forces all racers to confirm the suggested time."""
         if self._suggested_time is None:
             console.warning('Tried to force_confirm a Match with no suggested time.')
@@ -312,7 +317,7 @@ class Match(object):
         self._r2_wishes_to_unconfirm = False
 
     @commits
-    def force_unconfirm(self):
+    def force_unconfirm(self) -> None:
         """Unconfirms and deletes any current suggested time."""
         self._confirmed_by_r1 = False
         self._confirmed_by_r2 = False
@@ -321,7 +326,7 @@ class Match(object):
         self._suggested_time = None
 
     @commits
-    def set_repeat(self, number: int):
+    def set_repeat(self, number: int) -> None:
         """Sets the match type to be a repeat-X.
         
         Parameters
@@ -333,7 +338,7 @@ class Match(object):
         self._match_info.max_races = number
 
     @commits
-    def set_best_of(self, number: int):
+    def set_best_of(self, number: int) -> None:
         """Sets the match type to be a best-of-X.
         
         Parameters
@@ -345,7 +350,7 @@ class Match(object):
         self._match_info.max_races = number
 
     @commits
-    def set_race_info(self, race_info: RaceInfo):
+    def set_race_info(self, race_info: RaceInfo) -> None:
         """Sets the type of races to be done in the match.
         
         Parameters
@@ -356,7 +361,7 @@ class Match(object):
         self._match_info.race_info = race_info
 
     @commits
-    def set_cawmentator_id(self, cawmentator_id: int or None):
+    def set_cawmentator_id(self, cawmentator_id: int or None) -> None:
         """Sets a cawmentator for the match. Using cawmentator_id = None will remove cawmentary.
         
         Parameters
@@ -367,7 +372,7 @@ class Match(object):
         self._cawmentator_id = cawmentator_id
 
     @commits
-    def set_channel_id(self, channel_id: int or None):
+    def set_channel_id(self, channel_id: int or None) -> None:
         """Sets a channel ID for the match.
         
         Parameters
@@ -377,7 +382,7 @@ class Match(object):
         """
         self._channel_id = int(channel_id)
 
-    def _set_suggested_time(self, time: datetime.datetime or None):
+    def _set_suggested_time(self, time: datetime.datetime or None) -> None:
         if time is None:
             self._suggested_time = None
             return

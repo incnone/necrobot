@@ -18,7 +18,7 @@ class SheetType(Enum):
 async def get_sheet(
         gsheet_id: str,
         wks_name: Optional[str] = None,
-        wks_id: Optional[str] = None,
+        wks_id: Optional[Union[int, str]] = None,
         sheet_type: SheetType = SheetType.MATCHUP
 ) -> Union[MatchupSheet, StandingsSheet]:
     """Get the Sheet representing the specified Google Worksheet

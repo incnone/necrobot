@@ -1,6 +1,7 @@
 import asyncio
 import discord
 
+from necrobot.botbase import server
 from necrobot.util import console
 
 from necrobot.botbase.command import Command
@@ -29,11 +30,11 @@ class CommandType(object):
 
     @property
     def client(self) -> discord.Client:
-        return self.necrobot.client
+        return server.client
 
     @property
     def necrobot(self) -> Necrobot:
-        return self.bot_channel.necrobot
+        return Necrobot()
 
     @property
     def mention(self) -> str:

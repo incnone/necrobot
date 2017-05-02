@@ -15,7 +15,6 @@ Current version: 0.10
 
 ## Refactor
 
-- Solve circular import Necrobot -> userdb -> NecroUser -> Necrobot
 - `util.level.py` and `util.racetime.py` might work better as classes
 - Replace NoneType returns with exceptions where appropriate
 - Gather argument parsing code
@@ -42,6 +41,15 @@ Current version: 0.10
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?
+
+### Things I don't understand
+
+- manfred4 wasn't properly added to rooms on RTMP setting; traceback was:
+  File "/home/bot/necrobot/necrobot/match/matchmgr.py", line 41, in ne_process
+    overwrite=read_perms
+  File "/home/bot/.pyenv/versions/3.5.2/lib/python3.5/site-packages/discord/client.py", line 3040, in edit_channel_permissions
+    raise InvalidArgument('target parameter must be either Member or Role')
+- Ri's timezone was getting read as none by bot but correctly used
 
 ## Features
 

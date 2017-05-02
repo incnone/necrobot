@@ -1,7 +1,8 @@
 import discord
 
 from necrobot.botbase import cmd_all
-from necrobot.botbase.necrobot import Necrobot
+from necrobot.botbase import server
+
 
 # Represents a discord channel on which the bot can read commands. Holds a list of commands the bot will respond to on
 # this channel.
@@ -18,11 +19,7 @@ class BotChannel(object):
 
     @property
     def client(self) -> discord.Client:
-        return Necrobot().client
-
-    @property
-    def necrobot(self) -> Necrobot:
-        return Necrobot()
+        return server.client
 
     @property
     def all_commands(self):
@@ -40,7 +37,7 @@ class BotChannel(object):
 
     def is_admin(self, discord_member: discord.Member) -> bool:
         """Whether the user can access admin commands for this channel"""
-        return self.necrobot.is_admin(discord_member) or self._virtual_is_admin(discord_member)
+        return server.is_admin(discord_member) or self._virtual_is_admin(discord_member)
 
     async def execute(self, command) -> None:
         """Attempts to execute the given command (if a command of its type is in channel_commands)"""

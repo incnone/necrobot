@@ -6,7 +6,7 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.daily.dailymgr import DailyMgr
 from necrobot.daily.daily import Daily
 from necrobot.daily.dailytype import DailyType
-from necrobot.user import userutil
+from necrobot.user import userlib
 
 
 class DailyCommandType(CommandType):
@@ -60,7 +60,7 @@ class DailyResubmit(DailyCommandType):
         return 'Resubmit for daily.'
 
     async def _daily_do_execute(self, cmd, daily):
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         last_submitted = await daily.submitted_daily(user.user_id)
         character = dailytype.character(daily.daily_type, last_submitted)
 
@@ -124,7 +124,7 @@ class DailySeed(DailyCommandType):
         return 'Get daily seed.'
 
     async def _daily_do_execute(self, cmd, daily):
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
 
         today = daily.today_number
         today_date = daily.daily_to_date(today)
@@ -154,7 +154,7 @@ class DailyStatus(DailyCommandType):
         return "Your status for today's dailies."
 
     async def _daily_do_execute(self, cmd, _):
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         status = ''
 
         for dtype in DailyType:
@@ -197,7 +197,7 @@ class DailySubmit(DailyCommandType):
         return 'Submit daily result.'
 
     async def _daily_do_execute(self, cmd, daily):
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
 
         daily_number = await daily.registered_daily(user.user_id)
         character = dailytype.character(daily.daily_type, daily_number)
@@ -263,7 +263,7 @@ class DailyUnsubmit(DailyCommandType):
         return 'Retract most recent submission.'
 
     async def _daily_do_execute(self, cmd, daily):
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
 
         daily_number = await daily.submitted_daily(user.user_id)
         character = dailytype.character(daily.daily_type, daily_number)

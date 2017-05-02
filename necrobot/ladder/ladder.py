@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import pytz
+from necrobot.botbase import server
 
 
 DO_AUTOMATCHING = False
@@ -9,8 +10,7 @@ AUTOMATCH_HOUR = 12  # Noon UTC
 
 
 class Ladder(object):
-    def __init__(self, necrobot):
-        self.necrobot = necrobot
+    def __init__(self):
         self._ladder_automatch_future = asyncio.ensure_future(self._wait_and_automatch())
 
     def refresh(self):
@@ -21,7 +21,7 @@ class Ladder(object):
 
     @property
     def client(self):
-        return self.necrobot.client
+        return server.client
 
     async def _wait_and_automatch(self):
         if not DO_AUTOMATCHING:

@@ -3,10 +3,11 @@ import datetime
 import discord
 from enum import Enum
 
+from necrobot.botbase import server
 from necrobot.database import dailydb, userdb
 from necrobot.daily import dailytype
 from necrobot.util import level, seedgen, racetime
-from necrobot.user import userutil
+from necrobot.user import userlib
 
 from necrobot.config import Config
 from necrobot.daily.dailytype import DailyType
@@ -45,14 +46,14 @@ class Daily(object):
     def __init__(self, daily_type: DailyType):
         self._daily_type = daily_type
         self._daily_update_future = asyncio.ensure_future(self._daily_update())
-        self._leaderboard_channel = self.necrobot.find_channel(Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
+        self._leaderboard_channel = server.find_channel(channel_name=Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
 
     def close(self):
         self._daily_update_future.cancel()
 
     @property
     def client(self) -> discord.Client:
-        return Necrobot().client
+        return server.client
 
     @property
     def daily_type(self) -> DailyType:
@@ -208,7 +209,7 @@ class Daily(object):
         if await self.has_registered(daily_number, user_id):
             return False
         else:
-            user = await userutil.get_user(user_id=user_id, register=True)
+            user = await userlib.get_user(user_id=user_id, register=True)
 
             await dailydb.register_daily(
                 user_id=user.user_id,
@@ -344,7 +345,7 @@ class Daily(object):
         # PM users with the daily_alert preference
         auto_pref = UserPrefs(daily_alert=True, race_alert=None)
         for member_id in await userdb.get_all_discord_ids_matching_prefs(auto_pref):
-            member = self.necrobot.find_member(discord_id=member_id)
+            member = server.find_member(discord_id=member_id)
             if member is not None:
                 await self.register(self.today_number, member.id)
                 await self.client.send_message(

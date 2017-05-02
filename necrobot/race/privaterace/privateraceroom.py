@@ -2,6 +2,7 @@
 
 import discord
 
+from necrobot.botbase import server
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.race.privaterace import permissioninfo, cmd_privaterace
 from necrobot.race.publicrace.raceroom import RaceRoom
@@ -11,19 +12,17 @@ from necrobot.util import writechannel
 
 # Make a private race with the given RacePrivateInfo; give the given discord_member admin status
 async def make_private_room(race_private_info, discord_member):
-    necrobot = Necrobot()
-
     # Define permissions
     deny_read = discord.PermissionOverwrite(read_messages=False)
     permit_read = discord.PermissionOverwrite(read_messages=True)
 
     # Make a channel for the room
     # noinspection PyUnresolvedReferences
-    race_channel = await necrobot.client.create_channel(
-        necrobot.server,
-        get_raceroom_name(necrobot.server, race_private_info.race_info),
-        discord.ChannelPermissions(target=necrobot.server.default_role, overwrite=deny_read),
-        discord.ChannelPermissions(target=necrobot.server.me, overwrite=permit_read),
+    race_channel = await server.client.create_channel(
+        server.server,
+        get_raceroom_name(race_private_info.race_info),
+        discord.ChannelPermissions(target=server.server.default_role, overwrite=deny_read),
+        discord.ChannelPermissions(target=server.server.me, overwrite=permit_read),
         discord.ChannelPermissions(target=discord_member, overwrite=permit_read),
         type=discord.ChannelType.text
     )
@@ -34,7 +33,7 @@ async def make_private_room(race_private_info, discord_member):
             race_private_info=race_private_info,
             admin_as_member=discord_member)
         await new_room.initialize()
-        necrobot.register_bot_channel(race_channel, new_room)
+        Necrobot().register_bot_channel(race_channel, new_room)
 
     return race_channel
 
@@ -44,7 +43,7 @@ class PrivateRaceRoom(RaceRoom):
         RaceRoom.__init__(self, race_discord_channel, race_private_info.race_info)
         self._room_creator = admin_as_member
 
-        self.permission_info = permissioninfo.get_permission_info(self.necrobot.server, race_private_info)
+        self.permission_info = permissioninfo.get_permission_info(server.server, race_private_info)
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
 

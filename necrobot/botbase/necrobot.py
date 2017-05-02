@@ -1,11 +1,13 @@
 import discord
 import sys
-import typing
+from typing import Dict, Callable, List, ValuesView
 
 from necrobot.test import msgqueue
 
+from necrobot.botbase import server
 from necrobot.util import console
 
+# from necrobot.botbase.botchannel import BotChannel
 from necrobot.config import Config
 from necrobot.botbase.command import Command, TestCommand
 from necrobot.botbase.manager import Manager
@@ -14,52 +16,33 @@ from necrobot.util.singleton import Singleton
 
 class Necrobot(object, metaclass=Singleton):
     def __init__(self):
-        self.client = None                      # type: discord.Client
-        self.server = None                      # type: discord.Server
+        self._pm_bot_channel = None  # type: BotChannel
+        self._bot_channels = dict()  # type: Dict[discord.Channel, BotChannel]
+        self._managers = list()  # type: List[Manager]
 
-        self._main_discord_channel = None       # type: discord.Channel
-
-        self._pm_bot_channel = None             # The special BotChannel for PM command handling
-        self._bot_channels = {}                 # Map discord.Channel -> BotChannel
-        self._managers = []                     # type: typing.List[Manager]
-
-        self._initted = False                   # type: bool
-        self._quitting = False                  # type: bool
-        self._load_config_fn = None             # type: typing.Coroutine
+        self._initted = False  # type: bool
+        self._quitting = False  # type: bool
+        self._load_config_fn = None  # type: Callable[[], None]
 
     @property
-    def all_channels(self):
+    def client(self) -> discord.Client:
+        return server.client
+
+    @property
+    def server(self) -> discord.Server:
+        return server.server
+
+    @property
+    def all_channels(self):  # -> ValuesView[BotChannel]:
         """Get a list of all BotChannels"""
         return self._bot_channels.values()
-
-    @property
-    def main_channel(self) -> discord.Channel:
-        """Get the bot's "main" discord channel"""
-        return self._main_discord_channel if self._main_discord_channel is not None else self.server.default_channel
 
     @property
     def quitting(self) -> bool:
         """True if the bot wants to quit (i.e. if logout() has been called)"""
         return self._quitting
 
-    @property
-    def admin_roles(self) -> typing.List[discord.Role]:
-        """A list of all admin roles on the server"""
-        admin_roles = []
-        for rolename in Config.ADMIN_ROLE_NAMES:
-            for role in self.server.roles:
-                if role.name == rolename:
-                    admin_roles.append(role)
-        return admin_roles
-
-    @property
-    def staff_role(self) -> typing.Optional[discord.Role]:
-        return self.find_role(Config.STAFF_ROLE)
-
-    def clean_init(self):
-        self.client = None
-        self.server = None
-        self._main_discord_channel = None
+    def clean_init(self) -> None:
         self._pm_bot_channel = None
         self._bot_channels.clear()
         self._managers.clear()
@@ -67,66 +50,7 @@ class Necrobot(object, metaclass=Singleton):
         self._quitting = False
         self._load_config_fn = None
 
-    def ready_client_events(self, client: discord.Client, load_config_fn, on_ready_fn=None):
-        """Set the code for event-handling in the discord.Client"""
-        @client.event
-        async def on_ready():
-            """Called after the client has successfully logged in"""
-            await self.post_login_init(
-                client=client,
-                server_id=Config.SERVER_ID,
-                load_config_fn=load_config_fn
-            )
-            if on_ready_fn is not None:
-                await on_ready_fn(self)
-
-        @client.event
-        async def on_message(message: discord.Message):
-            """Called whenever a new message is posted in any channel on any server"""
-            if not self._initted:
-                return
-
-            if Config.testing():
-                await msgqueue.send_message(message)
-
-            if message.author.id == self.client.user.id:
-                return
-
-            cmd = Command(message)
-            await self._execute(cmd)
-
-        @client.event
-        async def on_error(event: str, *args, **kwargs):
-            """Called when an event raises an uncaught exception"""
-            exc_info = sys.exc_info()
-            exc_type = exc_info[0].__name__ if exc_info[0] is not None else '<no exception>'
-            exc_what = str(exc_info[1]) if exc_info[1] is not None else ''
-            console.error(
-                'Uncaught exception {exc_type}: {exc_what}'.format(exc_type=exc_type, exc_what=exc_what)
-            )
-
-        # @client.event
-        # async def on_member_join(member: discord.Member):
-        #     """Called when anyone joins the server"""
-        #     if not self._initted:
-        #         return
-        #
-        #     await userdb.register_discord_user(member)
-        #
-        # @client.event
-        # async def on_member_update(member_before: discord.Member, member_after: discord.Member):
-        #     """Called when anyone updates their discord profile"""
-        #     if not self._initted:
-        #         return
-        #
-        #     if member_before.display_name != member_after.display_name:
-        #         await userdb.register_discord_user(member_after)
-
-    def set_main_channel(self, discord_channel: discord.Channel) -> None:
-        """Sets the bots "main" channel (returned by main_channel)"""
-        self._main_discord_channel = discord_channel
-
-    def get_bot_channel(self, discord_channel):
+    def get_bot_channel(self, discord_channel: discord.Channel):  # -> BotChannel:
         """Returns the BotChannel corresponding to the given discord.Channel, if one exists"""
         if discord_channel.is_private:
             return self._pm_bot_channel
@@ -152,83 +76,13 @@ class Necrobot(object, metaclass=Singleton):
         console.info('Registering a manager of type {0}.'.format(type(manager).__name__))
         self._managers.append(manager)
 
-    def is_admin(self, user: discord.User) -> bool:
-        """True if user is a server admin"""
-        member = self.get_as_member(user)
-        for role in member.roles:
-            if role in self.admin_roles:
-                return True
-        return False
-
-    def find_channel(self, channel_name) -> typing.Optional[discord.Channel]:
-        """Returns the channel with the given name on the server, if any"""
-        for channel in self.server.channels:
-            if channel.name == channel_name:
-                return channel
-        return None
-
-    def find_channel_with_id(self, channel_id) -> typing.Optional[discord.Channel]:
-        """Returns the channel with the given ID on the server, if any"""
-        for channel in self.server.channels:
-            if int(channel.id) == int(channel_id):
-                return channel
-        return None
-
-    def find_admin(self, ignore=list()) -> typing.Optional[discord.Member]:
-        """Returns a random bot admin (for testing purposes)"""
-        for member in self.server.members:
-            if member.display_name in ignore or member.id == self.client.user.id:
-                continue
-            for role in member.roles:
-                if role in self.admin_roles:
-                    return member
-        return None
-
-    def find_member(self, discord_name=None, discord_id=None) -> typing.Optional[discord.Member]:
-        """Returns a member with a given username (capitalization ignored)"""
-        if discord_name is None and discord_id is None:
-            return None
-
-        if discord_name is not None:
-            for member in self.server.members:
-                if member.display_name.lower() == discord_name.lower() \
-                        or member.name.lower() == discord_name.lower():
-                    return member
-        elif discord_id is not None:
-            for member in self.server.members:
-                if int(member.id) == int(discord_id):
-                    return member
-
-    def find_members(self, username) -> typing.List[discord.Member]:
-        """Returns a list of all members with a given username (capitalization ignored)"""
-        to_return = []
-        for member in self.server.members:
-            if member.display_name.lower() == username.lower():
-                to_return.append(member)
-        return to_return
-
-    def get_as_member(self, user) -> typing.Optional[discord.Member]:
-        """Returns the given Discord user as a member of the server"""
-        for member in self.server.members:
-            if int(member.id) == int(user.id):
-                return member
-        return None
-
-    def find_role(self, role_name: str) -> typing.Optional[discord.Role]:
-        """Finds a discord.Role with the given name, if any"""
-        for role in self.server.roles:
-            if role.name.lower() == role_name.lower():
-                return role
-        return None
-
     async def post_login_init(
-        self,
-        client: discord.Client,
-        server_id: int,
-        load_config_fn
+            self,
+            client: discord.Client,
+            server_id: int,
+            load_config_fn
     ) -> None:
         """Initializes object; call after client has been logged in to discord"""
-        self.client = client
         self._load_config_fn = load_config_fn
 
         # Find the correct server
@@ -238,15 +92,18 @@ class Necrobot(object, metaclass=Singleton):
         except ValueError:
             id_is_int = False
 
-        for s in self.client.servers:
+        the_server = None  # type: discord.Server
+        for s in client.servers:
             if id_is_int and s.id == server_id:
-                self.server = s
+                the_server = s
             elif s.name == server_id:
-                self.server = s
+                the_server = s
 
-        if self.server is None:
+        if the_server is None:
             console.warning('Could not find the server.')
             exit(1)
+
+        server.init(client, the_server)
 
         if not self._initted:
             await self._load_config_fn(self)
@@ -261,7 +118,7 @@ class Necrobot(object, metaclass=Singleton):
             '-Logged in---------------\n'
             '   User name: {0}\n'
             ' Server name: {1}\n'
-            '-------------------------'.format(self.server.me.display_name, self.server.name)
+            '-------------------------'.format(the_server.me.display_name, the_server.name)
         )
 
     async def redo_init(self) -> None:
@@ -272,7 +129,7 @@ class Necrobot(object, metaclass=Singleton):
         """Called when post_login_init() is run a second+ time"""
         channel_pairs = {}
         for channel, bot_channel in self._bot_channels.items():
-            new_channel = self.find_channel_with_id(channel.id)
+            new_channel = server.find_channel(channel_id=channel.id)
             if new_channel is not None:
                 channel_pairs[new_channel] = bot_channel
             bot_channel.refresh(new_channel)
@@ -306,7 +163,7 @@ class Necrobot(object, metaclass=Singleton):
         """
         await self._execute(TestCommand(channel=channel, author=author, message_str=message_str))
 
-    async def _execute(self, cmd) -> None:
+    async def _execute(self, cmd: Command) -> None:
         """Execute a command"""
         # Don't care about bad commands
         if cmd.command is None:
@@ -317,3 +174,65 @@ class Necrobot(object, metaclass=Singleton):
             await self._pm_bot_channel.execute(cmd)
         elif cmd.channel in self._bot_channels:
             await self._bot_channels[cmd.channel].execute(cmd)
+
+    def ready_client_events(
+            self,
+            client: discord.Client,
+            load_config_fn: Callable[[], None],
+            on_ready_fn: Callable[[], None] = None
+    ):
+        """Set the code for event-handling in the discord.Client"""
+
+        @client.event
+        async def on_ready():
+            """Called after the client has successfully logged in"""
+            await self.post_login_init(
+                client=client,
+                server_id=Config.SERVER_ID,
+                load_config_fn=load_config_fn
+            )
+            if on_ready_fn is not None:
+                await on_ready_fn(self)
+
+        @client.event
+        async def on_message(message: discord.Message):
+            """Called whenever a new message is posted in any channel on any server"""
+            if not self._initted:
+                return
+
+            if Config.testing():
+                await msgqueue.send_message(message)
+
+            if message.author.id == self.client.user.id:
+                return
+
+            cmd = Command(message)
+            await self._execute(cmd)
+
+        # noinspection PyUnusedLocal
+        @client.event
+        async def on_error(event: str, *args, **kwargs):
+            """Called when an event raises an uncaught exception"""
+            exc_info = sys.exc_info()
+            exc_type = exc_info[0].__name__ if exc_info[0] is not None else '<no exception>'
+            exc_what = str(exc_info[1]) if exc_info[1] is not None else ''
+            console.error(
+                'Uncaught exception {exc_type}: {exc_what}'.format(exc_type=exc_type, exc_what=exc_what)
+            )
+
+            # @client.event
+            # async def on_member_join(member: discord.Member):
+            #     """Called when anyone joins the server"""
+            #     if not self._initted:
+            #         return
+            #
+            #     await userdb.register_discord_user(member)
+            #
+            # @client.event
+            # async def on_member_update(member_before: discord.Member, member_after: discord.Member):
+            #     """Called when anyone updates their discord profile"""
+            #     if not self._initted:
+            #         return
+            #
+            #     if member_before.display_name != member_after.display_name:
+            #         await userdb.register_discord_user(member_after)

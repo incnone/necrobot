@@ -2,6 +2,7 @@ import asyncio
 import sys
 
 import run_condorbot
+from necrobot.botbase import server
 from necrobot import logon
 from necrobot.util import ratelimit
 
@@ -12,8 +13,8 @@ async def on_ready_fn(necrobot):
 
     try:
         msg_rl_pair = await ratelimit.send_and_get_rate_limit(
-            necrobot.client,
-            necrobot.main_channel,
+            server.client,
+            server.main_channel,
             'testing rate limit'
         )
         print(msg_rl_pair[1])

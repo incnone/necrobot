@@ -1,5 +1,6 @@
 import necrobot.exception
 from necrobot.botbase.commandtype import CommandType
+from necrobot.botbase.necrobot import Necrobot
 
 
 class Die(CommandType):
@@ -9,7 +10,7 @@ class Die(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.necrobot.logout()
+        await Necrobot().logout()
 
 
 class Reboot(CommandType):
@@ -19,7 +20,7 @@ class Reboot(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.necrobot.reboot()
+        await Necrobot().reboot()
 
 
 class RedoInit(CommandType):
@@ -29,7 +30,7 @@ class RedoInit(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.necrobot.redo_init()
+        await Necrobot().redo_init()
 
 
 class RaiseException(CommandType):

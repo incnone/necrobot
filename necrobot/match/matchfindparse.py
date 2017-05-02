@@ -6,7 +6,7 @@ import necrobot.exception
 from necrobot.util.parse import dateparse
 from necrobot.database import matchdb
 from necrobot.match import matchutil
-from necrobot.user import userutil
+from necrobot.user import userlib
 
 from necrobot.match.match import Match
 
@@ -37,12 +37,12 @@ async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
     if len(args) < 2:
         raise necrobot.exception.ParseException('Need at least two arguments to find a match.')
 
-    racer_1 = await userutil.get_user(any_name=args[0])
+    racer_1 = await userlib.get_user(any_name=args[0])
     if racer_1 is None:
         raise necrobot.exception.NotFoundException("Can't find any racer by the name `{0}`.".format(args[0]))
     args.pop(0)
 
-    racer_2 = await userutil.get_user(any_name=args[0])
+    racer_2 = await userlib.get_user(any_name=args[0])
     if racer_2 is None:
         raise necrobot.exception.NotFoundException("Can't find any racer by the name `{0}`.".format(args[0]))
     args.pop(0)

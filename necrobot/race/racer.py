@@ -1,6 +1,6 @@
 import discord
 
-from necrobot.user import userutil
+from necrobot.user import userlib
 from necrobot.util import level, racetime
 
 from necrobot.user.necrouser import NecroUser
@@ -20,7 +20,7 @@ class Racer(object):
         self.comment = ''                       # a comment added with .comment
 
     async def initialize(self):
-        self._user = await userutil.get_user(discord_id=self._discord_id, register=True)
+        self._user = await userlib.get_user(discord_id=self._discord_id, register=True)
 
     @property
     def user(self) -> NecroUser:

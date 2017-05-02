@@ -1,3 +1,4 @@
+from necrobot.botbase import server
 from necrobot.condor.condoradminchannel import CondorAdminChannel
 from necrobot.condor.condormainchannel import CondorMainChannel
 from necrobot.condor.condormgr import CondorMgr
@@ -14,10 +15,10 @@ async def load_condorbot_config(necrobot):
     necrobot.register_pm_channel(CondorPMChannel())
 
     # Main Channel
-    necrobot.register_bot_channel(necrobot.main_channel, CondorMainChannel())
+    necrobot.register_bot_channel(server.main_channel, CondorMainChannel())
 
     # Admin channel
-    condor_admin_channel = necrobot.find_channel('adminchat')
+    condor_admin_channel = server.find_channel(channel_name='adminchat')
     if condor_admin_channel is None:
         console.warning('Could not find the "{0}" channel.'.format('adminchat'))
     necrobot.register_bot_channel(condor_admin_channel, CondorAdminChannel())

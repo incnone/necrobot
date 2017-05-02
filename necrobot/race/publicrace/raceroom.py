@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import discord
 
+from necrobot.botbase import server
 from necrobot.race import cmd_race
 from necrobot.race.publicrace import cmd_publicrace
 from necrobot.test import cmd_test
@@ -12,6 +13,7 @@ from necrobot.database import racedb
 from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.botbase.necrobot import Necrobot
 from necrobot.config import Config
 from necrobot.race.race import Race, RaceEvent
 
@@ -98,7 +100,7 @@ class RaceRoom(BotChannel):
 
     @property
     def results_channel(self):
-        return self.necrobot.find_channel(Config.RACE_RESULTS_CHANNEL_NAME)
+        return server.find_channel(channel_name=Config.RACE_RESULTS_CHANNEL_NAME)
 
     # Returns the string to go in the topic for the leaderboard
     @property
@@ -206,8 +208,8 @@ class RaceRoom(BotChannel):
 
     # Close the channel.
     async def close(self):
-        self.necrobot.unregister_bot_channel(self._channel)
-        await self.necrobot.client.delete_channel(self._channel)
+        Necrobot().unregister_bot_channel(self._channel)
+        await server.client.delete_channel(self._channel)
 
     # Makes a rematch of this race if the current race is finished
     async def make_rematch(self):

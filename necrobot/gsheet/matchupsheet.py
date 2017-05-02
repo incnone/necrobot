@@ -5,7 +5,7 @@ import unittest
 
 import necrobot.exception
 from necrobot.match import matchutil
-from necrobot.user import userutil
+from necrobot.user import userlib
 from necrobot.util import console
 
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
@@ -111,8 +111,8 @@ class MatchupSheet(object):
 
                 console.debug('get_matches: Creating {0}-{1}'.format(racer_1_name, racer_2_name))
 
-                racer_1 = await userutil.get_user(any_name=racer_1_name, register=True)
-                racer_2 = await userutil.get_user(any_name=racer_2_name, register=True)
+                racer_1 = await userlib.get_user(any_name=racer_1_name, register=True)
+                racer_2 = await userlib.get_user(any_name=racer_2_name, register=True)
                 if racer_1 is None or racer_2 is None:
                     console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
                         racer_1_name, racer_2_name
@@ -208,12 +208,12 @@ class MatchupSheet(object):
             console.warning('No Cawmentary column on GSheet.')
             return
 
-        cawmentator = await userutil.get_user(user_id=match.cawmentator_id)
+        cawmentator = await userlib.get_user(user_id=match.cawmentator_id)
 
         await self.column_data.update_cell(
             row=row,
             col=self.column_data.cawmentary,
-            value=cawmentator.twitch_name if cawmentator is not None else '',
+            value='twitch.tv/{0}'.format(cawmentator.twitch_name) if cawmentator is not None else '',
             raw_input=False
         )
 
@@ -393,9 +393,9 @@ class TestMatchupSheet(unittest.TestCase):
             time: datetime.datetime or None,
             cawmentator_name: str or None
             ) -> Match:
-        racer_1 = await userutil.get_user(any_name=r1_name, register=False)
-        racer_2 = await userutil.get_user(any_name=r2_name, register=False)
-        cawmentator = await userutil.get_user(rtmp_name=cawmentator_name)
+        racer_1 = await userlib.get_user(any_name=r1_name, register=False)
+        racer_2 = await userlib.get_user(any_name=r2_name, register=False)
+        cawmentator = await userlib.get_user(rtmp_name=cawmentator_name)
         cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
 
         match_info = MatchInfo(ranked=True)

@@ -2,7 +2,7 @@ import pytz
 
 import mysql.connector
 
-from necrobot.user import userutil
+from necrobot.user import userlib
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
@@ -29,7 +29,7 @@ class DailyAlert(CommandType):
 
         user_prefs = UserPrefs(daily_alert=(cmd.args[0] == 'on'), race_alert=None)
 
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         user.set(user_prefs=user_prefs, commit=True)
 
         if user_prefs.daily_alert:
@@ -61,7 +61,7 @@ class ForceRTMP(CommandType):
 
         # Get the user
         discord_name = cmd.args[0]
-        user = await userutil.get_user(discord_name=discord_name)
+        user = await userlib.get_user(discord_name=discord_name)
         if user is None:
             await self.client.send_message(
                 cmd.channel,
@@ -87,7 +87,7 @@ class RaceAlert(CommandType):
 
         user_prefs = UserPrefs(daily_alert=None, race_alert=(cmd.args[0] == 'on'))
 
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         user.set(user_prefs=user_prefs, commit=True)
 
         if user_prefs.race_alert:
@@ -115,7 +115,7 @@ class RTMP(CommandType):
                 'Use `{1} rtmp_name`.'.format(cmd.author.mention, self.mention))
             return
 
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         rtmp_name = cmd.args[0]
         await _do_rtmp_register(cmd, self, user, rtmp_name)
 
@@ -138,7 +138,7 @@ class SetInfo(CommandType):
                 '{0}: Error: `.setinfo` cannot contain newlines or backticks.'.format(cmd.author.mention))
             return
 
-        user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         user.set(user_info=cmd.arg_string, commit=True)
         await self.client.send_message(
             cmd.channel,
@@ -163,7 +163,7 @@ class Timezone(CommandType):
 
         tz_name = cmd.args[0]
         if tz_name in pytz.common_timezones:
-            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
             user.set(timezone=tz_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
@@ -195,7 +195,7 @@ class Twitch(CommandType):
                 '{0}: Error: your twitch name cannot contain the character /. (Maybe you accidentally '
                 'included the "twitch.tv/" part of your stream name?)'.format(cmd.author.mention))
         else:
-            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
             user.set(twitch_name=twitch_name, commit=True)
             await self.client.send_message(
                 cmd.channel,
@@ -217,9 +217,9 @@ class UserInfo(CommandType):
 
         # find the user's discord id
         if len(cmd.args) == 0:
-            racer = await userutil.get_user(discord_id=cmd.author.id, register=True)
+            racer = await userlib.get_user(discord_id=cmd.author.id, register=True)
         else:
-            racer = await userutil.get_user(any_name=cmd.args[0])
+            racer = await userlib.get_user(any_name=cmd.args[0])
             if racer is None:
                 await self.client.send_message(
                     cmd.channel, 'Couldn\'t find a user by the name `{0}`.'.format(cmd.args[0]))
@@ -234,7 +234,7 @@ class ViewPrefs(CommandType):
         self.help_text = "See your current user preferences."
 
     async def _do_execute(self, cmd: Command):
-        user = await userutil.get_user(discord_id=int(cmd.author.id))
+        user = await userlib.get_user(discord_id=int(cmd.author.id))
         prefs = user.user_prefs
         prefs_string = ''
         for pref_str in prefs.pref_strings:
@@ -249,7 +249,7 @@ async def _do_rtmp_register(cmd: Command, cmd_type: CommandType, user: NecroUser
         user.set(rtmp_name=rtmp_name, commit=False)
         await user.commit()
     except mysql.connector.IntegrityError:
-        duplicate_user = await userutil.get_user(rtmp_name=rtmp_name)
+        duplicate_user = await userlib.get_user(rtmp_name=rtmp_name)
         if duplicate_user is None:
             await cmd_type.client.send_message(
                 cmd.channel,

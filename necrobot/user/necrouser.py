@@ -2,17 +2,19 @@ import asyncio
 import discord
 import pytz
 import re
+import textwrap
 import unittest
 
+from necrobot.botbase import server
+from necrobot.stats.leaguestats import LeagueStats
 from necrobot.util import console
 
-from necrobot.botbase.necrobot import Necrobot
 from necrobot.user.userprefs import UserPrefs
 
 
 class NecroUser(object):
     def __init__(self, commit_fn):
-        """Initialization. There should be no reason to directly create NecroUser objects; use userutil.get_user 
+        """Initialization. There should be no reason to directly create NecroUser objects; use userlib 
         instead.
         
         Parameters
@@ -77,7 +79,10 @@ class NecroUser(object):
         return self.discord_member.id if self.discord_member is not None else self._discord_id
 
     @property
-    def discord_member(self) -> discord.Member:
+    def discord_member(self) -> discord.Member or None:
+        if self._discord_member is None and \
+                (self._discord_id is not None or self._discord_name is not None):
+            self._discord_member = server.find_member(discord_name=self._discord_name, discord_id=self._discord_id)
         return self._discord_member
 
     @property
@@ -89,8 +94,8 @@ class NecroUser(object):
         return self.bot_name
 
     @property
-    def member(self) -> discord.Member:
-        return self._discord_member
+    def member(self) -> discord.Member or None:
+        return self.discord_member
 
     @property
     def rtmp_name(self) -> str:
@@ -151,7 +156,7 @@ class NecroUser(object):
         Parameters
         ----------
         user_id: int
-            The user's database ID. Called by userutil during creation.
+            The user's database ID. Called by userlib during creation.
         """
         self._user_id = user_id
 
@@ -198,7 +203,7 @@ class NecroUser(object):
             changed_any = True
         elif discord_id is not None and discord_id != self.discord_id:
             self._discord_id = discord_id
-            member = Necrobot().find_member(discord_id=discord_id)
+            member = server.find_member(discord_id=discord_id)
             if member is not None:
                 self._discord_member = member
                 self._discord_name = member.display_name
@@ -207,8 +212,9 @@ class NecroUser(object):
             changed_any = True
         elif discord_name is not None and discord_name != self.discord_name:
             self._discord_name = discord_name
-            member = Necrobot().find_member(discord_name=discord_name)
+            member = server.find_member(discord_name=discord_name)
             if member is not None:
+                self._discord_member = member
                 self._discord_id = int(member.id)
             changed_any = True
 
@@ -233,6 +239,30 @@ class NecroUser(object):
 
         if changed_any and commit:
             asyncio.ensure_future(self.commit())
+
+    async def get_big_infotext(self, stats: LeagueStats) -> str:
+        return textwrap.dedent(
+            """
+            {discord_name} ({userinfo})
+                   RTMP: {rtmp_name}
+                 Twitch: {twitch_name}
+               Timezone: {timezone}
+                 Record: {wins}-{losses}
+               Best win: {best_win}
+               Avg. win: {avg_win}
+            """
+            .format(
+                discord_name=self.discord_name,
+                userinfo=self.user_info,
+                rtmp_name=self.rtmp_name,
+                twitch_name=self.twitch_name,
+                timezone=self.timezone,
+                wins=stats.wins,
+                losses=stats.losses,
+                best_win=stats.best_win_str,
+                avg_win=stats.avg_win_str
+            )
+        )
 
 
 class TestNecroUser(unittest.TestCase):

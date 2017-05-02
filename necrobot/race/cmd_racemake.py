@@ -1,4 +1,5 @@
 import necrobot.exception
+from necrobot.botbase import server
 from necrobot.race import raceinfo, raceutil
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
 
@@ -45,7 +46,7 @@ class MakePrivate(CommandType):
         except (ValueError, IndexError):
             repeat_index = 1
 
-        author_as_member = self.necrobot.get_as_member(command.author)
+        author_as_member = server.get_as_member(command.author)     # TODO convert to NecroUser
 
         repeat_index = min(20, max(repeat_index, 1))
 

@@ -29,6 +29,7 @@ class RaceInfo(object):
 
     def __init__(self):
         self.seed = int(0)                   # the seed for the race
+        self.character = NDChar.Cadence      # the character for the race
         self.seed_fixed = False              # is this specific seed preserved for rematches
         self.seeded = True                   # whether the race is run in seeded mode
         self.descriptor = 'All-zones'        # a short description (e.g. '4-shrines', 'leprechaun hunting', etc)
@@ -37,7 +38,6 @@ class RaceInfo(object):
         self.post_results = True             # whether to post the results in the race_results necrobot
         self.condor_race = False             # whether this is a condor race
         self.private_race = False            # whether this is a private race
-        self.character = NDChar.Cadence      # the character for the race
 
     @property
     def character_str(self):

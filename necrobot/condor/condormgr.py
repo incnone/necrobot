@@ -1,9 +1,9 @@
+from necrobot.botbase import server
 from necrobot.condor import cmd_condor
 from necrobot.gsheet import cmd_sheet
 from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
-from necrobot.user import userutil
 
 from necrobot.botbase.manager import Manager
 from necrobot.gsheet.matchupsheet import MatchupSheet
@@ -11,7 +11,6 @@ from necrobot.gsheet.standingssheet import StandingsSheet
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.match import Match
 from necrobot.match.matchroom import MatchRoom
-from necrobot.botbase.necrobot import Necrobot
 from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
 from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util.singleton import Singleton
@@ -27,17 +26,17 @@ class CondorMgr(Manager, metaclass=Singleton):
         NEDispatch().subscribe(self)
 
     async def initialize(self):
-        self._main_channel = Necrobot().main_channel
-        self._notifications_channel = Necrobot().find_channel('bot_notifications')
-        self._schedule_channel = Necrobot().find_channel('schedule')
-        self._client = Necrobot().client
+        self._main_channel = server.main_channel
+        self._notifications_channel = server.find_channel(channel_name='bot_notifications')
+        self._schedule_channel = server.find_channel(channel_name='schedule')
+        self._client = server.client
 
         await self.update_schedule_channel()
 
     async def refresh(self):
-        self._notifications_channel = Necrobot().find_channel('bot_notifications')
-        self._schedule_channel = Necrobot().find_channel('schedule')
-        self._client = Necrobot().client
+        self._notifications_channel = server.find_channel(channel_name='bot_notifications')
+        self._schedule_channel = server.find_channel(channel_name='schedule')
+        self._client = server.client
         await self.update_schedule_channel()
 
     async def close(self):
@@ -65,6 +64,15 @@ class CondorMgr(Manager, metaclass=Singleton):
                 match=ev.match,
                 r1_wins=ev.r1_wins,
                 r2_wins=ev.r2_wins
+            )
+            await server.client.send_message(
+                self._main_channel,
+                'Match complete: **{r1}** [{w1}-{w2}] **{r2}**'.format(
+                    r1=ev.match.racer_1.display_name,
+                    r2=ev.match.racer_2.display_name,
+                    w1=ev.r1_wins,
+                    w2=ev.r2_wins
+                )
             )
         elif ev.event_type == 'end_match_race':
             await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
@@ -126,8 +134,8 @@ class CondorMgr(Manager, metaclass=Singleton):
         racer_1_stats = await statfn.get_league_stats(match.racer_1.user_id)
         racer_2_stats = await statfn.get_league_stats(match.racer_2.user_id)
 
-        alert_text += await userutil.get_big_infotext(match.racer_1, racer_1_stats) + '\n'
-        alert_text += await userutil.get_big_infotext(match.racer_2, racer_2_stats) + '\n'
+        alert_text += await match.racer_1.get_big_infotext(racer_1_stats) + '\n'
+        alert_text += await match.racer_2.get_big_infotext(racer_2_stats) + '\n'
 
         await self._client.send_message(cawmentator.member, alert_text)
 
@@ -167,18 +175,18 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         # Find the message:
         the_msg = None
-        async for msg in Necrobot().client.logs_from(self._schedule_channel):
-            if msg.author.id == Necrobot().client.user.id:
+        async for msg in server.client.logs_from(self._schedule_channel):
+            if msg.author.id == server.client.user.id:
                 the_msg = msg
                 break
 
         if the_msg is None:
-            await Necrobot().client.send_message(
+            await server.client.send_message(
                 self._schedule_channel,
                 infotext
             )
         else:
-            await Necrobot().client.edit_message(
+            await server.client.edit_message(
                 message=the_msg,
                 new_content=infotext
             )

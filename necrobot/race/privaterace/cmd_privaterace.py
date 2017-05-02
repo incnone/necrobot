@@ -1,3 +1,4 @@
+from necrobot.botbase import server
 from necrobot.botbase.commandtype import CommandType
 
 
@@ -9,7 +10,7 @@ class Add(CommandType):
 
     async def _do_execute(self, command):
         for username in command.args:
-            for member in self.necrobot.find_members(username):
+            for member in server.find_members(username):
                 await self.bot_channel.allow(member)
                 await self.bot_channel.write('Added {} to the room.'.format(member.mention))
         return True
@@ -61,7 +62,7 @@ class Remove(CommandType):
 
     async def _do_execute(self, command):
         for username in command.args:
-            for member in self.necrobot.find_members(username):
+            for member in server.find_members(username):
                 if self.bot_channel.is_admin(member):
                     await self.bot_channel.write(
                         'Cannot remove {0}, as they are an admin for this room.'.format(member.display_name))
@@ -78,7 +79,7 @@ class MakeAdmin(CommandType):
 
     async def _do_execute(self, command):
         for username in command.args:
-            for member in self.necrobot.find_members(username):
+            for member in server.find_members(username):
                 await self.bot_channel.allow(member)
                 if member not in self.bot_channel.permission_info.admins:
                     self.bot_channel.permission_info.admins.append(member)

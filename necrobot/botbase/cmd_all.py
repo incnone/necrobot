@@ -1,5 +1,7 @@
+from necrobot.botbase import server
 from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
+from necrobot.botbase.necrobot import Necrobot
 
 
 class ForceCommand(CommandType):
@@ -23,7 +25,7 @@ class ForceCommand(CommandType):
             return
 
         username = cmd.args[0]
-        user = self.necrobot.find_member(discord_name=username)
+        user = server.find_member(discord_name=username)
         if user is None:
             await self.client.send_message(
                 cmd.channel,
@@ -32,7 +34,7 @@ class ForceCommand(CommandType):
             return
 
         message_content = cmd.arg_string[(len(username) + 1):]
-        await self.necrobot.force_command(channel=cmd.channel, author=user, message_str=message_content)
+        await Necrobot().force_command(channel=cmd.channel, author=user, message_str=message_content)
 
 
 class Help(CommandType):

@@ -2,13 +2,14 @@ import datetime
 import pytz
 
 import necrobot.exception
+from necrobot.botbase import server
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 from necrobot.database import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match import matchutil, cmd_match, matchinfo
-from necrobot.user import userutil
+from necrobot.user import userlib
 from necrobot.util.parse import dateparse
 
 
@@ -122,7 +123,7 @@ class DropRacer(CommandType):
             return
 
         username = cmd.args[0]
-        user = await userutil.get_user(any_name=username)
+        user = await userlib.get_user(any_name=username)
         if user is None:
             await self.client.send_message(
                 cmd.channel,
@@ -133,7 +134,7 @@ class DropRacer(CommandType):
         matches = await matchutil.get_matches_with_channels(racer=user)
         deleted_any = False
         for match in matches:
-            channel = self.necrobot.find_channel_with_id(match.channel_id)
+            channel = server.find_channel(channel_id=match.channel_id)
             if channel is not None:
                 await self.client.delete_channel(channel)
                 await matchutil.delete_match(match_id=match.match_id)
@@ -271,7 +272,7 @@ class Register(CommandType):
         self.help_text = 'Register for the current event.'.format(self.mention)
 
     async def _do_execute(self, cmd: Command):
-        user = await userutil.get_user(discord_id=int(cmd.author.id))
+        user = await userlib.get_user(discord_id=int(cmd.author.id))
         await leaguedb.register_user(user.user_id)
 
 

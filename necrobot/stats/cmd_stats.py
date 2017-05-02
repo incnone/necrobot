@@ -1,6 +1,7 @@
 from necrobot.stats import statfn
-from necrobot.user import userutil
+from necrobot.user import userlib
 
+from necrobot.botbase import server
 from necrobot.botbase.commandtype import CommandType
 from necrobot.util.character import NDChar
 
@@ -37,14 +38,14 @@ from necrobot.util.character import NDChar
 #                 '{0}: Error: Can\'t parse {1} as a character name.'.format(cmd.author.mention, args[0]))
 #             return
 #
-#         member_1 = self.necrobot.find_member(args[1])
+#         member_1 = server.find_member(args[1])
 #         if member_1 is None:
 #             await self.client.send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: Can\'t find user {1}.'.format(cmd.author.mention, args[1]))
 #             return
 #
-#         member_2 = self.necrobot.find_member(args[2])
+#         member_2 = server.find_member(args[2])
 #         if member_2 is None:
 #             await self.client.send_message(
 #                 cmd.necrobot,
@@ -77,7 +78,7 @@ class Fastest(CommandType):
                          'base-game times.'
 
     async def _do_execute(self, cmd):
-        await self.necrobot.client.send_typing(cmd.channel)
+        await server.client.send_typing(cmd.channel)
         amplified = True
 
         # Parse arguments
@@ -131,10 +132,10 @@ class LeagueStats(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) == 0:
-            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         else:
             username = cmd.arg_string
-            user = await userutil.get_user(any_name=username)
+            user = await userlib.get_user(any_name=username)
             if user is None:
                 await self.client.send_message(
                     cmd.channel,
@@ -154,7 +155,7 @@ class MostRaces(CommandType):
                          'all-zones) races for that character.'
 
     async def _do_execute(self, cmd):
-        await self.necrobot.client.send_typing(cmd.channel)
+        await server.client.send_typing(cmd.channel)
         if len(cmd.args) != 1:
             await self.client.send_message(
                 cmd.channel,
@@ -184,7 +185,7 @@ class Stats(CommandType):
                          '`.stats <username> -base`.'
 
     async def _do_execute(self, cmd):
-        await self.necrobot.client.send_typing(cmd.channel)
+        await server.client.send_typing(cmd.channel)
 
         amplified = True
 
@@ -204,10 +205,10 @@ class Stats(CommandType):
             return
 
         if len(args) == 0:
-            user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+            user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         else:  # len(args) == 1
             racer_name = args[0]
-            user = await userutil.get_user(any_name=racer_name)
+            user = await userlib.get_user(any_name=racer_name)
             if user is None:
                 await self.client.send_message(
                     cmd.channel,

@@ -5,7 +5,7 @@ import unittest
 
 from necrobot.gsheet.makerequest import make_request
 from necrobot.match import matchutil
-from necrobot.user import userutil
+from necrobot.user import userlib
 from necrobot.util import console
 
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
@@ -217,9 +217,9 @@ class TestStandingsSheet(unittest.TestCase):
             cawmentator_name: str or None,
             gsheet_info: MatchGSheetInfo
             ) -> Match:
-        racer_1 = await userutil.get_user(any_name=r1_name, register=False)
-        racer_2 = await userutil.get_user(any_name=r2_name, register=False)
-        cawmentator = await userutil.get_user(rtmp_name=cawmentator_name)
+        racer_1 = await userlib.get_user(any_name=r1_name, register=False)
+        racer_2 = await userlib.get_user(any_name=r2_name, register=False)
+        cawmentator = await userlib.get_user(rtmp_name=cawmentator_name)
         cawmentator_id = cawmentator.discord_id if cawmentator is not None else None
 
         match_info = MatchInfo(ranked=True)

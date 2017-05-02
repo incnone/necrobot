@@ -3,9 +3,10 @@ import datetime
 import pytz
 
 import necrobot.exception
+from necrobot.botbase import server
 from necrobot.database import matchdb
 from necrobot.match import matchinfo, matchutil, matchfindparse
-from necrobot.user import userutil
+from necrobot.user import userlib
 from necrobot.util import console
 from necrobot.util import timestr
 from necrobot.util.parse import dateparse
@@ -78,7 +79,7 @@ class Vod(CommandType):
             )
             return
 
-        author_user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+        author_user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         if match.cawmentator_id is None or match.cawmentator_id != author_user.user_id:
             await self.client.send_message(
                 cmd.channel,
@@ -112,7 +113,7 @@ class Confirm(CommandType):
                 'Error: A scheduled time for this match has not been suggested. Use `.suggest` to suggest a time.')
             return
 
-        author_as_necrouser = await userutil.get_user(discord_id=int(cmd.author.id))
+        author_as_necrouser = await userlib.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
@@ -149,9 +150,8 @@ class Contest(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.contest_last_begun_race()
-        staff_role = self.necrobot.staff_role
-        if staff_role is not None:
-            contest_str = '{0}: The previous race has been marked as contested.'.format(staff_role.mention)
+        if server.staff_role is not None:
+            contest_str = '{0}: The previous race has been marked as contested.'.format(server.staff_role.mention)
         else:
             contest_str = 'The previous race has been marked as contested.'
 
@@ -214,7 +214,7 @@ class Suggest(CommandType):
             return
 
         # Get the command's author as a NecroUser object
-        author_as_necrouser = await userutil.get_user(discord_id=cmd.author.id)
+        author_as_necrouser = await userlib.get_user(discord_id=cmd.author.id)
         if not author_as_necrouser:
             await self.client.send_message(
                 cmd.channel,
@@ -325,7 +325,7 @@ class Unconfirm(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
 
-        author_as_necrouser = await userutil.get_user(discord_id=int(cmd.author.id))
+        author_as_necrouser = await userlib.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
             await self.client.send_message(
                 cmd.channel,
@@ -367,7 +367,7 @@ class Unconfirm(CommandType):
 # Admin matchroom commands
 class CancelRace(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'cancelrace')
+        CommandType.__init__(self, bot_channel, 'cancelrace', 'forcecancel')
         self.help_text = '`{0} N`: Cancel the `N`-th uncanceled race; `{0}` cancels the current race, if one is ' \
                          'ongoing.'.format(self.mention)
         self.admin_only = True
@@ -469,7 +469,7 @@ class ChangeWinner(CommandType):
 
 class ForceBegin(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-begin')
+        CommandType.__init__(self, bot_channel, 'f-begin', 'forcebegin', 'forcebeginmatch')
         self.help_text = 'Force the match to begin now.'
         self.admin_only = True
 
@@ -482,7 +482,7 @@ class ForceBegin(CommandType):
 
 class ForceConfirm(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-confirm')
+        CommandType.__init__(self, bot_channel, 'f-confirm', 'forceconfirm')
         self.help_text = 'Force all racers to confirm the suggested time.'
         self.admin_only = True
 
@@ -507,7 +507,7 @@ class ForceConfirm(CommandType):
 
 class ForceNewRace(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'newrace')
+        CommandType.__init__(self, bot_channel, 'newrace', 'forcenewrace')
         self.help_text = 'Force the bot to make a new race (the current race will be canceled).'
         self.admin_only = True
 
@@ -521,7 +521,7 @@ class ForceNewRace(CommandType):
 
 class ForceRecordRace(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'recordrace')
+        CommandType.__init__(self, bot_channel, 'recordrace', 'forcerecordrace')
         self.help_text = '`{0} winner`: Manually record a race with `winner` as the winner.'
         self.admin_only = True
 
@@ -559,7 +559,7 @@ class ForceRecordRace(CommandType):
 
 class ForceReschedule(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'f-schedule')
+        CommandType.__init__(self, bot_channel, 'f-schedule', 'f-reschedule', 'forceschedule', 'forcereschedule')
         self.help_text = 'Forces the race to be scheduled for a specific UTC time. Usage same as ' \
                          '`.suggest`, e.g., `.f-schedule February 18 2:30p`, except that the timezone is always ' \
                          'taken to be UTC. This command unschedules the match and `.suggests` a new time. Use ' \
@@ -611,7 +611,7 @@ class ForceReschedule(CommandType):
 
 class Postpone(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'postpone', 'f-unschedule')
+        CommandType.__init__(self, bot_channel, 'postpone', 'f-unschedule', 'forceunschedule')
         self.help_text = 'Postpones the match. An admin can resume with `.f-begin`.'
         self.admin_only = True
 
@@ -698,7 +698,7 @@ class SetMatchType(CommandType):
 
 class Update(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'update')
+        CommandType.__init__(self, bot_channel, 'update', 'forceupdate')
         self.help_text = 'Update the match room (may help solve bugs).'
         self.admin_only = True
 
@@ -723,11 +723,11 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         )
         return
 
-    author_user = await userutil.get_user(discord_id=int(cmd.author.id), register=True)
+    author_user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
 
     # Check if the match already has cawmentary
     if add and match.cawmentator_id is not None:
-        cawmentator_user = await userutil.get_user(user_id=match.cawmentator_id)
+        cawmentator_user = await userlib.get_user(user_id=match.cawmentator_id)
         if cawmentator_user is not None:
             await cmd_type.client.send_message(
                 cmd.channel,
@@ -788,7 +788,7 @@ async def make_match_from_cmd(
 
     # Add the racers from member objects
     for member in racer_members:
-        racer_as_necrouser = await userutil.get_user(discord_id=member.id)
+        racer_as_necrouser = await userlib.get_user(discord_id=member.id)
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)
         else:
@@ -800,7 +800,7 @@ async def make_match_from_cmd(
 
     # Add the racers from names
     for name in racer_names:
-        racer_as_necrouser = await userutil.get_user(any_name=name)
+        racer_as_necrouser = await userlib.get_user(any_name=name)
 
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)
