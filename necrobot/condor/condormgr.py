@@ -67,7 +67,7 @@ class CondorMgr(Manager, metaclass=Singleton):
             )
             await server.client.send_message(
                 self._main_channel,
-                'Match complete: **{r1}** [{w1}-{w2}] **{r2}**'.format(
+                'Match complete: **{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
                     r1=ev.match.racer_1.display_name,
                     r2=ev.match.racer_2.display_name,
                     w1=ev.r1_wins,
@@ -150,7 +150,7 @@ class CondorMgr(Manager, metaclass=Singleton):
                            "minutes. :timer: \n" \
                            "{stream}"
 
-        minutes_until_match = (match.time_until_match.total_seconds() + 30) // 60
+        minutes_until_match = int((match.time_until_match.total_seconds() + 30) // 60)
         cawmentator = await match.get_cawmentator()
         if cawmentator is not None:
             stream = 'Cawmentary: <http://www.twitch.tv/{0}>'.format(cawmentator.twitch_name)
