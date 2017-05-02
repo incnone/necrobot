@@ -50,7 +50,7 @@ def parse_matchtype_args(args: list) -> dict:
     """
 
     parsed_dict = parseutil.parse(args=args, keyword_set=matchtype_keywords)
-    if 'bestof' in parsed_dict and int(parsed_dict['bestof']) % 2 == 0:
+    if 'bestof' in parsed_dict and int(parsed_dict['bestof'][0]) % 2 == 0:
         raise necrobot.exception.ParseException(
             "Can't make a best-of-{0} match because {0} is even.".format(parsed_dict['bestof'])
         )

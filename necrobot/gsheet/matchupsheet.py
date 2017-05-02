@@ -1,9 +1,11 @@
 import asyncio
 import datetime
 import pytz
+import shlex
 import unittest
 
 import necrobot.exception
+from necrobot.match import matchinfo
 from necrobot.match import matchutil
 from necrobot.user import userlib
 from necrobot.util import console
@@ -26,7 +28,7 @@ class MatchupSheetIndexData(WorksheetIndexData):
                 'racer 2',
                 'cawmentary',
                 'date',
-                'match type',
+                'type',
                 'score',
                 'tier',
                 'vod',
@@ -91,6 +93,7 @@ class MatchupSheet(object):
         self._not_found_matches = []
         write_match_ids = self.column_data.match_id is not None and 'register' in kwargs and kwargs['register']
         match_ids = []
+
         async with Spreadsheets() as spreadsheets:
             value_range = await self.column_data.get_values(spreadsheets)
             console.debug('get_matches: Got values from spreadsheets.')
@@ -124,11 +127,20 @@ class MatchupSheet(object):
                 sheet_info.wks_id = self.wks_id
                 sheet_info.row = row_idx
 
+                kwarg_copy = kwargs.copy()
+                if self.column_data.type is not None:
+                    match_info = kwarg_copy['match_info'] if 'match_info' in kwargs else matchinfo.MatchInfo()
+                    try:
+                        parsed_args = shlex.split(row_values[self.column_data.type])
+                        kwarg_copy['match_info'] = matchinfo.parse_args_modify(parsed_args, match_info)
+                    except IndexError:
+                        pass
+
                 new_match = await matchutil.make_match(
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,
                     gsheet_info=sheet_info,
-                    **kwargs
+                    **kwarg_copy
                 )
                 matches.append(new_match)
                 console.debug('get_matches: Created {0}-{1}'.format(

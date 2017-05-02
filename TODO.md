@@ -2,6 +2,9 @@
 
 Current version: 0.10
 
+- Read match type from league when getting matches from sheet
+- Read match type overwrites from GSheet
+
 ## Automatching
 
 - Everything

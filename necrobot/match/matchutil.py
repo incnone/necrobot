@@ -32,8 +32,6 @@ async def make_match(*args, register=False, **kwargs) -> Match:
     max_races: int
         The maximum number of races this match can be. (If is_best_of is True, then the match is a best of
         max_races; otherwise, the match is just repeating max_races.)
-    is_best_of: bool
-        Whether the match is a best-of-X (if True) or a repeat-X (if False); X is max_races.
     match_id: int
         The DB unique ID of this match.
     suggested_time: datetime.datetime
@@ -46,9 +44,7 @@ async def make_match(*args, register=False, **kwargs) -> Match:
         Whether the first racer wishes to unconfirm the match time.
     r2_unconfirmed: bool
         Whether the second racer wishes to unconfirm the match time.
-    ranked: bool
-        Whether the results of this match should be used to update ladder rankings.
-    race_info: RaceInfo
+    match_info: MatchInfo
         The types of races to be run in this match.
     cawmentator_id: int
         The DB unique ID of the cawmentator for this match.

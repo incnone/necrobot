@@ -90,6 +90,8 @@ class MakeFromSheet(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
+        match_info = LeagueMgr().league.match_info
+
         console.info('MakeFromSheet: Getting GSheet info...')
         try:
             matchup_sheet = await sheetlib.get_sheet(
@@ -97,7 +99,7 @@ class MakeFromSheet(CommandType):
                     wks_name=wks_name,
                     sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
-            matches = await matchup_sheet.get_matches(register=False)
+            matches = await matchup_sheet.get_matches(register=False, match_info=match_info)
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
                 cmd.channel,
