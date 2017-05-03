@@ -101,6 +101,16 @@ class CondorMgr(Manager, metaclass=Singleton):
             if ev.match.sheet_id is not None:
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
                 await sheet.set_vod(match=ev.match, vod_link=ev.url)
+                cawmentator = await ev.match.get_cawmentator()
+                await server.client.send_message(
+                    self._main_channel,
+                    '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
+                        cawmentator=cawmentator.display_name if cawmentator is not None else '<unknown>',
+                        r1=ev.match.racer_1.display_name,
+                        r2=ev.match.racer_2.display_name,
+                        url=ev.url
+                    )
+                )
 
     @staticmethod
     async def get_gsheet(wks_id: str) -> MatchupSheet:

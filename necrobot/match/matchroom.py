@@ -238,6 +238,8 @@ class MatchRoom(BotChannel):
                 self._countdown_to_match_future.cancel()
             self._countdown_to_match_future = asyncio.ensure_future(self._countdown_to_match_start())
         elif not self.match.is_scheduled:
+            if self._countdown_to_match_future is not None:
+                self._countdown_to_match_future.cancel()
             self._current_race = None
 
         self._set_channel_commands()
