@@ -7,7 +7,7 @@ from necrobot.gsheet import cmd_sheet
 from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
-from necrobot.user import userlib
+# from necrobot.user import userlib
 
 from necrobot.botbase.manager import Manager
 from necrobot.gsheet.matchupsheet import MatchupSheet

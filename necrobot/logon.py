@@ -22,22 +22,7 @@ from necrobot.botbase.necrobot import Necrobot
 from necrobot.stream.vodrecord import VodRecorder
 
 
-def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn: types.FunctionType = None) -> None:
-    """Log on to Discord. Block until logout.
-    
-    Parameters
-    ----------
-    config_filename: str
-        The filename of the config file to use.
-    load_config_fn: [coro] (Necrobot) -> None
-        A coroutine to be called after first login, which should set up the Necrobot with the desired
-        BotChannels and Managers.
-    on_ready_fn: [coro] (Necrobot) -> None
-        A coroutine to be called after every login. Useful for unit testing.
-    """
-    # Initialize config file----------------------------------
-    config.init(config_filename)
-
+def set_up_logger():
     # Asyncio debug setup-------------------------------------
     if config.Config.testing():
         asyncio.get_event_loop().set_debug(True)
@@ -95,14 +80,38 @@ def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn:
     logging.getLogger('discord').setLevel(discord_level)
     logging.getLogger('discord').addHandler(file_handler)
     logging.getLogger('discord').addHandler(stderr_handler)
+
     logging.getLogger('asyncio').setLevel(asyncio_level)
     logging.getLogger('asyncio').addHandler(file_handler)
     logging.getLogger('asyncio').addHandler(stderr_handler)
 
+    logging.getLogger('necrobot').setLevel(necrobot_level)
+    logging.getLogger('necrobot').addHandler(file_handler)
+    logging.getLogger('necrobot').addHandler(stdout_handler)
+
+
+def logon(
+        config_filename: str,
+        load_config_fn: types.FunctionType,
+        on_ready_fn: types.FunctionType = None
+) -> None:
+    """Log on to Discord. Block until logout.
+    
+    Parameters
+    ----------
+    config_filename: str
+        The filename of the config file to use.
+    load_config_fn: [coro] (Necrobot) -> None
+        A coroutine to be called after first login, which should set up the Necrobot with the desired
+        BotChannels and Managers.
+    on_ready_fn: [coro] (Necrobot) -> None
+        A coroutine to be called after every login. Useful for unit testing.
+    """
+    # Initialize config file----------------------------------
+    config.init(config_filename)
+
+    set_up_logger()
     logger = logging.getLogger('necrobot')
-    logger.setLevel(necrobot_level)
-    logger.addHandler(file_handler)
-    logger.addHandler(stdout_handler)
 
     console.info('Initializing necrobot...')
 
