@@ -1,5 +1,5 @@
 data/*
-tmp/
+ignore/
 *.db
 *.pyc
 *.log
@@ -7,4 +7,3 @@ tmp/
 *.sql
 .idea/necrobot.iml
 ratelimittest.py
-ilp_test.txt

@@ -1,5 +1,4 @@
-from math import sqrt, erf, log2
-from typing import Tuple
+from math import sqrt, erf
 
 import trueskill
 
@@ -17,11 +16,11 @@ def init():
         backend=None)               # allows for mpmath/scipy normal distribution implementations
 
 
-def create_rating(mu=None, sigma=None) -> Rating:
+def create_rating(mu=None, sigma=None):
     return Rating.make_from_trueskill(trueskill.global_env().create_rating(mu, sigma))
 
 
-def get_new_ratings(rating_1: Rating, rating_2: Rating, winner=1) -> Tuple[Rating, Rating]:
+def get_new_ratings(rating_1: Rating, rating_2: Rating, winner=1):
     try:
         if winner == 1:
             recalc_pair = trueskill.rate_1vs1(rating_1.as_trueskill, rating_2.as_trueskill)
@@ -37,7 +36,7 @@ def get_new_ratings(rating_1: Rating, rating_2: Rating, winner=1) -> Tuple[Ratin
         return rating_1, rating_2
 
 
-def get_winrate(rating_1: Rating, rating_2: Rating) -> float:
+def get_winrate(rating_1: Rating, rating_2: Rating):
     delta_mu = rating_1.mu - rating_2.mu
     if delta_mu >= 0:
         beta = trueskill.global_env().beta
@@ -45,12 +44,3 @@ def get_winrate(rating_1: Rating, rating_2: Rating) -> float:
         return (erf(delta_mu/denom) + 1.0)/2.0
     else:
         return 1.0 - get_winrate(rating_2, rating_1)
-
-
-def get_entropy(rating_1: Rating, rating_2: Rating) -> float:
-    p1 = get_winrate(rating_1, rating_2)
-    p2 = 1.0 - p1
-    try:
-        return -(p1*log2(p1) + p2*log2(p2))
-    except ValueError:  # If p1 or p2 is too close to zero, there's no expected information
-        return 0.0
