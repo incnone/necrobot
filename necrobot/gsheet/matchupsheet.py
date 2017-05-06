@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import pytz
 import shlex
+import string
 import unittest
 
 import necrobot.exception
@@ -110,6 +111,13 @@ class MatchupSheet(object):
                     racer_2_name = row_values[self.column_data.racer_2].rstrip(' ')
                 except IndexError:
                     console.warning('Failed to make match from sheet row: <{}>'.format(row_values))
+                    continue
+
+                if not racer_1_name or not racer_2_name:
+                    continue
+
+                if racer_1_name[0] not in string.ascii_letters or racer_2_name[0]not in string.ascii_letters:
+                    self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
                     continue
 
                 console.debug('get_matches: Creating {0}-{1}'.format(racer_1_name, racer_2_name))
