@@ -3,6 +3,7 @@
 Current version: 0.10
 
 - Empty matches breaking getting matches from sheet
+- Show match type on room creation
 
 ## Automatching
 
