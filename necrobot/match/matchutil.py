@@ -141,6 +141,7 @@ async def get_upcoming_and_current() -> list:
                 match = await make_match_from_raw_db_data(row=row)
                 if match.suggested_time is None:
                     console.warning('Found match object {} has no suggested time.'.format(repr(match)))
+                    continue
                 if match.suggested_time > pytz.utc.localize(datetime.datetime.utcnow()):
                     matches.append(match)
                 else:
