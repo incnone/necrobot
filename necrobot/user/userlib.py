@@ -1,3 +1,11 @@
+"""
+Module for the NecroUser library.
+
+NecroUser represents a bot user, and is in correspondence with data stored in a row of the `users` table of
+the database. This module is responsible for checking out users from the database and storing a library, indexed
+by user ID, of checked out users.
+"""
+
 import necrobot.exception
 from necrobot.botbase import server
 from necrobot.database import userdb
@@ -120,7 +128,7 @@ def _get_user_from_db_row(user_row):
         user_prefs=UserPrefs(daily_alert=bool(user_row[6]), race_alert=bool(user_row[7])),
         commit=False
     )
-    user.set_user_id(int(user_row[8]))
+    user._user_id = int(user_row[8])
     _cache_user(user)
     return user
 

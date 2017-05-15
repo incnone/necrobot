@@ -7,7 +7,6 @@ Current version: 0.10
 
 ## Automatching
 
-- Everything
 - Auto-register users on match creation
 
 ## Ladderbot and Leagues
@@ -32,15 +31,22 @@ Current version: 0.10
 - Make more small/unit tests (may wish to use a mock DB and/or a mock discord client)
 
 ## Bugs
- 
+
+- `.d 2-3` responds with '<player> has forfeit the race' twice
+- `.register-condor-event` should set correct views and so on
+- Necrobot and Condorbot should not attempt to write to the same log file
+
 ### QoL UI Improvements
 
+- Fix help text for `.make` and allow `--` prepended to command keywords
 - Deal with duplicated Discord names in commands like `.add` (allow for discriminator)
+- Deal with database out-of-date names in commands like `.add`
 - Better timezone parsing
 - More friendly parsing of spaces in command arguments
 
 ### Unclear issues
 
+- `.forcecancel` doesn't seem to work as intended; racerooms can get stuck
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?

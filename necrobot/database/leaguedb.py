@@ -108,6 +108,9 @@ async def create_league(schema_name: str) -> League:
                 )
             )
 
+        def tablename(table):
+            return '`{league_schema}`.`{table}`'.format(league_schema=schema_name, table=table)
+
         cursor.execute(
             """
             CREATE VIEW {race_summary} AS
@@ -139,10 +142,10 @@ async def create_league(schema_name: str) -> League:
                         AND `race_runs_loser`.`race_id` = {match_races}.`race_id`
                 WHERE NOT {match_races}.`canceled`
             """.format(
-                matches=tn('matches'),
-                match_races=tn('match_races'),
-                race_runs=tn('race_runs'),
-                race_summary=tn('race_summary')
+                matches=tablename('matches'),
+                match_races=tablename('match_races'),
+                race_runs=tablename('race_runs'),
+                race_summary=tablename('race_summary')
             )
         )
 

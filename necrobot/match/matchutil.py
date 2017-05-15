@@ -139,6 +139,8 @@ async def get_upcoming_and_current() -> list:
             channel = server.find_channel(channel_id=channel_id)
             if channel is not None:
                 match = await make_match_from_raw_db_data(row=row)
+                if match.suggested_time is None:
+                    console.warning('Found match object {} has no suggested time.'.format(repr(match)))
                 if match.suggested_time > pytz.utc.localize(datetime.datetime.utcnow()):
                     matches.append(match)
                 else:
@@ -309,8 +311,8 @@ async def get_nextrace_displaytext(match_list: list) -> str:
     for match in match_list:
         # noinspection PyUnresolvedReferences
         display_text += '\N{BULLET} **{0}** - **{1}**'.format(
-            match.racer_1.bot_name,
-            match.racer_2.bot_name)
+            match.racer_1.display_name,
+            match.racer_2.display_name)
         if match.suggested_time is None:
             display_text += '\n'
             continue

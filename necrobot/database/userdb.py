@@ -269,7 +269,7 @@ async def _register_user(necro_user: NecroUser):
                 )
                 cursor.execute("SELECT LAST_INSERT_ID()")
                 uid = int(cursor.fetchone()[0])
-                necro_user.set_user_id(uid)
+                necro_user._user_id = uid
             except mysql.connector.IntegrityError:
                 console.warning('Tried to insert a duplicate racer entry. Params: {0}'.format(params))
                 raise
@@ -289,7 +289,7 @@ async def _register_user(necro_user: NecroUser):
                 """,
                 params
             )
-            necro_user.set_user_id(rtmp_clash_user_id)
+            necro_user._user_id = rtmp_clash_user_id
 
 
 async def _get_resolvable_rtmp_clash_user_id(necro_user: NecroUser) -> int or None:

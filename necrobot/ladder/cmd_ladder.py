@@ -68,7 +68,7 @@ class Rating(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rating')
         self.help_text = '`{} username` returns the TrueSkill rating of the discord user `username`; if no ' \
-                         'username is given, returns your TrueSkill rating.'
+                         'username is given, returns your TrueSkill rating.'.format(self.mention)
 
     @property
     def short_help_text(self):

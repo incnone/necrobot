@@ -1,8 +1,9 @@
 import math
 
 from necrobot.database import matchdb, racedb
-from necrobot.stats.leaguestats import LeagueStats
 from necrobot.util import console, racetime
+
+from necrobot.stats.leaguestats import LeagueStats
 from necrobot.util.character import NDChar
 from necrobot.util.singleton import Singleton
 

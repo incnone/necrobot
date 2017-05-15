@@ -4,6 +4,7 @@ import pytz
 import re
 import textwrap
 import unittest
+from typing import Callable
 
 from necrobot.botbase import server
 from necrobot.stats.leaguestats import LeagueStats
@@ -22,22 +23,36 @@ class NecroUser(object):
         commit_fn: function(NecroUser) -> None
             This should write the NecroUser to the database.
         """
-        self._user_id = None
-        self._discord_id = None
-        self._discord_name = None
-        self._discord_member = None
-        self._twitch_name = None
-        self._rtmp_name = None
-        self._timezone = None
-        self._user_info = None
-        self._user_prefs = UserPrefs(daily_alert=False, race_alert=False)
+        self._user_id = None            # type: int
+        self._discord_id = None         # type: int
+        self._discord_name = None       # type: str
+        self._discord_member = None     # type: discord.Member
+        self._twitch_name = None        # type: str
+        self._rtmp_name = None          # type: str
+        self._timezone = None           # type: pytz.timezone
+        self._user_info = None          # type: str
+        self._user_prefs = UserPrefs(daily_alert=False, race_alert=False)   # type: UserPrefs
 
-        self._commit = commit_fn
+        self._commit = commit_fn        # type: Callable[None, None]
 
     def __eq__(self, other):
         return self.user_id == other.user_id
 
-    async def commit(self):
+    def __repr__(self):
+        if self.rtmp_name is not None:
+            name_str = 'RTMP: ' + self.rtmp_name
+        elif self.discord_name is not None:
+            name_str = 'Discord: ' + self.discord_name
+        elif self.twitch_name is not None:
+            name_str = 'Twitch: ' + self.twitch_name
+        else:
+            name_str = '<unnamed>'
+        return 'User {uid} ({name})'.format(uid=self._user_id, name=name_str)
+
+    def __str__(self):
+        return self.display_name
+
+    async def commit(self) -> None:
         await self._commit(self)
 
     @property
@@ -63,18 +78,6 @@ class NecroUser(object):
         return re.compile(r'(?i)^\s*(' + re_str + r')\s*$')
 
     @property
-    def bot_name(self) -> str:
-        if self.rtmp_name is not None:
-            return self.rtmp_name
-        elif self.discord_name is not None:
-            return self.discord_name
-        elif self.twitch_name is not None:
-            return self.twitch_name
-        else:
-            console.warning('User with no name: ID <{}>.'.format(self.user_id))
-            return '<Unknown user>.'
-
-    @property
     def discord_id(self) -> int:
         return self.discord_member.id if self.discord_member is not None else self._discord_id
 
@@ -91,7 +94,14 @@ class NecroUser(object):
 
     @property
     def display_name(self) -> str:
-        return self.bot_name
+        if self.rtmp_name is not None:
+            return self.rtmp_name
+        elif self.discord_name is not None:
+            return self.discord_name
+        elif self.twitch_name is not None:
+            return self.twitch_name
+        else:
+            return '<NecroUser with ID {}>'.format(self.user_id)
 
     @property
     def member(self) -> discord.Member or None:
@@ -151,26 +161,18 @@ class NecroUser(object):
                     self.infoname,
                     self.infotext)
 
-    def set_user_id(self, user_id):
-        """
-        Parameters
-        ----------
-        user_id: int
-            The user's database ID. Called by userlib during creation.
-        """
-        self._user_id = user_id
-
-    def set(self,
-            discord_member: discord.Member = None,
-            discord_id: int = None,
-            discord_name: str = None,
-            twitch_name: str = None,
-            rtmp_name: str = None,
-            timezone: str = None,
-            user_info: str = None,
-            user_prefs: UserPrefs = None,
-            commit: bool = True
-            ) -> None:
+    def set(
+        self,
+        discord_member: discord.Member = None,
+        discord_id: int = None,
+        discord_name: str = None,
+        twitch_name: str = None,
+        rtmp_name: str = None,
+        timezone: str = None,
+        user_info: str = None,
+        user_prefs: UserPrefs = None,
+        commit: bool = True
+    ) -> None:
         """Set all non-None values and optionally commit the change to the database.
         
         Parameters

@@ -169,7 +169,7 @@ class MostRaces(CommandType):
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, cmd.args[0]))
             return
 
-        infobox = 'Most completed public all-zones {0} races:\n```\n{1}```'.format(
+        infobox = 'Most public all-zones {0} races:\n```\n{1}```'.format(
             ndchar.name,
             await statfn.get_most_races_infotext(ndchar, 20))
         await self.client.send_message(

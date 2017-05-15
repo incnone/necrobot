@@ -91,6 +91,9 @@ class Match(object):
         # Commit function
         self._commit = commit_fn                            # type: Callable[[], None]
 
+    def __repr__(self):
+        return 'Match: <ID={mid}>, <ChannelName={cname}'.format(mid=self.match_id, cname=self.matchroom_name)
+
     async def initialize(self):
         self._racer_1 = await userlib.get_user(user_id=self._racer_1_id)
         self._racer_2 = await userlib.get_user(user_id=self._racer_2_id)
