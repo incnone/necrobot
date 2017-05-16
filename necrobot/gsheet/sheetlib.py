@@ -65,7 +65,7 @@ async def get_sheet(
         sheet = _sheets_by_id_lib[(gsheet_id, sheet.wks_id,)]
 
         to_del = None
-        for key, val in _matchup_sheet_lib.values():
+        for key, val in _matchup_sheet_lib.items():
             if val.wks_name == wks_name:
                 to_del = key
                 break

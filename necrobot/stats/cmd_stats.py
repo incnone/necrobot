@@ -220,6 +220,6 @@ class Stats(CommandType):
         await self.client.send_message(
             cmd.channel,
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(
-                user.bot_name,
+                user.display_name,
                 'Amplified' if amplified else 'Base game',
                 general_stats.infotext))

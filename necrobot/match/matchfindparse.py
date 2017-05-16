@@ -62,7 +62,7 @@ async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
     )
     if match_id is None:
         raise necrobot.exception.NotFoundException(
-            "Can't find any match between `{0}` and `{1}`.".format(racer_1.bot_name, racer_2.bot_name)
+            "Can't find any match between `{0}` and `{1}`.".format(racer_1.display_name, racer_2.display_name)
         )
 
     return await matchutil.get_match_from_id(match_id)

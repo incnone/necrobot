@@ -2,6 +2,7 @@
 
 Current version: 0.10
 
+- Add `.userinfo` to race channels
 - Empty matches breaking getting matches from sheet
 - Show match type on room creation
 

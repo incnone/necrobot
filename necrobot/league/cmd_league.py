@@ -143,12 +143,12 @@ class DropRacer(CommandType):
         if deleted_any:
             await self.client.send_message(
                 cmd.channel,
-                "Dropped `{0}` from all their current matches.".format(user.bot_name)
+                "Dropped `{0}` from all their current matches.".format(user.display_name)
             )
         else:
             await self.client.send_message(
                 cmd.channel,
-                "Couldn't find any current matches for `{0}`.".format(user.bot_name)
+                "Couldn't find any current matches for `{0}`.".format(user.display_name)
             )
 
 
