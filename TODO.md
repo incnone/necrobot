@@ -2,9 +2,11 @@
 
 Current version: 0.10
 
+- Add "UTC" to return message on `.setdeadline`
 - Add `.userinfo` to race channels
 - Empty matches breaking getting matches from sheet
 - Show match type on room creation
+- Rooms with user `6000j` weren't making correctly from GSheet; figure out this bug
 
 ## Automatching
 

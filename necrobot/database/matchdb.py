@@ -441,7 +441,7 @@ async def get_raw_match_data(match_id: int) -> list:
                 number_of_races, 
                 cawmentator_id,
                 sheet_id,
-                sheet_info
+                sheet_row
             FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1
