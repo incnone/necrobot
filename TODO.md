@@ -2,6 +2,7 @@
 
 Current version: 0.10
 
+- Add timeout to VodRecorder calls
 - Add "UTC" to return message on `.setdeadline`
 - Add `.userinfo` to race channels
 - Empty matches breaking getting matches from sheet
