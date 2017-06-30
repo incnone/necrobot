@@ -472,7 +472,7 @@ async def _register_match(match: Match) -> None:
     async with DBConnect(commit=True) as cursor:
         cursor.execute(
             """
-            INSERT INTO {0} 
+            INSERT INTO {matches} 
             (
                race_type_id, 
                racer_1_id, 
@@ -488,11 +488,20 @@ async def _register_match(match: Match) -> None:
                cawmentator_id
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """.format(tn('matches')),
+            """.format(matches=tn('matches')),
             params
         )
         cursor.execute("SELECT LAST_INSERT_ID()")
         match.set_match_id(int(cursor.fetchone()[0]))
+
+        params = (match.racer_1.user_id, match.racer_2.user_id,)
+        cursor.execute(
+            """
+            INSERT IGNORE INTO {entrants} (user_id)
+            VALUES (%s), (%s)
+            """.format(entrants=tn('entrants')),
+            params
+        )
 
 
 async def _get_uncanceled_race_number(match: Match, race_number: int) -> int or None:

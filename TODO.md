@@ -2,6 +2,9 @@
 
 Current version: 0.10
 
+- Match type isn't being set from sheet correctly?nt
+- Race rooms maybe should use RTMP names only
+- Output text in channel on command throwing error if possible
 - Add `.userinfo` to race channels
 - Empty matches breaking getting matches from sheet
 - Show match type on room creation
@@ -36,6 +39,7 @@ Current version: 0.10
 - `.d 2-3` responds with '<player> has forfeit the race' twice
 - `.register-condor-event` should set correct views and so on
 - Necrobot and Condorbot should not attempt to write to the same log file
+- Cyber listed twice on `.fastest` (because times are identical)
 
 ### QoL UI Improvements
 

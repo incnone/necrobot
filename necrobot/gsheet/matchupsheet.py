@@ -267,7 +267,7 @@ class MatchupSheet(object):
         await self.column_data.update_cells(
             sheet_range=sheet_range,
             values=[[winner, '{0}-{1}'.format(winner_wins, loser_wins)]],
-            raw_input=False
+            raw_input=True
         )
 
     async def _get_match_row(self, match: Match) -> int or None:
