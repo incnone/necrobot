@@ -427,21 +427,22 @@ async def get_raw_match_data(match_id: int) -> list:
         cursor.execute(
             """
             SELECT 
-                match_id, 
-                race_type_id, 
-                racer_1_id, 
-                racer_2_id, 
-                suggested_time, 
-                r1_confirmed, 
-                r2_confirmed, 
-                r1_unconfirmed, 
-                r2_unconfirmed, 
-                ranked, 
-                is_best_of, 
-                number_of_races, 
-                cawmentator_id,
-                sheet_id,
-                sheet_info
+                 match_id, 
+                 race_type_id, 
+                 racer_1_id, 
+                 racer_2_id, 
+                 suggested_time, 
+                 r1_confirmed, 
+                 r2_confirmed, 
+                 r1_unconfirmed, 
+                 r2_unconfirmed, 
+                 ranked, 
+                 is_best_of, 
+                 number_of_races, 
+                 cawmentator_id, 
+                 channel_id,
+                 sheet_id,
+                 sheet_row
             FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1

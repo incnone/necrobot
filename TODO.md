@@ -5,9 +5,12 @@ Current version: 0.10
 - Match type isn't being set from sheet correctly?nt
 - Race rooms maybe should use RTMP names only
 - Output text in channel on command throwing error if possible
+- Add timeout to VodRecorder calls
+- Add "UTC" to return message on `.setdeadline`
 - Add `.userinfo` to race channels
 - Empty matches breaking getting matches from sheet
 - Show match type on room creation
+- Rooms with user `6000j` weren't making correctly from GSheet; figure out this bug
 
 ## Automatching
 
