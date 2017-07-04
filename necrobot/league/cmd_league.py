@@ -262,7 +262,7 @@ class NextRace(CommandType):
 
         await self.client.send_message(
             cmd.channel,
-            await matchutil.get_nextrace_displaytext(upcoming_matches)
+            await matchutil.get_nextrace_displaytext(upcoming_matches) + '\nFull schedule here: <https://condor.host/schedule>')
         )
 
 
