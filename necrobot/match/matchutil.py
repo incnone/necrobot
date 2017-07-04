@@ -325,6 +325,9 @@ async def get_nextrace_displaytext(match_list: list) -> str:
         elif match.racer_1.rtmp_name is not None and match.racer_2.rtmp_name is not None:
             display_text += '    RTMP: <http://rtmp.condorleague.tv/#{0}/{1}> \n'.format(
                 match.racer_1.rtmp_name.lower(), match.racer_2.rtmp_name.lower())
+
+    display_text += 'Full schedule: <https://condor.host/schedule>'
+
     return display_text
 
 
