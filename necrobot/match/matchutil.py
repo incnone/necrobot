@@ -326,7 +326,7 @@ async def get_nextrace_displaytext(match_list: list) -> str:
             display_text += '    RTMP: <http://rtmp.condorleague.tv/#{0}/{1}> \n'.format(
                 match.racer_1.rtmp_name.lower(), match.racer_2.rtmp_name.lower())
 
-    display_text += 'Full schedule: <https://condor.host/schedule>'
+    display_text += '\nFull schedule: <https://condor.host/schedule>'
 
     return display_text
 
