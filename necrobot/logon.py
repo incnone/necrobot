@@ -44,7 +44,8 @@ def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn:
         warnings.simplefilter("always", ResourceWarning)
 
     # Logging--------------------------------------------------
-    file_format_str = '%Y-%m-%d'
+    file_format_prefix = config_filename[:1] if config_filename else 'u'
+    file_format_str = file_format_prefix + '-%Y-%m-%d'
     utc_today = datetime.datetime.utcnow().date()
     utc_today_str = utc_today.strftime(file_format_str)
 

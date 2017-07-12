@@ -17,6 +17,8 @@ class NDChar(Enum):
     Nocturna = 12
     Diamond = 13
     Multichar = 14
+    Tempo = 15
+    Mary = 16
 
     def __str__(self):
         return self.name
