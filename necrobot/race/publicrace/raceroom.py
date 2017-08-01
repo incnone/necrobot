@@ -105,24 +105,23 @@ class RaceRoom(BotChannel):
     # Returns the string to go in the topic for the leaderboard
     @property
     def leaderboard(self):
-        new_leaderboard = '``` \n' + self.leaderboard_header + self.current_race.status_str + '\n'
+        new_leaderboard = '``` \n' + self._leaderboard_header(self.current_race) + self.current_race.status_str + '\n'
         new_leaderboard += 'Entrants:\n'
         new_leaderboard += self.current_race.leaderboard_text
         new_leaderboard += '```'
         return new_leaderboard
 
     # Returns 'header' text for the race, giving info about the rules etc.
-    @property
-    def leaderboard_header(self):
+    def _leaderboard_header(self, race: Race):
         room_rider = self.format_rider
         if room_rider:
             room_rider = ' ' + room_rider
 
-        seed_str = self._current_race.race_info.seed_str
+        seed_str = race.race_info.seed_str
         if seed_str:
             seed_str = '\n' + seed_str
 
-        return self.race_info.format_str + room_rider + seed_str + '\n'
+        return race.race_info.format_str + room_rider + seed_str + '\n'
 
 # Methods -------------------------------------------------------------
     # Notifies the given user on a rematch
@@ -181,7 +180,7 @@ class RaceRoom(BotChannel):
             self.results_channel,
             'Race begun at {0}:\n```\n{1}{2}\n```'.format(
                 race.start_datetime.strftime("%d %B %Y, UTC %H:%M"),
-                self.leaderboard_header,
+                self._leaderboard_header(race),
                 race.leaderboard_text
             )
         )
