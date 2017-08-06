@@ -384,11 +384,14 @@ async def _transfer_user_id(from_user_id: int, to_user_id: int):
             """
         )
 
+        schema_names = []
         for row in cursor:
-            schema_name = row[0]
+            schema_names.append(row[0])
+
+        for schema_name in schema_names:
             cursor.execute(
                 """
-                UPDATE {schema_name}.entrants 
+                UPDATE `{schema_name}`.entrants 
                 SET user_id=%(to_uid)s 
                 WHERE user_id=%(from_uid)s
                 """.format(schema_name=schema_name),
@@ -396,7 +399,7 @@ async def _transfer_user_id(from_user_id: int, to_user_id: int):
             )
             cursor.execute(
                 """
-                UPDATE {schema_name}.matches 
+                UPDATE `{schema_name}`.matches 
                 SET racer_1_id=%(to_uid)s 
                 WHERE racer_1_id=%(from_uid)s
                 """.format(schema_name=schema_name),
@@ -404,7 +407,7 @@ async def _transfer_user_id(from_user_id: int, to_user_id: int):
             )
             cursor.execute(
                 """
-                UPDATE {schema_name}.matches 
+                UPDATE `{schema_name}`.matches 
                 SET racer_2_id=%(to_uid)s 
                 WHERE racer_2_id=%(from_uid)s
                 """.format(schema_name=schema_name),
