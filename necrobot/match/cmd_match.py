@@ -275,7 +275,7 @@ class Suggest(CommandType):
                 if suggested_time_utc - deadline > datetime.timedelta(seconds=0):
                     await self.client.send_message(
                         cmd.channel,
-                        'Matches must be scheduled before {deadline:%b %d (%A) at %I:%M %p}'
+                        'Matches must be scheduled before {deadline:%b %d (%A) at %I:%M %p} UTC'
                         .format(deadline=deadline)
                     )
                     return
