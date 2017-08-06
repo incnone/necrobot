@@ -116,9 +116,9 @@ class MatchupSheet(object):
                 if not racer_1_name or not racer_2_name:
                     continue
 
-                if racer_1_name[0] not in string.ascii_letters or racer_2_name[0]not in string.ascii_letters:
-                    self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
-                    continue
+                # if racer_1_name[0] not in string.ascii_letters or racer_2_name[0] not in string.ascii_letters:
+                #     self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
+                #     continue
 
                 console.debug('get_matches: Creating {0}-{1}'.format(racer_1_name, racer_2_name))
 
