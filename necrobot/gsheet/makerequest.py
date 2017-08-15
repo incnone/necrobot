@@ -12,7 +12,7 @@ async def make_request(request):
         try:
             return request.execute()
         except googleapiclient.errors.HttpError as e:
-            backoff_errors = [429]
+            backoff_errors = [429, 502]
             error_type = e.resp.status
             if error_type in backoff_errors:
                 try:

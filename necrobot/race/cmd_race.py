@@ -87,10 +87,9 @@ class Forfeit(CommandType):
             if self.bot_channel.last_begun_race is None:
                 return
             lvl = level.from_str(cmd.args[0])
-            await self.bot_channel.last_begun_race.set_death_for_member(cmd.author, lvl)
-            if len(cmd.args) >= 2:
+            if lvl != level.LEVEL_NOS:
                 cmd.args.pop(0)
-                await self.reparse_as('comment', cmd)
+                await self.bot_channel.last_begun_race.set_death_for_member(cmd.author, lvl)
 
             await self.reparse_as('comment', cmd)
 

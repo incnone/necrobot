@@ -2,7 +2,9 @@
 
 Current version: 0.10
 
-- Match type isn't being set from sheet correctly?nt
+- Fix command reparsing bugs (e.g. ".f something" commenting as "ing")
+
+- Match type isn't being set from sheet correctly?
 - Race rooms maybe should use RTMP names only
 - Output text in channel on command throwing error if possible
 - Add timeout to VodRecorder calls
@@ -10,7 +12,12 @@ Current version: 0.10
 - Add `.userinfo` to race channels
 - Empty matches breaking getting matches from sheet
 - Show match type on room creation
-- Rooms with user `6000j` weren't making correctly from GSheet; figure out this bug
+- Write the time of race finish to the database
+
+## Showcases
+
+- More flexibility around showcase matches
+- Auto-confirming showcase match scheduling
 
 ## Automatching
 
