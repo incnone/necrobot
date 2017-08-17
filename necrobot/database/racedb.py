@@ -180,7 +180,7 @@ async def get_fastest_times_leaderboard(character_name: str, amplified: bool, li
                     WHERE 
                         {race_runs}.time > 0 
                         AND {race_runs}.level = -2 
-                        AND {races}.timestamp > '2017-07-12'
+                        AND ({races}.timestamp > '2017-07-12' OR NOT race_types.amplified)
                         AND race_types.character=%s 
                         AND race_types.descriptor='All-zones' 
                         AND race_types.seeded 

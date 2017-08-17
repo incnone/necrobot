@@ -3,7 +3,7 @@
 Current version: 0.10
 
 - Fix command reparsing bugs (e.g. ".f something" commenting as "ing")
-
+- Notify in race rooms when match is cup vs regular (s6 only)
 - Match type isn't being set from sheet correctly?
 - Race rooms maybe should use RTMP names only
 - Output text in channel on command throwing error if possible
