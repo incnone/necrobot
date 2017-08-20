@@ -3,7 +3,7 @@
 Current version: 0.10
 
 - Remove commentator on match reschedule
-- Fix bug where today looks at UTC instead of user's local time
+- ~~Fix bug where today looks at UTC instead of user's local time~~
 - Fix command reparsing bugs (e.g. ".f something" commenting as "ing")
 - Notify in race rooms when match is cup vs regular (s6 only)
 - Match type isn't being set from sheet correctly?

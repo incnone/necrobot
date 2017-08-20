@@ -10,6 +10,8 @@ class Command(object):
         self.command = None
         self.args = []      
         self._message = message
+        cut_len = len(Config.BOT_COMMAND_PREFIX) + len(self.command) + 1
+        self._arg_string = self._message.content[cut_len:].strip(' ')
 
         if message is None:
             return
@@ -49,8 +51,7 @@ class Command(object):
 
     @property
     def arg_string(self) -> str:
-        cut_len = len(Config.BOT_COMMAND_PREFIX) + len(self.command) + 1
-        return self._message.content[cut_len:].strip(' ')
+        return self._arg_string
 
 
 class TestCommand(Command):
