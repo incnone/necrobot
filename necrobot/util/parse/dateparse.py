@@ -22,8 +22,10 @@ def parse_datetime(parse_str: str, timezone: pytz.timezone = pytz.utc) -> dateti
         return pytz.utc.localize(datetime.datetime.utcnow())
 
     try:
+        default_time = (pytz.utc.localize(datetime.datetime.utcnow()).astimezone(timezone)).replace(tzinfo=None)
         dateutil_parse = parser.parse(
             parse_str,
+            default=default_time,
             fuzzy=True,
             dayfirst=False,
             yearfirst=False)

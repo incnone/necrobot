@@ -2,6 +2,8 @@
 
 Current version: 0.10
 
+- Remove commentator on match reschedule
+- Fix bug where today looks at UTC instead of user's local time
 - Fix command reparsing bugs (e.g. ".f something" commenting as "ing")
 - Notify in race rooms when match is cup vs regular (s6 only)
 - Match type isn't being set from sheet correctly?
@@ -13,6 +15,7 @@ Current version: 0.10
 - Empty matches breaking getting matches from sheet
 - Show match type on room creation
 - Write the time of race finish to the database
+- PM people who want it if there are uncawmentated races starting in 15 mins?
 
 ## Showcases
 
