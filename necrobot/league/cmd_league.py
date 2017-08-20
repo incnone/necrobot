@@ -388,7 +388,7 @@ class SetDeadline(CommandType):
         await self.client.send_message(
             cmd.channel,
             'Set the current league\'s deadline to "{deadline_str}". As of now, this is '
-            '{deadline:%b %d (%A) at %I:%M %p}.'
+            '{deadline:%b %d (%A) at %I:%M %p (%Z)}.'
             .format(
                 deadline_str=cmd.arg_string,
                 deadline=deadline

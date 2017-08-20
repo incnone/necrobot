@@ -2,25 +2,23 @@
 
 Current version: 0.10
 
-- Remove commentator on match reschedule
+## Bugfixes 
+
 - ~~Fix bug where today looks at UTC instead of user's local time~~
-- Fix command reparsing bugs (e.g. ".f something" commenting as "ing")
+- ~~Fix command reparsing bugs (e.g. ".f something" commenting as "ing")~~
+- ~~Race rooms maybe should use RTMP names only~~
+- ~~Add timeout to VodRecorder calls~~
+- ~~Add "UTC" to return message on `.setdeadline`f~~
+- ~~Add `.userinfo` to race channels~~
+- ~~Show match type on room creation~~
+
+## Features
+
 - Notify in race rooms when match is cup vs regular (s6 only)
-- Match type isn't being set from sheet correctly?
-- Race rooms maybe should use RTMP names only
-- Output text in channel on command throwing error if possible
-- Add timeout to VodRecorder calls
-- Add "UTC" to return message on `.setdeadline`
-- Add `.userinfo` to race channels
-- Empty matches breaking getting matches from sheet
-- Show match type on room creation
 - Write the time of race finish to the database
+- Output text in channel on command throwing error if possible
+- Remove commentator on match reschedule?
 - PM people who want it if there are uncawmentated races starting in 15 mins?
-
-## Showcases
-
-- More flexibility around showcase matches
-- Auto-confirming showcase match scheduling
 
 ## Automatching
 

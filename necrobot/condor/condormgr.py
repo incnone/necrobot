@@ -18,6 +18,7 @@ from necrobot.match.matchroom import MatchRoom
 from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
 from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util.singleton import Singleton
+from necrobot.config import Config
 
 
 class CondorMgr(Manager, metaclass=Singleton):
@@ -31,14 +32,14 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     async def initialize(self):
         self._main_channel = server.main_channel
-        self._notifications_channel = server.find_channel(channel_name='bot_notifications')
+        self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
         self._schedule_channel = server.find_channel(channel_name='schedule')
         self._client = server.client
 
         await self.update_schedule_channel()
 
     async def refresh(self):
-        self._notifications_channel = server.find_channel(channel_name='bot_notifications')
+        self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
         self._schedule_channel = server.find_channel(channel_name='schedule')
         self._client = server.client
         await self.update_schedule_channel()

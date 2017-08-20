@@ -14,6 +14,7 @@ from necrobot.util import timestr
 from necrobot.race import cmd_race
 from necrobot.match import cmd_match
 from necrobot.test import cmd_test
+from necrobot.user import cmd_user
 
 from necrobot.database import ratingsdb, matchdb, racedb
 from necrobot.ladder import ratingutil
@@ -69,6 +70,8 @@ class MatchRoom(BotChannel):
             cmd_match.Update(self),
 
             cmd_test.TestMatch(self),
+
+            cmd_user.UserInfo(self),
         ]
 
         self._during_match_channel_commands = [
@@ -95,6 +98,8 @@ class MatchRoom(BotChannel):
             cmd_race.ChangeRules(self),
 
             cmd_test.TestMatch(self),
+
+            cmd_user.UserInfo(self),
         ]
 
         self._postmatch_channel_commands = [
@@ -112,6 +117,8 @@ class MatchRoom(BotChannel):
             cmd_race.ChangeRules(self),
 
             cmd_test.TestMatch(self),
+
+            cmd_user.UserInfo(self),
         ]
 
         self.channel_commands = self._prematch_channel_commands
@@ -197,7 +204,7 @@ class MatchRoom(BotChannel):
                 behind_racer_name = self.match.racer_2.display_name
                 diff_str = timestr.timedelta_to_str(r1off - r2off)
                 # noinspection PyUnresolvedReferences
-                msg += '\N{BULLET} {0} is currently {1} ahead of {2}.'.format(
+                msg += '\N{BULLET} {0} is currently {1} ahead of {2}.\n'.format(
                     ahead_racer_name, diff_str, behind_racer_name
                 )
             elif r1off < r2off:
@@ -205,30 +212,33 @@ class MatchRoom(BotChannel):
                 behind_racer_name = self.match.racer_1.display_name
                 diff_str = timestr.timedelta_to_str(r2off - r1off)
                 # noinspection PyUnresolvedReferences
-                msg += '\N{BULLET} {0} is currently {1} ahead of {2}.'.format(
+                msg += '\N{BULLET} {0} is currently {1} ahead of {2}.\n'.format(
                     ahead_racer_name, diff_str, behind_racer_name
                 )
             else:
                 # noinspection PyUnresolvedReferences
-                msg += '\N{BULLET} The two racers in this match currently have the same UTC offset.'
+                msg += '\N{BULLET} The two racers in this match currently have the same UTC offset.\n'
 
         else:
             if self.match.racer_1.timezone is None and self.match.racer_2.timezone is not None:
                 # noinspection PyUnresolvedReferences
-                msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.'.format(
+                msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.\n'.format(
                     self.match.racer_1.display_name
                 )
             elif self.match.racer_1.timezone is not None and self.match.racer_2.timezone is None:
                 # noinspection PyUnresolvedReferences
-                msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.'.format(
+                msg += '\N{BULLET} {0} has not registered a timezone. Please call `.timezone`.\n'.format(
                     self.match.racer_2.display_name
                 )
             else:
                 # noinspection PyUnresolvedReferences
-                msg += '\N{BULLET} {0} and {1} have not registered a timezone. Please call `.timezone`.'.format(
+                msg += '\N{BULLET} {0} and {1} have not registered a timezone. Please call `.timezone`.\n'.format(
                     self.match.racer_1.display_name,
                     self.match.racer_2.display_name
                 )
+
+        # noinspection PyUnresolvedReferences
+        msg += '\N{BULLET} This match is a {0}.'.format(self.match.format_str)
 
         await self.client.send_message(self.channel, msg)
 

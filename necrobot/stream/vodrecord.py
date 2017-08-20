@@ -56,9 +56,11 @@ class VodRecorder(object, metaclass=Singleton):
         for rtmp_name in self._recording_rtmps:
             curl = pycurl.Curl()
             try:
-                curl.setopt(pycurl.CAINFO, certifi.where())
+                self._set_def_curl_opts(curl)
+
                 curl.setopt(pycurl.URL, self._end_url(rtmp_name))
                 curl.setopt(pycurl.WRITEDATA, self._end_buffer)
+
                 curl.perform()
             except pycurl.error as e:
                 console.warning(
@@ -118,9 +120,11 @@ class VodRecorder(object, metaclass=Singleton):
         try:
             new_buffer = BytesIO()
             self._vodstart_buffers[rtmp_name] = new_buffer
-            curl.setopt(pycurl.CAINFO, certifi.where())
+
+            self._set_def_curl_opts(curl)
             curl.setopt(pycurl.URL, self._start_url(rtmp_name))
             curl.setopt(pycurl.WRITEDATA, new_buffer)
+
             curl.perform()
             self._recording_rtmps.append(rtmp_name)
         except pycurl.error as e:
@@ -139,9 +143,10 @@ class VodRecorder(object, metaclass=Singleton):
 
         curl = pycurl.Curl()
         try:
-            curl.setopt(pycurl.CAINFO, certifi.where())
+            self._set_def_curl_opts(curl)
             curl.setopt(pycurl.URL, self._end_url(rtmp_name))
             curl.setopt(pycurl.WRITEDATA, self._end_buffer)
+
             curl.perform()
             self._recording_rtmps = [r for r in self._recording_rtmps if r != rtmp_name]
         except pycurl.error as e:
@@ -152,3 +157,8 @@ class VodRecorder(object, metaclass=Singleton):
                     e))
         finally:
             curl.close()
+
+    @staticmethod
+    def _set_def_curl_opts(curl):
+        curl.setopt(pycurl.CONNECTTIMEOUT, 15)
+        curl.setopt(pycurl.CAINFO, certifi.where())

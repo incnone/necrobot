@@ -148,6 +148,7 @@ class Config(object):
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
+    NOTIFICATIONS_CHANNEL_NAME = 'bot_notifications'
 
     # Database --------------------------------------------------------------------------------
     MYSQL_DB_HOST = 'localhost'
