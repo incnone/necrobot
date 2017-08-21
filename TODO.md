@@ -14,8 +14,9 @@ Current version: 0.10
 
 ## Features
 
+- Restrict commentary to scheduled matches
 - Notify in race rooms when match is cup vs regular (s6 only)
-- Write the time of race finish to the database
+- Write the time of match finish to the database
 - Output text in channel on command throwing error if possible
 - Remove commentator on match reschedule?
 - PM people who want it if there are uncawmentated races starting in 15 mins?

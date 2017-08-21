@@ -360,6 +360,7 @@ async def make_match_from_raw_db_data(row: list) -> Match:
         racer_1_id=int(row[2]),
         racer_2_id=int(row[3]),
         suggested_time=row[4],
+        finish_time=row[16],
         r1_confirmed=bool(row[5]),
         r2_confirmed=bool(row[6]),
         r1_unconfirmed=bool(row[7]),

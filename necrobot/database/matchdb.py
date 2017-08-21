@@ -135,6 +135,7 @@ async def write_match(match: Match):
         match.channel_id,
         match.sheet_id,
         match.sheet_row,
+        match.finish_time,
         match.match_id,
     )
 
@@ -157,7 +158,8 @@ async def write_match(match: Match):
                cawmentator_id=%s,
                channel_id=%s,
                sheet_id=%s,
-               sheet_row=%s
+               sheet_row=%s,
+               finish_time=%s
             WHERE match_id=%s
             """.format(matches=tn('matches')),
             params
@@ -230,7 +232,8 @@ async def get_channeled_matches_raw_data(
                  cawmentator_id, 
                  channel_id,
                  sheet_id,
-                 sheet_row
+                 sheet_row,
+                 finish_time
             FROM {matches} 
             WHERE {where_query} {order_query}
             """.format(matches=tn('matches'), where_query=where_query, order_query=order_query), params)
@@ -442,7 +445,8 @@ async def get_raw_match_data(match_id: int) -> list:
                  cawmentator_id, 
                  channel_id,
                  sheet_id,
-                 sheet_row
+                 sheet_row,
+                 finish_time
             FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1
@@ -468,6 +472,7 @@ async def _register_match(match: Match) -> None:
         match.is_best_of,
         match.number_of_races,
         match.cawmentator_id,
+        match.finish_time,
     )
 
     async with DBConnect(commit=True) as cursor:
@@ -486,9 +491,10 @@ async def _register_match(match: Match) -> None:
                ranked, 
                is_best_of, 
                number_of_races, 
-               cawmentator_id
+               cawmentator_id,
+               finish_time
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """.format(matches=tn('matches')),
             params
         )

@@ -464,6 +464,8 @@ class MatchRoom(BotChannel):
             winner_wins = self._match_race_data.r1_wins
             loser_wins = self._match_race_data.r2_wins
 
+        self.match.set_finish_time(pytz.utc.localize(datetime.datetime.utcnow()))
+
         await NEDispatch().publish(
             'end_match',
             match=self.match,

@@ -26,10 +26,10 @@ class Match(object):
             r1_unconfirmed=False,
             r2_unconfirmed=False,
             match_info=MatchInfo(),
-            # race_data=MatchRaceData(),
             cawmentator_id=None,
             channel_id=None,
-            gsheet_info=None
+            gsheet_info=None,
+            finish_time=None
     ):
         """Create a `Match` object. There should be no need to call this directly; use `matchutil.make_match` instead, 
         since this needs to interact with the database.
@@ -62,6 +62,8 @@ class Match(object):
             The discord.ID of the channel for this match, if any.
         gsheet_info: MatchGSheetInfo
             If this match was created from a GSheet, the worksheet and row it was created from.
+        finish_time: datetime.datetime
+            The time the match finished at. If no tzinfo, UTC is assumed.
         """
         self._match_id = match_id
 
@@ -72,8 +74,10 @@ class Match(object):
         self._racer_2 = None                                # type: NecroUser
 
         # Scheduling data
-        self._suggested_time = None                         # type: datetime
+        self._suggested_time = None                         # type: datetime.datetime
+        self._finish_time = None                            # type: datetime.datetime
         self._set_suggested_time(suggested_time)
+        self._set_finish_time(finish_time)
         self._confirmed_by_r1 = r1_confirmed                # type: bool
         self._confirmed_by_r2 = r2_confirmed                # type: bool
         self._r1_wishes_to_unconfirm = r1_unconfirmed       # type: bool
@@ -81,7 +85,6 @@ class Match(object):
 
         # Format and race data
         self._match_info = match_info                       # type: MatchInfo
-        # self._race_data = race_data                         # type: MatchRaceData
 
         # Other
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None  # type: int
@@ -94,17 +97,17 @@ class Match(object):
     def __repr__(self):
         return 'Match: <ID={mid}>, <ChannelName={cname}'.format(mid=self.match_id, cname=self.matchroom_name)
 
-    async def initialize(self):
-        self._racer_1 = await userlib.get_user(user_id=self._racer_1_id)
-        self._racer_2 = await userlib.get_user(user_id=self._racer_2_id)
-        if self._racer_1 is None or self._racer_2 is None:
-            raise RuntimeError('Attempted to make a Match object with an unregistered racer.')
-
     def __eq__(self, other):
         return self.match_id == other.match_id
 
     def __str__(self):
         return '{0}-{1}'.format(self.matchroom_name, self.match_id)
+
+    async def initialize(self):
+        self._racer_1 = await userlib.get_user(user_id=self._racer_1_id)
+        self._racer_2 = await userlib.get_user(user_id=self._racer_2_id)
+        if self._racer_1 is None or self._racer_2 is None:
+            raise RuntimeError('Attempted to make a Match object with an unregistered racer.')
 
     @property
     def format_str(self) -> str:
@@ -138,6 +141,10 @@ class Match(object):
     @property
     def suggested_time(self) -> datetime.datetime:
         return self._suggested_time
+
+    @property
+    def finish_time(self) -> datetime.datetime:
+        return self._finish_time
 
     @property
     def confirmed_by_r1(self) -> bool:
@@ -261,6 +268,17 @@ class Match(object):
         self._match_id = match_id
 
     @commits
+    def set_finish_time(self, time: datetime.datetime) -> None:
+        """Sets the finishing time for the match.
+        
+        Parameters
+        ----------
+        time: datetime.datetime
+            The time of match finished. If no tzinfo, UTC is assumed.
+        """
+        self._set_finish_time(time)
+
+    @commits
     def suggest_time(self, time: datetime.datetime) -> None:
         """Unconfirms all previous times and suggests a new time for the match.
         
@@ -286,7 +304,6 @@ class Match(object):
         elif racer == self.racer_2:
             self._confirmed_by_r2 = True
 
-    # Unconfirm
     @commits
     def unconfirm_time(self, racer: NecroUser) -> None:
         """Attempts to unconfirm the current suggested time by the given racer. This deletes the 
@@ -392,3 +409,11 @@ class Match(object):
         if time.tzinfo is None:
             time = pytz.utc.localize(time)
         self._suggested_time = time.astimezone(pytz.utc)
+
+    def _set_finish_time(self, time: datetime.datetime or None) -> None:
+        if time is None:
+            self._finish_time = None
+            return
+        if time.tzinfo is None:
+            time = pytz.utc.localize(time)
+        self._finish_time = time.astimezone(pytz.utc)
