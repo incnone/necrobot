@@ -1,5 +1,6 @@
 import discord
 import shlex
+from typing import List
 
 from necrobot.config import Config
 
@@ -7,11 +8,10 @@ from necrobot.config import Config
 class Command(object):
     """Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)"""
     def __init__(self, message: discord.Message):
-        self.command = None
-        self.args = []      
-        self._message = message
-        cut_len = len(Config.BOT_COMMAND_PREFIX) + len(self.command) + 1
-        self._arg_string = self._message.content[cut_len:].strip(' ')
+        self.command = None         # type: str
+        self.args = []              # type: List[str]
+        self._message = message     # type: discord.Message
+        self._arg_string = ''       # type: str
 
         if message is None:
             return
@@ -23,6 +23,8 @@ class Command(object):
                 self.args = message.content.split()
             prefix_len = len(Config.BOT_COMMAND_PREFIX)
             self.command = (self.args.pop(0)[prefix_len:]).lower()
+            cut_len = len(Config.BOT_COMMAND_PREFIX) + len(self.command) + 1
+            self._arg_string = self._message.content[cut_len:].strip(' ')
 
     @property
     def author(self) -> discord.User or discord.Member:
