@@ -22,7 +22,8 @@ def parse_datetime(parse_str: str, timezone: pytz.timezone = pytz.utc) -> dateti
         return pytz.utc.localize(datetime.datetime.utcnow())
 
     try:
-        default_time = (pytz.utc.localize(datetime.datetime.utcnow()).astimezone(timezone)).replace(tzinfo=None)
+        default_time = (pytz.utc.localize(datetime.datetime.utcnow()).astimezone(timezone))\
+            .replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0)
         dateutil_parse = parser.parse(
             parse_str,
             default=default_time,
