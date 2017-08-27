@@ -8,6 +8,7 @@ from necrobot.database import dailydb, userdb
 from necrobot.daily import dailytype
 from necrobot.util import level, seedgen, racetime
 from necrobot.user import userlib
+from necrobot.util import strutil
 
 from necrobot.config import Config
 from necrobot.daily.dailytype import DailyType
@@ -153,7 +154,7 @@ class Daily(object):
                 reverse=True)
 
         for row in daily_times:
-            name = row[0]
+            name = strutil.tickless(row[0])
             lv = row[1]
             time = row[2]
             if lv == level.LEVEL_FINISHED:

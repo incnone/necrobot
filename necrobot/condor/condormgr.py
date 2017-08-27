@@ -8,6 +8,7 @@ from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
 from necrobot.user import userlib
+from necrobot.util import strutil
 
 from necrobot.botbase.manager import Manager
 from necrobot.gsheet.matchupsheet import MatchupSheet
@@ -152,8 +153,10 @@ class CondorMgr(Manager, metaclass=Singleton):
         racer_1_stats = await statfn.get_league_stats(match.racer_1.user_id)
         racer_2_stats = await statfn.get_league_stats(match.racer_2.user_id)
 
-        alert_text += '```' + await match.racer_1.get_big_infotext(racer_1_stats) + '\n```'
-        alert_text += '```' + await match.racer_2.get_big_infotext(racer_2_stats) + '\n```'
+        racer_1_infotext = await match.racer_1.get_big_infotext(racer_1_stats)
+        racer_2_infotext = await match.racer_1.get_big_infotext(racer_2_stats)
+        alert_text += '```' + strutil.tickless(racer_1_infotext) + '\n```'
+        alert_text += '```' + strutil.tickless(racer_2_infotext) + '\n```'
 
         await self._client.send_message(cawmentator.member, alert_text)
 

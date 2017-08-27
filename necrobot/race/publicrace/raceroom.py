@@ -11,6 +11,7 @@ from necrobot.test import cmd_test
 
 from necrobot.database import racedb
 from necrobot.race import raceinfo
+from necrobot.util import strutil
 
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.botbase.necrobot import Necrobot
@@ -105,9 +106,10 @@ class RaceRoom(BotChannel):
     # Returns the string to go in the topic for the leaderboard
     @property
     def leaderboard(self):
-        new_leaderboard = '``` \n' + self._leaderboard_header(self.current_race) + self.current_race.status_str + '\n'
+        new_leaderboard = '``` \n' + strutil.tickless(self._leaderboard_header(self.current_race)) \
+                          + self.current_race.status_str + '\n'
         new_leaderboard += 'Entrants:\n'
-        new_leaderboard += self.current_race.leaderboard_text
+        new_leaderboard += strutil.tickless(self.current_race.leaderboard_text)
         new_leaderboard += '```'
         return new_leaderboard
 
@@ -180,8 +182,8 @@ class RaceRoom(BotChannel):
             self.results_channel,
             'Race begun at {0}:\n```\n{1}{2}\n```'.format(
                 race.start_datetime.strftime("%d %B %Y, UTC %H:%M"),
-                self._leaderboard_header(race),
-                race.leaderboard_text
+                strutil.tickless(self._leaderboard_header(race)),
+                strutil.tickless(race.leaderboard_text)
             )
         )
 

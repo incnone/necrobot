@@ -4,7 +4,7 @@ import pytz
 
 from necrobot.botbase import server
 from necrobot.database import matchdb, racedb
-from necrobot.util import console, timestr, writechannel
+from necrobot.util import console, timestr, writechannel, strutil
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
@@ -382,17 +382,17 @@ async def get_schedule_infotext():
     max_r1_len = 0
     max_r2_len = 0
     for match in matches:
-        max_r1_len = max(max_r1_len, len(match.racer_1.display_name))
-        max_r2_len = max(max_r2_len, len(match.racer_2.display_name))
+        max_r1_len = max(max_r1_len, len(strutil.tickless(match.racer_1.display_name)))
+        max_r2_len = max(max_r2_len, len(strutil.tickless(match.racer_2.display_name)))
 
     schedule_text = '``` \nUpcoming matches: \n'
     for match in matches:
         if len(schedule_text) > 1800:
             break
         schedule_text += '{r1:>{w1}} v {r2:<{w2}} : '.format(
-            r1=match.racer_1.display_name,
+            r1=strutil.tickless(match.racer_1.display_name),
             w1=max_r1_len,
-            r2=match.racer_2.display_name,
+            r2=strutil.tickless(match.racer_2.display_name),
             w2=max_r2_len
         )
         if match.suggested_time - utcnow < datetime.timedelta(minutes=0):

@@ -1,7 +1,8 @@
 from necrobot.stats import statfn
 from necrobot.user import userlib
-
 from necrobot.botbase import server
+from necrobot.util import strutil
+
 from necrobot.botbase.commandtype import CommandType
 from necrobot.util.character import NDChar
 
@@ -103,9 +104,10 @@ class Fastest(CommandType):
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, args[0]))
             return
 
+        infotext = await statfn.get_fastest_times_infotext(ndchar, amplified, 20)
         infobox = 'Fastest public all-zones {2} {0} times:\n```\n{1}```'.format(
             ndchar.name,
-            await statfn.get_fastest_times_infotext(ndchar, amplified, 20),
+            strutil.tickless(infotext),
             'Amplified' if amplified else 'base-game')
         await self.client.send_message(
             cmd.channel,
@@ -118,8 +120,9 @@ class LeagueFastest(CommandType):
         self.help_text = 'Get fastest wins.'
 
     async def _do_execute(self, cmd):
+        infotext = await statfn.get_fastest_times_league_infotext(20)
         infobox = '```\nFastest wins:\n{0}```'.format(
-            await statfn.get_fastest_times_league_infotext(20)
+            strutil.tickless(infotext)
         )
 
         await self.client.send_message(cmd.channel, infobox)
@@ -144,7 +147,11 @@ class LeagueStats(CommandType):
                 return
 
         stats = await statfn.get_league_stats(user.user_id)
-        infobox = '```\nStats: {username}\n{stats}\n```'.format(username=user.display_name, stats=stats.infotext)
+        infobox = '```\nStats: {username}\n{stats}\n```'\
+                  .format(
+                      username=strutil.tickless(user.display_name),
+                      stats=strutil.tickless(stats.infotext)
+                  )
         await self.client.send_message(cmd.channel, infobox)
 
 
@@ -169,12 +176,15 @@ class MostRaces(CommandType):
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, cmd.args[0]))
             return
 
+        infotext = await statfn.get_most_races_infotext(ndchar, 20)
         infobox = 'Most public all-zones {0} races:\n```\n{1}```'.format(
             ndchar.name,
-            await statfn.get_most_races_infotext(ndchar, 20))
+            strutil.tickless(infotext)
+        )
         await self.client.send_message(
             cmd.channel,
-            infobox)
+            infobox
+        )
 
 
 class Stats(CommandType):
@@ -220,6 +230,7 @@ class Stats(CommandType):
         await self.client.send_message(
             cmd.channel,
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(
-                user.display_name,
+                strutil.tickless(user.display_name),
                 'Amplified' if amplified else 'Base game',
-                general_stats.infotext))
+                general_stats.infotext)
+        )

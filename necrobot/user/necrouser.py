@@ -8,7 +8,7 @@ from typing import Callable
 
 from necrobot.botbase import server
 from necrobot.stats.leaguestats import LeagueStats
-from necrobot.util import console
+from necrobot.util import console, strutil
 
 from necrobot.user.userprefs import UserPrefs
 
@@ -157,9 +157,11 @@ class NecroUser(object):
     def infobox(self) -> str:
         return '```\n' \
                '{0}\n' \
-               '{1}```'.format(
-                    self.infoname,
-                    self.infotext)
+               '{1}```'\
+                .format(
+                    strutil.tickless(self.infoname),
+                    strutil.tickless(self.infotext)
+                )
 
     def set(
         self,
