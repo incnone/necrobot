@@ -726,21 +726,29 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     author_user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
 
     # Check if the match already has cawmentary
-    if add and match.cawmentator_id is not None:
-        cawmentator_user = await userlib.get_user(user_id=match.cawmentator_id)
-        if cawmentator_user is not None:
+    if add:
+        if not match.is_scheduled and not cmd_type.bot_channel.is_admin(cmd.author):
             await cmd_type.client.send_message(
                 cmd.channel,
-                'This match already has a cawmentator ({0}).'.format(cawmentator_user.discord_name)
+                'Can\'t add commentary for match {matchroom_name}, because it hasn\'t been scheduled yet.'
+                .format(matchroom_name=match.matchroom_name)
             )
             return
-        else:
-            console.warning(
-                'Unexpected error in Cawmentate._do_execute(): Couldn\'t find NecroUser for '
-                'cawmentator ID {0}'.format(match.cawmentator_id)
-            )
-            # No return here; we'll just write over this mystery ID
-    elif not add:
+        if match.cawmentator_id is not None:
+            cawmentator_user = await userlib.get_user(user_id=match.cawmentator_id)
+            if cawmentator_user is not None:
+                await cmd_type.client.send_message(
+                    cmd.channel,
+                    'This match already has a cawmentator ({0}).'.format(cawmentator_user.discord_name)
+                )
+                return
+            else:
+                console.warning(
+                    'Unexpected error in Cawmentate._do_execute(): Couldn\'t find NecroUser for '
+                    'cawmentator ID {0}'.format(match.cawmentator_id)
+                )
+                # No return here; we'll just write over this mystery ID
+    else:  # not add
         if match.cawmentator_id is None:
             await cmd_type.client.send_message(
                 cmd.channel,

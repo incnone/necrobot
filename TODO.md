@@ -4,17 +4,13 @@ Current version: 0.10
 
 ## Bugfixes 
 
-- ~~Fix bug where today looks at UTC instead of user's local time~~
-- ~~Fix command reparsing bugs (e.g. ".f something" commenting as "ing")~~
-- ~~Race rooms maybe should use RTMP names only~~
-- ~~Add timeout to VodRecorder calls~~
-- ~~Add "UTC" to return message on `.setdeadline`f~~
-- ~~Add `.userinfo` to race channels~~
-- ~~Show match type on room creation~~
+- Fix issues related to mass canceling of match countdowns
 
 ## Features
 
-- Restrict commentary to scheduled matches
+- Make bot say races awaiting review in match score announcement when contested races
+- Separate table to support putting co-commentators in database
+- ~~Restrict commentary to scheduled matches~~
 - Notify in race rooms when match is cup vs regular (s6 only)
 - ~~Write the time of match finish to the database~~
 - Output text in channel on command throwing error if possiblehanks 
