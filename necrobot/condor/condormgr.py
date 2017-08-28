@@ -154,7 +154,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         racer_2_stats = await statfn.get_league_stats(match.racer_2.user_id)
 
         racer_1_infotext = await match.racer_1.get_big_infotext(racer_1_stats)
-        racer_2_infotext = await match.racer_1.get_big_infotext(racer_2_stats)
+        racer_2_infotext = await match.racer_2.get_big_infotext(racer_2_stats)
         alert_text += '```' + strutil.tickless(racer_1_infotext) + '\n```'
         alert_text += '```' + strutil.tickless(racer_2_infotext) + '\n```'
 
