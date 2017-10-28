@@ -1,15 +1,16 @@
-from necrobot.database import ratingsdb
+from necrobot.database import leaguedb, ratingsdb
 from necrobot.match import cmd_match
 from necrobot.user import userlib
 
+from necrobot.config import Config
 from necrobot.botbase.commandtype import CommandType
 from necrobot.match.matchinfo import MatchInfo
 
 
 # General commands
-class LadderDropMyMatches(CommandType):
+class LadderDrop(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladder-drop-my-matches')
+        CommandType.__init__(self, bot_channel, 'dropcurrent')
         self.help_text = 'Drop out of all currently scheduled ladder matches.'
 
     async def _do_execute(self, cmd):
@@ -22,18 +23,95 @@ class LadderDropMyMatches(CommandType):
 
 class LadderRegister(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladder-register')
-        self.help_text = 'Begin registering yourself for the Necrobot ladder.'
-
-    @property
-    def short_help_text(self):
-        return 'Begin registration for ladder.'
+        CommandType.__init__(self, bot_channel, 'register')
+        self.help_text = 'Register yourself for the Necrobot ladder.'
 
     async def _do_execute(self, cmd):
-        # TODO
+        user = await userlib.get_user(discord_id=int(cmd.author.id))
+
+        if await leaguedb.is_registered(user.user_id):
+            await self.client.send_message(
+                cmd.channel,
+                '{0}: You are already registered for the ladder.'.format(cmd.author.mention)
+            )
+        else:
+            await leaguedb.register_user(user.user_id)
+            await self.client.send_message(
+                cmd.channel,
+                '{0} has registered for the ladder. '.format(cmd.author.mention)
+            )
+
+
+class LadderUnregister(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'unregister')
+        self.help_text = 'Unregister for the ladder.'
+
+    async def _do_execute(self, cmd):
+        user = await userlib.get_user(discord_id=int(cmd.author.id))
+
+        if await leaguedb.is_registered(user.user_id):
+            await leaguedb.unregister_user(user.user_id)
+            await self.client.send_message(
+                cmd.channel,
+                '{0}: You are no longer registered for the ladder.'.format(cmd.author.mention)
+            )
+        else:
+            await self.client.send_message(
+                cmd.channel,
+                '{0}: You are not registered for the ladder.'.format(cmd.author.mention)
+            )
+
+
+class SetAutomatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'setautomatch')
+        self.help_text = '`{0} n`: Tells the bot you want `n` automatches per week. (`n` must be between 0 and {1}.)'\
+                         .format(self.mention, Config.AUTOMATCH_MAX_MATCHES)
+
+    async def _do_execute(self, cmd):
+        user = await userlib.get_user(discord_id=int(cmd.author.id))
+
+        if not await leaguedb.is_registered(user.user_id):
+            await self.client.send_message(
+                cmd.channel,
+                '{0}: You are not registered for the ladder. Please register with `.register`.'
+                .format(cmd.author.mention)
+            )
+            return
+
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of arguments for `{0}`. Please specify a number of races per week.'.format(self.mention)
+            )
+            return
+
+        try:
+            num_matches = int(cmd.args[0])
+        except ValueError:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Could\'t parse {0} as a number.'.format(cmd.args[0])
+            )
+            return
+
+        if not (0 <= num_matches <= Config.AUTOMATCH_MAX_MATCHES):
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Number of automatches per week must be between 0 and {0}.'.format(Config.AUTOMATCH_MAX_MATCHES)
+            )
+            return
+
+        await leaguedb.set_automatches(user.user_id, num_matches)
         await self.client.send_message(
             cmd.channel,
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+            '{auth}: You\'re now requesting {num} {matches} per week.'
+            .format(
+                auth=cmd.author.mention,
+                num=num_matches,
+                matches='match' if num_matches == 1 else 'matches'
+            )
         )
 
 
@@ -44,10 +122,10 @@ class Ranked(CommandType):
 
     @property
     def short_help_text(self):
-        return 'Create ladder match.'
+        return 'Create ranked ladder match.'
 
     async def _do_execute(self, cmd):
-        if len(cmd.args[0]) != 1:
+        if len(cmd.args) != 1:
             await self.client.send_message(
                 cmd.channel,
                 'Wrong number of arguments for `{0}`. '
@@ -67,8 +145,8 @@ class Ranked(CommandType):
 class Rating(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rating')
-        self.help_text = '`{} username` returns the TrueSkill rating of the discord user `username`; if no ' \
-                         'username is given, returns your TrueSkill rating.'.format(self.mention)
+        self.help_text = '`{} username` returns the rating of the discord user `username` (or your own by default).'\
+                         .format(self.mention)
 
     @property
     def short_help_text(self):
@@ -76,18 +154,15 @@ class Rating(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) == 0:
-            user_name = cmd.author.display_name
-            discord_id = int(cmd.author.id)
+            user = await userlib.get_user(discord_id=int(cmd.author.id))
         elif len(cmd.args) == 1:
-            necro_user = await userlib.get_user(any_name=cmd.args[0])
-            if necro_user is None:
+            user = await userlib.get_user(any_name=cmd.args[0])
+            if user is None:
                 await self.client.send_message(
                     cmd.channel,
                     'Couldn\'t find user {0}.'.format(cmd.args[0])
                 )
                 return
-            user_name = necro_user.discord_name
-            discord_id = necro_user.discord_id
         else:
             await self.client.send_message(
                 cmd.channel,
@@ -95,24 +170,23 @@ class Rating(CommandType):
             )
             return
 
-        rating = await ratingsdb.get_rating(discord_id=discord_id)
+        rating = await ratingsdb.get_rating(user_id=user.user_id)
         await self.client.send_message(
             cmd.channel,
-            '**{0}**: {1}'.format(user_name, rating.displayed_rating))
+            '**{0}**: {1}'.format(user.display_name, rating.displayed_rating))
 
 
 class Unranked(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'unranked')
-        self.help_text = 'Suggest an unranked match with an opponent with `{0} opponent_name`. Both ' \
-                         'players must do this for the match to be made.'.format(self.mention)
+        self.help_text = 'Create an unranked ladder match (`{0} opponent_name`).'.format(self.mention)
 
     @property
     def short_help_text(self):
         return 'Create unranked match.'
 
     async def _do_execute(self, cmd):
-        if len(cmd.args[0]) != 1:
+        if len(cmd.args) != 1:
             await self.client.send_message(
                 cmd.channel,
                 'Wrong number of arguments for `{0}`. '

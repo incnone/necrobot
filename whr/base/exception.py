@@ -1,0 +1,2 @@
+class UnstableRatingException(RuntimeError):
+    pass

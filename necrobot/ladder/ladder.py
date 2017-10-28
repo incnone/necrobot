@@ -5,8 +5,8 @@ from necrobot.botbase import server
 
 
 DO_AUTOMATCHING = False
-AUTOMATCH_WEEKDAY = 4  # Friday (0=Monday, 6=Sunday)
-AUTOMATCH_HOUR = 12  # Noon UTC
+AUTOMATCH_WEEKDAY = 4   # Friday (0=Monday, 6=Sunday)
+AUTOMATCH_HOUR = 12     # Noon UTC
 
 
 class Ladder(object):

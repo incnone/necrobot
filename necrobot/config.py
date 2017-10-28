@@ -146,6 +146,7 @@ class Config(object):
     # Channels --------------------------------------------------------------------------------
     MAIN_CHANNEL_NAME = 'necrobot_main'
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
+    LADDER_CHANNEL_NAME = 'ladder'
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
     NOTIFICATIONS_CHANNEL_NAME = 'bot_notifications'
@@ -164,6 +165,7 @@ class Config(object):
 
     # Ladder ----------------------------------------------------------------------------------
     RATINGS_IN_NICKNAMES = True
+    AUTOMATCH_MAX_MATCHES = 3
 
     # League ----------------------------------------------------------------------------------
     LEAGUE_NAME = ''

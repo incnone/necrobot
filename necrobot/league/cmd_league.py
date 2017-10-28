@@ -319,6 +319,49 @@ class RegisterCondorEvent(CommandType):
         )
 
 
+class RegisterLadder(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'register-new-ladder')
+        self.help_text = '`{0} schema_name`: Create a new ladder schema in the database, and set this to ' \
+                         'be the bot\'s active ladder.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Create a new ladder.'
+
+    async def _do_execute(self, cmd: Command):
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        schema_name = cmd.args[0].lower()
+        try:
+            await LeagueMgr().create_league(schema_name=schema_name)
+        except necrobot.exception.LeagueAlreadyExists as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Schema `{0}`: {1}'.format(schema_name, e)
+            )
+            return
+        except necrobot.exception.InvalidSchemaName:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: `{0}` is an invalid schema name. (`a-z`, `A-Z`, `0-9`, `_` and `$` are allowed characters.)'
+                .format(schema_name)
+            )
+            return
+
+        await self.client.send_message(
+            cmd.channel,
+            'Registered new ladder `{0}`, and set it to be the bot\'s active ladder.'.format(schema_name)
+        )
+
+
 class SetCondorEvent(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setevent', 'setleague')

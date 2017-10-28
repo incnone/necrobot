@@ -8,14 +8,14 @@ from necrobot.database.dbconnect import DBConnect
 from necrobot.ladder.rating import Rating
 
 
-async def get_rating(discord_id: int) -> Rating:
+async def get_rating(user_id: int) -> Rating:
     async with DBConnect(commit=False) as cursor:
-        params = (discord_id,)
+        params = (user_id,)
         cursor.execute(
             """
             SELECT trueskill_mu, trueskill_sigma 
             FROM ratings 
-            WHERE discord_id=%s
+            WHERE user_id=%s
             """,
             params
         )
@@ -27,11 +27,11 @@ async def get_rating(discord_id: int) -> Rating:
     # If here, there was no rating
     async with DBConnect(commit=True) as cursor:
         rating = ratingutil.create_rating()
-        params = (discord_id, rating.mu, rating.sigma,)
+        params = (user_id, rating.mu, rating.sigma,)
         cursor.execute(
             """
             INSERT INTO ratings 
-            (discord_id, trueskill_mu, trueskill_sigma) 
+            (user_id, trueskill_mu, trueskill_sigma) 
             VALUES (%s, %s, %s)
             """,
             params
@@ -39,13 +39,13 @@ async def get_rating(discord_id: int) -> Rating:
         return rating
 
 
-async def set_rating(discord_id: int, rating: Rating):
+async def set_rating(user_id: int, rating: Rating):
     async with DBConnect(commit=True) as cursor:
-        params = (discord_id, rating.mu, rating.sigma,)
+        params = (user_id, rating.mu, rating.sigma,)
         cursor.execute(
             """
             INSERT INTO ratings 
-                (discord_id, trueskill_mu, trueskill_sigma) 
+                (user_id, trueskill_mu, trueskill_sigma) 
             VALUES (%s,%s,%s) 
             ON DUPLICATE KEY UPDATE 
                 trueskill_mu=VALUES(trueskill_mu), 

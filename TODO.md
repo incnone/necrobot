@@ -2,54 +2,28 @@
 
 Current version: 0.10
 
-## Bugfixes 
+## Database
 
-- Fix issues related to mass canceling of match countdowns
-
-## Features
-
-- Make bot say races awaiting review in match score announcement when contested races
-- Separate table to support putting co-commentators in database
-- ~~Restrict commentary to scheduled matches~~
-- Notify in race rooms when match is cup vs regular (s6 only)
-- ~~Write the time of match finish to the database~~
-- Output text in channel on command throwing error if possiblehanks 
-- Remove commentator on match reschedule?
-- PM people who want it if there are uncawmentated races starting in 15 mins?
-
-## Automatching
-
-- Auto-register users on match creation
-
-## Ladderbot and Leagues
-
-- Lots of things here
-- Better rankings display
-- Add match entrants to the `entrants` table in a league database
-
-## Refactor
-
-- `util.level.py` and `util.racetime.py` might work better as classes
-- Replace NoneType returns with exceptions where appropriate
-- Gather argument parsing code
-
-### Cleaner lib classes
-
-- combine MatchRaceData and Match in a friendly way
-- better standings update code
-
-### Testing
-
-- Make more small/unit tests (may wish to use a mock DB and/or a mock discord client)
+- Standardize creation of views when creating a new event
+- Clean up "library" classes, which should solve some bugs
+- Combine MatchRaceData and Match in a friendly way
+- Better standings update code
 
 ## Bugs
 
+- Fix issues related to mass canceling of match countdowns
+- Allow quoted user names in `.force` command
+- Fix bugs with `.makematches` being called mid-week (e.g. blank lines on sheet)
 - `.d 2-3` responds with '<player> has forfeit the race' twice
-- `.register-condor-event` should set correct views and so on
-- Necrobot and Condorbot should not attempt to write to the same log file
-- Cyber listed twice on `.fastest` (because times are identical)
+- Identical fastest times causes two listings on `.fastest` (Necrobot)
 
-### QoL UI Improvements
+## Error handling
+
+- Fix UnicodeEncodeErrors on logging write
+- Output text in channel when a command throws an error if possible
+- Necrobot and Condorbot should not attempt to write to the same log file
+
+## Parsing / UI handling
 
 - Fix help text for `.make` and allow `--` prepended to command keywords
 - Deal with duplicated Discord names in commands like `.add` (allow for discriminator)
@@ -57,23 +31,43 @@ Current version: 0.10
 - Better timezone parsing
 - More friendly parsing of spaces in command arguments
 
-### Unclear issues
+## Awaiting something
+
+- Update to use channel groups (Need to wait on discord.py updates)
+
+## Condorbot
+
+### UI touchups
+
+- Make bot say races awaiting review in match score announcement when contested races
+- Better information directly on #schedule?
+- Race pausing shouldn't alert forfeit or finished racers
+
+### Cawmentary
+
+- Separate table to support putting co-commentators in database
+- Give cawmentator read access to race room on match start
+- Remove commentator on match reschedule
+- PM people who want it if there are uncawmentated races starting in 15 mins?
+
+## Refactor
+
+- `util.level.py` and `util.racetime.py` might work better as classes
+- Replace NoneType returns with exceptions where appropriate
+- Gather argument parsing code
+
+## Testing
+
+- Make more small/unit tests (may wish to use a mock DB and/or a mock discord client)
+
+## Unclear issues
 
 - `.forcecancel` doesn't seem to work as intended; racerooms can get stuck
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
 just finished or the race that people are currently entering. It maybe also doesn't work after a race?
 
-### Things I don't understand
-
-- manfred4 wasn't properly added to rooms on RTMP setting; traceback was:
-  File "/home/bot/necrobot/necrobot/match/matchmgr.py", line 41, in ne_process
-    overwrite=read_perms
-  File "/home/bot/.pyenv/versions/3.5.2/lib/python3.5/site-packages/discord/client.py", line 3040, in edit_channel_permissions
-    raise InvalidArgument('target parameter must be either Member or Role')
-- Ri's timezone was getting read as none by bot but correctly used
-
-## Features
+## Nice features, but probably not doing these
 
 - Configuration of `.racealert` for character-specific, etc
 - Add more complicated sorts to `.mostraces`

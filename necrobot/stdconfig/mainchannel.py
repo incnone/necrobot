@@ -23,11 +23,6 @@ class MainBotChannel(BotChannel):
             cmd_daily.DailySeed(self),
             cmd_daily.DailyWhen(self),
 
-            # cmd_ladder.ForceRanked(self),
-            # cmd_ladder.Ranked(self),
-            # cmd_ladder.Rating(self),
-            # cmd_ladder.Unranked(self),
-
             cmd_racemake.Make(self),
             cmd_racemake.MakeCondor(self),
             cmd_racemake.MakePrivate(self),

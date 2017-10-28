@@ -94,6 +94,8 @@ async def create_league(schema_name: str) -> League:
             """
             CREATE TABLE `{schema_name}`.`entrants` (
                 `user_id` smallint unsigned NOT NULL,
+                `is_registered` BIT(1) NOT NULL DEFAULT 0,
+                `automatches` smallint unsigned NOT NULL DEFAULT 0,
                 PRIMARY KEY (`user_id`)
             ) DEFAULT CHARSET=utf8
             """.format(schema_name=schema_name)
@@ -254,6 +256,32 @@ async def get_league(schema_name: str) -> League:
         raise necrobot.exception.LeagueDoesNotExist()
 
 
+async def is_registered(user_id: int) -> bool:
+    """Returns true if the user is registered for the league
+    
+    Parameters
+    ----------
+    user_id: int
+        The user's NecroUser ID.
+
+    Returns
+    -------
+    bool
+        True if the user is registered (i.e. in the `entrants` table)
+    """
+    async with DBConnect(commit=True) as cursor:
+        params = (user_id,)
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM {entrants}
+            WHERE user_id=%s AND is_registered=1
+            """.format(entrants=tn('entrants')),
+            params
+        )
+        return bool(cursor.fetchone()[0])
+
+
 async def register_user(user_id: int) -> None:
     """Register the user for the league
     
@@ -267,10 +295,52 @@ async def register_user(user_id: int) -> None:
         cursor.execute(
             """
             INSERT INTO {entrants}
-                (user_id)
-            VALUES (%s)
+                (user_id, is_registered)
+            VALUES (%s, 1)
             ON DUPLICATE KEY UPDATE
-                user_id = VALUES(user_id)
+                is_registered=1
+            """.format(entrants=tn('entrants')),
+            params
+        )
+
+
+async def unregister_user(user_id: int) -> None:
+    """Unregister the user for the league
+    
+    Parameters
+    ----------
+    user_id: int
+        The user's NecroUser ID.
+    """
+    async with DBConnect(commit=True) as cursor:
+        params = (user_id,)
+        cursor.execute(
+            """
+            UPDATE {entrants}
+            SET is_registered=0
+            WHERE user_id=%s
+            """.format(entrants=tn('entrants')),
+            params
+        )
+
+
+async def set_automatches(user_id: int, num_automatches: int) -> None:
+    """Sets the number of automatches the user is requesting.
+    
+    Parameters
+    ----------
+    user_id: int
+        The user's NecroUser ID.
+    num_automatches: int
+        The requested number of matches.
+    """
+    async with DBConnect(commit=True) as cursor:
+        params = (num_automatches, user_id)
+        cursor.execute(
+            """
+            UPDATE {entrants}
+            SET automatches=%s
+            WHERE user_id=%s
             """.format(entrants=tn('entrants')),
             params
         )

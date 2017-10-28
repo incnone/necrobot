@@ -1,7 +1,6 @@
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.ladder import cmd_ladder
-from necrobot.stdconfig import cmd_seedgen
-from necrobot.stats import cmd_stats
+from necrobot.league import cmd_league
 from necrobot.user import cmd_user
 
 
@@ -14,11 +13,7 @@ class LadderAdminChannel(BotChannel):
             cmd_ladder.DropRacer(self),
             cmd_ladder.ForceRanked(self),
 
-            cmd_seedgen.RandomSeed(self),
-
-            cmd_stats.Fastest(self),
-            cmd_stats.MostRaces(self),
-            cmd_stats.Stats(self),
+            cmd_league.RegisterLadder(self),
 
             cmd_user.RTMP(self),
             cmd_user.UserInfo(self),
