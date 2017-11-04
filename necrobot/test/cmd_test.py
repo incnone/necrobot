@@ -1,11 +1,15 @@
 import asyncio
 import discord
 
+import necrobot.league.the_league
 from necrobot.botbase import server
+from necrobot.test import msgqueue
+
+from necrobot.ladder import ratingutil
+
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.test import msgqueue
 
 
 class TestCommandType(CommandType):
@@ -32,6 +36,27 @@ class TestCommandType(CommandType):
         def starts_with_str(msg: discord.Message) -> bool:
             return msg_str in msg.content
         return await msgqueue.register_event(starts_with_str)
+
+
+class TestRate(TestCommandType):
+    def __init__(self, bot_channel):
+        TestCommandType.__init__(self, bot_channel, 'testrate')
+        self.help_text = "Get ratings for players on the Necrobot server. " \
+                         "WARNING: This takes several minutes and is only for debugging."
+
+    async def _do_execute(self, cmd: Command):
+        ratings = await ratingutil.compute_ratings()
+
+        with open('ratings_test.txt', 'w') as file:
+            for user_id, rating in ratings.items():
+                file.write(
+                    '{player_id}: {mu} +/- {sigma}\n'
+                    .format(
+                        player_id=user_id,
+                        mu=rating.mu,
+                        sigma=rating.sigma
+                    )
+                )
 
 
 class TestMatch(TestCommandType):

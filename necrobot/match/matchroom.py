@@ -16,8 +16,7 @@ from necrobot.match import cmd_match
 from necrobot.test import cmd_test
 from necrobot.user import cmd_user
 
-from necrobot.database import ratingsdb, matchdb, racedb
-from necrobot.ladder import ratingutil
+from necrobot.database import matchdb, racedb
 from necrobot.race import raceinfo
 
 from necrobot.botbase.botchannel import BotChannel
@@ -490,26 +489,6 @@ class MatchRoom(BotChannel):
             canceled=False
         )
         self._update_race_data(race_winner=race_winner)
-
-    async def _record_new_ratings(self, race_winner: int) -> None:
-        """Get new ratings for the racers in this match and record them"""
-        racer_1 = self.match.racer_1
-        racer_2 = self.match.racer_2
-
-        rating_1 = await ratingsdb.get_rating(racer_1.discord_id)
-        rating_2 = await ratingsdb.get_rating(racer_2.discord_id)
-
-        new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
-
-        await ratingsdb.set_rating(racer_1.discord_id, new_ratings[0])
-        await ratingsdb.set_rating(racer_2.discord_id, new_ratings[1])
-
-        # this isn't working
-        # if Config.RATINGS_IN_NICKNAMES:
-        #     for pair in [(racer_1, rating_1,), (racer_2, rating_2,)]:
-        #         member = pair[0].member
-        #         nick = '{0} ({1})'.format(pair[0].member.name, pair[1].displayed_rating)
-        #         await self.client.change_nickname(member=member, nickname=nick)
 
     def _set_channel_commands(self) -> None:
         if self.current_race is None:

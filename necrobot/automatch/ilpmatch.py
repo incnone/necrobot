@@ -3,26 +3,24 @@ import pulp
 import random
 from typing import Dict, List, Tuple
 
+from necrobot.ladder.rating import Rating
 
 rand = random.Random()
 rand.seed()
 
 
-def get_entropy(p1_elo: int, p2_elo: int) -> float:
-    prob_p1_wins = 1 / (1 + pow(10, (p2_elo - p1_elo) / 400))
-    return -(prob_p1_wins * math.log2(prob_p1_wins) + (1 - prob_p1_wins) * math.log2(1 - prob_p1_wins))
-
-
-def get_utility(p1_elo: int, p2_elo: int) -> float:
-    return math.sqrt(get_entropy(p1_elo, p2_elo))
+def get_utility(r1: Rating, r2: Rating) -> float:
+    prob_p1_wins = 1 / (1 + pow(10, (r2.mu - r1.mu) / 400))
+    entropy = -(prob_p1_wins * math.log2(prob_p1_wins) + (1 - prob_p1_wins) * math.log2(1 - prob_p1_wins))
+    return math.sqrt(entropy)
 
 
 def get_matchups(
-        elos: Dict[str, int],
-        max_matches: Dict[str, int],
-        costs: Dict[Tuple[str, str], float],
-        cost_multipliers: Dict[str, float]
-)-> List[Tuple[str, str]]:
+        ratings: Dict[int, Rating],
+        max_matches: Dict[int, int],
+        costs: Dict[Tuple[int, int], float],
+        cost_multipliers: Dict[int, float]
+)-> List[Tuple[int, int]]:
     prob = pulp.LpProblem("Matchup problem", pulp.LpMaximize)
 
     # Pre-optimize by forcing max_matches to have an even sum
@@ -38,7 +36,7 @@ def get_matchups(
                 break
 
     # Make variables
-    all_players = list(elos.keys())
+    all_players = list(ratings.keys())
     matchups = dict()
     for p_idx in range(len(all_players)):
         p1_name = all_players[p_idx]
@@ -54,11 +52,11 @@ def get_matchups(
     for val in costs.values():
         max_cost = max(max_cost, val)
 
-    # Add entropy value of each matchup
+    # Add utility value of each matchup
     weighting = dict()
     for player in matchups:
         for opp in matchups[player]:
-            weighting[matchups[player][opp]] = get_utility(elos[player], elos[opp]) + max_cost
+            weighting[matchups[player][opp]] = get_utility(ratings[player], ratings[opp]) + max_cost
 
     # Subtract rematchup cost
     for m, cost in costs.items():
@@ -245,7 +243,7 @@ def test_one_matchup():
         num_matches[pname] = 2
 
     week_matches = get_matchups(
-        elos=the_elos,
+        ratings=the_elos,
         max_matches=num_matches,
         costs=the_costs,
         cost_multipliers=the_cost_multipliers

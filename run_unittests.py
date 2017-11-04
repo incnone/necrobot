@@ -7,7 +7,6 @@ from necrobot.botbase import server
 
 from necrobot.condor.condoradminchannel import CondorAdminChannel
 from necrobot.daily.dailymgr import DailyMgr
-from necrobot.ladder import ratingutil
 from necrobot.ladder.ladderadminchannel import LadderAdminChannel
 from necrobot.match.matchmgr import MatchMgr
 from necrobot.stdconfig.mainchannel import MainBotChannel
@@ -87,9 +86,6 @@ async def load_testing_config(necrobot):
     # Managers
     necrobot.register_manager(DailyMgr())
     necrobot.register_manager(MatchMgr())
-
-    # Ratings
-    ratingutil.init()
 
 
 if __name__ == "__main__":

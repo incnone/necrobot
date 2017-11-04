@@ -29,9 +29,6 @@ async def make_match(*args, register=False, **kwargs) -> Match:
         The DB user ID of the first racer.
     racer_2_id: int
         The DB user ID of the second racer.
-    max_races: int
-        The maximum number of races this match can be. (If is_best_of is True, then the match is a best of
-        max_races; otherwise, the match is just repeating max_races.)
     match_id: int
         The DB unique ID of this match.
     suggested_time: datetime.datetime

@@ -4,8 +4,8 @@ https://github.com/goshrine/whole_history_rating/blob/master/lib/whole_history_r
 """
 
 import math
-from game import Game
-from player import Player
+from whr.base.game import Game
+from whr.base.player import Player
 
 
 class WholeHistoryRating(object):
@@ -25,7 +25,7 @@ class WholeHistoryRating(object):
         self.config = {
             'w': 30.0,
             'prior_stdev': 400.0,
-            'verbose': True
+            'verbose': False
         }
         self.config.update(config)
         self.config['w2'] = self.config['w']**2

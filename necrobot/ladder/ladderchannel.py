@@ -11,8 +11,9 @@ class LadderChannel(BotChannel):
             cmd_ladder.LadderDrop(self),
             cmd_ladder.LadderRegister(self),
             cmd_ladder.LadderUnregister(self),
+            cmd_ladder.Leaderboard(self),
             cmd_ladder.Ranked(self),
-            cmd_ladder.Rating(self),
+            cmd_ladder.GetRating(self),
             cmd_ladder.SetAutomatch(self),
             cmd_ladder.Unranked(self),
 

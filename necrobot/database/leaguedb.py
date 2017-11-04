@@ -22,12 +22,15 @@ InvalidSchemaName
 """
 
 import re
+from typing import Optional, Dict, List, Tuple
 import necrobot.exception
 
-from necrobot.config import Config
 from necrobot.database import racedb
-from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
+
+from necrobot.config import Config
+from necrobot.database.dbconnect import DBConnect
+from necrobot.ladder.rating import Rating
 from necrobot.league.league import League
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo
@@ -96,6 +99,9 @@ async def create_league(schema_name: str) -> League:
                 `user_id` smallint unsigned NOT NULL,
                 `is_registered` BIT(1) NOT NULL DEFAULT 0,
                 `automatches` smallint unsigned NOT NULL DEFAULT 0,
+                `rating_mu` float DEFAULT NULL,
+                `rating_sigma` float DEFAULT NULL,
+                `rating_rank` smallint DEFAULT NULL,
                 PRIMARY KEY (`user_id`)
             ) DEFAULT CHARSET=utf8
             """.format(schema_name=schema_name)
@@ -119,10 +125,12 @@ async def create_league(schema_name: str) -> League:
                 SELECT 
                     {matches}.`match_id` AS `match_id`,
                     {match_races}.`race_number` AS `race_number`,
+                    {match_races}.`race_id` AS `race_id`,
                     `users_winner`.`user_id` AS `winner_id`,
                     `users_loser`.`user_id` AS `loser_id`,
                     `race_runs_winner`.`time` AS `winner_time`,
-                    `race_runs_loser`.`time` AS `loser_time`
+                    `race_runs_loser`.`time` AS `loser_time`,
+                    {races}.`timestamp` AS `timestamp`
                 FROM
                     {matches}
                     JOIN {match_races} ON {matches}.`match_id` = {match_races}.`match_id`
@@ -142,12 +150,15 @@ async def create_league(schema_name: str) -> League:
                     LEFT JOIN {race_runs} `race_runs_loser` ON 
                         `race_runs_loser`.`user_id` = `users_loser`.`user_id`
                         AND `race_runs_loser`.`race_id` = {match_races}.`race_id`
+                    LEFT JOIN {races} ON
+                        {races}.`race_id` = {match_races}.`race_id`
                 WHERE NOT {match_races}.`canceled`
             """.format(
                 matches=tablename('matches'),
                 match_races=tablename('match_races'),
                 race_runs=tablename('race_runs'),
-                race_summary=tablename('race_summary')
+                race_summary=tablename('race_summary'),
+                races=tablename('races')
             )
         )
 
@@ -169,19 +180,24 @@ async def create_league(schema_name: str) -> League:
     )
 
 
-async def get_entrant_ids() -> list:
+async def get_entrant_ids(require_registered=False) -> list:
     """Get NecroUser IDs for all entrants to the league
     
     Returns
     -------
     list[int]
     """
+    where_str = ""
+    if require_registered:
+        where_str = "WHERE `is_registered`"
+
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT `user_id`
             FROM {entrants}
-            """.format(entrants=tn('entrants'))
+            {where_str}
+            """.format(entrants=tn('entrants'), where_str=where_str)
         )
         to_return = []
         for row in cursor:
@@ -395,3 +411,94 @@ async def write_league(league: League) -> None:
             """,
             params
         )
+
+
+async def get_automatches(require_registered=False) -> Dict[int, Rating]:
+    """Get all ratings sorted by displayed rating."""
+    where_str = ""
+    if require_registered:
+        where_str = "WHERE `is_registered`"
+
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT user_id, automatches 
+            FROM {entrants}
+            {where_str}
+            """.format(entrants=tn('entrants'), where_str=where_str)
+        )
+
+        automatches = dict()
+        for row in cursor:
+            automatches[int(row[0])] = int(row[1])
+        return automatches
+
+
+async def get_ratings(require_registered=False) -> Dict[int, Rating]:
+    """Get all ratings sorted by displayed rating."""
+    where_str = ""
+    if require_registered:
+        where_str = "WHERE `is_registered`"
+
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT user_id, rating_mu, rating_sigma 
+            FROM {entrants}
+            {where_str}
+            """.format(entrants=tn('entrants'), where_str=where_str)
+        )
+
+        ratings = dict()
+        for row in cursor:
+            ratings[int(row[0])] = Rating(mu=row[1], sigma=row[2])
+        return ratings
+
+
+async def get_rating(user_id: int) -> Optional[Rating]:
+    async with DBConnect(commit=False) as cursor:
+        params = (user_id,)
+        cursor.execute(
+            """
+            SELECT rating_mu, rating_sigma 
+            FROM {entrants} 
+            WHERE user_id=%s
+            """.format(entrants=tn('entrants')),
+            params
+        )
+
+        row = cursor.fetchone()
+        if row is not None:
+            return Rating(mu=row[0], sigma=row[1])
+
+    # If here, there was no rating
+    return None
+
+
+async def set_rating(user_id: int, rating: Rating) -> None:
+    set_ratings({user_id: rating})
+
+
+async def set_ratings(ratings_dict: Dict[int, Rating]) -> None:
+    if not ratings_dict:
+        return
+
+    params = tuple()
+    param_string = ""
+    for user_id, rating in ratings_dict.items():
+        params += (user_id, float(rating.mu), float(rating.sigma),)
+        param_string += "(%s, %s, %s), "
+    param_string = param_string[:-2]
+
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            INSERT INTO {entrants} 
+                (user_id, rating_mu, rating_sigma) 
+            VALUES 
+                {param_str}
+            ON DUPLICATE KEY UPDATE 
+                rating_mu=VALUES(rating_mu), 
+                rating_sigma=VALUES(rating_sigma)
+            """.format(entrants=tn('entrants'), param_str=param_string),
+            params)

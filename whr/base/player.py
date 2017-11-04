@@ -11,8 +11,8 @@ import numpy.linalg
 import unittest
 from typing import List, Optional, Tuple
 
-import conversions
-from playerday import PlayerDay
+import whr.base.conversions as conversions
+from whr.base.playerday import PlayerDay
 
 
 class Player(object):

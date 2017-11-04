@@ -18,7 +18,8 @@ class League(object):
             league_name: str,
             match_info: MatchInfo,
             gsheet_id: str = None,
-            deadline: str = None
+            deadline: str = None,
+            is_ladder: bool = False
     ):
         self._commit = commit_fn
         self._schema_name = schema_name
@@ -26,6 +27,7 @@ class League(object):
         self.match_info = match_info
         self.gsheet_id = gsheet_id
         self.deadline = deadline
+        self.is_ladder = is_ladder
 
     @property
     def schema_name(self):

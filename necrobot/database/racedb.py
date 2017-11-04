@@ -2,6 +2,7 @@
 Interaction with the races, race_types, and race_runs databases (necrobot or condor event schema).
 """
 
+from typing import List, Tuple
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
 from necrobot.race.race import Race
@@ -249,11 +250,30 @@ async def get_largest_race_number(user_id: int) -> int:
         cursor.execute(
             """
             SELECT race_id 
-            FROM {0} 
+            FROM {race_runs} 
             WHERE user_id = %s 
             ORDER BY race_id DESC 
             LIMIT 1
-            """.format(tn('race_runs')),
+            """.format(race_runs=tn('race_runs')),
             params)
         row = cursor.fetchone()
         return int(row[0]) if row is not None else 0
+
+
+async def get_game_data_for_ratings() -> List[Tuple]:
+    """Return all game data in raw form. Used for the rating algorithm.
+    
+    Returns
+    -------
+    List[Tuple]
+        A list of games in the form (winner_id, loser_id, timestamp)
+    """
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT `winner_id`, `loser_id`, `timestamp`
+            FROM {race_summary}
+            """.format(race_summary=tn('race_summary'))
+        )
+        return cursor.fetchall()
+

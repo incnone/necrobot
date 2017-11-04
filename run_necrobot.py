@@ -8,6 +8,7 @@ from necrobot.stdconfig.pmbotchannel import PMBotChannel
 from necrobot.daily.dailymgr import DailyMgr
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.matchmgr import MatchMgr
+from necrobot.ladder.laddermgr import LadderMgr
 
 from necrobot.botbase import server
 from necrobot.util import console
@@ -41,6 +42,7 @@ async def load_necrobot_config(necrobot):
     necrobot.register_manager(DailyMgr())
     necrobot.register_manager(LeagueMgr())
     necrobot.register_manager(MatchMgr())
+    necrobot.register_manager(LadderMgr())
 
     # # Ratings
     # ratingutil.init()

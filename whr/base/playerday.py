@@ -3,7 +3,7 @@
 https://github.com/goshrine/whole_history_rating/blob/master/lib/whole_history_rating/playerday.rb
 """
 import math
-import conversions
+import whr.base.conversions as conversions
 
 
 class PlayerDay(object):

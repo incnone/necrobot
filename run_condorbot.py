@@ -3,7 +3,6 @@ from necrobot.condor.condoradminchannel import CondorAdminChannel
 from necrobot.condor.condormainchannel import CondorMainChannel
 from necrobot.condor.condormgr import CondorMgr
 from necrobot.condor.condorpmchannel import CondorPMChannel
-from necrobot.ladder import ratingutil
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.matchmgr import MatchMgr
 from necrobot.util import console
@@ -27,9 +26,6 @@ async def load_condorbot_config(necrobot):
     necrobot.register_manager(LeagueMgr())
     necrobot.register_manager(MatchMgr())
     necrobot.register_manager(CondorMgr())
-
-    # Ratings
-    ratingutil.init()
 
 
 if __name__ == "__main__":

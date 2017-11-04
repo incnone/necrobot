@@ -4,8 +4,8 @@ https://github.com/goshrine/whole_history_rating/blob/master/lib/whole_history_r
 """
 
 import math
-from exception import UnstableRatingException
-from player import Player
+from whr.base.exception import UnstableRatingException
+from whr.base.player import Player
 
 
 class Game(object):
