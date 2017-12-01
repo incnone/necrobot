@@ -79,6 +79,8 @@ MATCH_FIRST_WARNING: datetime.timedelta
     The time before match start at which to first ping the racers.
 MATCH_FINAL_WARNING: datetime.timedelta
     The time before match start at which to make the final ping to the racers.
+MATCH_CHANNEL_CATEGORY_NAME: str
+    The channel category name for newly created match channels.
 
 Races
 -----
@@ -136,7 +138,7 @@ class Config(object):
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.10.2'
+    BOT_VERSION = '0.11.0'
     DEBUG_LEVEL = DebugLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
@@ -177,12 +179,14 @@ class Config(object):
     MATCH_AUTOCONTEST_IF_WITHIN_HUNDREDTHS = 500
     MATCH_FIRST_WARNING = datetime.timedelta(minutes=15)
     MATCH_FINAL_WARNING = datetime.timedelta(minutes=5)
+    MATCH_CHANNEL_CATEGORY_NAME = "Race rooms"
 
     # Races -----------------------------------------------------------------------------------
     COUNTDOWN_LENGTH = int(10)
     UNPAUSE_COUNTDOWN_LENGTH = int(3)
     INCREMENTAL_COUNTDOWN_START = int(5)
     FINALIZE_TIME_SEC = int(30)
+    RACE_CHANNEL_CATEGORY_NAME = "Race rooms"
 
     # RaceRooms -------------------------------------------------------------------------------
     CLEANUP_TIME = datetime.timedelta(minutes=3)

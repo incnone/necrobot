@@ -2,7 +2,7 @@ import datetime
 import discord
 import pytz
 
-from necrobot.botbase import server
+from necrobot.botbase import server, discordutil
 from necrobot.database import matchdb, racedb
 from necrobot.util import console, timestr, writechannel, strutil
 
@@ -13,7 +13,7 @@ from necrobot.match.matchinfo import MatchInfo
 from necrobot.match.matchroom import MatchRoom
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.necrouser import NecroUser
-
+from necrobot.config import Config
 
 match_library = {}
 
@@ -268,6 +268,11 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
         if match_channel is None:
             console.warning('Failed to make a match channel.')
             return None
+
+        # Put the match channel in the matches category
+        match_channel_category = server.find_channel(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+        if match_channel_category is not None:
+            await discordutil.set_channel_category(channel=match_channel, category=match_channel_category)
 
     # Make the actual RaceRoom and initialize it
     match.set_channel_id(int(match_channel.id))
