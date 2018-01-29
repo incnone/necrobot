@@ -9,3 +9,4 @@ tmp/
 .idea/necrobot.iml
 ratelimittest.py
 ilp_test.txt
+*.mps

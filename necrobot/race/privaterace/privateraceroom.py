@@ -2,12 +2,13 @@
 
 import discord
 
-from necrobot.botbase import server
+from necrobot.botbase import server, discordutil
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.race.privaterace import permissioninfo, cmd_privaterace
 from necrobot.race.publicrace.raceroom import RaceRoom
 from necrobot.race.raceutil import get_raceroom_name
 from necrobot.util import writechannel
+from necrobot.config import Config
 
 
 # Make a private race with the given RacePrivateInfo; give the given discord_member admin status
@@ -27,13 +28,20 @@ async def make_private_room(race_private_info, discord_member):
         type=discord.ChannelType.text
     )
 
-    if race_channel is not None:
-        new_room = PrivateRaceRoom(
-            race_discord_channel=race_channel,
-            race_private_info=race_private_info,
-            admin_as_member=discord_member)
-        await new_room.initialize()
-        Necrobot().register_bot_channel(race_channel, new_room)
+    if race_channel is None:
+        return None
+
+    # Put the race channel in the races category
+    race_channel_category = server.find_channel(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
+    if race_channel_category is not None:
+        await discordutil.set_channel_category(channel=race_channel, category=race_channel_category)
+
+    new_room = PrivateRaceRoom(
+        race_discord_channel=race_channel,
+        race_private_info=race_private_info,
+        admin_as_member=discord_member)
+    await new_room.initialize()
+    Necrobot().register_bot_channel(race_channel, new_room)
 
     return race_channel
 

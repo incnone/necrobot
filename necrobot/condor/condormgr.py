@@ -7,8 +7,7 @@ from necrobot.gsheet import cmd_sheet
 from necrobot.match import matchutil
 from necrobot.gsheet import sheetlib
 from necrobot.stats import statfn
-from necrobot.user import userlib
-from necrobot.util import strutil
+from necrobot.util import strutil, rtmputil
 
 from necrobot.botbase.manager import Manager
 from necrobot.gsheet.matchupsheet import MatchupSheet
@@ -176,10 +175,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         if cawmentator is not None:
             stream = 'Cawmentary: <http://www.twitch.tv/{0}>'.format(cawmentator.twitch_name)
         else:
-            stream = 'RTMP: <http://rtmp.condorleague.tv/#{0}/{1}>'.format(
-                match.racer_1.rtmp_name,
-                match.racer_2.rtmp_name
-            )
+            stream = 'RTMP: {}'.format(rtmputil.rtmp_link(match.racer_1.rtmp_name, match.racer_2.rtmp_name))
 
         await self._client.send_message(
             self._main_channel,
