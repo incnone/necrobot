@@ -1,7 +1,7 @@
 from necrobot.botbase import cmd_admin
 from necrobot.daily import cmd_daily
 # from necrobot.ladder import cmd_ladder
-from necrobot.stdconfig import cmd_seedgen, cmd_color
+from necrobot.stdconfig import cmd_seedgen, cmd_color, cmd_role
 from necrobot.race import cmd_racemake
 from necrobot.stats import cmd_stats
 from necrobot.user import cmd_user
@@ -31,6 +31,9 @@ class MainBotChannel(BotChannel):
             cmd_racemake.Make(self),
             cmd_racemake.MakeCondor(self),
             cmd_racemake.MakePrivate(self),
+
+            cmd_role.AddCRoWRole(self),
+            cmd_role.RemoveCRoWRole(self),
 
             cmd_seedgen.RandomSeed(self),
 
