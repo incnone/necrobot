@@ -151,6 +151,51 @@ async def create_league(schema_name: str) -> League:
 
         cursor.execute(
             """
+            CREATE VIEW {match_info} AS
+                SELECT
+                    {matches}.`match_id` AS `match_id`,
+                    `ud1`.`rtmp_name` AS `racer_1_name`,
+                    `ud2`.`rtmp_name` AS `racer_2_name`,
+                    {matches}.`is_best_of` AS `is_best_of`,
+                    {matches}.`number_of_races` AS `number_of_races`,
+                    COUNT(0) AS `num_finished`,
+                    SUM((CASE
+                        WHEN ({match_races}.`winner` = 1) THEN 1
+                        ELSE 0
+                    END)) AS `racer_1_wins`,
+                    SUM((CASE
+                        WHEN ({match_races}.`winner` = 2) THEN 1
+                        ELSE 0
+                    END)) AS `racer_2_wins`,
+                    (CASE
+                        WHEN 
+                            {matches}.`is_best_of`
+                        THEN
+                            GREATEST(
+                                SUM(CASE WHEN ({match_races}.`winner` = 1) THEN 1 ELSE 0 END),
+                                SUM(CASE WHEN ({match_races}.`winner` = 2) THEN 1 ELSE 0 END)
+                            ) >= ({matches}.`number_of_races` DIV 2) + 1
+                        ELSE
+                            COUNT(0) >= {matches}.`number_of_races`
+                    END) AS `completed`
+                FROM
+                    {match_races}
+                    JOIN {matches} ON {matches}.`match_id` = {match_races}.`match_id`
+                    JOIN `necrobot`.`users` `ud1` ON {matches}.`racer_1_id` = `ud1`.`user_id`
+                    JOIN `necrobot`.`users` `ud2` ON {matches}.`racer_2_id` = `ud2`.`user_id`
+                WHERE
+                    {match_races}.`canceled` = 0
+                GROUP BY
+                    {match_races}.`match_id`
+            """.format(
+                match_info=tn('match_info'),
+                matches=tn('matches'),
+                match_races=tn('match_races')
+            )
+        )
+
+        cursor.execute(
+            """
             CREATE VIEW {league_info} AS
                 SELECT *
                 FROM `leagues`
