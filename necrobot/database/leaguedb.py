@@ -188,9 +188,9 @@ async def create_league(schema_name: str) -> League:
                 GROUP BY
                     {match_races}.`match_id`
             """.format(
-                match_info=tn('match_info'),
-                matches=tn('matches'),
-                match_races=tn('match_races')
+                match_info=tablename('match_info'),
+                matches=tablename('matches'),
+                match_races=tablename('match_races')
             )
         )
 
@@ -200,7 +200,7 @@ async def create_league(schema_name: str) -> League:
                 SELECT *
                 FROM `leagues`
                 WHERE (`leagues`.`schema_name` = %s)
-            """.format(league_info=tn('league_info')),
+            """.format(league_info=tablename('league_info')),
             params
         )
 
