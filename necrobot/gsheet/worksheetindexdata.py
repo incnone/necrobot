@@ -307,12 +307,11 @@ class WorksheetIndexData(object):
                 values = value_range['values']
                 for row, row_values in enumerate(values):
                     row += 1
-                    if self.header_row is None:
+                    if self.header_row is None and row > 1:
                         for col, cell_value in enumerate(row_values):
                             col += 1
                             if self._make_index(cell_value, col):
                                 self.header_row = row
-                                col_vals.append(col)
 
                 # If we got fewer than the requested number of rows, we've found the footer
                 if len(values) < row_query_max - row_query_min + 1:
