@@ -84,7 +84,7 @@ class VodRecorder(object, metaclass=Singleton):
             cut_idx = vodname.find('live-') + 5
             seconds_since_epoch = int(vodname[cut_idx:-4])
             vodtime = the_epoch + datetime.timedelta(seconds=seconds_since_epoch)
-            return 'https://vod.condor.host/{0}/{0}-vod-{1}%3A{2}.flv'.format(
+            return 'https://condor.live/{0}/{0}-vod-{1}%3A{2}.flv'.format(
                 rtmp_name,
                 vodtime.strftime("%Y-%m-%d_%H"),
                 vodtime.strftime("%M"))
@@ -98,12 +98,12 @@ class VodRecorder(object, metaclass=Singleton):
 
     @staticmethod
     def _start_url(rtmp_name):
-        return 'https://{1}:{2}@vod.condor.host/control/record/start?app={0}&name=live'.format(
+        return 'https://{1}:{2}@condor.live/control/record/start?app={0}&name=live'.format(
             rtmp_name, Config.VODRECORD_USERNAME, Config.VODRECORD_PASSWD)
 
     @staticmethod
     def _end_url(rtmp_name):
-        return 'https://{1}:{2}@vod.condor.host/control/record/stop?app={0}&name=live'.format(
+        return 'https://{1}:{2}@condor.live/control/record/stop?app={0}&name=live'.format(
             rtmp_name, Config.VODRECORD_USERNAME, Config.VODRECORD_PASSWD)
 
     def _start_record_nolock(self, rtmp_name):
