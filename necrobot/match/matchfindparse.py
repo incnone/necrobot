@@ -1,6 +1,7 @@
 """Utility for parsing user-entered strings and finding a corresponding Match"""
 import pytz
 import shlex
+from typing import Optional
 
 import necrobot.exception
 from necrobot.util.parse import dateparse
@@ -11,7 +12,11 @@ from necrobot.user import userlib
 from necrobot.match.match import Match
 
 
-async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
+async def find_match(
+        input_str: str,
+        tz: pytz.timezone = pytz.utc,
+        finished_only: Optional[bool] = None
+) -> Match:
     """Find a match in the league database corresponding to the input args
     
     Parameters
@@ -20,6 +25,8 @@ async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
         A user-input string that we want to use to find a registered match.
     tz: pytz.timezone
         A timezone (used for interpreting dates in the input_str)
+    finished_only: bool
+        If not None, then: If True, only return finished matches; if False, only return unfinished matches
 
     Returns
     -------
@@ -58,7 +65,8 @@ async def find_match(input_str: str, tz: pytz.timezone = pytz.utc) -> Match:
     match_id = await matchdb.get_match_id(
         racer_1_id=racer_1.user_id,
         racer_2_id=racer_2.user_id,
-        scheduled_time=match_date
+        scheduled_time=match_date,
+        finished_only=finished_only
     )
     if match_id is None:
         raise necrobot.exception.NotFoundException(

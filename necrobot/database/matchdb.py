@@ -2,6 +2,7 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 import datetime
+from typing import Optional
 
 from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
@@ -289,7 +290,8 @@ async def get_match_race_data(match_id: int) -> MatchRaceData:
 async def get_match_id(
         racer_1_id: int,
         racer_2_id: int,
-        scheduled_time: datetime.datetime = None
+        scheduled_time: datetime.datetime = None,
+        finished_only: Optional[bool] = None
 ) -> int or None:
     """Attempt to find a match between the two racers
     
@@ -307,6 +309,8 @@ async def get_match_id(
         The user ID of the second racer
     scheduled_time: datetime.datetime or None
         The approximate time to search around, or None to skip this priority
+    finished_only: bool
+        If not None, then: If True, only return matches that have a finish_time; if False, only return matches without
 
     Returns
     -------
@@ -319,6 +323,14 @@ async def get_match_id(
         'time': scheduled_time
     }
 
+    where_str = '(racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
+                'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)'
+    if finished_only is not None:
+        where_str = '({old_str}) AND (finish_time IS {nullstate})'.format(
+            old_str=where_str,
+            nullstate=('NOT NULL' if finished_only else 'NULL')
+        )
+
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
@@ -328,14 +340,13 @@ async def get_match_id(
                 channel_id,
                 ABS(`suggested_time` - '2017-23-04 12:00:00') AS abs_del
             FROM {matches}
-            WHERE 
-                (racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)
+            WHERE {where_str}
             ORDER BY
                 IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
                 `channel_id` IS NULL ASC, 
                 `suggested_time` DESC
             LIMIT 1
-            """.format(matches=tn('matches')),
+            """.format(matches=tn('matches'), where_str=where_str),
             param_dict
         )
         row = cursor.fetchone()

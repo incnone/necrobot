@@ -71,7 +71,7 @@ class Vod(CommandType):
             arg_string += arg + ' '
 
         try:
-            match = await matchfindparse.find_match(arg_string)
+            match = await matchfindparse.find_match(arg_string, finished_only=True)
         except necrobot.exception.NecroException as e:
             await self.client.send_message(
                 cmd.channel,
@@ -715,7 +715,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
 
     # Parse arguments
     try:
-        match = await matchfindparse.find_match(cmd.arg_string)
+        match = await matchfindparse.find_match(cmd.arg_string, finished_only=False)  # Only selects unfinished matches
     except necrobot.exception.NecroException as e:
         await cmd_type.client.send_message(
             cmd.channel,
