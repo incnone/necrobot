@@ -54,8 +54,8 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':
-            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_1.rtmp_name))
-            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_2.rtmp_name))
+            await VodRecorder().start_record(ev.match.racer_1.rtmp_name)
+            await VodRecorder().start_record(ev.match.racer_2.rtmp_name)
 
         elif ev.event_type == 'end_match':
             async def record_score():
@@ -87,13 +87,13 @@ class CondorMgr(Manager, metaclass=Singleton):
                     )
                 )
 
-            asyncio.ensure_future(record_score())
-            asyncio.ensure_future(record_standings())
-            asyncio.ensure_future(send_mainchannel_message())
+            await record_score()
+            await record_standings()
+            await send_mainchannel_message()
 
         elif ev.event_type == 'end_match_race':
-            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_1.rtmp_name))
-            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_2.rtmp_name))
+            await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
+            await VodRecorder().end_record(ev.match.racer_2.rtmp_name)
 
         elif ev.event_type == 'match_alert':
             if ev.final:
