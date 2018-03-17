@@ -498,7 +498,7 @@ async def get_match_gsheet_duplication_number(match: Match) -> int:
                 'sheetrow': match.sheet_row,
             }
         )
-        return cursor.fetchone()
+        return int(cursor.fetchone()[0])
 
 async def _register_match(match: Match) -> None:
     match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)

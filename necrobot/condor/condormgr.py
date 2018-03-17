@@ -59,6 +59,7 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'end_match':
             async def record_score():
+                # noinspection PyShadowingNames
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
                 sheet.record_score(
                     match=ev.match,
