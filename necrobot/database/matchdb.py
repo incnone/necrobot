@@ -456,6 +456,39 @@ async def get_raw_match_data(match_id: int) -> list:
         return cursor.fetchone()
 
 
+async def get_match_gsheet_duplication_number(match: Match) -> int:
+    """
+    Parameters
+    ----------
+    match: Match
+        A Match registered in the database.
+
+    Returns
+    -------
+    int
+        If this Match was created from a GSheet, the number of matches on the same worksheet and with
+        the same racers that appear in rows ahead of this match; otherwise, 0.
+    """
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM {matches}
+            WHERE
+                (racer_1_id = %(r1id)s OR racer_1_id = %(r2id)s)
+                AND (racer_2_id = %(r1id)s OR racer_2_id = %(r2id)s)
+                AND sheet_id = %(sheetid)s
+                AND sheet_row < %(sheetrow)s
+            """.format(matches=tn('matches')),
+            {
+                'r1id': match.racer_1.user_id,
+                'r2id': match.racer_2.user_id,
+                'sheetid': match.sheet_id,
+                'sheetrow': match.sheet_row,
+            }
+        )
+        return cursor.fetchone()
+
 async def _register_match(match: Match) -> None:
     match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)
 

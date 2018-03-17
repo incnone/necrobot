@@ -7,6 +7,7 @@ from necrobot.gsheet.makerequest import make_request
 from necrobot.match import matchutil
 from necrobot.user import userlib
 from necrobot.util import console
+from necrobot.database import matchdb
 
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.spreadsheets import Spreadsheets
@@ -105,6 +106,7 @@ class StandingsSheet(object):
             )
             return None, None, None, None
 
+        match_dupe_number = await matchdb.get_match_gsheet_duplication_number(match)
         async with Spreadsheets() as spreadsheets:
             # Get the column name for this match
             colname = None
@@ -142,16 +144,22 @@ class StandingsSheet(object):
                 gsheet_name = row_values[self.column_data.racer]
                 if match.racer_1.name_regex.match(gsheet_name):
                     r1_row = row
+                    match_dupe_1 = match_dupe_number
                     for col in range(self.column_data.getcol(colname), len(row_values)):
                         if match.racer_2.name_regex.match(row_values[col]):
-                            r1_col = col
-                            break
+                            match_dupe_1 -= 1
+                            if match_dupe_1 < 0:
+                                r1_col = col
+                                break
                 elif match.racer_2.name_regex.match(gsheet_name):
                     r2_row = row
+                    match_dupe_2 = match_dupe_number
                     for col in range(self.column_data.getcol(colname), len(row_values)):
                         if match.racer_1.name_regex.match(row_values[col]):
-                            r2_col = col
-                            break
+                            match_dupe_2 -= 1
+                            if match_dupe_2 < 0:
+                                r2_col = col
+                                break
 
             return r1_row, r1_col, r2_row, r2_col
 
