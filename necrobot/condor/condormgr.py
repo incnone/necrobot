@@ -54,14 +54,14 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':
-            await VodRecorder().start_record(ev.match.racer_1.rtmp_name)
-            await VodRecorder().start_record(ev.match.racer_2.rtmp_name)
+            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_1.rtmp_name))
+            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_2.rtmp_name))
 
         elif ev.event_type == 'end_match':
             async def record_score():
                 # noinspection PyShadowingNames
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
-                sheet.record_score(
+                await sheet.record_score(
                     match=ev.match,
                     winner=ev.winner,
                     winner_wins=ev.winner_wins,
@@ -70,14 +70,14 @@ class CondorMgr(Manager, metaclass=Singleton):
 
             async def record_standings():
                 standings = await self.get_standings_sheet()
-                standings.update_standings(
+                await standings.update_standings(
                     match=ev.match,
                     r1_wins=ev.r1_wins,
                     r2_wins=ev.r2_wins
                 )
 
             async def send_mainchannel_message():
-                server.client.send_message(
+                await server.client.send_message(
                     self._main_channel,
                     'Match complete: **{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
                         r1=ev.match.racer_1.display_name,
@@ -87,13 +87,13 @@ class CondorMgr(Manager, metaclass=Singleton):
                     )
                 )
 
-            await record_score()
-            await record_standings()
-            await send_mainchannel_message()
+            asyncio.ensure_future(record_score())
+            asyncio.ensure_future(record_standings())
+            asyncio.ensure_future(send_mainchannel_message())
 
         elif ev.event_type == 'end_match_race':
-            await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
-            await VodRecorder().end_record(ev.match.racer_2.rtmp_name)
+            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_1.rtmp_name))
+            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_2.rtmp_name))
 
         elif ev.event_type == 'match_alert':
             if ev.final:
