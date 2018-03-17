@@ -54,50 +54,66 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':
-            await VodRecorder().start_record(ev.match.racer_1.rtmp_name)
-            await VodRecorder().start_record(ev.match.racer_2.rtmp_name)
+            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_1.rtmp_name))
+            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_2.rtmp_name))
+
         elif ev.event_type == 'end_match':
-            sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
-            await sheet.record_score(
-                match=ev.match,
-                winner=ev.winner,
-                winner_wins=ev.winner_wins,
-                loser_wins=ev.loser_wins
-            )
-            standings = await self.get_standings_sheet()
-            await standings.update_standings(
-                match=ev.match,
-                r1_wins=ev.r1_wins,
-                r2_wins=ev.r2_wins
-            )
-            await server.client.send_message(
-                self._main_channel,
-                'Match complete: **{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
-                    r1=ev.match.racer_1.display_name,
-                    r2=ev.match.racer_2.display_name,
-                    w1=ev.r1_wins,
-                    w2=ev.r2_wins
+            async def record_score():
+                sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
+                sheet.record_score(
+                    match=ev.match,
+                    winner=ev.winner,
+                    winner_wins=ev.winner_wins,
+                    loser_wins=ev.loser_wins
                 )
-            )
+
+            async def record_standings():
+                standings = await self.get_standings_sheet()
+                standings.update_standings(
+                    match=ev.match,
+                    r1_wins=ev.r1_wins,
+                    r2_wins=ev.r2_wins
+                )
+
+            async def send_mainchannel_message():
+                server.client.send_message(
+                    self._main_channel,
+                    'Match complete: **{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
+                        r1=ev.match.racer_1.display_name,
+                        r2=ev.match.racer_2.display_name,
+                        w1=ev.r1_wins,
+                        w2=ev.r2_wins
+                    )
+                )
+
+            asyncio.ensure_future(record_score())
+            asyncio.ensure_future(record_standings())
+            asyncio.ensure_future(send_mainchannel_message())
+
         elif ev.event_type == 'end_match_race':
-            await VodRecorder().end_record(ev.match.racer_1.rtmp_name)
-            await VodRecorder().end_record(ev.match.racer_2.rtmp_name)
+            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_1.rtmp_name))
+            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_2.rtmp_name))
+
         elif ev.event_type == 'match_alert':
             if ev.final:
                 await self.match_alert(ev.match)
             else:
                 await self.cawmentator_alert(ev.match)
+
         elif ev.event_type == 'notify':
             if self._notifications_channel is not None:
                 await self._client.send_message(self._notifications_channel, ev.message)
+
         elif ev.event_type == 'schedule_match':
             sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
             await sheet.schedule_match(ev.match)
             await self.update_schedule_channel()
+
         elif ev.event_type == 'set_cawmentary':
             if ev.match.sheet_id is not None:
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
                 await sheet.set_cawmentary(match=ev.match)
+
         elif ev.event_type == 'set_vod':
             if ev.match.sheet_id is not None:
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)

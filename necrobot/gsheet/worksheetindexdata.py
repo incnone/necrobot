@@ -307,7 +307,7 @@ class WorksheetIndexData(object):
                 values = value_range['values']
                 for row, row_values in enumerate(values):
                     row += 1
-                    if self.header_row is None and row > 1:
+                    if self.header_row is None and row > 1:     # TODO: The row > 1 restriction is horrible
                         for col, cell_value in enumerate(row_values):
                             col += 1
                             if self._make_index(cell_value, col):

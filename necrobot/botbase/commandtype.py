@@ -89,8 +89,23 @@ class CommandType(object):
                     command.content
                 )
             )
-            await self._do_execute(command)
-            console.info('Exit {0}: <ID={1}>'.format(type(self).__name__, this_id))
+
+            try:
+                await self._do_execute(command)
+                console.info('Exit {0}: <ID={1}>'.format(type(self).__name__, this_id))
+            except Exception as e:
+                console.warning(
+                    'Error exiting {name} <ID={id}>: {error_msg}'.format(
+                        name=type(self).__name__,
+                        id=this_id,
+                        error_msg=repr(e)
+                    )
+                )
+                asyncio.ensure_future(self.client.send_message(
+                    command.channel,
+                    "Unexpected error while executing command `{mention}`.".format(mention=self.mention)
+                ))
+                raise
 
     async def reparse_as(self, new_name: str, command: Command) -> None:
         """Make the bot channel re-execute the given Command with a different command name
