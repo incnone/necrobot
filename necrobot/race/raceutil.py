@@ -40,7 +40,10 @@ async def make_room(race_info):
     for member_id in await userdb.get_all_discord_ids_matching_prefs(alert_pref):
         member = server.find_member(discord_id=member_id)
         if member is not None:
-            await server.client.send_message(member, alert_string)
+            try:
+                await server.client.send_message(member, alert_string)
+            except discord.errors.Forbidden:
+                continue
 
     return race_channel
 
