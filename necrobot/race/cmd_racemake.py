@@ -15,7 +15,7 @@ class Make(CommandType):
             '`charname`: Set the default match character.\n' \
             '`u | s | seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
             '`nodlc`: Matches are marked as being without the Amplified DLC.\n' \
-            '`--custom "desc"`: Give the matches a custom description.'
+            '`custom "desc"`: Give the matches a custom description.'
 
     async def _do_execute(self, cmd):
         try:
