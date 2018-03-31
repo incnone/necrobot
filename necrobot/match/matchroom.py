@@ -347,7 +347,9 @@ class MatchRoom(BotChannel):
         if self.current_race is not None and not self.current_race.complete:
             await self.current_race.cancel()
 
-        await self._begin_new_race()
+        # Only directly call begin_new_race if cancelling the old one did not begin a new one already
+        if self.current_race is None or self.current_race.complete:
+            await self._begin_new_race()
 
     async def cancel_race(self, race_number: int) -> bool:
         """Mark a race as canceled
