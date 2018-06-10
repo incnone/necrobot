@@ -19,6 +19,7 @@ class NDChar(Enum):
     Multichar = 14
     Tempo = 15
     Mary = 16
+    Reaper = 17
 
     def __str__(self):
         return self.name
