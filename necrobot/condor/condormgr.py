@@ -192,7 +192,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         if cawmentator is not None:
             stream = 'Cawmentary: <http://www.twitch.tv/{0}>'.format(cawmentator.twitch_name)
         else:
-            stream = 'RTMP: {}'.format(rtmputil.rtmp_link(match.racer_1.rtmp_name, match.racer_2.rtmp_name))
+            stream = 'RTMP: {}'.format(rtmputil.rtmp_link(match.racer_1.twitch_name, match.racer_2.twitch_name))
 
         await self._client.send_message(
             self._main_channel,
