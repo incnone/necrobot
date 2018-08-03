@@ -328,9 +328,12 @@ async def get_nextrace_displaytext(match_list: list) -> str:
         if match_cawmentator is not None:
             display_text += '    Cawmentary: <http://www.twitch.tv/{0}> \n'.format(match_cawmentator.twitch_name)
         elif match.racer_1.twitch_name is not None and match.racer_2.twitch_name is not None:
-            display_text += '    RTMP: {} \n'.format(
-                rtmputil.rtmp_link(match.racer_1.twitch_name, match.racer_2.twitch_name)
+            display_text += '    Kadgar: {} \n'.format(
+                rtmputil.kadgar_link(match.racer_1.kadgar_name, match.racer_2.kadgar_name)
             )
+            # display_text += '    RTMP: {} \n'.format(
+            #     rtmputil.rtmp_link(match.racer_1.rtmp_name, match.racer_2.rtmp_name)
+            # )
 
     display_text += '\nFull schedule: <https://condor.host/schedule>'
 
