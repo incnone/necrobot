@@ -5,6 +5,7 @@ Current version: 0.10
 ## Bugfixes 
 
 - Fix issues related to mass canceling of match countdowns
+- Discord category limit is 50, so implement proper workaround when making >50 race rooms
 
 ## Features
 
