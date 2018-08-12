@@ -95,9 +95,9 @@ class NecroUser(object):
     @property
     def display_name(self) -> str:
         if self.discord_name is not None:
-            return self.rtmp_name
-        elif self.rtmp_name is not None:
             return self.discord_name
+        elif self.rtmp_name is not None:
+            return self.rtmp_name
         elif self.twitch_name is not None:
             return self.twitch_name
         else:
