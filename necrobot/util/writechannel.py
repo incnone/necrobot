@@ -9,6 +9,7 @@ async def write_channel(client, channel, outfile_name):
     async for message in client.logs_from(channel, 5000):
         messages.insert(0, message)
 
+    outfile_name = outfile_name.encode('utf-8').decode('ascii', 'replace')
     pathname = os.path.join(Config.LOG_DIRECTORY, '{0}.log'.format(outfile_name))
     outfile = codecs.open(pathname, 'w', 'utf-8')
     for message in messages:
