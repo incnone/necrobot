@@ -208,11 +208,11 @@ class PushMatchToSheet(CommandType):
         if played_all:
             # Send event
             if match_race_data.r1_wins > match_race_data.r2_wins:
-                winner = match.racer_1.display_name
+                winner = match.racer_1.gsheet_name
                 winner_wins = match_race_data.r1_wins
                 loser_wins = match_race_data.r2_wins
             elif match_race_data.r2_wins > match_race_data.r1_wins:
-                winner = match.racer_2.display_name
+                winner = match.racer_2.gsheet_name
                 winner_wins = match_race_data.r2_wins
                 loser_wins = match_race_data.r1_wins
             else:

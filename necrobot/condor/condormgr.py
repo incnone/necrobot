@@ -63,7 +63,7 @@ class CondorMgr(Manager, metaclass=Singleton):
                 sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
                 await sheet.record_score(
                     match=ev.match,
-                    winner=ev.winner,
+                    winner=ev.winner.gsheet_name,
                     winner_wins=ev.winner_wins,
                     loser_wins=ev.loser_wins
                 )

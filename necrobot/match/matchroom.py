@@ -454,11 +454,11 @@ class MatchRoom(BotChannel):
 
         # Send event
         if self._match_race_data.r1_wins > self._match_race_data.r2_wins:
-            winner = self.match.racer_1.display_name
+            winner = self.match.racer_1
             winner_wins = self._match_race_data.r1_wins
             loser_wins = self._match_race_data.r2_wins
         elif self._match_race_data.r2_wins > self._match_race_data.r1_wins:
-            winner = self.match.racer_2.display_name
+            winner = self.match.racer_2
             winner_wins = self._match_race_data.r2_wins
             loser_wins = self._match_race_data.r1_wins
         else:

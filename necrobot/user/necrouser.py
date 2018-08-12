@@ -104,6 +104,10 @@ class NecroUser(object):
             return '<NecroUser with ID {}>'.format(self.user_id)
 
     @property
+    def gsheet_name(self):
+        return self.twitch_name
+
+    @property
     def member(self) -> discord.Member or None:
         return self.discord_member
 

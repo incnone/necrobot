@@ -47,7 +47,7 @@ class TestMatch(TestCommandType):
         match = self.bot_channel.match
         racer_1 = match.racer_1.member
         racer_2 = match.racer_2.member
-        admin = server.find_admin(ignore=[racer_1.display_name, racer_2.display_name])
+        admin = server.find_admin(ignore=[racer_1.discord_name, racer_2.discord_name])
         if racer_1 is None or racer_2 is None or admin is None:
             await self.client.send_message(
                 cmd.channel,
