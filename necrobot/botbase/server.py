@@ -43,7 +43,7 @@ def find_channel(channel_name: str = None, channel_id: Union[str, int] = None) -
                 return channel
     elif channel_name is not None:
         for channel in server.channels:
-            if channel.name == channel_name:
+            if channel.name.lower() == channel_name.lower():
                 return channel
     return None
 
