@@ -522,7 +522,7 @@ class ForceNewRace(CommandType):
 class ForceRecordRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'recordrace', 'forcerecordrace')
-        self.help_text = '`{0} winner`: Manually record a race with `winner` as the winner.'
+        self.help_text = '`{0} winner`: Manually record a race with `winner` as the winner.'.format(self.mention)
         self.admin_only = True
 
     async def _do_execute(self, cmd):

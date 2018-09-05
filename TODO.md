@@ -17,6 +17,7 @@ Current version: 0.10
 - Output text in channel on command throwing error if possiblehanks 
 - Remove commentator on match reschedule?
 - PM people who want it if there are uncawmentated races starting in 15 mins?
+- Give the bot a command to set up a GSheet from blank
 
 ## Automatching
 
