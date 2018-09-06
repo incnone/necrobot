@@ -1,7 +1,7 @@
 import asyncio
 import discord
 
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.util import console
 
 from necrobot.botbase.command import Command

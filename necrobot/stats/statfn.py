@@ -1,11 +1,13 @@
 import math
+import textwrap
 
-from necrobot.database import matchdb, racedb
-from necrobot.util import console, racetime
-
+from necrobot.match import matchdb
 from necrobot.stats.leaguestats import LeagueStats
-from necrobot.util.character import NDChar
+from necrobot.user.necrouser import NecroUser
+from necrobot.util import console, racetime
+from necrobot.util.necrodancer.character import NDChar
 from necrobot.util.singleton import Singleton
+from necrobot.race import racedb
 
 
 class CharacterStats(object):
@@ -231,4 +233,28 @@ async def get_league_stats(user_id: int) -> LeagueStats:
         best=stats[1],
         average=stats[2],
         losses=stats[3]
+    )
+
+
+async def get_big_infotext(user: NecroUser, stats: LeagueStats) -> str:
+    return textwrap.dedent(
+        """
+        {discord_name} ({userinfo})
+               RTMP: {rtmp_name}
+             Twitch: {twitch_name}
+           Timezone: {timezone}
+             Record: {wins}-{losses}
+           Best win: {best_win}
+           Avg. win: {avg_win}
+        """.format(
+            discord_name=user.discord_name,
+            userinfo=user.user_info,
+            rtmp_name=user.rtmp_name,
+            twitch_name=user.twitch_name,
+            timezone=user.timezone,
+            wins=stats.wins,
+            losses=stats.losses,
+            best_win=stats.best_win_str,
+            avg_win=stats.avg_win_str
+        )
     )

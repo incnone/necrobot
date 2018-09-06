@@ -1,6 +1,6 @@
+from necrobot.botbase import cmd_seedgen
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.ladder import cmd_ladder
-from necrobot.stdconfig import cmd_seedgen
 from necrobot.stats import cmd_stats
 from necrobot.user import cmd_user
 

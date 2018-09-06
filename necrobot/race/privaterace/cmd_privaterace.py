@@ -1,4 +1,4 @@
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.botbase.commandtype import CommandType
 
 

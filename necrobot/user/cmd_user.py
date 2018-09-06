@@ -1,12 +1,10 @@
+import mysql.connector
 import pytz
 
-import mysql.connector
-
-from necrobot.user import userlib
-
+from necrobot.botbase.necroevent import NEDispatch
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
-from necrobot.necroevent.necroevent import NEDispatch
+from necrobot.user import userlib
 from necrobot.user.necrouser import NecroUser
 from necrobot.user.userprefs import UserPrefs
 

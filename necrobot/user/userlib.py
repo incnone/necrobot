@@ -7,12 +7,11 @@ by user ID, of checked out users.
 """
 
 import necrobot.exception
-from necrobot.botbase import server
-from necrobot.database import userdb
-from necrobot.util import console
-
 from necrobot.user.necrouser import NecroUser
 from necrobot.user.userprefs import UserPrefs
+from necrobot.util import console
+from necrobot.util import server
+from necrobot.user import userdb
 
 # Libraries of checked out users
 user_library_by_uid = {}

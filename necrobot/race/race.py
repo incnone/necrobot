@@ -4,19 +4,22 @@
 
 import asyncio
 import datetime
-import discord
 import time
 from enum import IntEnum, Enum
 
-import necrobot.util.level
-from necrobot.util import console, seedgen, racetime
-from necrobot.util.ordinal import ordinal
-# from necrobot.util import ratelimit
+import discord
 
+import util.necrodancer.level
+from necrobot.config import Config
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.race.racer import Racer
-from necrobot.config import Config
+from necrobot.util import console, racetime
+from necrobot.util.ordinal import ordinal
+from necrobot.util.necrodancer import seedgen
+
+
+# from necrobot.util import ratelimit
 
 # CHECK_RATE_LIMITS = False
 
@@ -539,7 +542,7 @@ class Race(object):
 
         await self._do_forfeit_racer(racer)
         await self._write(mute=mute, text='{0} has forfeit the race.'.format(racer_member.mention))
-        if not level == necrobot.util.level.LEVEL_NOS:
+        if not level == util.necrodancer.level.LEVEL_NOS:
             racer.level = level
         await self._process(RaceEvent.EventType.RACER_FORFEIT, racer_member=racer_member)
 

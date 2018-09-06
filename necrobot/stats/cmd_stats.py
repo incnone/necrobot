@@ -1,10 +1,9 @@
+from necrobot.botbase.commandtype import CommandType
 from necrobot.stats import statfn
 from necrobot.user import userlib
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.util import strutil
-
-from necrobot.botbase.commandtype import CommandType
-from necrobot.util.character import NDChar
+from necrobot.util.necrodancer.character import NDChar
 
 
 # class Matchup(CommandType):

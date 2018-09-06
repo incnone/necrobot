@@ -2,8 +2,8 @@
 Interaction with the necrobot.dailies and necrobot.daily_runs tables.
 """
 
+import util.necrodancer.level
 from necrobot.database.dbconnect import DBConnect
-import necrobot.util.level
 
 
 async def get_daily_seed(daily_id, daily_type):
@@ -60,7 +60,7 @@ async def has_registered_daily(user_id, daily_id, daily_type):
         return cursor.fetchone() is not None
 
 
-async def register_daily(user_id, daily_id, daily_type, level=necrobot.util.level.LEVEL_NOS, time=-1):
+async def register_daily(user_id, daily_id, daily_type, level=util.necrodancer.level.LEVEL_NOS, time=-1):
     async with DBConnect(commit=True) as cursor:
         params = (user_id, daily_id, daily_type, level, time,)
         cursor.execute(

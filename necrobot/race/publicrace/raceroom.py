@@ -2,21 +2,20 @@
 
 import asyncio
 import datetime
+
 import discord
-
-from necrobot.botbase import server
-from necrobot.race import cmd_race
-from necrobot.race.publicrace import cmd_publicrace
-from necrobot.test import cmd_test
-
-from necrobot.database import racedb
-from necrobot.race import raceinfo
-from necrobot.util import strutil
 
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.config import Config
+from necrobot.race import cmd_race
+from necrobot.race import raceinfo
+from necrobot.race.publicrace import cmd_publicrace
 from necrobot.race.race import Race, RaceEvent
+from necrobot.test import cmd_test
+from necrobot.util import server
+from necrobot.util import strutil
+from necrobot.race import racedb
 
 
 class RaceRoom(BotChannel):

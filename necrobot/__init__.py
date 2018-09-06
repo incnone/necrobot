@@ -1,12 +1,25 @@
 """
+Dependency Tree
+---------------
+util
+    botbase
+    database
+        user
+            race
+    vodrecord
+    
+
 Modules
 -------
 config
     Global bot configuration.
+exception
+    Definition of some custom exception classes.
 logon
     Discord logon.
 
-Submodule summary
+
+Package summary
 -----------------
 automatch
     Algorithms for automatic matchmaking.

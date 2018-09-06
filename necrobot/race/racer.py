@@ -1,10 +1,10 @@
 import discord
 
-from necrobot.user import userlib
-from necrobot.util import level, racetime
-
-from necrobot.user.necrouser import NecroUser
 from necrobot.race.racerstatus import RacerStatus
+from necrobot.user import userlib
+from necrobot.user.necrouser import NecroUser
+from necrobot.util import racetime
+from necrobot.util.necrodancer import level
 
 FIELD_UNKNOWN = int(-1)
 

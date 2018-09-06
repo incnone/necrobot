@@ -3,7 +3,7 @@ import sys
 import unittest
 
 import run_condorbot
-from necrobot.botbase import server
+from necrobot.util import server
 
 from necrobot.condor.condoradminchannel import CondorAdminChannel
 from necrobot.daily.dailymgr import DailyMgr

@@ -4,16 +4,14 @@ import typing
 import unittest
 
 from necrobot.gsheet.makerequest import make_request
-from necrobot.match import matchutil
-from necrobot.user import userlib
-from necrobot.util import console
-from necrobot.database import matchdb
-
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.spreadsheets import Spreadsheets
+from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
+from necrobot.match import matchdb, matchutil
 from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
-from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
+from necrobot.user import userlib
+from necrobot.util import console
 
 
 class StandingsSheetIndexData(WorksheetIndexData):

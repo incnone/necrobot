@@ -1,11 +1,12 @@
+"""
+Represents a discord channel on which the bot can read commands. Holds a list of commands the bot will respond to on
+this channel.
+"""
+
 import discord
 
 from necrobot.botbase import cmd_all
-from necrobot.botbase import server
-
-
-# Represents a discord channel on which the bot can read commands. Holds a list of commands the bot will respond to on
-# this channel.
+from necrobot.util import server
 
 
 class BotChannel(object):

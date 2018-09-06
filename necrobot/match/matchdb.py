@@ -4,11 +4,11 @@ Interaction with matches and match_races tables (in the necrobot schema, or a co
 import datetime
 from typing import Optional
 
-from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
+from necrobot.race import racedb
 
 
 async def record_match_race(

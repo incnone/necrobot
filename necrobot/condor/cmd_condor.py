@@ -1,8 +1,7 @@
-from necrobot.botbase import server
-
-from necrobot.botbase.commandtype import CommandType
 # from necrobot.condor.condormgr import CondorMgr
-from necrobot.necroevent.necroevent import NEDispatch
+from necrobot.botbase.necroevent import NEDispatch
+from necrobot.botbase.commandtype import CommandType
+from necrobot.util import server
 
 
 class StaffAlert(CommandType):

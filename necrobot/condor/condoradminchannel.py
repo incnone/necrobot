@@ -1,8 +1,8 @@
-from necrobot.league import cmd_league
-from necrobot.gsheet import cmd_sheet
-from necrobot.stdconfig import cmd_seedgen
-from necrobot.user import cmd_user
+from necrobot.botbase import cmd_seedgen
 from necrobot.botbase.botchannel import BotChannel
+from necrobot.gsheet import cmd_sheet
+from necrobot.league import cmd_league
+from necrobot.user import cmd_user
 
 
 class CondorAdminChannel(BotChannel):

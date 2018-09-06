@@ -2,31 +2,31 @@
 
 import asyncio
 import datetime
-import discord
-import pytz
 import typing
 
-from necrobot.botbase import server
-from necrobot.util import console
-from necrobot.util import ordinal
-from necrobot.util import timestr
+import discord
+import pytz
 
-from necrobot.race import cmd_race
-from necrobot.match import cmd_match
-from necrobot.test import cmd_test
-from necrobot.user import cmd_user
-
-from necrobot.database import ratingsdb, matchdb, racedb
-from necrobot.ladder import ratingutil
-from necrobot.race import raceinfo
-
+from necrobot.botbase.necroevent import NEDispatch
+from necrobot.ladder import ratingsdb
+from necrobot.match import matchdb
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.config import Config
+from necrobot.ladder import ratingutil
+from necrobot.match import cmd_match
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
-from necrobot.necroevent.necroevent import NEDispatch
-from necrobot.race.raceconfig import RaceConfig
+from necrobot.race import cmd_race
+from necrobot.race import raceinfo
 from necrobot.race.race import Race, RaceEvent
+from necrobot.race.raceconfig import RaceConfig
+from necrobot.test import cmd_test
+from necrobot.user import cmd_user
+from necrobot.util import console
+from necrobot.util import ordinal
+from necrobot.util import server
+from necrobot.util import timestr
+from necrobot.race import racedb
 
 
 class MatchRoom(BotChannel):

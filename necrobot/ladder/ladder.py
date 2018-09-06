@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import pytz
-from necrobot.botbase import server
+from necrobot.util import server
 
 
 DO_AUTOMATCHING = False

@@ -8,9 +8,9 @@
 #     - write is only required for Time
 
 import necrobot.exception
-from necrobot.util import level, racetime
-
 from necrobot.botbase.commandtype import CommandType
+from necrobot.util import racetime
+from necrobot.util.necrodancer import level
 
 
 class Enter(CommandType):

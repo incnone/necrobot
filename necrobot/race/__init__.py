@@ -4,6 +4,17 @@ in tandem. Typically the goal is to finish a specific task (e.g. the game) as fa
 for less time-based taskes (such as score runs), which will likely use much of the code in this module. At the end of
 a race the racers are ranked in some fashion and their results recorded to the necrobot's MySQL database.
 
+
+Package Requirements
+--------------------
+botbase
+database
+util
+user
+
+
+Module Overview
+---------------
 `race`.`Race` is the class representing the race itself. Information about `Race` objects is recorded to the databse 
 when races are finalized, to the table `races`, but there is not a 1-1 correspondence with database information (unlike 
 in the case of `Match`, `League`, and `NecroUser`). A `Race` object is run under the auspice of some `parent`, passed 
@@ -32,4 +43,80 @@ and recording, whether to auto-forfeit the last racer when all others have finis
 format).
 
 `cmd_race` and `cmd_racemake` have typical race-related commands.
+
+
+Dependencies
+------------
+cmd_race
+    exception
+    botbase/
+        commandtype
+    util/
+        racetime
+        necrodancer/
+            level
+cmd_racemake
+    exception
+    botbase/
+        commandtype
+    race/
+        raceinfo
+        raceutil
+        privaterace/
+            privateraceinfo
+            privateraceroom
+race
+    config
+    race/
+        raceconfig
+        raceinfo
+        racer
+    util/
+        console
+        racetime
+        ordinal
+        necrodancer/
+            level
+            seedgen
+raceconfig
+    config
+racedb
+    database/
+        dbconnect
+        dbutil
+    race/
+        race
+        raceinfo
+raceinfo
+    exception
+    util/
+        parse/
+            matchparse
+        necrodancer/
+            seedgen
+            character
+racer
+    race/
+        racerstatus
+    user/
+        userlib
+        necrouser
+    util/
+        racetime
+        necrodancer/
+            level
+racerstatus
+raceutil
+    config
+    botbase/
+        necrobot
+    race/
+        publicrace/
+            raceroom
+    user/
+        userdb
+        userprefs
+    util/
+        console
+        server
 """

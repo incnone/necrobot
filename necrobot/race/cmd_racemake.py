@@ -1,5 +1,5 @@
 import necrobot.exception
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.race import raceinfo, raceutil
 from necrobot.race.privaterace import privateraceinfo, privateraceroom
 

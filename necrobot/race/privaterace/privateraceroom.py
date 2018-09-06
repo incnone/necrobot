@@ -2,7 +2,7 @@
 
 import discord
 
-from necrobot.botbase import server, discordutil
+from necrobot.util import server
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.race.privaterace import permissioninfo, cmd_privaterace
 from necrobot.race.publicrace.raceroom import RaceRoom
@@ -34,7 +34,7 @@ async def make_private_room(race_private_info, discord_member):
     # Put the race channel in the races category
     race_channel_category = server.find_channel(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
     if race_channel_category is not None:
-        await discordutil.set_channel_category(channel=race_channel, category=race_channel_category)
+        await server.set_channel_category(channel=race_channel, category=race_channel_category)
 
     new_room = PrivateRaceRoom(
         race_discord_channel=race_channel,

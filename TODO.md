@@ -2,65 +2,55 @@
 
 Current version: 0.10
 
-## Bugfixes 
+## Current TODO
 
-- Fix issues related to mass canceling of match countdowns
+### General
+- Replace NoneType returns with exceptions where appropriate
+- Output text in channel when a command throws an error (if possible)
+- Fix frequent caching errors
+- Better handling of rate-limiting issues on countdown (fix delay before 'Go!' text)
+
+### Dependencies
+- Split race/match stats dependencies into appropriate packages 
+- Remove `gsheet`, `league`, and `ladder` dependencies from `match`
+- Remove `stats` dependency from `ladder` (perhaps split into a "ratings" and "ladder" package?)
+- Clarify `league` dependency in `ladder`?
+
+### League
 - Discord category limit is 50, so implement proper workaround when making >50 race rooms
 
-## Features
-
-- Make bot say races awaiting review in match score announcement when contested races
-- Separate table to support putting co-commentators in database
-- ~~Restrict commentary to scheduled matches~~
-- Notify in race rooms when match is cup vs regular (s6 only)
-- ~~Write the time of match finish to the database~~
-- Output text in channel on command throwing error if possiblehanks 
-- Remove commentator on match reschedule?
-- PM people who want it if there are uncawmentated races starting in 15 mins?
+### GSheet
 - Give the bot a command to set up a GSheet from blank
+- Tag input with match ID on creation, so we don't depend on row/sheetID for identification
+- Better standings update code
 
-## Automatching
-
-- Auto-register users on match creation
-
-## Ladderbot and Leagues
-
-- Lots of things here
-- Better rankings display
-- Add match entrants to the `entrants` table in a league database
-
-## Refactor
-
-- `util.level.py` and `util.racetime.py` might work better as classes
-- Replace NoneType returns with exceptions where appropriate
-- Gather argument parsing code
-
-### Cleaner lib classes
-
+### Match
+- Make bot say races awaiting review in match score announcement when contested races
+- Remove or notify commentator on match reschedule
 - combine MatchRaceData and Match in a friendly way
-- better standings update code
+
+### User
+- Configuration of `.racealert` for character-specific, etc
+
+### Util
+- `util.level.py` and `util.racetime.py` might work better as classes, when wanting to generalize to other games
+
+### Parsing
+- More consistent/flexible command-line syntax
+- Better public-facing command-line documentation (i.e. `.help` command)
+- Deal with duplicated Discord names in commands like `.add` (allow for discriminator)
+- More friendly parsing of spaces in command arguments
 
 ### Testing
-
 - Make more small/unit tests (may wish to use a mock DB and/or a mock discord client)
 
 ## Bugs
-
 - `.d 2-3` responds with '<player> has forfeit the race' twice
-- `.register-condor-event` should set correct views and so on
+- `.register-condor-event` should do more to set up convenient views in database
 - Necrobot and Condorbot should not attempt to write to the same log file
-- Cyber listed twice on `.fastest` (because times are identical)
-
-### QoL UI Improvements
-
-- Fix help text for `.make` and allow `--` prepended to command keywords
-- Deal with duplicated Discord names in commands like `.add` (allow for discriminator)
-- Deal with database out-of-date names in commands like `.add`
-- Better timezone parsing
-- More friendly parsing of spaces in command arguments
+- Fix identical times causing a racer to be listed twice on `.fastest`
 
 ### Unclear issues
-
 - `.forcecancel` doesn't seem to work as intended; racerooms can get stuck
 - Various issues with raceroom topic not updating properly (e.g. on .r without .e)
 - `.forcecancel` is kind of unintuitive when input pre-race, since it's not clear if you want to cancel the race
@@ -75,11 +65,8 @@ just finished or the race that people are currently entering. It maybe also does
     raise InvalidArgument('target parameter must be either Member or Role')
 - Ri's timezone was getting read as none by bot but correctly used
 
-## Features
+## Possible features (no concrete plans to implement these)
 
-- Configuration of `.racealert` for character-specific, etc
-- Add more complicated sorts to `.mostraces`
-- Add `.forceunready` command
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
 
 ### Different race modes

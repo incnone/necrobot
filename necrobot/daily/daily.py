@@ -1,20 +1,22 @@
 import asyncio
 import datetime
-import discord
 from enum import Enum
 
-from necrobot.botbase import server
-from necrobot.database import dailydb, userdb
-from necrobot.daily import dailytype
-from necrobot.util import level, seedgen, racetime
-from necrobot.user import userlib
-from necrobot.util import strutil
+import discord
 
-from necrobot.config import Config
-from necrobot.daily.dailytype import DailyType
+from necrobot.daily import dailydb
 from necrobot.botbase.necrobot import Necrobot
+from necrobot.config import Config
+from necrobot.daily import dailytype
+from necrobot.daily.dailytype import DailyType
+from necrobot.user import userlib
 from necrobot.user.userprefs import UserPrefs
+from necrobot.util import racetime
+from necrobot.util import server
+from necrobot.util import strutil
 from necrobot.util import timestr
+from necrobot.user import userdb
+from necrobot.util.necrodancer import level, seedgen
 
 DATE_ZERO = datetime.date(2016, 1, 1)
 

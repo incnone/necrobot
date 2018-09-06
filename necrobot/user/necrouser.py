@@ -2,14 +2,10 @@ import asyncio
 import discord
 import pytz
 import re
-import textwrap
 import unittest
 from typing import Callable
 
-from necrobot.botbase import server
-from necrobot.stats.leaguestats import LeagueStats
-from necrobot.util import console, strutil
-
+from necrobot.util import console, server, strutil
 from necrobot.user.userprefs import UserPrefs
 
 
@@ -247,30 +243,6 @@ class NecroUser(object):
 
         if changed_any and commit:
             asyncio.ensure_future(self.commit())
-
-    async def get_big_infotext(self, stats: LeagueStats) -> str:
-        return textwrap.dedent(
-            """
-            {discord_name} ({userinfo})
-                   RTMP: {rtmp_name}
-                 Twitch: {twitch_name}
-               Timezone: {timezone}
-                 Record: {wins}-{losses}
-               Best win: {best_win}
-               Avg. win: {avg_win}
-            """
-            .format(
-                discord_name=self.discord_name,
-                userinfo=self.user_info,
-                rtmp_name=self.rtmp_name,
-                twitch_name=self.twitch_name,
-                timezone=self.timezone,
-                wins=stats.wins,
-                losses=stats.losses,
-                best_win=stats.best_win_str,
-                avg_win=stats.avg_win_str
-            )
-        )
 
 
 class TestNecroUser(unittest.TestCase):

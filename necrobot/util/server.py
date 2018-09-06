@@ -1,4 +1,10 @@
+"""
+Module containing global server information for discord. Acts as a very small encapsulation layer between the bot and
+discord.py.
+"""
+
 import discord
+import discord.http
 from typing import List, Optional, Union
 from necrobot.config import Config
 
@@ -96,3 +102,10 @@ def is_admin(user: discord.User) -> bool:
         if role in admin_roles:
             return True
     return False
+
+
+async def set_channel_category(channel: discord.Channel, category: discord.Channel):
+    await client.http.request(
+        discord.http.Route('PATCH', '/channels/{channel_id}', channel_id=channel.id),
+        json={'parent_id': category.id}
+    )

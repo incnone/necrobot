@@ -1,0 +1,88 @@
+"""
+Encapsulation layer for interacting with Google Sheets.
+
+Package Requirements
+--------------------
+googleapiclient
+league
+    botbase
+    match
+    user
+    util
+
+
+Local Dependencies
+------------------
+cmd_sheet
+    botbase/
+        command
+        commandtype
+    gsheet/
+        sheetlib
+        sheetutil
+        matchupsheet
+        standingssheet
+    league/
+        leaguemgr
+    match/
+        match
+        matchutil
+        matchracedata
+makerequest
+    util/
+        backoff
+matchgsheetinfo
+matchupsheet
+    exception
+    gsheet/
+        matchgsheetinfo
+        spreadsheets
+        worksheetindexdata
+    match/
+        match
+        matchinfo
+        matchutil
+    user/
+        userlib
+        console
+sheetcell
+    gsheet/
+        sheetutil
+sheetlib
+    exception
+    gsheet/
+        matchupsheet
+        standingssheet
+sheetrange
+    gsheet/
+        sheetutil
+sheetutil
+    exception
+    gsheet/
+        makerequest
+        spreadsheets
+spreadsheets
+    config
+standingssheet
+    gsheet/
+        makerequest
+        matchgsheetinfo
+        spreadsheets
+        worksheetindexdata
+    match/
+        matchdb
+        matchutil
+        match
+        matchinfo
+    user/
+        userlib
+    util/
+        console
+worksheetindexdata
+    exception
+    gsheet/
+        makerequest
+        sheetcell
+        sheetrange
+        spreadsheets
+"""

@@ -1,0 +1,3 @@
+"""
+NecroDancer-specific classes.
+"""

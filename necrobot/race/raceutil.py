@@ -1,12 +1,12 @@
 import discord
 
-from necrobot.botbase import server, discordutil
-from necrobot.database import userdb
-from necrobot.util import console
 from necrobot.botbase.necrobot import Necrobot
+from necrobot.config import Config
 from necrobot.race.publicrace.raceroom import RaceRoom
 from necrobot.user.userprefs import UserPrefs
-from necrobot.config import Config
+from necrobot.util import console
+from necrobot.util import server
+from necrobot.user import userdb
 
 
 # Make a room with the given RaceInfo
@@ -24,7 +24,7 @@ async def make_room(race_info):
     # Put the race channel in the races category
     race_channel_category = server.find_channel(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
     if race_channel_category is not None:
-        await discordutil.set_channel_category(channel=race_channel, category=race_channel_category)
+        await server.set_channel_category(channel=race_channel, category=race_channel_category)
 
     # Make the actual RaceRoom and initialize it
     new_room = RaceRoom(race_discord_channel=race_channel, race_info=race_info)

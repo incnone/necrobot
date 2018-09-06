@@ -1,5 +1,5 @@
 from necrobot.botbase.commandtype import CommandType
-from necrobot.util import seedgen
+from necrobot.util.necrodancer import seedgen
 
 MAX_NUM_SEEDS_TO_GENERATE = 20
 

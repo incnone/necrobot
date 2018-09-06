@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import pytz
 import shlex
-import string
 import unittest
 
 import necrobot.exception
@@ -14,7 +13,6 @@ from necrobot.util import console
 from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.match.match import Match
-from necrobot.match.matchinfo import MatchInfo
 from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 
 

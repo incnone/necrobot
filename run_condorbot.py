@@ -1,4 +1,4 @@
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.condor.condoradminchannel import CondorAdminChannel
 from necrobot.condor.condormainchannel import CondorMainChannel
 from necrobot.condor.condormgr import CondorMgr

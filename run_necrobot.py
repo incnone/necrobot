@@ -1,4 +1,4 @@
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.config import Config
 from necrobot.daily.dailymgr import DailyMgr
 # from necrobot.ladder import ratingutil

@@ -1,10 +1,9 @@
 import unittest
-import necrobot.exception
 
+import necrobot.exception
 from necrobot.util.parse import parseutil
 from necrobot.util.parse.parseutil import Keyword
-from necrobot.util.character import NDChar
-
+from necrobot.util.necrodancer.character import NDChar
 
 matchtype_keywords = {
     # Match info

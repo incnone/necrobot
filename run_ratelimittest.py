@@ -2,7 +2,7 @@ import asyncio
 import sys
 
 import run_condorbot
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot import logon
 from necrobot.util import ratelimit
 

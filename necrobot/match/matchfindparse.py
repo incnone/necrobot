@@ -1,15 +1,15 @@
 """Utility for parsing user-entered strings and finding a corresponding Match"""
-import pytz
 import shlex
 from typing import Optional
 
-import necrobot.exception
-from necrobot.util.parse import dateparse
-from necrobot.database import matchdb
-from necrobot.match import matchutil
-from necrobot.user import userlib
+import pytz
 
+import necrobot.exception
+from necrobot.match import matchdb
+from necrobot.match import matchutil
 from necrobot.match.match import Match
+from necrobot.user import userlib
+from necrobot.util.parse import dateparse
 
 
 async def find_match(

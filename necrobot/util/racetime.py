@@ -1,8 +1,10 @@
-# Given a time string, returns the time in total hundredths of a second, or -1 on failure.
-# Allowable string formats:
-#  [m]m:ss.hh
-#  [m]m:ss:hh
-#  [m]m:ss
+"""
+Given a time string, returns the time in total hundredths of a second, or -1 on failure.
+Allowable string formats:
+ [m]m:ss.hh
+ [m]m:ss:hh
+ [m]m:ss
+"""
 
 
 def from_str(time_str):

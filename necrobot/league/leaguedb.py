@@ -22,15 +22,15 @@ InvalidSchemaName
 """
 
 import re
-import necrobot.exception
 
+import necrobot.exception
 from necrobot.config import Config
-from necrobot.database import racedb
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
 from necrobot.league.league import League
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo
+from necrobot.race import racedb
 
 
 async def create_league(schema_name: str) -> League:

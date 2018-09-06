@@ -1,15 +1,12 @@
 import discord
 
-from necrobot.botbase import server
-from necrobot.util import console
-from necrobot.database import matchdb
-from necrobot.match import matchutil
-
-from necrobot.botbase.necrobot import Necrobot
-from necrobot.match.matchroom import MatchRoom
-from necrobot.necroevent.necroevent import NEDispatch, NecroEvent
-from necrobot.util.singleton import Singleton
+from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
+from necrobot.botbase.necrobot import Necrobot
+from necrobot.match import matchdb, matchutil
+from necrobot.match.matchroom import MatchRoom
+from necrobot.util import console, server
+from necrobot.util.singleton import Singleton
 
 
 class MatchMgr(Manager, metaclass=Singleton):

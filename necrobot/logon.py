@@ -5,21 +5,23 @@ logon() blocks until the bot is logged out; any code to be run after bot log-on
 should be placed in a coroutine and passed to logon in the on_ready_fn parameter.
 """
 
-import aiohttp
 import asyncio
 import datetime
-import discord
 import logging
 import os
 import sys
 import types
 import warnings
+
+import aiohttp
+import discord
 import websockets
 
 from necrobot import config
-from necrobot.util import backoff, console, seedgen
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.stream.vodrecord import VodRecorder
+from necrobot.util import backoff, console
+from necrobot.util.necrodancer import seedgen
 
 
 def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn: types.FunctionType = None) -> None:

@@ -1,11 +1,10 @@
+from necrobot.botbase import cmd_seedgen
 from necrobot.botbase import cmd_admin
+from necrobot.botbase.botchannel import BotChannel
 from necrobot.daily import cmd_daily
-from necrobot.stdconfig import cmd_seedgen
 from necrobot.race import cmd_racemake
 from necrobot.stats import cmd_stats
 from necrobot.user import cmd_user
-
-from necrobot.botbase.botchannel import BotChannel
 
 
 class PMBotChannel(BotChannel):

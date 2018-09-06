@@ -4,7 +4,7 @@ from typing import Dict, Callable, List, ValuesView
 
 from necrobot.test import msgqueue
 
-from necrobot.botbase import server
+from necrobot.util import server
 from necrobot.util import console
 
 # from necrobot.botbase.botchannel import BotChannel

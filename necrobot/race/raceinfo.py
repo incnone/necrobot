@@ -1,8 +1,7 @@
 import necrobot.exception
-from necrobot.util import seedgen
 from necrobot.util.parse import matchparse
-
-from necrobot.util.character import NDChar
+from necrobot.util.necrodancer import seedgen
+from necrobot.util.necrodancer.character import NDChar
 
 
 class RaceInfo(object):
