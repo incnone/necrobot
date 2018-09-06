@@ -5,16 +5,25 @@ Current version: 0.10
 ## Current TODO
 
 ### General
+- Make condorbot/necrobot not overwrite each other's/their own logging files
 - Replace NoneType returns with exceptions where appropriate
 - Output text in channel when a command throws an error (if possible)
 - Fix frequent caching errors
 - Better handling of rate-limiting issues on countdown (fix delay before 'Go!' text)
+- Add admin command to delete racerooms (for remaking), instead of just closing them
 
 ### Dependencies
 - Split race/match stats dependencies into appropriate packages 
-- Remove `gsheet`, `league`, and `ladder` dependencies from `match`
 - Remove `stats` dependency from `ladder` (perhaps split into a "ratings" and "ladder" package?)
 - Clarify `league` dependency in `ladder`?
+- Remove `league` from `cmd_match`:
+    Currently `.suggest` looks at the league deadline to determine if the given time is appropriate. How to fix this?
+    Could give matches their own per-match deadline, but then need to carefully update it when the deadline changes
+    after matches are made. Perhaps better would be to possibly associate a League to each Match? Ideal might be to
+    use the Event system ("I am trying to schedule a match for X, is that okay?").
+- Remove `gsheet` from `match` and `matchutil`:
+    This will happen naturally with the change to record match ID into the GSheet, so that the GSheet has the data for
+    which match is which, instead of the matches having data for where they are on the GSheet.
 
 ### League
 - Discord category limit is 50, so implement proper workaround when making >50 race rooms
@@ -28,9 +37,6 @@ Current version: 0.10
 - Make bot say races awaiting review in match score announcement when contested races
 - Remove or notify commentator on match reschedule
 - combine MatchRaceData and Match in a friendly way
-
-### User
-- Configuration of `.racealert` for character-specific, etc
 
 ### Util
 - `util.level.py` and `util.racetime.py` might work better as classes, when wanting to generalize to other games
@@ -68,6 +74,7 @@ just finished or the race that people are currently entering. It maybe also does
 ## Possible features (no concrete plans to implement these)
 
 - Raceroom-specific voice chat, with an audio countdown and some other audio support (e.g. "Please pause.").
+- Configuration of `.racealert` for character-specific, etc
 
 ### Different race modes
 

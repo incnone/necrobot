@@ -112,9 +112,6 @@ matchroom
     botbase/
         botchannel
         necroevent
-    ladder/
-        ratingsdb
-        ratingutil
     match/
         cmd_match
         matchdb

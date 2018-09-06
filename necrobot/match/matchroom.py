@@ -8,11 +8,9 @@ import discord
 import pytz
 
 from necrobot.botbase.necroevent import NEDispatch
-from necrobot.ladder import ratingsdb
-from necrobot.match import matchdb
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.config import Config
-from necrobot.ladder import ratingutil
+from necrobot.match import matchdb
 from necrobot.match import cmd_match
 from necrobot.match.match import Match
 from necrobot.match.matchracedata import MatchRaceData
@@ -300,7 +298,6 @@ class MatchRoom(BotChannel):
                 )
 
             await self._record_race(race_event.race, self._race_winner(race_event.race))
-            # await self._record_new_ratings(race_winner)
 
             # Write end-of-race message
             end_race_msg = 'The race has ended.'
@@ -493,25 +490,26 @@ class MatchRoom(BotChannel):
         )
         self._update_race_data(race_winner=race_winner)
 
-    async def _record_new_ratings(self, race_winner: int) -> None:
-        """Get new ratings for the racers in this match and record them"""
-        racer_1 = self.match.racer_1
-        racer_2 = self.match.racer_2
-
-        rating_1 = await ratingsdb.get_rating(racer_1.discord_id)
-        rating_2 = await ratingsdb.get_rating(racer_2.discord_id)
-
-        new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
-
-        await ratingsdb.set_rating(racer_1.discord_id, new_ratings[0])
-        await ratingsdb.set_rating(racer_2.discord_id, new_ratings[1])
-
-        # this isn't working
-        # if Config.RATINGS_IN_NICKNAMES:
-        #     for pair in [(racer_1, rating_1,), (racer_2, rating_2,)]:
-        #         member = pair[0].member
-        #         nick = '{0} ({1})'.format(pair[0].member.name, pair[1].displayed_rating)
-        #         await self.client.change_nickname(member=member, nickname=nick)
+    # TODO: move to LadderManager class, trigger on appropriate event
+    # async def _record_new_ratings(self, race_winner: int) -> None:
+    #     """Get new ratings for the racers in this match and record them"""
+    #     racer_1 = self.match.racer_1
+    #     racer_2 = self.match.racer_2
+    #
+    #     rating_1 = await ratingsdb.get_rating(racer_1.discord_id)
+    #     rating_2 = await ratingsdb.get_rating(racer_2.discord_id)
+    #
+    #     new_ratings = ratingutil.get_new_ratings(rating_1=rating_1, rating_2=rating_2, winner=race_winner)
+    #
+    #     await ratingsdb.set_rating(racer_1.discord_id, new_ratings[0])
+    #     await ratingsdb.set_rating(racer_2.discord_id, new_ratings[1])
+    #
+    #     # this isn't working
+    #     # if Config.RATINGS_IN_NICKNAMES:
+    #     #     for pair in [(racer_1, rating_1,), (racer_2, rating_2,)]:
+    #     #         member = pair[0].member
+    #     #         nick = '{0} ({1})'.format(pair[0].member.name, pair[1].displayed_rating)
+    #     #         await self.client.change_nickname(member=member, nickname=nick)
 
     def _set_channel_commands(self) -> None:
         if self.current_race is None:

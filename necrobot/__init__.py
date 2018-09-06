@@ -2,11 +2,18 @@
 Dependency Tree
 ---------------
 util
-    botbase
-    database
+    botbase + database
         user
             race
-    vodrecord
+                match
+                    league
+                        ladder
+                        gsheet
+                            condor (needs stream & stats too)
+                        stats
+                daily
+                    stdconfig (needs stats too)       
+    stream
     
 
 Modules
@@ -39,8 +46,6 @@ league
     Holds a "league" variable that determines database schema.
 match
     For handling matches, which are sequences of races between two common racers.
-necroevent
-    Publish-subscribe global event pattern.
 race
     Core race functionality.
 stats
