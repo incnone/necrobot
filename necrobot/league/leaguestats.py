@@ -39,11 +39,15 @@ class LeagueStats(object):
 async def get_fastest_times_league_infotext(limit: int) -> str:
     fastest_times = await matchdb.get_fastest_wins_raw(limit)
     max_namelen = 0
+    namelen_cap = 20
     for row in fastest_times:
-        max_namelen = max(max_namelen, len(row[1]))
+        max_namelen = max(max_namelen, len(row[1]), namelen_cap)
 
-    dated_format_str = '  {winner:>' + str(max_namelen) + '} -- {time:<9} (vs {loser}, {date:%b %d})\n'
-    undated_format_str = '  {winner:>' + str(max_namelen) + '} -- {time:<9} (vs {loser})\n'
+    dated_format_str = '  {winner:>' + str(max_namelen) + '.' + str(max_namelen) + \
+                       '} -- {time:<9} (vs {loser}, {date:%b %d})\n'
+    undated_format_str = '  {winner:>' + str(max_namelen) + '.' + str(max_namelen) + \
+                         '} -- {time:<9} (vs {loser})\n'
+
     infotext = ''
     for row in fastest_times:
         if row[3] is not None:

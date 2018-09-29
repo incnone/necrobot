@@ -178,17 +178,17 @@ async def get_winrates(user_id_1: int, user_id_2: int, ndchar: NDChar, amplified
 
 async def get_most_races_infotext(ndchar: NDChar, limit: int) -> str:
     most_races = await racedb.get_most_races_leaderboard(str(ndchar), limit)
-    infotext = '{0:>16} {1:>6} {2:>6}\n'.format('', 'Base', 'Amp')
+    infotext = '{0:>20} {1:>6} {2:>6}\n'.format('', 'Base', 'Amp')
     for row in most_races:
-        infotext += '{0:>16} {1:>6} {2:>6}\n'.format(row[0], row[2], row[3])
+        infotext += '{0:>20.20} {1:>6} {2:>6}\n'.format(row[0], row[2], row[3])
     return infotext
 
 
 async def get_fastest_times_infotext(ndchar: NDChar, amplified: bool, limit: int) -> str:
     fastest_times = await racedb.get_fastest_times_leaderboard(str(ndchar), amplified, limit)
-    infotext = '{0:>16} {1:<9} {2:<9} {3:<13}\n'.format('', 'Time (rta)', 'Seed', 'Date')
+    infotext = '{0:>20} {1:<9} {2:<9} {3:<13}\n'.format('', 'Time (rta)', 'Seed', 'Date')
     for row in fastest_times:
-        infotext += '{0:>16} {1:>9} {2:>9} {3:>13}\n'.format(
+        infotext += '{0:>20.20} {1:>9} {2:>9} {3:>13}\n'.format(
             row[0],
             racetime.to_str(int(row[1])),
             row[2],
