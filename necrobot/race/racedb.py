@@ -169,29 +169,26 @@ async def get_fastest_times_leaderboard(character_name: str, amplified: bool, li
         params = (character_name, limit,)
         cursor.execute(
             """
-            SELECT users.discord_name, {race_runs}.time, {races}.seed, {races}.timestamp 
-            FROM {race_runs} 
-                INNER JOIN 
+            SELECT users.discord_name, rd1.min_time, {races}.seed, {races}.`timestamp`
+            FROM 
                 ( 
-                    SELECT user_id, MIN(time) AS min_time 
-                    FROM {race_runs} 
+                    SELECT user_id, MIN(time) AS min_time, {race_runs}.race_id AS race_id
+                    FROM {race_runs}
                         INNER JOIN {races} ON {races}.race_id = {race_runs}.race_id 
                         INNER JOIN race_types ON race_types.type_id = {races}.type_id 
                     WHERE 
-                        {race_runs}.time > 0 
-                        AND {race_runs}.level = -2 
-                        AND ({races}.timestamp > '2017-07-12' OR NOT race_types.amplified)
-                        AND race_types.character=%s 
-                        AND race_types.descriptor='All-zones' 
-                        AND race_types.seeded 
-                        AND {not_amplified}race_types.amplified 
-                        AND NOT {races}.private 
+                        {race_runs}.`time` > 0 
+                        AND {race_runs}.`level` = -2 
+                        AND race_types.`character`= %s
+                        AND race_types.`descriptor`='All-zones' 
+                        AND race_types.`seeded`
+                        AND {not_amplified}race_types.`amplified` 
+                        AND NOT {races}.`private` 
                     GROUP BY user_id 
-                ) rd1 On rd1.user_id = {race_runs}.user_id 
-                INNER JOIN users ON users.user_id = {race_runs}.user_id 
-                INNER JOIN {races} ON {races}.race_id = {race_runs}.race_id 
-            WHERE {race_runs}.time = rd1.min_time 
-            ORDER BY {race_runs}.time ASC 
+                ) rd1
+                INNER JOIN users ON users.user_id = rd1.user_id 
+                INNER JOIN {races} ON {races}.race_id = rd1.race_id 
+            ORDER BY rd1.min_time ASC 
             LIMIT %s
             """.format(races=tn('races'), race_runs=tn('race_runs'), not_amplified=('' if amplified else 'NOT ')),
             params)
