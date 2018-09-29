@@ -166,30 +166,46 @@ async def get_all_racedata(user_id: int, char_name: str, amplified: bool) -> lis
 
 async def get_fastest_times_leaderboard(character_name: str, amplified: bool, limit: int) -> list:
     async with DBConnect(commit=False) as cursor:
-        params = (character_name, limit,)
+        params = {'character': character_name, 'limit': limit,}
         cursor.execute(
             """
-            SELECT 
-                users.discord_name AS `discord_name`,  
-                MIN(time) AS `min_time`, 
-                {races}.`seed` AS `seed`,
-                {races}.`timestamp` AS `timestamp`
-            FROM {race_runs}
-                INNER JOIN {races} ON {races}.race_id = {race_runs}.race_id 
-                INNER JOIN race_types ON race_types.type_id = {races}.type_id 
-                INNER JOIN users ON users.user_id = {race_runs}.user_id
-            WHERE 
-                {race_runs}.`time` > 0 
-                AND {race_runs}.`level` = -2 
-                AND ({races}.`timestamp` > '2017-07-12' OR NOT race_types.amplified)
-                AND race_types.`character`= %s
-                AND race_types.`descriptor`='All-zones' 
+            SELECT
+                users.`discord_name`,
+                mintimes.`min_time`,
+                {races}.`seed`,
+                {races}.`timestamp`
+            FROM 
+                ( 
+                    SELECT user_id, MIN(time) AS `min_time`
+                    FROM {race_runs}
+                    INNER JOIN {races} ON {races}.`race_id` = {race_runs}.`race_id`
+                    INNER JOIN race_types ON race_types.`type_id` = {races}.`type_id`
+                    WHERE
+                        {race_runs}.`time` > 0
+                        AND {race_runs}.`level` = -2
+                        AND ({races}.`timestamp` > '2017-07-12' OR NOT race_types.`amplified`)
+                        AND race_types.`character` = %(character)s
+                        AND race_types.`descriptor` = 'All-zones'
+                        AND race_types.`seeded`
+                        AND {not_amplified}race_types.`amplified`
+                        AND NOT {races}.`private`
+                    GROUP BY user_id
+                ) mintimes
+                INNER JOIN {race_runs} ON ({race_runs}.`user_id` = mintimes.`user_id` AND {race_runs}.`time` = mintimes.`min_time`)
+                INNER JOIN {races} ON {races}.`race_id` = {race_runs}.`race_id`
+                INNER JOIN race_types ON race_types.`type_id` = {races}.`type_id`
+                INNER JOIN users ON users.`user_id` = mintimes.`user_id`
+            WHERE
+                {race_runs}.`level` = -2
+                AND ({races}.`timestamp` > '2017-07-12' OR NOT race_types.`amplified`)
+                AND race_types.`character` = %(character)s
+                AND race_types.`descriptor` = 'All-zones'
                 AND race_types.`seeded`
-                AND {not_amplified}race_types.`amplified` 
-                AND NOT {races}.`private` 
-            GROUP BY users.user_id 
-            ORDER BY min_time ASC 
-            LIMIT %s
+                AND {not_amplified}race_types.`amplified`
+                AND NOT {races}.`private`
+            GROUP BY {race_runs}.`user_id`
+            ORDER BY mintimes.min_time ASC
+            LIMIT %(limit)s
             """.format(races=tn('races'), race_runs=tn('race_runs'), not_amplified=('' if amplified else 'NOT ')),
             params)
         return cursor.fetchall()
