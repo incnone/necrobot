@@ -95,6 +95,7 @@ async def load_testing_config(necrobot):
 if __name__ == "__main__":
     logon.logon(
         config_filename='data/condorbot_config',
+        logging_prefix='condorbot_test',
         load_config_fn=run_condorbot.load_condorbot_config,
         on_ready_fn=on_ready_fn
     )

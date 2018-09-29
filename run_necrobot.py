@@ -40,6 +40,7 @@ async def load_necrobot_config(necrobot):
 if __name__ == "__main__":
     logon.logon(
         config_filename='data/necrobot_config',
+        logging_prefix='necrobot',
         load_config_fn=load_necrobot_config
     )
 
