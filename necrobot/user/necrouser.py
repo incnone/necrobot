@@ -65,6 +65,8 @@ class NecroUser(object):
             re_str += re.escape(self.discord_name) + r'|'
         if self.twitch_name is not None:
             re_str += re.escape(self.twitch_name) + r'|'
+        if self.display_name is not None:
+            re_str += re.escape(self.display_name) + r'|'
 
         if re_str == r'':
             return None
@@ -86,18 +88,29 @@ class NecroUser(object):
 
     @property
     def discord_name(self) -> str:
-        return self.discord_member.display_name if self.discord_member is not None else self._discord_name
+        return self.discord_member.name if self.discord_member is not None else self._discord_name
 
     @property
     def display_name(self) -> str:
-        if self.discord_name is not None:
-            return self.discord_name
+        if self.discord_member is not None:
+            return self.discord_member.display_name
         elif self.rtmp_name is not None:
             return self.rtmp_name
         elif self.twitch_name is not None:
             return self.twitch_name
+        elif self._discord_name is not None:
+            return self._discord_name
         else:
             return '<NecroUser with ID {}>'.format(self.user_id)
+
+    @property
+    def matchroom_name(self) -> str:
+        if self.twitch_name is not None:
+            return self.twitch_name.lower()
+        elif self.rtmp_name is not None:
+            return self.rtmp_name.lower()
+        else:
+            return self.discord_name.lower()
 
     @property
     def gsheet_name(self):
@@ -134,9 +147,9 @@ class NecroUser(object):
     @property
     def infoname(self) -> str:
         if self.user_info is not None:
-            return '{0} ({1})'.format(self.discord_name, self.user_info)
+            return '{0} ({1})'.format(self.display_name, self.user_info)
         else:
-            return self.discord_name
+            return self.display_name
 
     @property
     def infotext(self) -> str:
@@ -202,7 +215,7 @@ class NecroUser(object):
         changed_any = False
         if discord_member is not None and discord_member != self.discord_member:
             self._discord_id = int(discord_member.id)
-            self._discord_name = discord_member.display_name
+            self._discord_name = discord_member.name
             self._discord_member = discord_member
             changed_any = True
         elif discord_id is not None and discord_id != self.discord_id:
@@ -210,7 +223,7 @@ class NecroUser(object):
             member = server.find_member(discord_id=discord_id)
             if member is not None:
                 self._discord_member = member
-                self._discord_name = member.display_name
+                self._discord_name = member.name
             elif discord_name is not None:
                 self._discord_name = discord_name
             changed_any = True

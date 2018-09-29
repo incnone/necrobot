@@ -207,10 +207,9 @@ class Match(object):
         """Get a name for a channel for this match."""
         racer_names = []
         for racer in self.racers:
-            if racer.rtmp_name is not None:
-                racer_names.append(racer.rtmp_name.lower())
-            elif racer.discord_name is not None:
-                racer_names.append(racer.discord_name.lower())
+            racer_matchroom_name = racer.matchroom_name
+            if racer_matchroom_name is not None:
+                racer_names.append(racer_matchroom_name)
 
         if len(racer_names) == 2:
             racer_names.sort()

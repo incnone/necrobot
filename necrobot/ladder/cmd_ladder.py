@@ -85,7 +85,7 @@ class Rating(CommandType):
                     'Couldn\'t find user {0}.'.format(cmd.args[0])
                 )
                 return
-            user_name = necro_user.discord_name
+            user_name = necro_user.display_name
             discord_id = necro_user.discord_id
         else:
             await self.client.send_message(

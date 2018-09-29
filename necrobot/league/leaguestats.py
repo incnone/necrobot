@@ -87,7 +87,7 @@ async def get_big_infotext(user: NecroUser, stats: LeagueStats) -> str:
            Best win: {best_win}
            Avg. win: {avg_win}
         """.format(
-            discord_name=user.discord_name,
+            discord_name=user.display_name,
             userinfo=user.user_info,
             rtmp_name=user.rtmp_name,
             twitch_name=user.twitch_name,

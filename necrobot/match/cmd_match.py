@@ -175,8 +175,8 @@ class GetMatchInfo(CommandType):
         await self.client.send_message(
             cmd.channel,
             '**{0}** [{2} - {3}] **{1}** ({4})'.format(
-                match.racer_1.discord_name,
-                match.racer_2.discord_name,
+                match.racer_1.display_name,
+                match.racer_2.display_name,
                 match_race_data.r1_wins,
                 match_race_data.r2_wins,
                 match.format_str
@@ -435,10 +435,10 @@ class ChangeWinner(CommandType):
         match = self.bot_channel.match
         if match.racer_1.name_regex.match(winner_name):
             winner = 1
-            winner_name = match.racer_1.discord_name
+            winner_name = match.racer_1.display_name
         elif match.racer_2.name_regex.match(winner_name):
             winner = 2
-            winner_name = match.racer_2.discord_name
+            winner_name = match.racer_2.display_name
         if winner is None:
             await self.client.send_message(
                 cmd.channel,
@@ -530,10 +530,10 @@ class ForceRecordRace(CommandType):
         match = self.bot_channel.match
         if match.racer_1.name_regex.match(winner_name):
             winner = 1
-            winner_name = match.racer_1.discord_name
+            winner_name = match.racer_1.display_name
         elif match.racer_2.name_regex.match(winner_name):
             winner = 2
-            winner_name = match.racer_2.discord_name
+            winner_name = match.racer_2.display_name
 
         if winner is None:
             await self.client.send_message(
@@ -731,7 +731,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
             if cawmentator_user is not None:
                 await cmd_type.client.send_message(
                     cmd.channel,
-                    'This match already has a cawmentator ({0}).'.format(cawmentator_user.discord_name)
+                    'This match already has a cawmentator ({0}).'.format(cawmentator_user.display_name)
                 )
                 return
             else:
