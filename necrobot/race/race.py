@@ -575,12 +575,12 @@ class Race(object):
     # Reseed the race
     async def reseed(self, mute=False):
         if not self.race_info.seeded:
-            await self._write(mute=mute, text='This is not a seeded race. Use `.changerulse` to change this.')
+            await self._write(mute=mute, text='This is not a seeded race. Use `.changerules` to change this.')
 
         elif self.race_info.seed_fixed:
             await self._write(
                 mute=mute,
-                text='The seed for this race was fixed by its rules. Use `.changerulse` to change this.')
+                text='The seed for this race was fixed by its rules. Use `.changerules` to change this.')
             return
 
         else:

@@ -22,10 +22,10 @@ Dependency Tree
           ladder
            |
            |
-          gsheet   stream
-           |    ___/ 
+          gsheet     stream
+           |    _____/ 
            |   /  
-          condor 
+          condorbot 
 
     
 
