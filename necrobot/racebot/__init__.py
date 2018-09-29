@@ -18,14 +18,13 @@ Dependencies
             cmd_admin
         daily/
             cmd_daily
-        stdconfig/
+        racebot/
             cmd_seedgen
             cmd_color
             cmd_role
         race/
             cmd_racemake
-        stats/
-            cmd_stats
+            cmd_racestats
         user/
             cmd_user
     pmbotchannel
@@ -33,12 +32,11 @@ Dependencies
             cmd_admin
         daily/
             cmd_daily
-        stdconfig/
+        racebot/
             cmd_seedgen
         race/
             cmd_racemake
-        stats/
-            cmd_stats
+            cmd_racestats
         user/
             cmd_user
 """

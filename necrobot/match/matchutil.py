@@ -3,9 +3,9 @@ import datetime
 import discord
 import pytz
 
+from match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.config import Config
-from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
 from necrobot.match import matchdb
 from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo

@@ -1,10 +1,16 @@
+import datetime
+import functools
+from typing import Optional
+
 import necrobot.exception
 from necrobot.league import leaguedb
 from necrobot.botbase.manager import Manager
 from necrobot.config import Config
 from necrobot.database import dbutil
 from necrobot.util import console
+from necrobot.util.parse import dateparse
 from necrobot.util.singleton import Singleton
+from necrobot.match.matchmgr import MatchMgr
 
 
 class LeagueMgr(Manager, metaclass=Singleton):
@@ -80,6 +86,16 @@ class LeagueMgr(Manager, metaclass=Singleton):
         cls._the_league.league = await leaguedb.get_league(schema_name)
         dbutil.league_schema_name = schema_name
 
+        MatchMgr().set_deadline_fn(functools.partial(LeagueMgr.deadline, cls))
+
         if save_to_config:
             Config.LEAGUE_NAME = schema_name
             Config.write()
+
+    @classmethod
+    def deadline(cls) -> Optional[datetime]:
+        if cls._the_league is not None:
+            deadline_str = cls._the_league.deadline
+            if deadline_str is not None:
+                return dateparse.parse_datetime(deadline_str)
+        return None

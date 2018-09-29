@@ -10,9 +10,6 @@ race
     database
     util
     user
-ladder (TODO - remove)
-league (TODO - remove)
-gsheet (TODO - remove)
 
 
 Module Overview
@@ -43,8 +40,6 @@ cmd_match
         necroevent
         command
         commandtype
-    league/
-        leaguemgr
     match/
         matchdb
     user/
@@ -56,10 +51,9 @@ cmd_match
         parse/
             dateparse
 match
-    gsheet/
-        matchgsheetinfo
     match/
         matchinfo
+        matchgsheetinfo
     race/
         raceinfo
     user/
@@ -132,10 +126,9 @@ matchroom
 matchutil
     botbase/
         necrobot
-    gsheet/
-        matchgsheetinfo
     match/
         match
+        matchgsheetinfo
         matchinfo
         matchroom
     race/

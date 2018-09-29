@@ -1,19 +1,32 @@
 """
 Dependency Tree
 ---------------
-util
-    botbase + database
-        user
-            race
-                match
-                    league
-                        ladder
-                        gsheet
-                            condor (needs stream & stats too)
-                        stats
-                daily
-                    stdconfig (needs stats too)       
-    stream
+          util
+        __/  \__
+       /        \
+   botbase   database
+       \__    __/
+          \  /
+          user
+           |
+           |
+          race
+           |  \_______
+           |          \
+          match      daily
+           |          |
+           |          |
+          league     racebot
+           |
+           |
+          ladder
+           |
+           |
+          gsheet   stream
+           |    ___/ 
+           |   /  
+          condor 
+
     
 
 Modules
@@ -48,9 +61,7 @@ match
     For handling matches, which are sequences of races between two common racers.
 race
     Core race functionality.
-stats
-    For computing stats on race and match data.
-stdconfig
+racebot
     For running necrobot on the Crypt of the Necrobot server.
 stream
     For interacting with RTMP streams.

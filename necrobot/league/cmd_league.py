@@ -82,7 +82,7 @@ class Deadline(CommandType):
             )
             return
 
-        deadline_str = LeagueMgr().league.deadline
+        deadline_str = LeagueMgr().league.deadline_str
 
         if deadline_str is None:
             await self.client.send_message(

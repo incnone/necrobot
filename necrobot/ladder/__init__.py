@@ -31,8 +31,8 @@ ladderadminchannel
         cmd_seedgen
     ladder/
         cmd_ladder
-    stats/
-        cmd_stats
+    race/
+        cmd_racestats
     user/
         cmd_user
 rating

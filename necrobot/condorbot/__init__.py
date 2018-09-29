@@ -37,10 +37,9 @@ condormainchannel
         cmd_admin
     league/
         cmd_league
+        cmd_leaguestats
     match/
         cmd_match
-    stats/
-        cmd_stats
     user/
         cmd_user
 condormgr
@@ -56,12 +55,11 @@ condormgr
         standingssheet
     league/
         leaguemgr
+        leaguestats
     match/
         matchutil
         match
         matchroom
-    stats/
-        statfn
     stream/
         vodrecord
     util/
@@ -73,10 +71,10 @@ condorpmchannel
     botbase/
         cmd_admin
         botchannel
+    league/
+        leaguestats
     match/
         cmd_match
-    stats/
-        cmd_stats
     user/
         cmd_user
 """

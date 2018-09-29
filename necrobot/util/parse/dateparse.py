@@ -19,7 +19,7 @@ class CustomParserInfo(parser.parserinfo):
 
 def parse_datetime(parse_str: str, timezone: pytz.timezone = pytz.utc) -> datetime.datetime:
     if parse_str.lower() == 'now':
-        return pytz.utc.localize(datetime.datetime.utcnow())
+        return pytz.utc.localize(datetime.datetime.utcnow() + datetime.timedelta(minutes=1))
 
     try:
         default_time = (pytz.utc.localize(datetime.datetime.utcnow()).astimezone(timezone))\

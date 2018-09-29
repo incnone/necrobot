@@ -1,19 +1,19 @@
 import asyncio
 import datetime
-import pytz
 import shlex
 import unittest
 
+import pytz
+
 import necrobot.exception
+from match.matchgsheetinfo import MatchGSheetInfo
+from necrobot.gsheet.spreadsheets import Spreadsheets
+from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 from necrobot.match import matchinfo
 from necrobot.match import matchutil
+from necrobot.match.match import Match
 from necrobot.user import userlib
 from necrobot.util import console
-
-from necrobot.gsheet.matchgsheetinfo import MatchGSheetInfo
-from necrobot.gsheet.spreadsheets import Spreadsheets
-from necrobot.match.match import Match
-from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 
 
 class MatchupSheetIndexData(WorksheetIndexData):

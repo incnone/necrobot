@@ -4,8 +4,8 @@ from necrobot.daily.dailymgr import DailyMgr
 # from necrobot.ladder import ratingutil
 # from necrobot.ladder.ladderadminchannel import LadderAdminChannel
 # from necrobot.match.matchmgr import MatchMgr
-from necrobot.stdconfig.mainchannel import MainBotChannel
-from necrobot.stdconfig.pmbotchannel import PMBotChannel
+from necrobot.racebot.mainchannel import MainBotChannel
+from necrobot.racebot.pmbotchannel import PMBotChannel
 from necrobot.util import console
 from necrobot import logon
 

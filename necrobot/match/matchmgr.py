@@ -12,6 +12,7 @@ from necrobot.util.singleton import Singleton
 class MatchMgr(Manager, metaclass=Singleton):
     def __init__(self):
         NEDispatch().subscribe(self)
+        self._deadline_fn = MatchMgr._default_deadline
 
     async def initialize(self):
         await self._recover_stored_match_rooms()
@@ -39,6 +40,17 @@ class MatchMgr(Manager, metaclass=Singleton):
                             target=ev.user.member,
                             overwrite=read_perms
                         )
+
+    async def set_deadline_fn(self, f):
+        self._deadline_fn = f
+
+    @property
+    def deadline(self):
+        return self._deadline_fn()
+
+    @staticmethod
+    def _default_deadline():
+        return None
 
     @staticmethod
     async def _recover_stored_match_rooms() -> None:

@@ -11,7 +11,7 @@ packages in the list:
 - `race`
 
 The core league-running code (for the CoNDOR Event server) is contained in `match` and `league`, which depend on all
-of the above (and currently have some very minor cross-dependency between them). 
+of the above; `league` depends on `match` but not vice-versa.
 
 The CoNDOR event server works with a GSheet to input and display match information. The code for this is contained
 within the `gsheet` package.

@@ -69,7 +69,7 @@ class RaceStatus(IntEnum):
         entry_open      
             The race is open to new entrants.
         counting_down
-            The racebot is counting down to race start.
+            The bot is counting down to race start.
             If people .unready during this time, race reverts to the entry_open state.
         racing 
             The race has begun, and at least one player is still racing.

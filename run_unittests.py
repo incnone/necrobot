@@ -5,13 +5,13 @@ import unittest
 import run_condorbot
 from necrobot.util import server
 
-from necrobot.condor.condoradminchannel import CondorAdminChannel
+from necrobot.condorbot.condoradminchannel import CondorAdminChannel
 from necrobot.daily.dailymgr import DailyMgr
 from necrobot.ladder import ratingutil
 from necrobot.ladder.ladderadminchannel import LadderAdminChannel
 from necrobot.match.matchmgr import MatchMgr
-from necrobot.stdconfig.mainchannel import MainBotChannel
-from necrobot.stdconfig.pmbotchannel import PMBotChannel
+from necrobot.racebot.mainchannel import MainBotChannel
+from necrobot.racebot.pmbotchannel import PMBotChannel
 from necrobot.util import console
 from necrobot import logon
 
@@ -23,7 +23,7 @@ TEST_USER = False
 
 if TEST_CONDOR:
     # noinspection PyUnresolvedReferences
-    from necrobot.condor.condormgr import TestCondorMgr
+    from necrobot.condorbot.condormgr import TestCondorMgr
 
 if TEST_CONFIG:
     # noinspection PyUnresolvedReferences

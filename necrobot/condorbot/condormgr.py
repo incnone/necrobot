@@ -3,17 +3,17 @@ import unittest
 
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
-from necrobot.condor import cmd_condor
+from necrobot.condorbot import cmd_condor
 from necrobot.config import Config
 from necrobot.gsheet import cmd_sheet
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
 from necrobot.league.leaguemgr import LeagueMgr
+from necrobot.league import leaguestats
 from necrobot.match import matchutil
 from necrobot.match.match import Match
 from necrobot.match.matchroom import MatchRoom
-from necrobot.stats import statfn
 from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util import server, strutil, rtmputil
 from necrobot.util.singleton import Singleton
@@ -164,11 +164,11 @@ class CondorMgr(Manager, metaclass=Singleton):
             minutes=int((match.time_until_match.total_seconds() + 30) // 60)
         )
 
-        racer_1_stats = await statfn.get_league_stats(match.racer_1.user_id)
-        racer_2_stats = await statfn.get_league_stats(match.racer_2.user_id)
+        racer_1_stats = await leaguestats.get_league_stats(match.racer_1.user_id)
+        racer_2_stats = await leaguestats.get_league_stats(match.racer_2.user_id)
 
-        racer_1_infotext = await statfn.get_big_infotext(user=match.racer_1, stats=racer_1_stats)
-        racer_2_infotext = await statfn.get_big_infotext(user=match.racer_2, stats=racer_2_stats)
+        racer_1_infotext = await leaguestats.get_big_infotext(user=match.racer_1, stats=racer_1_stats)
+        racer_2_infotext = await leaguestats.get_big_infotext(user=match.racer_2, stats=racer_2_stats)
         alert_text += '```' + strutil.tickless(racer_1_infotext) + '\n```'
         alert_text += '```' + strutil.tickless(racer_2_infotext) + '\n```'
 

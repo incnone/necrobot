@@ -1,6 +1,6 @@
 import discord
 import sys
-from typing import Dict, Callable, List, ValuesView
+from typing import Dict, Callable, List
 
 from necrobot.test import msgqueue
 
