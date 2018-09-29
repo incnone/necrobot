@@ -24,13 +24,20 @@ from necrobot.util import backoff, console
 from necrobot.util.necrodancer import seedgen
 
 
-def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn: types.FunctionType = None) -> None:
+def logon(
+        config_filename: str,
+        logging_prefix: str,
+        load_config_fn: types.FunctionType,
+        on_ready_fn: types.FunctionType = None
+) -> None:
     """Log on to Discord. Block until logout.
     
     Parameters
     ----------
     config_filename: str
         The filename of the config file to use.
+    logging_prefix: str
+        A prefix to append to all logfile outputs.
     load_config_fn: [coro] (Necrobot) -> None
         A coroutine to be called after first login, which should set up the Necrobot with the desired
         BotChannels and Managers.
@@ -46,8 +53,8 @@ def logon(config_filename: str, load_config_fn: types.FunctionType, on_ready_fn:
         warnings.simplefilter("always", ResourceWarning)
 
     # Logging--------------------------------------------------
-    file_format_prefix = config_filename[:1] if config_filename else 'u'
-    file_format_str = file_format_prefix + '-%Y-%m-%d'
+    file_format_prefix = logging_prefix
+    file_format_str = file_format_prefix + '-%Y-%m-%d-%H-%M-%S'
     utc_today = datetime.datetime.utcnow().date()
     utc_today_str = utc_today.strftime(file_format_str)
 
