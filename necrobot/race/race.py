@@ -9,7 +9,7 @@ from enum import IntEnum, Enum
 
 import discord
 
-import util.necrodancer.level
+from necrobot.util.necrodancer import level as necrolevel
 from necrobot.config import Config
 from necrobot.race.raceconfig import RaceConfig
 from necrobot.race.raceinfo import RaceInfo
@@ -542,7 +542,7 @@ class Race(object):
 
         await self._do_forfeit_racer(racer)
         await self._write(mute=mute, text='{0} has forfeit the race.'.format(racer_member.mention))
-        if not level == util.necrodancer.level.LEVEL_NOS:
+        if not level == necrolevel.LEVEL_NOS:
             racer.level = level
         await self._process(RaceEvent.EventType.RACER_FORFEIT, racer_member=racer_member)
 
