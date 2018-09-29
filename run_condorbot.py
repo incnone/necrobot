@@ -35,5 +35,6 @@ async def load_condorbot_config(necrobot):
 if __name__ == "__main__":
     logon.logon(
         config_filename='data/condorbot_config',
+        logging_prefix='condorbot',
         load_config_fn=load_condorbot_config
     )
