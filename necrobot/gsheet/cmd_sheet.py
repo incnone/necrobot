@@ -1,10 +1,12 @@
 import googleapiclient.errors
+
 import necrobot.exception
 
 from necrobot.util import console
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet import sheetutil
 from necrobot.match import matchutil
+from necrobot.match import matchchannelutil
 
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
@@ -109,7 +111,7 @@ class MakeFromSheet(CommandType):
 
         console.info('MakeFromSheet: Creating Match objects...')
         not_found_matches = matchup_sheet.uncreated_matches()
-        matches_with_channels = await matchutil.get_matches_with_channels()
+        matches_with_channels = await matchchannelutil.get_matches_with_channels()
         channeled_matchroom_names = dict()
         for match in matches_with_channels:
             if match.matchroom_name in channeled_matchroom_names:
@@ -135,7 +137,7 @@ class MakeFromSheet(CommandType):
         console.info('MakeFromSheet: Creating match channels...')
         for match in unchanneled_matches:
             console.info('MakeFromSheet: Creating {0}...'.format(match.matchroom_name))
-            new_room = await matchutil.make_match_room(match=match, register=True)
+            new_room = await matchchannelutil.make_match_room(match=match, register=True)
             await new_room.send_channel_start_text()
 
         uncreated_str = ''

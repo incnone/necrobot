@@ -2,7 +2,7 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 import datetime
-from typing import Optional
+from typing import Optional, List
 
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
@@ -499,6 +499,100 @@ async def get_match_gsheet_duplication_number(match: Match) -> int:
             }
         )
         return int(cursor.fetchone()[0])
+
+
+async def scrub_unchanneled_unraced_matches() -> None:
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            DELETE {matches}
+            FROM {matches}
+            LEFT JOIN (
+                SELECT 
+                    match_id, 
+                    COUNT(*) AS number_of_races 
+                FROM {match_races}
+                GROUP BY match_id
+            ) match_counts ON match_counts.match_id = {matches}.match_id
+            WHERE match_counts.number_of_races IS NULL AND {matches}.channel_id IS NULL
+            """.format(
+                matches=tn('matches'),
+                match_races=tn('match_races')
+            )
+        )
+
+
+async def scrub_matches(match_ids: List[int]) -> None:
+    if len(match_ids) == 0:
+        return
+    
+    match_id_str = ''
+    for match_id in match_ids:
+        match_id_str += '{id} OR '.format(id=match_id)
+    match_id_str = match_id_str[:-4]
+    
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            DELETE {race_runs}
+            FROM {race_runs}
+            INNER JOIN {races} ON {races}.race_id = {race_runs}.race_id
+            INNER JOIN {match_races} ON {match_races}.race_id = {races}.race_id
+            INNER JOIN {matches} ON {matches}.match_id = {match_races}.match_id
+            WHERE {matches}.match_id = {match_id_str}
+            """.format(
+                race_runs=tn('race_runs'),
+                races=tn('races'),
+                match_races=tn('match_races'),
+                matches=tn('matches'),
+                match_id_str=match_id_str
+            )
+        )
+
+        cursor.execute(
+            """
+            DELETE {races}
+            FROM {races}
+            INNER JOIN {match_races} ON {match_races}.race_id = races.race_id
+            INNER JOIN {matches} ON {matches}.match_id = {match_races}.match_id
+            WHERE {matches}.match_id = {match_id_str}
+            """.format(
+                race_runs=tn('race_runs'),
+                races=tn('races'),
+                match_races=tn('match_races'),
+                matches=tn('matches'),
+                match_id_str=match_id_str
+            )
+        )
+
+        cursor.execute(
+            """
+            DELETE {match_races}
+            FROM {match_races}
+            INNER JOIN {matches} ON {matches}.match_id = {match_races}.match_id
+            WHERE {matches}.match_id = {match_id_str}
+            """.format(
+                race_runs=tn('race_runs'),
+                races=tn('races'),
+                match_races=tn('match_races'),
+                matches=tn('matches'),
+                match_id_str=match_id_str
+            )
+        )
+
+        cursor.execute(
+            """
+            DELETE 
+            FROM {matches}
+            WHERE {matches}.match_id = {match_id_str}
+            """.format(
+                race_runs=tn('race_runs'),
+                races=tn('races'),
+                match_races=tn('match_races'),
+                matches=tn('matches'),
+                match_id_str=match_id_str
+            )
+        )
 
 async def _register_match(match: Match) -> None:
     match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)

@@ -15,9 +15,6 @@ Current version: 0.10
 - Remove `stats` dependency from `ladder` (perhaps split into a "ratings" and "ladder" package?)
 - Clarify `league` dependency in `ladder`?
 
-### League
-- Discord category limit is 50, so implement proper workaround when making >50 race rooms
-
 ### GSheet
 - Give the bot a command to set up a GSheet from blank
 - Tag input with match ID on creation, so we don't depend on row/sheetID for identification
@@ -26,7 +23,7 @@ Current version: 0.10
 ### Match
 - Make bot say races awaiting review in match score announcement when contested races
 - Remove or notify commentator on match reschedule
-- combine MatchRaceData and Match in a friendly way
+- Combine MatchRaceData and Match in a friendly way
 
 ### Util
 - `util.level.py` and `util.racetime.py` might work better as classes, when wanting to generalize to other games

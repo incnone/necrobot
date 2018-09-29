@@ -109,3 +109,15 @@ async def set_channel_category(channel: discord.Channel, category: discord.Chann
         discord.http.Route('PATCH', '/channels/{channel_id}', channel_id=channel.id),
         json={'parent_id': category.id}
     )
+
+
+async def create_channel_category(name: str) -> discord.Channel:
+    data = await client.http.request(
+        discord.http.Route('POST', '/guilds/{guild_id}/channels', guild_id=server.id),
+        json={
+            'name': name,
+            'type': 4   # 4 is the "category" channel type
+        }
+    )
+    channel = discord.Channel(server=server, **data)
+    return channel

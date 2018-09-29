@@ -5,17 +5,20 @@ from necrobot.botbase.manager import Manager
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match import matchdb, matchutil
 from necrobot.match.matchroom import MatchRoom
+from necrobot.match.matchglobals import MatchGlobals
 from necrobot.util import console, server
 from necrobot.util.singleton import Singleton
+from necrobot.config import Config
 
 
 class MatchMgr(Manager, metaclass=Singleton):
     def __init__(self):
         NEDispatch().subscribe(self)
-        self._deadline_fn = MatchMgr._default_deadline
 
     async def initialize(self):
         await self._recover_stored_match_rooms()
+        category_channel = server.find_channel(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+        MatchGlobals().set_channel_category(category_channel)
 
     async def refresh(self):
         pass
@@ -40,17 +43,6 @@ class MatchMgr(Manager, metaclass=Singleton):
                             target=ev.user.member,
                             overwrite=read_perms
                         )
-
-    async def set_deadline_fn(self, f):
-        self._deadline_fn = f
-
-    @property
-    def deadline(self):
-        return self._deadline_fn()
-
-    @staticmethod
-    def _default_deadline():
-        return None
 
     @staticmethod
     async def _recover_stored_match_rooms() -> None:

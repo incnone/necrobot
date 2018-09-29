@@ -6,8 +6,8 @@ import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necroevent import NEDispatch
-from necrobot.match import matchdb, matchinfo, matchutil, matchfindparse
-from necrobot.match.matchmgr import MatchMgr
+from necrobot.match import matchdb, matchfindparse
+from necrobot.match.matchglobals import MatchGlobals
 from necrobot.user import userlib
 from necrobot.util import console, server, timestr
 from necrobot.util.parse import dateparse
@@ -263,7 +263,7 @@ class Suggest(CommandType):
             return
 
         # Check for deadlines on suggested times.
-        deadline = MatchMgr().deadline
+        deadline = MatchGlobals().deadline
         if deadline is not None and suggested_time_utc - deadline > datetime.timedelta(seconds=0):
             await self.client.send_message(
                 cmd.channel,
@@ -634,11 +634,15 @@ class RebootRoom(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await matchutil.make_match_room(match=self.bot_channel.match)
         await self.client.send_message(
             cmd.channel,
-            'Room rebooted.'
+            'This command is currently deprecated.'
         )
+        # await match.matchchannelutil.make_match_room(match=self.bot_channel.match)
+        # await self.client.send_message(
+        #     cmd.channel,
+        #     'Room rebooted.'
+        # )
 
 
 class SetMatchType(CommandType):
@@ -777,62 +781,3 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         )
 
 
-async def make_match_from_cmd(
-        cmd: Command,
-        cmd_type: CommandType,
-        racer_members=list(),
-        racer_names=list(),
-        match_info=matchinfo.MatchInfo()
-):
-    racers = []
-
-    # Add the racers from member objects
-    for member in racer_members:
-        racer_as_necrouser = await userlib.get_user(discord_id=member.id)
-        if racer_as_necrouser is not None:
-            racers.append(racer_as_necrouser)
-        else:
-            await cmd_type.client.send_message(
-                cmd.channel,
-                'Unexpected error: Couldn\'t find `{0}` in the database.'.format(member.display_name)
-            )
-            return
-
-    # Add the racers from names
-    for name in racer_names:
-        racer_as_necrouser = await userlib.get_user(any_name=name)
-
-        if racer_as_necrouser is not None:
-            racers.append(racer_as_necrouser)
-        else:
-            await cmd_type.client.send_message(
-                cmd.channel,
-                'Couldn\'t find a user with name `{0}`.'.format(name)
-            )
-            return
-
-    # Check we have exactly two racers
-    if len(racers) != 2:
-        await cmd_type.client.send_message(
-            cmd.channel,
-            'Unexpected error: Tried to create a match with more than two racers.'
-        )
-        return
-
-    # Create the Match object
-    new_match = await matchutil.make_match(
-        racer_1_id=racers[0].user_id,
-        racer_2_id=racers[1].user_id,
-        match_info=match_info,
-        register=True
-    )
-
-    # Create the match room
-    match_room = await matchutil.make_match_room(new_match)
-    await match_room.send_channel_start_text()
-
-    # Output success
-    await cmd_type.client.send_message(
-        cmd.channel,
-        'Match created in channel {0}.'.format(
-            match_room.channel.mention))
