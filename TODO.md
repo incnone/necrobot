@@ -6,7 +6,6 @@ Current version: 0.10
 
 ### General
 - Replace NoneType returns with exceptions where appropriate
-- Output text in channel when a command throws an error (if possible)
 - Fix frequent caching errors
 - Better handling of rate-limiting issues on countdown (fix delay before 'Go!' text)
 - Add admin command to delete racerooms (for remaking), instead of just closing them
@@ -17,7 +16,6 @@ Current version: 0.10
 
 ### GSheet
 - Give the bot a command to set up a GSheet from blank
-- Tag input with match ID on creation, so we don't depend on row/sheetID for identification
 - Better standings update code
 
 ### Match
