@@ -86,9 +86,9 @@ class MakeFromSheet(CommandType):
             return
 
         wks_name = cmd.args[0]
-        await self.client.send_message(
+        status_message = await self.client.send_message(
             cmd.channel,
-            'Creating matches from worksheet `{0}`...'.format(wks_name)
+            'Creating matches from worksheet `{0}`... (Getting GSheet info)'.format(wks_name)
         )
         await self.client.send_typing(cmd.channel)
 
@@ -101,7 +101,7 @@ class MakeFromSheet(CommandType):
                     wks_name=wks_name,
                     sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
-            matches = await matchup_sheet.get_matches(register=False, match_info=match_info)
+            matches = await matchup_sheet.get_matches(register=True, match_info=match_info)
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
             await self.client.send_message(
                 cmd.channel,
@@ -110,34 +110,37 @@ class MakeFromSheet(CommandType):
             return
 
         console.info('MakeFromSheet: Creating Match objects...')
+        await self.client.edit_message(
+            status_message,
+            'Creating matches from worksheet `{0}`... (Creating match list)'.format(wks_name)
+        )
         not_found_matches = matchup_sheet.uncreated_matches()
         matches_with_channels = await matchchannelutil.get_matches_with_channels()
-        channeled_matchroom_names = dict()
-        for match in matches_with_channels:
-            if match.matchroom_name in channeled_matchroom_names:
-                channeled_matchroom_names[match.matchroom_name] += 1
-            else:
-                channeled_matchroom_names[match.matchroom_name] = 1
 
         console.info('MakeFromSheet: Removing duplicate matches...')
-        # Remove matches that have the same name as current channels (but only one per channel)
+        # Remove matches from the list that already have channels
         unchanneled_matches = []
         for match in matches:
-            channeled_name = match.matchroom_name in channeled_matchroom_names
-            if not channeled_name or channeled_matchroom_names[match.matchroom_name] <= 0:
+            found = False
+            for channeled_match in matches_with_channels:
+                if match.match_id == channeled_match.match_id:
+                    found = True
+            if not found:
                 unchanneled_matches.append(match)
-            if channeled_name:
-                channeled_matchroom_names[match.matchroom_name] -= 1
 
         console.info('MakeFromSheet: Sorting matches...')
         # Sort the remaining matches
         unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
 
+        await self.client.edit_message(
+            status_message,
+            'Creating matches from worksheet `{0}`... (Creating race rooms)'.format(wks_name)
+        )
         console.debug('MakeFromSheet: Matches to make: {0}'.format(unchanneled_matches))
         console.info('MakeFromSheet: Creating match channels...')
         for match in unchanneled_matches:
             console.info('MakeFromSheet: Creating {0}...'.format(match.matchroom_name))
-            new_room = await matchchannelutil.make_match_room(match=match, register=True)
+            new_room = await matchchannelutil.make_match_room(match=match, register=False)
             await new_room.send_channel_start_text()
 
         uncreated_str = ''
@@ -147,11 +150,14 @@ class MakeFromSheet(CommandType):
             uncreated_str = uncreated_str[:-2]
 
         if uncreated_str:
-            report_str = 'Done creating matches. The following matches were not made: {0}'.format(uncreated_str)
+            report_str = 'The following matches were not made: {0}'.format(uncreated_str)
         else:
             report_str = 'All matches created successfully.'
 
-        await self.client.send_message(cmd.channel, report_str)
+        await self.client.edit_message(
+            status_message,
+            'Creating matches from worksheet `{0}`... done. {1}'.format(wks_name, report_str)
+        )
 
 
 class PushMatchToSheet(CommandType):

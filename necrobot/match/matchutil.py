@@ -15,8 +15,13 @@ from necrobot.util import server
 match_library = {}
 
 
+def invalidate_cache():
+    global match_library
+    match_library = {}
+
+
 # noinspection PyIncorrectDocstring
-async def make_match(*args, register=False, **kwargs) -> Match:
+async def make_match(*args, register=False, update=False, **kwargs) -> Match:
     """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
     since this needs to interact with the database.
 
@@ -55,8 +60,12 @@ async def make_match(*args, register=False, **kwargs) -> Match:
     Match
         The created match.
     """
-    if 'match_id' in kwargs and kwargs['match_id'] in match_library:
-        return match_library[kwargs['match_id']]
+    if 'match_id' in kwargs and kwargs['match_id'] is not None:
+        cached_match = await get_match_from_id(kwargs['match_id'])
+        if update:
+            cached_match.raw_update(**kwargs)
+            await cached_match.commit()
+        return cached_match
 
     match = Match(*args, commit_fn=matchdb.write_match, **kwargs)
     await match.initialize()

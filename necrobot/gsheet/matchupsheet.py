@@ -90,7 +90,7 @@ class MatchupSheet(object):
 
         matches = []
         self._not_found_matches = []
-        write_match_ids = self.column_data.match_id is not None and 'register' in kwargs and kwargs['register']
+        register_match_ids = self.column_data.match_id is not None and 'register' in kwargs and kwargs['register']
         match_ids = []
 
         async with Spreadsheets() as spreadsheets:
@@ -113,6 +113,13 @@ class MatchupSheet(object):
 
                 if not racer_1_name or not racer_2_name:
                     continue
+
+                match_id = None
+                if register_match_ids:
+                    try:
+                        match_id = int(row_values[self.column_data.match_id])
+                    except ValueError:
+                        pass
 
                 # if racer_1_name[0] not in string.ascii_letters or racer_2_name[0] not in string.ascii_letters:
                 #     self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
@@ -143,20 +150,26 @@ class MatchupSheet(object):
                         pass
 
                 new_match = await matchutil.make_match(
+                    update=True,
+                    match_id=match_id,
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,
                     gsheet_info=sheet_info,
                     **kwarg_copy
                 )
+                if new_match is None:
+                    self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
+                    continue
+
                 matches.append(new_match)
                 console.debug('get_matches: Created {0}-{1}'.format(
                     new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
                 )
 
-                if write_match_ids:
+                if register_match_ids:
                     match_ids.append([new_match.match_id])
 
-        if write_match_ids:
+        if register_match_ids:
             ids_range = self.column_data.get_range_for_column(self.column_data.match_id)
             await self.column_data.update_cells(sheet_range=ids_range, values=match_ids, raw_input=True)
 

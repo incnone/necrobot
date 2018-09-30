@@ -5,7 +5,7 @@ from necrobot.match import matchdb
 from necrobot.match.match import Match
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.match.matchroom import MatchRoom
-from necrobot.match.matchutil import make_match_from_raw_db_data
+from necrobot.match import matchutil
 from necrobot.user.necrouser import NecroUser
 from necrobot.util import server, console, writechannel
 from necrobot.config import Config
@@ -65,7 +65,7 @@ async def get_matches_with_channels(racer: NecroUser = None) -> list:
         channel_id = int(row[13])
         channel = server.find_channel(channel_id=channel_id)
         if channel is not None:
-            match = await make_match_from_raw_db_data(row=row)
+            match = await matchutil.make_match_from_raw_db_data(row=row)
             matches.append(match)
         else:
             console.warning('Found Match with channel {0}, but couldn\'t find this channel.'.format(channel_id))
@@ -75,8 +75,7 @@ async def get_matches_with_channels(racer: NecroUser = None) -> list:
 
 async def delete_all_match_channels(
         log=False,
-        completed_only=False,
-        delete_db_info_for_uncompleted=False
+        completed_only=False
 ) -> None:
     """Delete all match channels from the server.
     
@@ -87,7 +86,6 @@ async def delete_all_match_channels(
     completed_only: bool
         If True, will only find completed matches.
     """
-    match_ids_to_scrub_from_db = []
     for row in await matchdb.get_channeled_matches_raw_data():
         match_id = int(row[0])
         channel_id = int(row[13])
@@ -100,9 +98,6 @@ async def delete_all_match_channels(
             if completed_only and not completed:
                 delete_this = False
 
-            if delete_db_info_for_uncompleted and not completed:
-                match_ids_to_scrub_from_db.append(match_id)
-
             if delete_this:
                 if log:
                     await writechannel.write_channel(
@@ -114,9 +109,6 @@ async def delete_all_match_channels(
 
         if delete_this:
             await matchdb.register_match_channel(match_id, None)
-
-    if delete_db_info_for_uncompleted:
-        await matchdb.scrub_matches(match_ids_to_scrub_from_db)
 
 
 async def make_match_room(match: Match, register=False) -> MatchRoom or None:

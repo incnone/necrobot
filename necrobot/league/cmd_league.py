@@ -24,6 +24,7 @@ class ScrubDatabase(CommandType):
 
     async def _do_execute(self, cmd: Command):
         await matchdb.scrub_unchanneled_unraced_matches()
+        matchutil.invalidate_cache()
         await self.client.send_message(
             cmd.channel,
             'Database scrubbed.'
@@ -47,17 +48,17 @@ class CloseAllMatches(CommandType):
         log = 'nolog' not in cmd.args
         delete = 'nodelete' not in cmd.args
 
-        await self.client.send_message(
+        status_message = await self.client.send_message(
             cmd.channel,
             'Closing all match channels...'
         )
         await self.client.send_typing(cmd.channel)
 
-        await match.matchchannelutil.delete_all_match_channels(log=log, delete_db_info_for_uncompleted=delete)
+        await match.matchchannelutil.delete_all_match_channels(log=log)
 
-        await self.client.send_message(
-            cmd.channel,
-            'Done closing all match channels.'
+        await self.client.edit_message(
+            status_message,
+            'Closing all match channels... done.'
         )
 
 
@@ -72,7 +73,7 @@ class CloseFinished(CommandType):
     async def _do_execute(self, cmd: Command):
         log = not (len(cmd.args) == 1 and cmd.args[0].lstrip('-').lower() == 'nolog')
 
-        await self.client.send_message(
+        status_message = await self.client.send_message(
             cmd.channel,
             'Closing all completed match channels...'
         )
@@ -80,9 +81,9 @@ class CloseFinished(CommandType):
 
         await match.matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
 
-        await self.client.send_message(
-            cmd.channel,
-            'Done closing all completed match channels.'
+        await self.client.edit_message(
+            status_message,
+            'Closing all completed match channels... done.'
         )
 
 
