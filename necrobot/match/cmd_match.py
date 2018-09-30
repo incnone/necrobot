@@ -210,7 +210,7 @@ class Suggest(CommandType):
             return
 
         # Get the command's author as a NecroUser object
-        author_as_necrouser = await userlib.get_user(discord_id=cmd.author.id)
+        author_as_necrouser = await userlib.get_user(discord_id=int(cmd.author.id))
         if not author_as_necrouser:
             await self.client.send_message(
                 cmd.channel,

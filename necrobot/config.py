@@ -138,7 +138,7 @@ class Config(object):
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.11.1'
+    BOT_VERSION = '0.12.1'
     DEBUG_LEVEL = DebugLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
