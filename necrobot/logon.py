@@ -55,7 +55,7 @@ def logon(
     # Logging--------------------------------------------------
     file_format_prefix = logging_prefix
     file_format_str = file_format_prefix + '-%Y-%m-%d-%H-%M-%S'
-    utc_today = datetime.datetime.utcnow().date()
+    utc_today = datetime.datetime.utcnow()
     utc_today_str = utc_today.strftime(file_format_str)
 
     filenames_in_dir = os.listdir('logging')
