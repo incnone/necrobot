@@ -5,4 +5,4 @@ def escaped(s):
 
 
 def tickless(s):
-    return s.replace('```', '')
+    return s.replace('```', '`\u200b`\u200b`\u200b')
