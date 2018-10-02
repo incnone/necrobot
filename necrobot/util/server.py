@@ -63,7 +63,8 @@ def find_member(discord_name: str = None, discord_id: Union[str, int] = None) ->
         for member in server.members:
             if int(member.id) == int(discord_id):
                 return member
-    elif discord_name is not None:
+
+    if discord_name is not None:
         for member in server.members:
             if member.display_name.lower() == discord_name.lower() \
                     or member.name.lower() == discord_name.lower():
