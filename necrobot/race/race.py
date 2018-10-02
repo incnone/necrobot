@@ -6,6 +6,7 @@ import asyncio
 import datetime
 import time
 from enum import IntEnum, Enum
+from typing import List
 
 import discord
 
@@ -646,15 +647,16 @@ class Race(object):
     # Countdown coroutine to be wrapped in self._countdown_future.
     # Warning: Do not call this -- use begin_countdown instead.
     async def _race_countdown(self, mute=False):
+        # TODO: The warnings = [5] is a hardcoded hack due to mananging current Discord rate limits.
         await self._do_countdown(
             length=self._config.countdown_length,
             incremental_start=self._config.incremental_countdown_start,
+            warnings=[5],
             mute=mute
         )
-
         await self._begin_race()
 
-    async def _do_countdown(self, length: int, incremental_start: int = None, mute=False):
+    async def _do_countdown(self, length: int, warnings: List[int] = list(), incremental_start: int = None, mute=False):
         fudge = 0.6
 
         countdown_systemtime_begin = time.monotonic()
@@ -664,6 +666,9 @@ class Race(object):
             await self._write(mute=mute, text='The race will begin in {0} seconds.'.format(countdown_timer))
         while countdown_timer > 0:
             sleep_time = float(countdown_systemtime_begin + length - countdown_timer + 1 - time.monotonic())
+
+            if countdown_timer in warnings:
+                await self._write(mute=mute, text='{} seconds...'.format(countdown_timer))
 
             if incremental_start is None or countdown_timer <= incremental_start:
                 await self._write(mute=mute, text='{}'.format(countdown_timer))
