@@ -2,7 +2,7 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 import datetime
-from typing import Optional
+from typing import Optional, List
 
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
@@ -499,6 +499,28 @@ async def get_match_gsheet_duplication_number(match: Match) -> int:
             }
         )
         return int(cursor.fetchone()[0])
+
+
+async def scrub_unchanneled_unraced_matches() -> None:
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            DELETE {matches}
+            FROM {matches}
+            LEFT JOIN (
+                SELECT 
+                    match_id, 
+                    COUNT(*) AS number_of_races 
+                FROM {match_races}
+                GROUP BY match_id
+            ) match_counts ON match_counts.match_id = {matches}.match_id
+            WHERE match_counts.number_of_races IS NULL AND {matches}.channel_id IS NULL
+            """.format(
+                matches=tn('matches'),
+                match_races=tn('match_races')
+            )
+        )
+
 
 async def _register_match(match: Match) -> None:
     match_racetype_id = await racedb.get_race_type_id(race_info=match.race_info, register=True)

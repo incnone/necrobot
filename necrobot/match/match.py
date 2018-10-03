@@ -101,7 +101,7 @@ class Match(object):
         return self.match_id == other.match_id
 
     def __str__(self):
-        return '{0}-{1}'.format(self.matchroom_name, self.match_id)
+        return self.matchroom_name
 
     async def initialize(self):
         self._racer_1 = await userlib.get_user(user_id=self._racer_1_id)
@@ -213,7 +213,7 @@ class Match(object):
 
         if len(racer_names) == 2:
             racer_names.sort()
-            return '{0}-{1}'.format(racer_names[0], racer_names[1])
+            return '{0}-{1}-{2}'.format(racer_names[0], racer_names[1], self.match_id)
         else:
             return self.race_info.raceroom_name
 
@@ -400,6 +400,29 @@ class Match(object):
             A discord.Channel ID
         """
         self._channel_id = int(channel_id)
+
+    @commits
+    def raw_update(self, **kwargs):
+        if 'suggested_time' in kwargs:
+            self._set_suggested_time(kwargs['suggested_time'])
+        if 'r1_confirmed' in kwargs:
+            self._confirmed_by_r1 = kwargs['r1_confirmed']
+        if 'r2_confirmed' in kwargs:
+            self._confirmed_by_r2 = kwargs['r2_confirmed']
+        if 'r1_unconfirmed' in kwargs:
+            self._r1_wishes_to_unconfirm = kwargs['r1_unconfirmed']
+        if 'r2_unconfirmed' in kwargs:
+            self._r2_wishes_to_unconfirm = kwargs['r2_unconfirmed']
+        if 'match_info' in kwargs:
+            self._match_info = kwargs['match_info']
+        if 'cawmentator_id' in kwargs:
+            self._cawmentator_id = kwargs['cawmentator_id']
+        if 'channel_id' in kwargs:
+            self._channel_id = kwargs['channel_id']
+        if 'gsheet_info' in kwargs:
+            self._gsheet_info = kwargs['gsheet_info']
+        if 'finish_time' in kwargs:
+            self._finish_time = kwargs['finish_time']
 
     def _set_suggested_time(self, time: datetime.datetime or None) -> None:
         if time is None:

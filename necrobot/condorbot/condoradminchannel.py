@@ -3,6 +3,7 @@ from necrobot.botbase.botchannel import BotChannel
 from necrobot.gsheet import cmd_sheet
 from necrobot.league import cmd_league
 from necrobot.user import cmd_user
+from necrobot.test import cmd_test
 
 
 class CondorAdminChannel(BotChannel):
@@ -23,6 +24,7 @@ class CondorAdminChannel(BotChannel):
             cmd_league.GetMatchRules(self),
             cmd_league.MakeMatch(self),
             cmd_league.RegisterCondorEvent(self),
+            cmd_league.ScrubDatabase(self),
             cmd_league.SetCondorEvent(self),
             cmd_league.SetDeadline(self),
             cmd_league.SetEventName(self),
@@ -37,4 +39,6 @@ class CondorAdminChannel(BotChannel):
             cmd_user.ForceRTMP(self),
             cmd_user.RTMP(self),
             cmd_user.UserInfo(self),
+
+            cmd_test.TestCreateCategory(self)
         ]

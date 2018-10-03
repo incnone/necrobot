@@ -138,7 +138,7 @@ class Config(object):
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.11.1'
+    BOT_VERSION = '0.12.1'
     DEBUG_LEVEL = DebugLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
@@ -185,7 +185,7 @@ class Config(object):
     # Races -----------------------------------------------------------------------------------
     COUNTDOWN_LENGTH = int(10)
     UNPAUSE_COUNTDOWN_LENGTH = int(3)
-    INCREMENTAL_COUNTDOWN_START = int(5)
+    INCREMENTAL_COUNTDOWN_START = int(3)
     FINALIZE_TIME_SEC = int(30)
     RACE_CHANNEL_CATEGORY_NAME = "Race rooms"
 

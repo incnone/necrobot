@@ -146,7 +146,7 @@ class SetInfo(CommandType):
 class Timezone(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'timezone')
-        self._timezone_loc = 'https://github.com/incnone/condorbot/blob/master/data/tz_list.txt'
+        self._timezone_loc = 'https://github.com/incnone/necrobot/blob/master/docs/Timezones.txt'
         self.help_text = 'Register a time zone with your account. Usage is `{1} zone_name`. See <{0}> for a ' \
                          'list of recognized time zones; these strings should be input exactly as-is, e.g., ' \
                          '`.timezone US/Eastern`.'.format(self._timezone_loc, self.mention)

@@ -43,7 +43,7 @@ def get_keyword(arg: str, keyword_set: set) -> Keyword or None:
     Optional[Keyword]
         The found Keyword, or None if none found.
     """
-    arg = arg.lower()
+    arg = arg.lower().lstrip('-')
     for keyword in keyword_set:
         if arg == keyword.keyword or arg in keyword.aliases:
             return keyword

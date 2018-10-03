@@ -62,6 +62,21 @@ match
     util/
         console
         decorators
+matchchannelutil
+    botbase/
+        necrobot
+    match/
+        match
+        matchdb
+        matchmgr
+        matchroom
+        matchutil
+    user/
+        necrouser
+    util/
+        server
+        console
+        writechannel
 matchdb
     database/
         dbconnect

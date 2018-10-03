@@ -6,6 +6,7 @@ from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.test import msgqueue
+from necrobot.config import Config
 
 
 class TestCommandType(CommandType):
@@ -34,6 +35,15 @@ class TestCommandType(CommandType):
         return await msgqueue.register_event(starts_with_str)
 
 
+class TestCreateCategory(TestCommandType):
+    def __init__(self, bot_channel):
+        TestCommandType.__init__(self, bot_channel, 'testcreatecategory')
+        self.help_text = "Make the 'Race Rooms' category channel."
+
+    async def _do_execute(self, cmd: Command):
+        await server.create_channel_category(Config.MATCH_CHANNEL_CATEGORY_NAME)
+
+
 class TestMatch(TestCommandType):
     def __init__(self, bot_channel):
         TestCommandType.__init__(self, bot_channel, 'testmatch')
@@ -47,7 +57,7 @@ class TestMatch(TestCommandType):
         match = self.bot_channel.match
         racer_1 = match.racer_1.member
         racer_2 = match.racer_2.member
-        admin = server.find_admin(ignore=[racer_1.discord_name, racer_2.discord_name])
+        admin = server.find_admin(ignore=[racer_1.name, racer_2.name])
         if racer_1 is None or racer_2 is None or admin is None:
             await self.client.send_message(
                 cmd.channel,

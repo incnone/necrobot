@@ -1,3 +1,4 @@
+import match.cmd_matchmake
 from necrobot.ladder import ratingsdb
 from necrobot.botbase.commandtype import CommandType
 from necrobot.match.matchinfo import MatchInfo
@@ -54,7 +55,7 @@ class Ranked(CommandType):
             )
             return
 
-        await cmd_match.make_match_from_cmd(
+        await match.cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_members=[cmd.author],
@@ -119,7 +120,7 @@ class Unranked(CommandType):
             )
             return
 
-        await cmd_match.make_match_from_cmd(
+        await match.cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_members=[cmd.author],
@@ -181,7 +182,7 @@ class ForceRanked(CommandType):
                 'Error: Wrong number of arguments for `{}`.'.format(self.mention))
             return
 
-        await cmd_match.make_match_from_cmd(
+        await match.cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],

@@ -53,22 +53,12 @@ def logon(
         warnings.simplefilter("always", ResourceWarning)
 
     # Logging--------------------------------------------------
-    file_format_prefix = logging_prefix
-    file_format_str = file_format_prefix + '-%Y-%m-%d-%H-%M-%S'
-    utc_today = datetime.datetime.utcnow().date()
-    utc_today_str = utc_today.strftime(file_format_str)
-
-    filenames_in_dir = os.listdir('logging')
-
-    # Get log output filename
-    filename_rider = 0
-    while True:
-        filename_rider += 1
-        log_output_filename = '{0}-{1}.log'.format(utc_today_str, filename_rider)
-        if not (log_output_filename in filenames_in_dir):
-            break
-    # noinspection PyUnboundLocalVariable
-    log_output_filename = 'logging/{0}'.format(log_output_filename)
+    log_timestr_format = '%Y-%m-%d-%H-%M-%S'
+    log_file_format = '{prefix}-{timestr}.log'
+    log_output_filename = os.path.join(
+        'logging',
+        log_file_format.format(prefix=logging_prefix, timestr=datetime.datetime.utcnow().strftime(log_timestr_format))
+    )
 
     # Set up logger
     if config.Config.full_debugging():
