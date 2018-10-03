@@ -1,15 +1,14 @@
 from necrobot.ladder import ratingsdb
 from necrobot.botbase.commandtype import CommandType
-from necrobot.match import cmd_match
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.user import userlib
 
 
 # General commands
-class LadderDropMyMatches(CommandType):
+class LadderLeaderboard(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladder-drop-my-matches')
-        self.help_text = 'Drop out of all currently scheduled ladder matches.'
+        CommandType.__init__(self, bot_channel, 'leaderboard')
+        self.help_text = 'View the current ladder leaderboard.'
 
     async def _do_execute(self, cmd):
         # TODO
@@ -19,14 +18,15 @@ class LadderDropMyMatches(CommandType):
         )
 
 
-class LadderRegister(CommandType):
+class SetAutomatch(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ladder-register')
-        self.help_text = 'Begin registering yourself for the Necrobot ladder.'
+        CommandType.__init__(self, bot_channel, 'setautomatch')
+        self.help_text = '`{} n`: Tell the bot you want `n` automatically generated matches per week.' \
+                         .format(self.mention)
 
     @property
     def short_help_text(self):
-        return 'Begin registration for ladder.'
+        return 'Set number of desired matchups per week.'
 
     async def _do_execute(self, cmd):
         # TODO
@@ -39,7 +39,7 @@ class LadderRegister(CommandType):
 class Ranked(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'ranked')
-        self.help_text = 'Create a ranked ladder match (`{0} opponent_name`).'.format(self.mention)
+        self.help_text = 'Create a ranked ladder match (`{} opponent_name`).'.format(self.mention)
 
     @property
     def short_help_text(self):
@@ -49,8 +49,8 @@ class Ranked(CommandType):
         if len(cmd.args[0]) != 1:
             await self.client.send_message(
                 cmd.channel,
-                'Wrong number of arguments for `{0}`. '
-                '(Enclose racer names with spaces inside quotes.)'.format(self.mention)
+                'Wrong number of arguments for `{}`. (Enclose racer names with spaces inside quotes.)'
+                .format(self.mention)
             )
             return
 
@@ -82,7 +82,7 @@ class Rating(CommandType):
             if necro_user is None:
                 await self.client.send_message(
                     cmd.channel,
-                    'Couldn\'t find user {0}.'.format(cmd.args[0])
+                    'Couldn\'t find user {}.'.format(cmd.args[0])
                 )
                 return
             user_name = necro_user.display_name
@@ -90,7 +90,7 @@ class Rating(CommandType):
         else:
             await self.client.send_message(
                 cmd.channel,
-                'Error: Too many args for `{0}`. (Enclose names with spaces in quotes.)'.format(self.mention)
+                'Error: Too many args for `{}`. (Enclose names with spaces in quotes.)'.format(self.mention)
             )
             return
 
@@ -103,7 +103,7 @@ class Rating(CommandType):
 class Unranked(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'unranked')
-        self.help_text = 'Suggest an unranked match with an opponent with `{0} opponent_name`. Both ' \
+        self.help_text = 'Suggest an unranked match with an opponent with `{} opponent_name`. Both ' \
                          'players must do this for the match to be made.'.format(self.mention)
 
     @property
@@ -114,8 +114,8 @@ class Unranked(CommandType):
         if len(cmd.args[0]) != 1:
             await self.client.send_message(
                 cmd.channel,
-                'Wrong number of arguments for `{0}`. '
-                '(Enclose racer names with spaces inside quotes.)'.format(self.mention)
+                'Wrong number of arguments for `{}`. (Enclose racer names with spaces inside quotes.)'
+                .format(self.mention)
             )
             return
 
@@ -139,21 +139,7 @@ class Automatch(CommandType):
         # TODO
         await self.client.send_message(
             cmd.channel,
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
-        )
-
-
-class CloseFinished(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'closefinished')
-        self.help_text = 'Close all finished match rooms.'
-        self.admin_only = True
-
-    async def _do_execute(self, cmd):
-        # TODO
-        await self.client.send_message(
-            cmd.channel,
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+            '`{}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
 
@@ -172,7 +158,7 @@ class DropRacer(CommandType):
         # TODO
         await self.client.send_message(
             cmd.channel,
-            '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
+            '`{}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
 
@@ -192,7 +178,7 @@ class ForceRanked(CommandType):
         if len(cmd.args) != 2:
             await self.client.send_message(
                 cmd.channel,
-                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+                'Error: Wrong number of arguments for `{}`.'.format(self.mention))
             return
 
         await cmd_match.make_match_from_cmd(
