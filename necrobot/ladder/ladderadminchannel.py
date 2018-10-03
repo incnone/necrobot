@@ -10,10 +10,19 @@ class LadderAdminChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
         self.channel_commands = [
-            # cmd_ladder.Automatch(self),
+            cmd_league.CloseAllMatches(self),
             cmd_league.CloseFinished(self),
+            cmd_league.GetCurrentEvent(self),
+            cmd_league.GetMatchRules(self),
+            cmd_league.ScrubDatabase(self),
+            cmd_league.SetCondorEvent(self),
+            cmd_league.SetEventName(self),
+            cmd_league.SetMatchRules(self),
+
+            # cmd_ladder.Automatch(self),
             # cmd_ladder.DropRacer(self),
             cmd_ladder.ForceRanked(self),
+            # cmd_ladder.ForceUnranked(self),
 
             cmd_seedgen.RandomSeed(self),
 

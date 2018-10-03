@@ -9,7 +9,7 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.match import matchdb, matchfindparse
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.user import userlib
-from necrobot.util import console, server, timestr
+from necrobot.util import console, server, timestr, writechannel
 from necrobot.util.parse import dateparse
 
 
@@ -470,6 +470,28 @@ class ForceBegin(CommandType):
         match.suggest_time(pytz.utc.localize(datetime.datetime.utcnow()))
         match.force_confirm()
         await self.bot_channel.update()
+
+
+class ForceCloseRoom(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'f-close', 'forceclose')
+        self.help_text = 'Close (delete) this match channel. Use `{} nolog` if you do not wish to save a log ' \
+                         'of the channel text.'.format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        match_id = self.bot_channel.match.match_id
+        channel = self.bot_channel.channel
+
+        if 'nolog' not in cmd.args:
+            await writechannel.write_channel(
+                client=server.client,
+                channel=channel,
+                outfile_name='{0}-{1}'.format(match_id, channel.name)
+            )
+
+        await server.client.delete_channel(channel)
+        await matchdb.register_match_channel(match_id, None)
 
 
 class ForceConfirm(CommandType):

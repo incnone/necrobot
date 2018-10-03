@@ -26,16 +26,18 @@ async def load_necrobot_config(necrobot):
     necrobot.register_bot_channel(server.main_channel, MainBotChannel())
 
     # Ladder Channels
-    ladder_main_channel = necrobot.find_channel(Config.LADDER_MAIN_CHANNEL_NAME)
+    ladder_main_channel = server.find_channel(Config.LADDER_MAIN_CHANNEL_NAME)
     if ladder_main_channel is None:
         console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_MAIN_CHANNEL_NAME))
-    ladder_admin_channel = necrobot.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)
+    ladder_admin_channel = server.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)
     if ladder_admin_channel is None:
         console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_ADMIN_CHANNEL_NAME))
 
     if ladder_main_channel is not None and ladder_admin_channel is not None:
         necrobot.register_bot_channel(ladder_main_channel, LadderMainChannel())
         necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
+
+    Config.MATCH_CHANNEL_CATEGORY_NAME = 'Ladder rooms'
 
     # Managers
     necrobot.register_manager(DailyMgr())

@@ -35,9 +35,8 @@ class CloseAllMatches(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'closeall', 'closeallmatches')
         self.help_text = 'Close all match rooms. Use `{0} nolog` to close all rooms without writing ' \
-                         'logs (much faster, but no record will be kept of room chat). Use `{0} nodelete` to prevent ' \
-                         'the bot from deleting database information for unfinished matches on room close.' \
-            .format(self.mention)
+                         'logs (much faster, but no record will be kept of room chat).' \
+                         .format(self.mention)
         self.admin_only = True
 
     @property
@@ -46,7 +45,6 @@ class CloseAllMatches(CommandType):
 
     async def _do_execute(self, cmd: Command):
         log = 'nolog' not in cmd.args
-        delete = 'nodelete' not in cmd.args
 
         status_message = await self.client.send_message(
             cmd.channel,

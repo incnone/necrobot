@@ -149,7 +149,7 @@ class Config(object):
     MAIN_CHANNEL_NAME = 'necrobot_main'
     DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
-    LADDER_MAIN_CHANNEL_NAME = 'ladder'
+    LADDER_MAIN_CHANNEL_NAME = 'ladder_main'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
     NOTIFICATIONS_CHANNEL_NAME = 'bot_notifications'
 
