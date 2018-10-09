@@ -3,7 +3,7 @@ import datetime
 import typing
 import unittest
 
-from match.matchgsheetinfo import MatchGSheetInfo
+from necrobot.match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.makerequest import make_request
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
@@ -164,7 +164,7 @@ class StandingsSheet(object):
 
 class TestStandingsSheet(unittest.TestCase):
     from necrobot.test.asynctest import async_test
-    from match.matchgsheetinfo import MatchGSheetInfo
+    from necrobot.match.matchgsheetinfo import MatchGSheetInfo
 
     loop = asyncio.new_event_loop()
     the_gsheet_id = '1JbwqUsX1ibHVVtcRVpOmaFJcfQz2ncBAOwb1nV1PsPA'

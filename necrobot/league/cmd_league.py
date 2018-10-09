@@ -2,8 +2,8 @@ import datetime
 
 import pytz
 
-import match.cmd_matchmake
-import match.matchchannelutil
+import necrobot.match.cmd_matchmake
+import necrobot.match.matchchannelutil
 import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
