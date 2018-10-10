@@ -6,7 +6,7 @@ import unittest
 import pytz
 
 import necrobot.exception
-from match.matchgsheetinfo import MatchGSheetInfo
+from necrobot.match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 from necrobot.match import matchinfo

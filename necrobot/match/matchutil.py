@@ -2,7 +2,7 @@ import datetime
 
 import pytz
 
-from match.matchgsheetinfo import MatchGSheetInfo
+from necrobot.match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match import matchdb
 from necrobot.match.match import Match

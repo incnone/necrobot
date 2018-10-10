@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytz
 
-from match.matchgsheetinfo import MatchGSheetInfo
+from necrobot.match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.match.matchinfo import MatchInfo
 # from necrobot.match.matchracedata import MatchRaceData
 from necrobot.race.raceinfo import RaceInfo
