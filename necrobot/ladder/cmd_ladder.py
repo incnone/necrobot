@@ -1,7 +1,6 @@
 import match.cmd_matchmake
 from necrobot.ladder import ratingsdb
 from necrobot.botbase.commandtype import CommandType
-from necrobot.match import cmd_match
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.user import userlib
 

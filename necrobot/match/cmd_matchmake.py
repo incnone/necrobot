@@ -1,7 +1,7 @@
-import necrobot.match.matchchannelutil
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.match import matchinfo, matchutil
+from necrobot.match import matchchannelutil
 from necrobot.user import userlib
 
 
@@ -56,7 +56,7 @@ async def make_match_from_cmd(
     )
 
     # Create the match room
-    match_room = await match.matchchannelutil.make_match_room(match=new_match)
+    match_room = await matchchannelutil.make_match_room(match=new_match)
     await match_room.send_channel_start_text()
 
     # Output success

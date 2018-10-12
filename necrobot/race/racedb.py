@@ -166,7 +166,7 @@ async def get_all_racedata(user_id: int, char_name: str, amplified: bool) -> lis
 
 async def get_fastest_times_leaderboard(character_name: str, amplified: bool, limit: int) -> list:
     async with DBConnect(commit=False) as cursor:
-        params = {'character': character_name, 'limit': limit,}
+        params = {'character': character_name, 'limit': limit, }
         cursor.execute(
             """
             SELECT

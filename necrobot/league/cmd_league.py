@@ -1,16 +1,15 @@
 import datetime
 
 import pytz
-
-import necrobot.match.cmd_matchmake
-import necrobot.match.matchchannelutil
 import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.config import Config
 from necrobot.league import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.match import matchutil, cmd_match, matchinfo, matchdb
+from necrobot.match import cmd_matchmake
+from necrobot.match import matchutil, matchinfo, matchdb
+from necrobot.match import matchchannelutil
 from necrobot.user import userlib
 from necrobot.util import server
 from necrobot.util.parse import dateparse
@@ -35,9 +34,8 @@ class CloseAllMatches(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'closeall', 'closeallmatches')
         self.help_text = 'Close all match rooms. Use `{0} nolog` to close all rooms without writing ' \
-                         'logs (much faster, but no record will be kept of room chat). Use `{0} nodelete` to prevent ' \
-                         'the bot from deleting database information for unfinished matches on room close.' \
-            .format(self.mention)
+                         'logs (much faster, but no record will be kept of room chat). ' \
+                         .format(self.mention)
         self.admin_only = True
 
     @property
@@ -46,7 +44,6 @@ class CloseAllMatches(CommandType):
 
     async def _do_execute(self, cmd: Command):
         log = 'nolog' not in cmd.args
-        delete = 'nodelete' not in cmd.args
 
         status_message = await self.client.send_message(
             cmd.channel,
@@ -54,7 +51,7 @@ class CloseAllMatches(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
-        await match.matchchannelutil.delete_all_match_channels(log=log)
+        await matchchannelutil.delete_all_match_channels(log=log)
 
         await self.client.edit_message(
             status_message,
@@ -79,7 +76,7 @@ class CloseFinished(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
-        await match.matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
+        await matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
 
         await self.client.edit_message(
             status_message,
@@ -151,7 +148,7 @@ class DropRacer(CommandType):
             )
             return
 
-        matches = await match.matchchannelutil.get_matches_with_channels(racer=user)
+        matches = await matchchannelutil.get_matches_with_channels(racer=user)
         deleted_any = False
         for match in matches:
             channel = server.find_channel(channel_id=match.channel_id)
@@ -246,7 +243,7 @@ class MakeMatch(CommandType):
             )
             return
 
-        await match.cmd_matchmake.make_match_from_cmd(
+        await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],
