@@ -4,6 +4,9 @@ Current version: 0.12
 
 ## Current TODO
 
+### More urgent
+- Better database setup on new league creation; see Alexis's comments
+
 ### General
 - Replace NoneType returns with exceptions where appropriate
 - Fix frequent caching errors

@@ -157,6 +157,10 @@ class MatchupSheet(object):
                     gsheet_info=sheet_info,
                     **kwarg_copy
                 )
+
+                if register_match_ids:
+                    match_ids.append([new_match.match_id] if new_match is not None else [''])
+
                 if new_match is None:
                     self._not_found_matches.append('{0}-{1}'.format(racer_1_name, racer_2_name))
                     continue
@@ -165,9 +169,6 @@ class MatchupSheet(object):
                 console.debug('get_matches: Created {0}-{1}'.format(
                     new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
                 )
-
-                if register_match_ids:
-                    match_ids.append([new_match.match_id])
 
         if register_match_ids:
             ids_range = self.column_data.get_range_for_column(self.column_data.match_id)
