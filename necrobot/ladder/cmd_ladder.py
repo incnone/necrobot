@@ -39,12 +39,12 @@ class SetAutomatch(CommandType):
 
 class Ranked(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'ranked')
-        self.help_text = 'Create a ranked ladder match (`{} opponent_name`).'.format(self.mention)
+        CommandType.__init__(self, bot_channel, 'makematch', 'ranked')
+        self.help_text = 'Create a match against the given opponent (`{} opponent_name`).'.format(self.mention)
 
     @property
     def short_help_text(self):
-        return 'Create ladder match.'
+        return 'Create match.'
 
     async def _do_execute(self, cmd):
         if len(cmd.args[0]) != 1:
@@ -67,8 +67,8 @@ class Ranked(CommandType):
 class Rating(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'rating')
-        self.help_text = '`{} username` returns the TrueSkill rating of the discord user `username`; if no ' \
-                         'username is given, returns your TrueSkill rating.'.format(self.mention)
+        self.help_text = '`{} username` returns the rating of the discord user `username`; if no ' \
+                         'username is given, returns your rating.'.format(self.mention)
 
     @property
     def short_help_text(self):
