@@ -11,6 +11,7 @@ register_discord_user
 """
 import discord
 import mysql.connector
+from typing import Iterable
 
 from necrobot.util import console
 
@@ -117,6 +118,40 @@ async def get_users_with_any(
         case_sensitive=case_sensitive,
         do_any=True
     )
+
+
+async def get_all_users_with_any(names: Iterable[str]):
+    async with DBConnect(commit=False) as cursor:
+        if not names:
+            return []
+        params = tuple()
+        for name in names:
+            params += (name.lower(),)
+        format_strings = ','.join(['%s'] * len(params))
+
+        params = params + params + params
+        print(params)
+
+        cursor.execute(
+            """
+            SELECT 
+               discord_id, 
+               discord_name, 
+               twitch_name, 
+               rtmp_name, 
+               timezone, 
+               user_info, 
+               daily_alert, 
+               race_alert, 
+               user_id 
+            FROM users 
+            WHERE LOWER(discord_name) IN ({fm})
+            OR LOWER(twitch_name) IN ({fm})
+            OR LOWER(rtmp_name) IN ({fm})
+            """.format(fm=format_strings),
+            params
+        )
+        return cursor.fetchall()
 
 
 async def get_users_with_all(

@@ -23,6 +23,7 @@ class CondorAdminChannel(BotChannel):
             cmd_league.ForceMakeMatch(self),
             cmd_league.GetCurrentEvent(self),
             cmd_league.GetMatchRules(self),
+            cmd_league.MakeMatchesFromFile(self),
             cmd_league.RegisterCondorEvent(self),
             cmd_league.ScrubDatabase(self),
             cmd_league.SetCondorEvent(self),
@@ -31,7 +32,6 @@ class CondorAdminChannel(BotChannel):
             cmd_league.SetMatchRules(self),
 
             cmd_sheet.GetGSheet(self),
-            # cmd_sheet.MakeFromSheet(self),
             cmd_sheet.OverwriteGSheet(self),
             cmd_sheet.SetGSheet(self),
 

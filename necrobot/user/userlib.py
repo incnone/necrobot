@@ -18,6 +18,24 @@ user_library_by_uid = {}
 user_library_by_did = {}
 
 
+async def fill_user_dict(user_dict: dict):
+    """
+    For each key in the given dict, find a NecroUser, if possible, matching that key (via the logic used for the
+    'any_name' field of get_user), and put that NecroUser into the value.
+    """
+    # TODO: be more careful about name duplication
+    raw_db_data = await userdb.get_all_users_with_any(user_dict.keys())
+    for row in raw_db_data:
+        necrouser = _get_user_from_db_row(row)
+        if necrouser.discord_name.lower() in user_dict:
+            user_dict[necrouser.discord_name.lower()] = necrouser
+        elif necrouser.twitch_name.lower() in user_dict:
+            user_dict[necrouser.twitch_name.lower()] = necrouser
+        elif necrouser.rtmp_name.lower() in user_dict:
+            user_dict[necrouser.rtmp_name.lower()] = necrouser
+    return user_dict
+
+
 async def get_user(
     discord_id: int = None,
     discord_name: str = None,

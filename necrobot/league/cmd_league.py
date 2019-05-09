@@ -1,4 +1,5 @@
 import datetime
+import os
 
 import pytz
 
@@ -11,10 +12,11 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.config import Config
 from necrobot.league import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.match import matchutil, cmd_match, matchinfo, matchdb
+from necrobot.match import matchutil, cmd_match, matchinfo, matchdb, matchchannelutil
 from necrobot.user import userlib
 from necrobot.util import server
 from necrobot.util.parse import dateparse
+from necrobot.util import console
 
 
 class ScrubDatabase(CommandType):
@@ -150,13 +152,13 @@ class DropRacer(CommandType):
             )
             return
 
-        matches = await match.matchchannelutil.get_matches_with_channels(racer=user)
+        matches = await matchchannelutil.get_matches_with_channels(racer=user)
         deleted_any = False
-        for match in matches:
-            channel = server.find_channel(channel_id=match.channel_id)
+        for the_match in matches:
+            channel = server.find_channel(channel_id=the_match.channel_id)
             if channel is not None:
                 await self.client.delete_channel(channel)
-                await matchutil.delete_match(match_id=match.match_id)
+                await matchutil.delete_match(match_id=the_match.match_id)
                 deleted_any = True
 
         if deleted_any:
@@ -288,6 +290,124 @@ class MakeMatch(CommandType):
         )
         if new_match is not None:
             await NEDispatch().publish(event_type='create_match', match=new_match)
+
+
+class MakeMatchesFromFile(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makematchesfromfile')
+        self.help_text = '`{0}` filename: Make a set of matches as given in the filename. The file should be a .csv ' \
+            'file, one match per row, whose rows are of the form `racer_1_name,racer_2_name`.'.format(self.mention)
+
+    @property
+    def short_help_text(self):
+        return 'Make a set of matches from a file.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        filename = cmd.args[0]
+        if not filename.endswith('.csv'):
+            await self.client.send_message(
+                cmd.channel,
+                'Matchup file should be a `.csv` file.'
+            )
+            return
+        file_path = os.path.join(filename)
+        if not os.path.isfile(file_path):
+            await self.client.send_message(
+                cmd.channel,
+                'Cannot find file `{}`.'.format(filename)
+            )
+            return
+
+        match_info = LeagueMgr().league.match_info
+        status_message = await self.client.send_message(
+            cmd.channel,
+            'Creating matches from file `{0}`... (Reading file)'.format(filename)
+        )
+        await self.client.send_typing(cmd.channel)
+
+        # Store file data
+        desired_match_pairs = []
+        with open(file_path) as file:
+            for line in file:
+                racernames = line.rstrip('\n').split(',')
+                desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
+
+        # Find all racers
+        all_racers = dict()
+        for racerpair in desired_match_pairs:
+            all_racers[racerpair[0]] = None
+            all_racers[racerpair[1]] = None
+
+        await userlib.fill_user_dict(all_racers)
+        console.debug('MakeMatchesFromFile: Filled user dict: {}'.format(all_racers))
+
+        # Create Match objects
+        matches = []
+        not_found_matches = []
+        for racers in desired_match_pairs:
+            console.debug('MakeMatchesFromFile: Making match {0}-{1}'.format(racers[0], racers[1]))
+            racer_1 = all_racers[racers[0]]
+            racer_2 = all_racers[racers[1]]
+            if racer_1 is None or racer_2 is None:
+                console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
+                    racers[0], racers[1]
+                ))
+                not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
+                continue
+
+            new_match = await matchutil.make_match(
+                register=True,
+                racer_1_id=racer_1.user_id,
+                racer_2_id=racer_2.user_id,
+                match_info=match_info
+            )
+            if new_match is None:
+                console.debug('MakeMatchesFromFile: Match {0}-{1} not created.'.format(racers[0], racers[1]))
+                not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
+                continue
+
+            matches.append(new_match)
+            console.debug('MakeMatchesFromFile: Created {0}-{1}'.format(
+                new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
+            )
+
+        matches = sorted(matches, key=lambda m: m.matchroom_name)
+
+        await self.client.edit_message(
+            status_message,
+            'Creating matches from file `{0}`... (Creating race rooms)'.format(filename)
+        )
+        console.debug('MakeMatchesFromFile: Matches to make: {0}'.format(matches))
+
+        # Create match channels
+        for match in matches:
+            console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
+            new_room = await matchchannelutil.make_match_room(match=match, register=False)
+            await new_room.send_channel_start_text()
+
+        # Report on uncreated matches
+        uncreated_str = ''
+        for match_str in not_found_matches:
+            uncreated_str += match_str + ', '
+        if uncreated_str:
+            uncreated_str = uncreated_str[:-2]
+
+        if uncreated_str:
+            report_str = 'The following matches were not made: {0}'.format(uncreated_str)
+        else:
+            report_str = 'All matches created successfully.'
+
+        await self.client.edit_message(
+            status_message,
+            'Creating matches from file `{0}`... done. {1}'.format(filename, report_str)
+        )
 
 
 class NextRace(CommandType):
