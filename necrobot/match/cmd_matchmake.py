@@ -64,3 +64,5 @@ async def make_match_from_cmd(
         cmd.channel,
         'Match created in channel {0}.'.format(
             match_room.channel.mention))
+
+    return new_match

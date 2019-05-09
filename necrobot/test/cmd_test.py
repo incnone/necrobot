@@ -1,12 +1,20 @@
 import asyncio
 import discord
+import googleapiclient.errors
 
+import necrobot.exception
 from necrobot.util import server
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
+from necrobot.database import dbutil
+from necrobot.match import matchutil
 from necrobot.test import msgqueue
 from necrobot.config import Config
+
+from necrobot.gsheet.matchupsheet import MatchupSheet
+from necrobot.gsheet import sheetlib
+from necrobot.league.leaguemgr import LeagueMgr
 
 
 class TestCommandType(CommandType):
@@ -42,6 +50,37 @@ class TestCreateCategory(TestCommandType):
 
     async def _do_execute(self, cmd: Command):
         await server.create_channel_category(Config.MATCH_CHANNEL_CATEGORY_NAME)
+
+
+class TestOverwriteGSheet(TestCommandType):
+    def __init__(self, bot_channel):
+        TestCommandType.__init__(self, bot_channel, 'testoverwritegsheet')
+        self.help_text = "Write a bunch of data into the current GSheet."
+
+    async def _do_execute(self, cmd: Command):
+        # Get matches for test data
+        matches = await matchutil.get_all()
+
+        # Get the matchup sheet
+        wks_id = 0
+        try:
+            matchup_sheet = await sheetlib.get_sheet(
+                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    wks_id=wks_id,
+                    sheet_type=sheetlib.SheetType.MATCHUP
+                )  # type: MatchupSheet
+        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error accessing GSheet: `{0}`'.format(e)
+            )
+            return
+
+        if matchup_sheet is None:
+            await self.client.send_message(cmd.channel, 'Error: MatchupSheet is None.')
+            return
+
+        await matchup_sheet.overwrite_gsheet_with_matches(matches)
 
 
 class TestMatch(TestCommandType):

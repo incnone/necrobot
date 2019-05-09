@@ -36,6 +36,10 @@ class WorksheetIndexData(object):
     def col_indicies(self):
         return self._col_indicies
 
+    @property
+    def num_columns(self):
+        return len(self._col_indicies)
+
     def getcol(self, colname) -> int or None:
         colname = self._convert_colname(colname)
         if colname in self._col_indicies:
@@ -169,7 +173,7 @@ class WorksheetIndexData(object):
                                         int(props['gridProperties']['columnCount']),)
                     break
 
-            await self._refresh_all(spreadsheets)
+            await self._refresh(spreadsheets)
 
     async def refresh_footer(self):
         """Refresh the self.footer_row property from the GSheet"""
@@ -261,9 +265,6 @@ class WorksheetIndexData(object):
         bool
             True if the update was successful.
         """
-        if not self.valid:
-            raise RuntimeError('Trying to update a cell on an invalid MatchupSheet.')
-
         range_str = str(sheet_range)
         value_input_option = 'RAW' if raw_input else 'USER_ENTERED'
         value_range_body = {'values': values}

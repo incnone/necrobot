@@ -18,8 +18,7 @@ class CondorMainChannel(BotChannel):
                 cmd_admin.Reboot(self),
                 cmd_admin.RedoInit(self),
 
-                cmd_ladder.Ranked(self),
-
+                cmd_league.MakeMatch(self),
                 cmd_league.NextRace(self),
 
                 cmd_match.Cawmentate(self),

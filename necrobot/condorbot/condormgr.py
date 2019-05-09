@@ -47,8 +47,8 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     def on_botchannel_create(self, channel, bot_channel):
         bot_channel.default_commands.append(cmd_condor.StaffAlert(bot_channel))
-        if isinstance(bot_channel, MatchRoom):
-            bot_channel.default_commands.append(cmd_sheet.PushMatchToSheet(bot_channel))
+        # if isinstance(bot_channel, MatchRoom):
+        #     bot_channel.default_commands.append(cmd_sheet.PushMatchToSheet(bot_channel))
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':
@@ -56,24 +56,6 @@ class CondorMgr(Manager, metaclass=Singleton):
             asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_2.rtmp_name))
 
         elif ev.event_type == 'end_match':
-            async def record_score():
-                # noinspection PyShadowingNames
-                sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
-                await sheet.record_score(
-                    match=ev.match,
-                    winner=ev.winner.gsheet_name,
-                    winner_wins=ev.winner_wins,
-                    loser_wins=ev.loser_wins
-                )
-
-            async def record_standings():
-                standings = await self.get_standings_sheet()
-                await standings.update_standings(
-                    match=ev.match,
-                    r1_wins=ev.r1_wins,
-                    r2_wins=ev.r2_wins
-                )
-
             async def send_mainchannel_message():
                 await server.client.send_message(
                     self._main_channel,
@@ -85,8 +67,7 @@ class CondorMgr(Manager, metaclass=Singleton):
                     )
                 )
 
-            asyncio.ensure_future(record_score())
-            asyncio.ensure_future(record_standings())
+            asyncio.ensure_future(self._overwrite_gsheet())
             asyncio.ensure_future(send_mainchannel_message())
 
         elif ev.event_type == 'end_match_race':
@@ -103,33 +84,43 @@ class CondorMgr(Manager, metaclass=Singleton):
             if self._notifications_channel is not None:
                 await self._client.send_message(self._notifications_channel, ev.message)
 
+        elif ev.event_type == 'create_match':
+            pass
+
+        elif ev.event_type == 'delete_match':
+            pass
+
         elif ev.event_type == 'schedule_match':
-            sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
-            await sheet.schedule_match(ev.match)
-            await self.update_schedule_channel()
+            asyncio.ensure_future(self._overwrite_gsheet())
+            asyncio.ensure_future(self.update_schedule_channel())
 
         elif ev.event_type == 'set_cawmentary':
-            if ev.match.sheet_id is not None:
-                sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
-                await sheet.set_cawmentary(match=ev.match)
+            asyncio.ensure_future(self._overwrite_gsheet())
 
         elif ev.event_type == 'set_vod':
-            if ev.match.sheet_id is not None:
-                sheet = await self.get_gsheet(wks_id=ev.match.sheet_id)
-                await sheet.set_vod(match=ev.match, vod_link=ev.url)
-                cawmentator = await ev.match.get_cawmentator()
-                await server.client.send_message(
-                    self._main_channel,
-                    '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
-                        cawmentator=cawmentator.display_name if cawmentator is not None else '<unknown>',
-                        r1=ev.match.racer_1.display_name,
-                        r2=ev.match.racer_2.display_name,
-                        url=ev.url
-                    )
-                )
+            pass    # TODO
+            # if ev.match.sheet_id is not None:
+            #     sheet = await self._get_gsheet(wks_id=ev.match.sheet_id)
+            #     await sheet.set_vod(match=ev.match, vod_link=ev.url)
+            #     cawmentator = await ev.match.get_cawmentator()
+            #     await server.client.send_message(
+            #         self._main_channel,
+            #         '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
+            #             cawmentator=cawmentator.display_name if cawmentator is not None else '<unknown>',
+            #             r1=ev.match.racer_1.display_name,
+            #             r2=ev.match.racer_2.display_name,
+            #             url=ev.url
+            #         )
+            #     )
+
+    async def _overwrite_gsheet(self):
+        # noinspection PyShadowingNames
+        sheet = await self._get_gsheet(wks_id='0')
+        matches = await matchutil.get_all()
+        await sheet.overwrite_gsheet_with_matches(matches)
 
     @staticmethod
-    async def get_gsheet(wks_id: str) -> MatchupSheet:
+    async def _get_gsheet(wks_id: str) -> MatchupSheet:
         return await sheetlib.get_sheet(
             gsheet_id=LeagueMgr().league.gsheet_id,
             wks_id=wks_id,
@@ -137,7 +128,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         )
 
     @staticmethod
-    async def get_standings_sheet() -> StandingsSheet:
+    async def _get_standings_sheet() -> StandingsSheet:
         return await sheetlib.get_sheet(
             gsheet_id=LeagueMgr().league.gsheet_id,
             wks_name='Standings',

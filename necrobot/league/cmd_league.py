@@ -7,6 +7,7 @@ import match.matchchannelutil
 import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
+from necrobot.botbase.necroevent import NEDispatch
 from necrobot.config import Config
 from necrobot.league import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
@@ -217,9 +218,9 @@ class GetMatchRules(CommandType):
         )
 
 
-class MakeMatch(CommandType):
+class ForceMakeMatch(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'makematch')
+        CommandType.__init__(self, bot_channel, 'f-makematch')
         self.help_text = 'Create a new match room between two racers with ' \
                          '`{0} racer_1_name racer_2_name`.'.format(self.mention)
         self.admin_only = True
@@ -244,12 +245,49 @@ class MakeMatch(CommandType):
             )
             return
 
-        await match.cmd_matchmake.make_match_from_cmd(
+        new_match = await match.cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],
             match_info=league.match_info
         )
+        if new_match is not None:
+            await NEDispatch().publish(event_type='create_match', match=new_match)
+
+
+class MakeMatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makematch')
+        self.help_text = '`{0}` username: Make a new match between yourself and the given user.'.format(self.mention)
+
+    @property
+    def short_help_text(self):
+        return 'Create new match room.'
+
+    async def _do_execute(self, cmd):
+        # Parse arguments
+        if len(cmd.args) != 1:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        league = LeagueMgr().league
+        if league is None:
+            await self.client.send_message(
+                cmd.channel,
+                'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
+            )
+            return
+
+        new_match = await match.cmd_matchmake.make_match_from_cmd(
+            cmd=cmd,
+            cmd_type=self,
+            racer_names=[cmd.author.display_name, cmd.args[0]],
+            match_info=league.match_info
+        )
+        if new_match is not None:
+            await NEDispatch().publish(event_type='create_match', match=new_match)
 
 
 class NextRace(CommandType):

@@ -285,3 +285,35 @@ class SetGSheet(CommandType):
                 'https://docs.google.com/spreadsheets/d/{0}'.format(sheet_id)
             )
         )
+
+
+class OverwriteGSheet(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'overwritegsheet')
+        self.help_text = "Refresh the GSheet (overwrites all data)."
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        # Get matches for test data
+        matches = await matchutil.get_all()
+
+        # Get the matchup sheet
+        wks_id = 0
+        try:
+            matchup_sheet = await sheetlib.get_sheet(
+                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    wks_id=wks_id,
+                    sheet_type=sheetlib.SheetType.MATCHUP
+                )  # type: MatchupSheet
+        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+            await self.client.send_message(
+                cmd.channel,
+                'Error accessing GSheet: `{0}`'.format(e)
+            )
+            return
+
+        if matchup_sheet is None:
+            await self.client.send_message(cmd.channel, 'Error: MatchupSheet is None.')
+            return
+
+        await matchup_sheet.overwrite_gsheet_with_matches(matches)
