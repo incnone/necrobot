@@ -11,8 +11,7 @@ from match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.spreadsheets import Spreadsheets
 from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
-from necrobot.match import matchinfo
-from necrobot.match import matchutil
+from necrobot.match import matchdb, matchinfo, matchutil
 from necrobot.match.match import Match
 from necrobot.user import userlib
 from necrobot.util import console
@@ -98,44 +97,47 @@ class MatchupSheet(object):
     #         else:
     #             console.debug('MatchupSheet.add_match: Values: {0}'.format(value_range['values']))
 
-    async def overwrite_gsheet_with_matches(self, matches: List[Match]):
+    async def overwrite_gsheet(self):
         await self.column_data.refresh_all()
         header_row = ['Match ID', 'Racer 1', 'Racer 2', 'Date', 'Winner', 'Score', 'Cawmentary', 'Vod']
+
+        # Get the match data
+        matchview_data = await matchdb.get_matchview_raw_data()
 
         # Construct the SheetRange to update
         range_to_update = SheetRange(
             ul_cell=(1, 1),
-            lr_cell=(len(matches) + 1, len(header_row)),
+            lr_cell=(len(matchview_data) + 1, len(header_row)),
             wks_name=self.wks_name,
         )
 
         # Construct the value array to place in the sheet
         values = [header_row]
-        for match in matches:
-            cawmentator = await match.get_cawmentator()
+        for raw_match in matchview_data:
+            cawmentator_name = raw_match[4]
 
-            cawmentator_str = 'twitch.tv/{0}'.format(cawmentator.twitch_name) if cawmentator is not None else ''
-            if match.suggested_time is None:
+            cawmentator_str = 'twitch.tv/{0}'.format(cawmentator_name) if cawmentator_name else ''
+            if raw_match[3] is None:
                 time_str = ''
             else:
-                time_str = match.suggested_time.astimezone(pytz.timezone('US/Eastern')).strftime('%Y-%m-%d %H:%M:%S')
+                time_str = pytz.utc.localize(raw_match[3]).astimezone(pytz.timezone('US/Eastern'))\
+                    .strftime('%Y-%m-%d %H:%M:%S')
 
-            match_race_data = await matchutil.get_race_data(match)
-            if match_race_data.completed(match.match_info):
-                if match_race_data.r1_wins >= match_race_data.r2_wins:
-                    winner_str = match.racer_1.display_name
-                    score_str = '{r1}-{r2}'.format(r1=match_race_data.r1_wins, r2=match_race_data.r2_wins)
+            if raw_match[7]:    # completed
+                if raw_match[5] >= raw_match[6]:
+                    winner_str = raw_match[1]
+                    score_str = '{r1}-{r2}'.format(r1=raw_match[5], r2=raw_match[6])
                 else:
-                    winner_str = match.racer_2.display_name
-                    score_str = '{r2}-{r1}'.format(r1=match_race_data.r1_wins, r2=match_race_data.r2_wins)
+                    winner_str = raw_match[2]
+                    score_str = '{r2}-{r1}'.format(r1=raw_match[5], r2=raw_match[6])
             else:
                 winner_str = ''
                 score_str = ''
 
             values.append([
-                match.match_id,
-                match.racer_1.display_name,
-                match.racer_2.display_name,
+                raw_match[0],
+                raw_match[1],
+                raw_match[2],
                 time_str,
                 winner_str,
                 score_str,

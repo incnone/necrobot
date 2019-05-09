@@ -294,9 +294,6 @@ class OverwriteGSheet(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
-        # Get matches for test data
-        matches = await matchutil.get_all()
-
         # Get the matchup sheet
         wks_id = 0
         try:
@@ -316,4 +313,4 @@ class OverwriteGSheet(CommandType):
             await self.client.send_message(cmd.channel, 'Error: MatchupSheet is None.')
             return
 
-        await matchup_sheet.overwrite_gsheet_with_matches(matches)
+        await matchup_sheet.overwrite_gsheet()

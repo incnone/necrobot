@@ -7,8 +7,7 @@ from necrobot.util import server
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.database import dbutil
-from necrobot.match import matchutil
+from necrobot.match import matchdb
 from necrobot.test import msgqueue
 from necrobot.config import Config
 
@@ -58,9 +57,6 @@ class TestOverwriteGSheet(TestCommandType):
         self.help_text = "Write a bunch of data into the current GSheet."
 
     async def _do_execute(self, cmd: Command):
-        # Get matches for test data
-        matches = await matchutil.get_all()
-
         # Get the matchup sheet
         wks_id = 0
         try:
@@ -80,7 +76,7 @@ class TestOverwriteGSheet(TestCommandType):
             await self.client.send_message(cmd.channel, 'Error: MatchupSheet is None.')
             return
 
-        await matchup_sheet.overwrite_gsheet_with_matches(matches)
+        await matchup_sheet.overwrite_gsheet()
 
 
 class TestMatch(TestCommandType):

@@ -128,14 +128,6 @@ async def get_upcoming_and_current() -> list:
     return matches
 
 
-async def get_all(limit: int = None) -> list:
-    matches = []
-    for row in await matchdb.get_all_matches_raw_data(order_by_time=True, must_be_scheduled=True, limit=limit):
-        match = await make_match_from_raw_db_data(row=row)
-        matches.append(match)
-    return matches
-
-
 async def get_nextrace_displaytext(match_list: list) -> str:
     utcnow = pytz.utc.localize(datetime.datetime.utcnow())
     if len(match_list) > 1:

@@ -116,8 +116,7 @@ class CondorMgr(Manager, metaclass=Singleton):
     async def _overwrite_gsheet(self):
         # noinspection PyShadowingNames
         sheet = await self._get_gsheet(wks_id='0')
-        matches = await matchutil.get_all()
-        await sheet.overwrite_gsheet_with_matches(matches)
+        await sheet.overwrite_gsheet()
 
     @staticmethod
     async def _get_gsheet(wks_id: str) -> MatchupSheet:

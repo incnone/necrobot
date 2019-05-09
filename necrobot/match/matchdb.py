@@ -241,6 +241,26 @@ async def get_channeled_matches_raw_data(
         return cursor.fetchall()
 
 
+async def get_matchview_raw_data():
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT 
+                match_id,
+                racer_1_name,
+                racer_2_name,
+                scheduled_time,
+                cawmentator_name,
+                racer_1_wins,
+                racer_2_wins,
+                completed
+            FROM {match_info}
+            ORDER BY scheduled_time ASC
+            """.format(match_info=tn('match_info'))
+        )
+        return cursor.fetchall()
+
+
 async def get_all_matches_raw_data(
         must_be_channeled: bool = False,
         must_be_scheduled: bool = False,
