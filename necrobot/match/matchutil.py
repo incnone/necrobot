@@ -1,8 +1,9 @@
 import datetime
+from typing import Optional
 
 import pytz
 
-from match.matchgsheetinfo import MatchGSheetInfo
+from necrobot.match.matchgsheetinfo import MatchGSheetInfo
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match import matchdb
 from necrobot.match.match import Match
@@ -21,9 +22,8 @@ def invalidate_cache():
 
 
 # noinspection PyIncorrectDocstring
-async def make_match(*args, register=False, update=False, **kwargs) -> Match:
-    """Create a Match object. There should be no need to call this directly; use matchutil.make_match instead, 
-    since this needs to interact with the database.
+async def make_match(*args, register=False, update=False, **kwargs) -> Optional[Match]:
+    """Create a Match object. 
 
     Parameters
     ----------
@@ -35,7 +35,8 @@ async def make_match(*args, register=False, update=False, **kwargs) -> Match:
         The maximum number of races this match can be. (If is_best_of is True, then the match is a best of
         max_races; otherwise, the match is just repeating max_races.)
     match_id: int
-        The DB unique ID of this match.
+        The DB unique ID of this match. If this parameter is specified, the return value may be None, if no match
+        in the database has the specified ID.
     suggested_time: datetime.datetime
         The time the match is suggested for. If no tzinfo, UTC is assumed.
     r1_confirmed: bool
@@ -54,7 +55,9 @@ async def make_match(*args, register=False, update=False, **kwargs) -> Match:
         The sheetID of the worksheet the match was created from, if any.
     register: bool
         Whether to register the match in the database. 
-        
+    update: bool
+        If match_id is given and this is True, updates the database match with any other specified parameters.
+    
     Returns
     ---------
     Match
@@ -62,7 +65,7 @@ async def make_match(*args, register=False, update=False, **kwargs) -> Match:
     """
     if 'match_id' in kwargs and kwargs['match_id'] is not None:
         cached_match = await get_match_from_id(kwargs['match_id'])
-        if update:
+        if update and cached_match is not None:
             cached_match.raw_update(**kwargs)
             await cached_match.commit()
         return cached_match

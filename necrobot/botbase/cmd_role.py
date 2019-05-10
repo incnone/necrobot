@@ -5,8 +5,7 @@ from necrobot.botbase.commandtype import CommandType
 class AddCRoWRole(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'addrole')
-        self.help_text = "Add yourself to a CRoW role. Use `{cmd} crow4` for the 4pm role, and `{cmd} crow11` " \
-                         "for the 11pm role.".format(cmd=self.mention)
+        self.help_text = "Use `{cmd} crow` to give yourself the CRoW role.".format(cmd=self.mention)
 
     async def _do_execute(self, cmd):
         await _modify_roles(self, cmd, add=True)
@@ -15,8 +14,7 @@ class AddCRoWRole(CommandType):
 class RemoveCRoWRole(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'removerole')
-        self.help_text = "Remove yourself from a CRoW role. Use `{cmd} crow4` for the 4pm role, and `{cmd} crow11` " \
-                         "for the 11pm role.".format(cmd=self.mention)
+        self.help_text = "Use `{cmd} crow` to remove the CRoW role from yourself.".format(cmd=self.mention)
 
     async def _do_execute(self, cmd):
         await _modify_roles(self, cmd, add=False)
@@ -24,15 +22,13 @@ class RemoveCRoWRole(CommandType):
 
 async def _modify_roles(cmdtype: CommandType, cmd, add: bool):
     role_map = {
-        'crow4': 'CRoW Racers 4pm',
-        'crow11': 'CRoW Racers 11pm'
+        'crow': 'CRoW Racers',
     }
 
     if len(cmd.args) == 0:
         await cmdtype.client.send_message(
             cmd.channel,
-            'Error: Use `{c} crow4` for the 4pm role, and `{c} crow11` " \
-                     "for the 11pm role.'.format(c=cmdtype.mention)
+            'Error: Use `{c} crow` for the CRoW role. (No other roles currently function with this command.)'
         )
         return
 

@@ -2,7 +2,7 @@
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
 import datetime
-from typing import Optional, List
+from typing import Optional
 
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn

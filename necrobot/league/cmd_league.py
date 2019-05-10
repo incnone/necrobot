@@ -10,7 +10,7 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.config import Config
 from necrobot.league import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.match import matchutil, cmd_match, cmd_matchmake, matchinfo, matchdb, matchchannelutil
+from necrobot.match import matchutil, cmd_matchmake, matchinfo, matchdb, matchchannelutil
 from necrobot.user import userlib
 from necrobot.util import server
 from necrobot.util.parse import dateparse

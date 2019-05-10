@@ -1,7 +1,8 @@
-from botbase.command import Command
-from botbase.commandtype import CommandType
-from match import matchinfo, matchutil, matchchannelutil
-from user import userlib
+from necrobot.botbase.command import Command
+from necrobot.botbase.commandtype import CommandType
+from necrobot.match import matchinfo, matchutil
+from necrobot.match import matchchannelutil
+from necrobot.user import userlib
 
 
 async def make_match_from_cmd(
