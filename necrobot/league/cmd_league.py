@@ -3,8 +3,6 @@ import os
 
 import pytz
 
-import match.cmd_matchmake
-import match.matchchannelutil
 import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
@@ -12,7 +10,7 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.config import Config
 from necrobot.league import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.match import matchutil, cmd_match, matchinfo, matchdb, matchchannelutil
+from necrobot.match import matchutil, cmd_match, cmd_matchmake, matchinfo, matchdb, matchchannelutil
 from necrobot.user import userlib
 from necrobot.util import server
 from necrobot.util.parse import dateparse
@@ -55,7 +53,7 @@ class CloseAllMatches(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
-        await match.matchchannelutil.delete_all_match_channels(log=log)
+        await matchchannelutil.delete_all_match_channels(log=log)
 
         await self.client.edit_message(
             status_message,
@@ -80,7 +78,7 @@ class CloseFinished(CommandType):
         )
         await self.client.send_typing(cmd.channel)
 
-        await match.matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
+        await matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
 
         await self.client.edit_message(
             status_message,
@@ -247,7 +245,7 @@ class ForceMakeMatch(CommandType):
             )
             return
 
-        new_match = await match.cmd_matchmake.make_match_from_cmd(
+        new_match = await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],
@@ -282,7 +280,7 @@ class MakeMatch(CommandType):
             )
             return
 
-        new_match = await match.cmd_matchmake.make_match_from_cmd(
+        new_match = await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             cmd_type=self,
             racer_names=[cmd.author.display_name, cmd.args[0]],
