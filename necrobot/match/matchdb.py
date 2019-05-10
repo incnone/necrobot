@@ -47,6 +47,23 @@ async def record_match_race(
         )
 
 
+async def add_vod(match: Match, vodlink: str):
+    if match.match_id is None:
+        return
+
+    params = (vodlink, match.match_id,)
+
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            UPDATE {matches}
+            SET `vod`=%s
+            WHERE `match_id`=%s
+            """.format(matches=tn('matches')),
+            params
+        )
+
+
 async def set_match_race_contested(
         match: Match,
         race_number: int = None,
@@ -109,6 +126,28 @@ async def cancel_race(match: Match, race_number: int) -> bool:
             SET `canceled` = TRUE
             WHERE `match_id` = %s AND `race_number` = %s
             """.format(match_races=tn('match_races')),
+            params
+        )
+        return True
+
+
+async def cancel_match(match: Match) -> bool:
+    params = (match.match_id,)
+    async with DBConnect(commit=True) as cursor:
+        cursor.execute(
+            """
+            DELETE
+            FROM {match_races}
+            WHERE `match_id` = %s
+            """.format(match_races=tn('match_races')),
+            params
+        )
+        cursor.execute(
+            """
+            DELETE
+            FROM {matches}
+            WHERE `match_id` = %s
+            """.format(matches=tn('matches')),
             params
         )
         return True
@@ -253,7 +292,8 @@ async def get_matchview_raw_data():
                 cawmentator_name,
                 racer_1_wins,
                 racer_2_wins,
-                completed
+                completed,
+                vod
             FROM {match_info}
             ORDER BY scheduled_time ASC
             """.format(match_info=tn('match_info'))

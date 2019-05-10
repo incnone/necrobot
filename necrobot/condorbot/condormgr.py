@@ -98,7 +98,8 @@ class CondorMgr(Manager, metaclass=Singleton):
             asyncio.ensure_future(self._overwrite_gsheet())
 
         elif ev.event_type == 'set_vod':
-            pass    # TODO
+            asyncio.ensure_future(self._overwrite_gsheet())
+            # Old code for on-sheet updates; deprecated
             # if ev.match.sheet_id is not None:
             #     sheet = await self._get_gsheet(wks_id=ev.match.sheet_id)
             #     await sheet.set_vod(match=ev.match, vod_link=ev.url)

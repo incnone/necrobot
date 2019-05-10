@@ -107,12 +107,14 @@ class WorksheetIndexData(object):
                     break
 
             if self.wks_id is None:
-                raise necrobot.exception.NotFoundException(
-                    "No worksheet with name {wks_name} on GSheet {gsheetid}".format(
-                        wks_name=wks_name,
-                        gsheetid=self.gsheet_id
-                    )
-                )
+                self.wks_id = 0
+                # Old code, we're doing hacky stuff for S8 tho
+                # raise necrobot.exception.NotFoundException(
+                #     "No worksheet with name {wks_name} on GSheet {gsheetid}".format(
+                #         wks_name=wks_name,
+                #         gsheetid=self.gsheet_id
+                #     )
+                # )
 
             await self._refresh(spreadsheets)
 

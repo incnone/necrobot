@@ -126,10 +126,10 @@ class MatchupSheet(object):
             if raw_match[7]:    # completed
                 if raw_match[5] >= raw_match[6]:
                     winner_str = raw_match[1]
-                    score_str = '{r1}-{r2}'.format(r1=raw_match[5], r2=raw_match[6])
+                    score_str = "'{r1}-{r2}".format(r1=raw_match[5], r2=raw_match[6])
                 else:
                     winner_str = raw_match[2]
-                    score_str = '{r2}-{r1}'.format(r1=raw_match[5], r2=raw_match[6])
+                    score_str = "'{r2}-{r1}".format(r1=raw_match[5], r2=raw_match[6])
             else:
                 winner_str = ''
                 score_str = ''
@@ -142,13 +142,13 @@ class MatchupSheet(object):
                 winner_str,
                 score_str,
                 cawmentator_str,
-                ''
+                raw_match[8] if raw_match[8] is not None else ''
             ])
 
         await self.column_data.update_cells(
             sheet_range=range_to_update,
             values=values,
-            raw_input=True
+            raw_input=False
         )
 
     async def get_matches(self, **kwargs):

@@ -84,6 +84,7 @@ class Vod(CommandType):
             )
             return
 
+        await matchdb.add_vod(match=match, vodlink=url)
         await NEDispatch().publish(event_type='set_vod', match=match, url=url)
         await self.client.send_message(
             cmd.channel,
@@ -492,6 +493,27 @@ class ForceCloseRoom(CommandType):
 
         await server.client.delete_channel(channel)
         await matchdb.register_match_channel(match_id, None)
+
+
+class ForceCancelMatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'f-cancelmatch', 'forcecancelmatch')
+        self.help_text = 'Cancel this match. Warning: This deletes the race channel.'
+        self.admin_only = True
+
+    async def _do_execute(self, cmd):
+        match = self.bot_channel.match
+        channel = self.bot_channel.channel
+
+        if 'nolog' not in cmd.args:
+            await writechannel.write_channel(
+                client=server.client,
+                channel=channel,
+                outfile_name='{0}-{1}'.format(match.match_id, channel.name)
+            )
+
+        await matchdb.cancel_match(match)
+        await server.client.delete_channel(channel)
 
 
 class ForceConfirm(CommandType):

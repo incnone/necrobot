@@ -152,10 +152,13 @@ async def create_league(schema_name: str) -> League:
         cursor.execute(
             """
             CREATE VIEW {match_info} AS
-                SELECT
+                SELECT 
                     {matches}.`match_id` AS `match_id`,
-                    `ud1`.`rtmp_name` AS `racer_1_name`,
-                    `ud2`.`rtmp_name` AS `racer_2_name`,
+                    `ud1`.`twitch_name` AS `racer_1_name`,
+                    `ud2`.`twitch_name` AS `racer_2_name`,
+                    {matches}.`suggested_time` AS `scheduled_time`,
+                    `ud3`.`twitch_name` AS `cawmentator_name`,
+                    {matches}.`vod` AS `vod`,
                     {matches}.`is_best_of` AS `is_best_of`,
                     {matches}.`number_of_races` AS `number_of_races`,
                     COUNT(0) AS `num_finished`,
@@ -168,25 +171,28 @@ async def create_league(schema_name: str) -> League:
                         ELSE 0
                     END)) AS `racer_2_wins`,
                     (CASE
-                        WHEN 
+                        WHEN
                             {matches}.`is_best_of`
                         THEN
-                            GREATEST(
-                                SUM(CASE WHEN ({match_races}.`winner` = 1) THEN 1 ELSE 0 END),
-                                SUM(CASE WHEN ({match_races}.`winner` = 2) THEN 1 ELSE 0 END)
-                            ) >= ({matches}.`number_of_races` DIV 2) + 1
-                        ELSE
-                            COUNT(0) >= {matches}.`number_of_races`
+                            (GREATEST(SUM((CASE
+                                        WHEN ({match_races}.`winner` = 1) THEN 1
+                                        ELSE 0
+                                    END)),
+                                    SUM((CASE
+                                        WHEN ({match_races}.`winner` = 2) THEN 1
+                                        ELSE 0
+                                    END))) >= (({matches}.`number_of_races` DIV 2) + 1))
+                        ELSE (COUNT(0) >= {matches}.`number_of_races`)
                     END) AS `completed`
                 FROM
-                    {match_races}
-                    JOIN {matches} ON {matches}.`match_id` = {match_races}.`match_id`
-                    JOIN `necrobot`.`users` `ud1` ON {matches}.`racer_1_id` = `ud1`.`user_id`
-                    JOIN `necrobot`.`users` `ud2` ON {matches}.`racer_2_id` = `ud2`.`user_id`
+                    (((({match_races}
+                    JOIN {matches} ON (({matches}.`match_id` = {match_races}.`match_id`)))
+                    JOIN `necrobot`.`users` `ud1` ON (({matches}.`racer_1_id` = `ud1`.`user_id`)))
+                    JOIN `necrobot`.`users` `ud2` ON (({matches}.`racer_2_id` = `ud2`.`user_id`)))
+                    LEFT JOIN `necrobot`.`users` `ud3` ON (({matches}.`cawmentator_id` = `ud3`.`user_id`)))
                 WHERE
-                    {match_races}.`canceled` = 0
-                GROUP BY
-                    {match_races}.`match_id`
+                    ({match_races}.`canceled` = 0)
+                GROUP BY {match_races}.`match_id`
             """.format(
                 match_info=tablename('match_info'),
                 matches=tablename('matches'),
