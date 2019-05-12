@@ -29,9 +29,9 @@ async def fill_user_dict(user_dict: dict):
         necrouser = _get_user_from_db_row(row)
         if necrouser.discord_name is not None and necrouser.discord_name.lower() in user_dict:
             user_dict[necrouser.discord_name.lower()] = necrouser
-        elif necrouser.discord_name is not None and necrouser.twitch_name.lower() in user_dict:
+        elif necrouser.twitch_name is not None and necrouser.twitch_name.lower() in user_dict:
             user_dict[necrouser.twitch_name.lower()] = necrouser
-        elif necrouser.discord_name is not None and necrouser.rtmp_name.lower() in user_dict:
+        elif necrouser.rtmp_name is not None and necrouser.rtmp_name.lower() in user_dict:
             user_dict[necrouser.rtmp_name.lower()] = necrouser
     return user_dict
 
