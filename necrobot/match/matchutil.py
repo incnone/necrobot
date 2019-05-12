@@ -200,7 +200,8 @@ async def make_match_from_raw_db_data(row: list) -> Match:
         r2_unconfirmed=bool(row[8]),
         cawmentator_id=row[12],
         channel_id=int(row[13]) if row[13] is not None else None,
-        gsheet_info=sheet_info
+        gsheet_info=sheet_info,
+        autogenned=bool(row[17])
     )
 
     await new_match.initialize()

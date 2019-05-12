@@ -364,7 +364,8 @@ async def get_all_matches_raw_data(
                  channel_id,
                  sheet_id,
                  sheet_row,
-                 finish_time
+                 finish_time,
+                 autogenned
             FROM {matches} 
             WHERE {where_query} {order_query}
             {limit_query}
