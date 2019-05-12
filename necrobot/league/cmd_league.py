@@ -377,7 +377,8 @@ class MakeMatchesFromFile(CommandType):
                 register=True,
                 racer_1_id=racer_1.user_id,
                 racer_2_id=racer_2.user_id,
-                match_info=match_info
+                match_info=match_info,
+                autogenned=True
             )
             if new_match is None:
                 console.debug('MakeMatchesFromFile: Match {0}-{1} not created.'.format(racers[0], racers[1]))

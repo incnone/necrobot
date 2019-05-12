@@ -185,13 +185,13 @@ async def create_league(schema_name: str) -> League:
                         ELSE (COUNT(0) >= {matches}.`number_of_races`)
                     END) AS `completed`
                 FROM
-                    (((({match_races}
-                    JOIN {matches} ON (({matches}.`match_id` = {match_races}.`match_id`)))
+                    (((({matches}
+                    LEFT JOIN {match_races} ON (({matches}.`match_id` = {match_races}.`match_id`)))
                     JOIN `necrobot`.`users` `ud1` ON (({matches}.`racer_1_id` = `ud1`.`user_id`)))
                     JOIN `necrobot`.`users` `ud2` ON (({matches}.`racer_2_id` = `ud2`.`user_id`)))
                     LEFT JOIN `necrobot`.`users` `ud3` ON (({matches}.`cawmentator_id` = `ud3`.`user_id`)))
                 WHERE
-                    ({match_races}.`canceled` = 0)
+                    ({match_races}.`canceled` = 0 OR {match_races}.`canceled` IS NULL)
                 GROUP BY {match_races}.`match_id`
             """.format(
                 match_info=tablename('match_info'),

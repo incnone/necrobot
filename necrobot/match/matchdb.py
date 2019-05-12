@@ -192,6 +192,7 @@ async def write_match(match: Match):
         match.sheet_id,
         match.sheet_row,
         match.finish_time,
+        match.autogenned,
         match.match_id,
     )
 
@@ -215,7 +216,8 @@ async def write_match(match: Match):
                channel_id=%s,
                sheet_id=%s,
                sheet_row=%s,
-               finish_time=%s
+               finish_time=%s,
+               autogenned=%s
             WHERE match_id=%s
             """.format(matches=tn('matches')),
             params
@@ -309,9 +311,10 @@ async def get_matchview_raw_data():
                 racer_1_wins,
                 racer_2_wins,
                 completed,
-                vod
+                vod,
+                autogenned
             FROM {match_info}
-            ORDER BY scheduled_time ASC
+            ORDER BY -scheduled_time DESC
             """.format(match_info=tn('match_info'))
         )
         return cursor.fetchall()
@@ -672,6 +675,7 @@ async def _register_match(match: Match) -> None:
         match.number_of_races,
         match.cawmentator_id,
         match.finish_time,
+        match.autogenned
     )
 
     async with DBConnect(commit=True) as cursor:
@@ -691,9 +695,10 @@ async def _register_match(match: Match) -> None:
                is_best_of, 
                number_of_races, 
                cawmentator_id,
-               finish_time
+               finish_time,
+               autogenned
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """.format(matches=tn('matches')),
             params
         )

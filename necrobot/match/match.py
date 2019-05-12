@@ -29,7 +29,8 @@ class Match(object):
             cawmentator_id=None,
             channel_id=None,
             gsheet_info=None,
-            finish_time=None
+            finish_time=None,
+            autogenned=False
     ):
         """Create a `Match` object. There should be no need to call this directly; use `matchutil.make_match` instead, 
         since this needs to interact with the database.
@@ -90,6 +91,7 @@ class Match(object):
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None  # type: int
         self._channel_id = channel_id                       # type: int
         self._gsheet_info = gsheet_info                     # type: MatchGSheetInfo
+        self._autogenned = autogenned                       # type: bool
 
         # Commit function
         self._commit = commit_fn                            # type: Callable[[], None]
@@ -201,6 +203,10 @@ class Match(object):
     @property
     def sheet_row(self) -> int:
         return self._gsheet_info.row if self._gsheet_info is not None else None
+
+    @property
+    def autogenned(self) -> bool:
+        return self._autogenned
 
     @property
     def matchroom_name(self) -> str:
