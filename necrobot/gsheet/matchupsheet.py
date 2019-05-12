@@ -99,7 +99,7 @@ class MatchupSheet(object):
 
     async def overwrite_gsheet(self):
         await self.column_data.refresh_all()
-        header_row = ['Match ID', 'Racer 1', 'Racer 2', 'Date', 'Winner', 'Score', 'Cawmentary', 'Vod', 'Autogenned']
+        header_row = ['Match ID', 'Autogenned', 'Racer 1', 'Racer 2', 'Date', 'Winner', 'Score', 'Cawmentary', 'Vod']
 
         # Get the match data
         matchview_data = await matchdb.get_matchview_raw_data()
@@ -134,8 +134,11 @@ class MatchupSheet(object):
                 winner_str = ''
                 score_str = ''
 
+            autogen_str = 'Auto-gen' if raw_match[9] else 'Challenge'
+
             values.append([
                 raw_match[0],
+                autogen_str,
                 raw_match[1],
                 raw_match[2],
                 time_str,
@@ -143,7 +146,6 @@ class MatchupSheet(object):
                 score_str,
                 cawmentator_str,
                 raw_match[8] if raw_match[8] is not None else '',
-                raw_match[9]
             ])
 
         await self.column_data.update_cells(
