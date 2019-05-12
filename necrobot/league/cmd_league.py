@@ -280,12 +280,25 @@ class MakeMatch(CommandType):
             )
             return
 
-        new_match = await cmd_matchmake.make_match_from_cmd(
-            cmd=cmd,
-            cmd_type=self,
-            racer_names=[cmd.author.display_name, cmd.args[0]],
-            match_info=league.match_info
-        )
+        # Make the match
+        try:
+            new_match = await cmd_matchmake.make_match_from_cmd(
+                cmd=cmd,
+                cmd_type=self,
+                racer_names=[cmd.author.display_name, cmd.args[0]],
+                match_info=league.match_info,
+                allow_duplicates=False
+            )
+        except necrobot.exception.DuplicateMatchException:
+            await self.client.send_message(
+                cmd.channel,
+                'A match between `{r1}` and `{r2}` already exists! Contact incnone if this is in error.'.format(
+                    r1=cmd.author.display_name,
+                    r2=cmd.args[0]
+                )
+            )
+            return
+
         if new_match is not None:
             await NEDispatch().publish(event_type='create_match', match=new_match)
 

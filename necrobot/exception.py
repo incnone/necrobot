@@ -37,6 +37,10 @@ class IncorrectWksException(NecroException):
     pass
 
 
+class DuplicateMatchException(NecroException):
+    pass
+
+
 # DatabaseException -------------------------------------
 
 class DatabaseException(NecroException):

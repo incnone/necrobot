@@ -47,6 +47,22 @@ async def record_match_race(
         )
 
 
+async def get_matches_between(user_1_id, user_2_id):
+    params = (user_1_id, user_2_id, user_2_id, user_1_id,)
+
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                match_id
+            FROM {matches}
+            WHERE (racer_1_id = %s AND racer_2_id = %s) OR (racer_2_id = %s AND racer_1_id = %s)
+            """.format(matches=tn('matches')),
+            params
+        )
+        return cursor.fetchall()
+
+
 async def add_vod(match: Match, vodlink: str):
     if match.match_id is None:
         return

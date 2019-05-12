@@ -1,3 +1,4 @@
+import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.match import matchinfo, matchutil
@@ -10,7 +11,8 @@ async def make_match_from_cmd(
         cmd_type: CommandType,
         racer_members=list(),
         racer_names=list(),
-        match_info=matchinfo.MatchInfo()
+        match_info=matchinfo.MatchInfo(),
+        allow_duplicates=True
 ):
     racers = []
 
@@ -46,6 +48,12 @@ async def make_match_from_cmd(
             'Unexpected error: Tried to create a match with more than two racers.'
         )
         return
+
+    # Check for duplicating match
+    if not allow_duplicates:
+        duplicate = await matchutil.match_exists_between(racers[0], racers[1])
+        if duplicate:
+            raise necrobot.exception.DuplicateMatchException()
 
     # Create the Match object
     new_match = await matchutil.make_match(

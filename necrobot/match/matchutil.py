@@ -240,3 +240,8 @@ async def get_schedule_infotext():
 
 async def get_race_data(match: Match):
     return await matchdb.get_match_race_data(match.match_id)
+
+
+async def match_exists_between(racer_1, racer_2) -> bool:
+    prior_match_ids = await matchdb.get_matches_between(racer_1.user_id, racer_2.user_id)
+    return bool(prior_match_ids)
