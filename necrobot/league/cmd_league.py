@@ -1,6 +1,6 @@
 import datetime
 import os
-
+import asyncio
 import pytz
 
 import necrobot.exception
@@ -362,7 +362,8 @@ class MakeMatchesFromFile(CommandType):
         # Create Match objects
         matches = []
         not_found_matches = []
-        for racers in desired_match_pairs:
+
+        async def make_single_match(racers):
             console.debug('MakeMatchesFromFile: Making match {0}-{1}'.format(racers[0], racers[1]))
             racer_1 = all_racers[racers[0]]
             racer_2 = all_racers[racers[1]]
@@ -371,7 +372,7 @@ class MakeMatchesFromFile(CommandType):
                     racers[0], racers[1]
                 ))
                 not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
-                continue
+                return
 
             new_match = await matchutil.make_match(
                 register=True,
@@ -383,12 +384,15 @@ class MakeMatchesFromFile(CommandType):
             if new_match is None:
                 console.debug('MakeMatchesFromFile: Match {0}-{1} not created.'.format(racers[0], racers[1]))
                 not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
-                continue
+                return
 
             matches.append(new_match)
             console.debug('MakeMatchesFromFile: Created {0}-{1}'.format(
                 new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
             )
+
+        for racer_pair in desired_match_pairs:
+            await make_single_match(racer_pair)
 
         matches = sorted(matches, key=lambda m: m.matchroom_name)
 
