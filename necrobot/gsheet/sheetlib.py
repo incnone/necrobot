@@ -40,6 +40,8 @@ async def get_sheet(
     -------
     Union[MatchupSheet, StandingsSheet]
     """
+    wks_id = str(wks_id)
+
     if wks_name is None and wks_id is None:
         raise necrobot.exception.NotFoundException(
             "Called sheetlib.get_sheet with both wks_name and wks_id None."
