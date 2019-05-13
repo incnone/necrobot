@@ -164,20 +164,27 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
             return None
 
         # Put the match channel in the matches category
-        channel_category = MatchGlobals().channel_category
-        if channel_category is None:
+        channel_categories = MatchGlobals().channel_categories
+        if channel_categories is None:
             category_name = Config.MATCH_CHANNEL_CATEGORY_NAME
             if len(category_name) > 0:
                 channel_category = await server.create_channel_category(category_name)
-                MatchGlobals().set_channel_category(channel_category)
+                MatchGlobals().set_channel_categories([channel_category])
 
-        if channel_category is not None:
-            try:
-                await server.set_channel_category(channel=match_channel, category=channel_category)
-            except discord.HTTPException:
-                # Out of space, so register a new matches category
-                new_channel_category = await server.create_channel_category(name=channel_category.name)
-                MatchGlobals().set_channel_category(channel=new_channel_category)
+        if channel_categories is not None:
+            success = False
+            for channel_category in reversed(channel_categories):
+                try:
+                    await server.set_channel_category(channel=match_channel, category=channel_category)
+                    success = True
+                    break
+                except discord.HTTPException:
+                    pass
+
+            # Out of space, so register a new matches category
+            if not success:
+                new_channel_category = await server.create_channel_category(name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+                MatchGlobals().add_channel_category(channel=new_channel_category)
                 await server.set_channel_category(channel=match_channel, category=new_channel_category)
 
     # Make the actual RaceRoom and initialize it

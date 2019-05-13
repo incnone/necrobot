@@ -17,8 +17,8 @@ class MatchMgr(Manager, metaclass=Singleton):
 
     async def initialize(self):
         await self._recover_stored_match_rooms()
-        category_channel = server.find_channel(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
-        MatchGlobals().set_channel_category(category_channel)
+        category_channels = server.find_all_channels(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+        MatchGlobals().set_channel_categories(category_channels)
 
     async def refresh(self):
         pass

@@ -42,7 +42,7 @@ def find_admin(ignore=list()) -> Optional[discord.Member]:
 
 
 def find_channel(channel_name: str = None, channel_id: Union[str, int] = None) -> Optional[discord.Channel]:
-    """Returns the channel with the given name on the server, if any"""
+    """Returns a channel with the given name on the server, if any"""
     if channel_id is not None:
         for channel in server.channels:
             if int(channel.id) == int(channel_id):
@@ -52,6 +52,15 @@ def find_channel(channel_name: str = None, channel_id: Union[str, int] = None) -
             if channel.name.lower() == channel_name.lower():
                 return channel
     return None
+
+
+def find_all_channels(channel_name: str) -> List[discord.Channel]:
+    """Returns all channels with the given name on the server"""
+    found_channels = []
+    for channel in server.channels:
+        if channel.name.lower() == channel_name.lower():
+            found_channels.append(channel)
+    return found_channels
 
 
 def find_member(discord_name: str = None, discord_id: Union[str, int] = None) -> Optional[discord.Member]:
