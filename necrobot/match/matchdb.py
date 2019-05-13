@@ -498,8 +498,8 @@ async def get_fastest_wins_raw(limit: int = None) -> list:
             """
             SELECT
                 {race_runs}.`time` AS `time`,
-                users_winner.rtmp_name AS winner_name,
-                users_loser.rtmp_name AS loser_name,
+                users_winner.twitch_name AS winner_name,
+                users_loser.twitch_name AS loser_name,
                 {matches}.suggested_time AS match_time
             FROM 
                 {match_races}

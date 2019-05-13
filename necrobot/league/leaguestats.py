@@ -41,6 +41,8 @@ async def get_fastest_times_league_infotext(limit: int) -> str:
     max_namelen = 0
     namelen_cap = 20
     for row in fastest_times:
+        if row[1] is None:
+            continue
         max_namelen = max(max_namelen, len(row[1]), namelen_cap)
 
     dated_format_str = '  {winner:>' + str(max_namelen) + '.' + str(max_namelen) + \
@@ -50,6 +52,8 @@ async def get_fastest_times_league_infotext(limit: int) -> str:
 
     infotext = ''
     for row in fastest_times:
+        if row[1] is None or row[2] is None:
+            continue
         if row[3] is not None:
             infotext += dated_format_str.format(
                 winner=row[1],
