@@ -257,7 +257,7 @@ class MatchRoom(BotChannel):
         self._set_channel_commands()
 
         if self.played_all_races:
-            self._end_match()
+            await self._end_match()
 
     async def change_race_info(self, command_args: list) -> None:
         """Change the RaceInfo for this room by parsing the input args"""
@@ -374,6 +374,7 @@ class MatchRoom(BotChannel):
             winner=winner
         )
         self._update_race_data(race_winner=winner)
+        await self.update()
 
     async def _countdown_to_match_start(self, warn: bool = False) -> None:
         """Does things at certain times before the match
