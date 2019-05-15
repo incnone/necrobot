@@ -15,7 +15,7 @@ class CondorMainChannel(BotChannel):
         if ladder:
             self.channel_commands = [
                 cmd_admin.Die(self),
-                cmd_admin.Reboot(self),
+                # cmd_admin.Reboot(self),
                 cmd_admin.RedoInit(self),
 
                 cmd_league.MakeMatch(self),
@@ -36,7 +36,7 @@ class CondorMainChannel(BotChannel):
         else:
             self.channel_commands = [
                 cmd_admin.Die(self),
-                cmd_admin.Reboot(self),
+                # cmd_admin.Reboot(self),
                 cmd_admin.RedoInit(self),
 
                 cmd_league.NextRace(self),

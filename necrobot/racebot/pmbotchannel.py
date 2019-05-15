@@ -1,7 +1,6 @@
 from necrobot.botbase import cmd_seedgen
 from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.daily import cmd_daily
 from necrobot.race import cmd_racemake
 from necrobot.race import cmd_racestats
 from necrobot.user import cmd_user
@@ -12,19 +11,7 @@ class PMBotChannel(BotChannel):
         BotChannel.__init__(self)
         self.channel_commands = [
             cmd_admin.Die(self),
-            cmd_admin.Reboot(self),
             cmd_admin.RedoInit(self),
-
-            cmd_daily.DailyChar(self),
-            cmd_daily.DailyResubmit(self),
-            cmd_daily.DailyRules(self),
-            cmd_daily.DailySeed(self),
-            cmd_daily.DailyStatus(self),
-            cmd_daily.DailySubmit(self),
-            cmd_daily.DailyUnsubmit(self),
-            cmd_daily.DailyWhen(self),
-            cmd_daily.ForceRunNewDaily(self),
-            cmd_daily.ForceUpdateLeaderboard(self),
 
             cmd_racemake.Make(self),
             cmd_racemake.MakeCondor(self),

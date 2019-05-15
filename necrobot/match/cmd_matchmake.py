@@ -22,8 +22,7 @@ async def make_match_from_cmd(
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)
         else:
-            await cmd_type.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Unexpected error: Couldn\'t find `{0}` in the database.'.format(member.display_name)
             )
             return
@@ -35,16 +34,14 @@ async def make_match_from_cmd(
         if racer_as_necrouser is not None:
             racers.append(racer_as_necrouser)
         else:
-            await cmd_type.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Couldn\'t find a user with name `{0}`.'.format(name)
             )
             return
 
     # Check we have exactly two racers
     if len(racers) != 2:
-        await cmd_type.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Unexpected error: Tried to create a match with more than two racers.'
         )
         return
@@ -68,8 +65,7 @@ async def make_match_from_cmd(
     await match_room.send_channel_start_text()
 
     # Output success
-    await cmd_type.client.send_message(
-        cmd.channel,
+    await cmd.channel.send(
         'Match created in channel {0}.'.format(
             match_room.channel.mention))
 

@@ -26,13 +26,13 @@ class BotChannel(object):
     def all_commands(self):
         return self.channel_commands + self.default_commands
 
-    def refresh(self, channel: discord.Channel) -> None:
+    def refresh(self, channel: discord.TextChannel) -> None:
         """Called on Necrobot.refresh()
         
         Parameters
         ----------
         channel
-            The discord.Channel that now points to this BotChannel
+            The discord.TextChannel that now points to this BotChannel
         """
         pass
 

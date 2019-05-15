@@ -17,7 +17,7 @@ class MatchMgr(Manager, metaclass=Singleton):
 
     async def initialize(self):
         await self._recover_stored_match_rooms()
-        category_channels = server.find_all_channels(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+        category_channels = guild.find_all_channels(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
         MatchGlobals().set_channel_categories(category_channels)
 
     async def refresh(self):
@@ -35,10 +35,10 @@ class MatchMgr(Manager, metaclass=Singleton):
             for row in await matchdb.get_channeled_matches_raw_data():
                 if int(row[2]) == ev.user.user_id or int(row[3]) == ev.user.user_id:
                     channel_id = int(row[13])
-                    channel = server.find_channel(channel_id=channel_id)
+                    channel = guild.find_channel(channel_id=channel_id)
                     if channel is not None:
                         read_perms = discord.PermissionOverwrite(read_messages=True)
-                        await server.client.edit_channel_permissions(
+                        await guild.client.edit_channel_permissions(
                             channel=channel,
                             target=ev.user.member,
                             overwrite=read_perms
@@ -54,7 +54,7 @@ class MatchMgr(Manager, metaclass=Singleton):
         console.info('Recovering stored match rooms------------')
         for row in await matchdb.get_channeled_matches_raw_data():
             channel_id = int(row[13])
-            channel = server.find_channel(channel_id=channel_id)
+            channel = guild.find_channel(channel_id=channel_id)
             if channel is not None:
                 match = await matchutil.make_match_from_raw_db_data(row=row)
                 new_room = MatchRoom(match_discord_channel=channel, match=match)

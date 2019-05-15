@@ -115,7 +115,7 @@ async def get_upcoming_and_current() -> list:
     for row in await matchdb.get_channeled_matches_raw_data(must_be_scheduled=True, order_by_time=True):
         channel_id = int(row[13]) if row[13] is not None else None
         if channel_id is not None:
-            channel = server.find_channel(channel_id=channel_id)
+            channel = guild.find_channel(channel_id=channel_id)
             if channel is not None:
                 match = await make_match_from_raw_db_data(row=row)
                 if match.suggested_time is None:

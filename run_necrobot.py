@@ -1,9 +1,8 @@
 from necrobot.util import server
 from necrobot.config import Config
-from necrobot.daily.dailymgr import DailyMgr
 from necrobot.ladder import ratingutil
-from necrobot.ladder.ladderadminchannel import LadderAdminChannel
-from necrobot.ladder.laddermainchannel import LadderMainChannel
+# from necrobot.ladder.ladderadminchannel import LadderAdminChannel
+# from necrobot.ladder.laddermainchannel import LadderMainChannel
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.matchmgr import MatchMgr
 from necrobot.racebot.mainchannel import MainBotChannel
@@ -22,30 +21,28 @@ async def load_necrobot_config(necrobot):
     main_discord_channel = server.find_channel(channel_name=Config.MAIN_CHANNEL_NAME)
     if main_discord_channel is None:
         console.warning('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
-    server.main_channel = main_discord_channel
-    necrobot.register_bot_channel(server.main_channel, MainBotChannel())
+    necrobot.register_bot_channel(main_discord_channel, MainBotChannel())
 
     # Ladder Channels
-    ladder_main_channel = server.find_channel(Config.LADDER_MAIN_CHANNEL_NAME)
-    if ladder_main_channel is None:
-        console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_MAIN_CHANNEL_NAME))
-    ladder_admin_channel = server.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)
-    if ladder_admin_channel is None:
-        console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_ADMIN_CHANNEL_NAME))
-
-    if ladder_main_channel is not None and ladder_admin_channel is not None:
-        necrobot.register_bot_channel(ladder_main_channel, LadderMainChannel())
-        necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
-
-    Config.MATCH_CHANNEL_CATEGORY_NAME = 'Ladder rooms'
+    # ladder_main_channel = server.find_channel(Config.LADDER_MAIN_CHANNEL_NAME)
+    # if ladder_main_channel is None:
+    #     console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_MAIN_CHANNEL_NAME))
+    # ladder_admin_channel = server.find_channel(Config.LADDER_ADMIN_CHANNEL_NAME)
+    # if ladder_admin_channel is None:
+    #     console.warning('Could not find the "{0}" channel.'.format(Config.LADDER_ADMIN_CHANNEL_NAME))
+    #
+    # if ladder_main_channel is not None and ladder_admin_channel is not None:
+    #     necrobot.register_bot_channel(ladder_main_channel, LadderMainChannel())
+    #     necrobot.register_bot_channel(ladder_admin_channel, LadderAdminChannel())
+    #
+    # Config.MATCH_CHANNEL_CATEGORY_NAME = 'Ladder rooms'
 
     # Managers
-    necrobot.register_manager(DailyMgr())
-    necrobot.register_manager(LeagueMgr())
-    necrobot.register_manager(MatchMgr())
+    # necrobot.register_manager(LeagueMgr())
+    # necrobot.register_manager(MatchMgr())
 
     # Ratings
-    ratingutil.init()
+    # ratingutil.init()
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import asyncio
 import datetime
 import time
 from enum import IntEnum, Enum
-from typing import List
+from typing import List, Optional, Union
 
 import discord
 
@@ -278,16 +278,16 @@ class Race(object):
         return lead_racer if lead_racer.is_finished else None
 
     # True if the given discord.User is entered in the race
-    def has_racer(self, racer_usr: discord.User) -> bool:
+    def has_racer(self, racer_usr: Union[discord.User, discord.Member]) -> bool:
         for racer in self.racers:
-            if int(racer.member.id) == int(racer_usr.id):
+            if racer.member.id == racer_usr.id:
                 return True
         return False
 
     # Returns the given discord.User as a Racer, if possible
-    def get_racer(self, racer_usr: discord.User) -> Racer:
+    def get_racer(self, racer_usr: Union[discord.User, discord.Member]) -> Racer:
         for racer in self.racers:
-            if int(racer.member.id) == int(racer_usr.id):
+            if racer.member.id == racer_usr.id:
                 return racer
 
 # Public methods (all coroutines)
@@ -656,7 +656,11 @@ class Race(object):
         )
         await self._begin_race()
 
-    async def _do_countdown(self, length: int, warnings: List[int] = list(), incremental_start: int = None, mute=False):
+    async def _do_countdown(
+            self, length: int, warnings: Optional[List[int]] = None, incremental_start: int = None, mute=False
+    ):
+        if warnings is None:
+            warnings = []
         fudge = 0.6
 
         countdown_systemtime_begin = time.monotonic()

@@ -18,8 +18,7 @@ class ForceCommand(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) < 2:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Not enough arguments for `{0}`.'.format(self.mention)
             )
             return
@@ -27,8 +26,7 @@ class ForceCommand(CommandType):
         username = cmd.args[0]
         user = server.find_member(discord_name=username)
         if user is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't find the user `{0}`.".format(username)
             )
             return
@@ -59,8 +57,7 @@ class Help(CommandType):
                     cmds_to_show.append(cmd_type)
 
             if not cmds_to_show:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'No commands available in this channel.'
                 )
                 return
@@ -78,8 +75,7 @@ class Help(CommandType):
                 )
                 command_list_text += this_cmd_text[:cutoff]
 
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Command list: {0}\n\nUse `{1} command` for more info about a '
                 'particular command.'.format(command_list_text, self.mention)
             )
@@ -93,8 +89,8 @@ class Help(CommandType):
                         alias_str += '`{alias}`, '.format(alias=Config.BOT_COMMAND_PREFIX + alias)
                     if alias_str:
                         alias_str = '(Aliases: {})'.format(alias_str[:-2])
-                    await self.client.send_message(
-                        cmd.channel, '`{cmd_name}`: {admin}{help_text} {aliases}'.format(
+                    await cmd.channel.send(
+                        '`{cmd_name}`: {admin}{help_text} {aliases}'.format(
                             cmd_name=cmd_type.mention,
                             help_text=cmd_type.help_text,
                             admin='[Admin only] ' if cmd_type.admin_only else '',
@@ -119,8 +115,7 @@ class Info(CommandType):
         elif Config.testing():
             debug_str = ' (TEST)'
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Necrobot v-{0}{1}. Type `.help` for a list of commands.'.format(
                 Config.BOT_VERSION,
                 debug_str

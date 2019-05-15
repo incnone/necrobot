@@ -54,8 +54,7 @@ class Vod(CommandType):
     async def _do_execute(self, cmd):
         # Parse arguments
         if len(cmd.args) < 3:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Not enough arguments for `{0}`.'.format(self.mention)
             )
             return
@@ -69,16 +68,14 @@ class Vod(CommandType):
         try:
             match = await matchfindparse.find_match(arg_string, finished_only=True)
         except necrobot.exception.NecroException as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0}.'.format(e)
             )
             return
 
         author_user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         if match.cawmentator_id is None or match.cawmentator_id != author_user.user_id:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: You are not the cawmentator for the match {1} (and so cannot add a vod).'
                 .format(cmd.author.mention, match.matchroom_name)
             )
@@ -86,8 +83,7 @@ class Vod(CommandType):
 
         await matchdb.add_vod(match=match, vodlink=url)
         await NEDispatch().publish(event_type='set_vod', match=match, url=url)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Added a vod for the match {0}.'.format(match.matchroom_name)
         )
 
@@ -105,36 +101,31 @@ class Confirm(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
         if not match.has_suggested_time:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: A scheduled time for this match has not been suggested. Use `.suggest` to suggest a time.')
             return
 
         author_as_necrouser = await userlib.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0} is not registered. Please register with `.register` in the main channel. '
                 'If the problem persists, contact CoNDOR Staff.'.format(cmd.author.mention))
             return
 
         if match.is_confirmed_by(author_as_necrouser):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: You\'ve already confirmed this time.'.format(cmd.author.mention))
             return
 
         match.confirm_time(author_as_necrouser)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '{0}: Confirmed acceptance of match time {1}.'.format(
                 cmd.author.mention,
                 timestr.str_full_12h(match.suggested_time.astimezone(author_as_necrouser.timezone))))
 
         if match.is_scheduled:
             await NEDispatch().publish('schedule_match', match=match)
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'The match has been officially scheduled.')
 
         await self.bot_channel.update()
@@ -147,12 +138,12 @@ class Contest(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.contest_last_begun_race()
-        if server.staff_role is not None:
-            contest_str = '{0}: The previous race has been marked as contested.'.format(server.staff_role.mention)
+        if guild.staff_role is not None:
+            contest_str = '{0}: The previous race has been marked as contested.'.format(guild.staff_role.mention)
         else:
             contest_str = 'The previous race has been marked as contested.'
 
-        await self.client.send_message(cmd.channel, contest_str)
+        await cmd.channel.send(contest_str)
         contest_str = '`{0}` has contested a race in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention)
         await NEDispatch().publish('notify', message=contest_str)
 
@@ -165,16 +156,14 @@ class GetMatchInfo(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
         if not match.is_registered:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Unexpected error (match not registered).'
             )
             return
 
         match_race_data = await matchdb.get_match_race_data(match.match_id)
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '**{0}** [{2} - {3}] **{1}** ({4})'.format(
                 match.racer_1.display_name,
                 match.racer_2.display_name,
@@ -204,8 +193,7 @@ class Suggest(CommandType):
 
         # Check for match already being confirmed
         if match.is_scheduled:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'The scheduled time for this match has already been confirmed by both racers. To reschedule, '
                 'both racers should first call `.unconfirm`; you will then be able to `.suggest` a new time.')
             return
@@ -213,8 +201,7 @@ class Suggest(CommandType):
         # Get the command's author as a NecroUser object
         author_as_necrouser = await userlib.get_user(discord_id=int(cmd.author.id))
         if not author_as_necrouser:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0} is not registered. Please register with `.stream` in the main channel. '
                 'If the problem persists, contact CoNDOR Staff.'.format(cmd.author.mention))
             return
@@ -222,8 +209,7 @@ class Suggest(CommandType):
         # Check that both racers in the match are registered
         if not match.racer_1 or not match.racer_2 \
                 or not match.racer_1.discord_id or not match.racer_2.discord_id:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: At least one of the racers in this match is not registered, and needs to call '
                 '`.register` in the main channel. (To check if you are registered, you can call `.userinfo '
                 '<discord name>`. Use quotes around your discord name if it contains a space.)')
@@ -231,16 +217,14 @@ class Suggest(CommandType):
 
         # Check that the command author is racing in the match
         if not match.racing_in_match(author_as_necrouser):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0} does not appear to be one of the racers in this match. '
                 'If this is in error, contact CoNDOR Staff.'.format(cmd.author.mention))
             return
 
         # Get the racer's timezone
         if author_as_necrouser.timezone is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Please register a timezone with `.timezone`.'.format(cmd.author.mention))
             return
 
@@ -248,8 +232,7 @@ class Suggest(CommandType):
         try:
             suggested_time_utc = dateparse.parse_datetime(cmd.arg_string, author_as_necrouser.timezone)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Failed to parse your input as a time ({0}).'.format(e))
             return
 
@@ -257,8 +240,7 @@ class Suggest(CommandType):
         utcnow = pytz.utc.localize(datetime.datetime.utcnow())
         time_until = suggested_time_utc - utcnow
         if not time_until.total_seconds() >= 0:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Error: The time you are suggesting for the match appears to be in the past.'.format(
                     cmd.author.mention))
             return
@@ -266,8 +248,7 @@ class Suggest(CommandType):
         # Check for deadlines on suggested times.
         deadline = MatchGlobals().deadline
         if deadline is not None and suggested_time_utc - deadline > datetime.timedelta(seconds=0):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Matches must be scheduled before {deadline:%b %d (%A) at %I:%M %p} UTC'
                 .format(deadline=deadline)
             )
@@ -282,22 +263,19 @@ class Suggest(CommandType):
             if racer.member is not None:
                 if racer.timezone is not None:
                     if racer == author_as_necrouser:
-                        await self.client.send_message(
-                            cmd.channel,
+                        await cmd.channel.send(
                             '{0}: You\'ve suggested the match be scheduled for {1}. Waiting for the other '
                             'racer to `.confirm`.'.format(
                                 racer.member.mention,
                                 timestr.str_full_12h(racer.timezone.normalize(suggested_time_utc))))
                     else:
-                        await self.client.send_message(
-                            cmd.channel,
+                        await cmd.channel.send(
                             '{0}: This match is suggested to be scheduled for {1}. Please confirm with '
                             '`.confirm`.'.format(
                                 racer.member.mention,
                                 timestr.str_full_12h(racer.timezone.normalize(suggested_time_utc))))
                 else:
-                    await self.client.send_message(
-                        cmd.channel,
+                    await cmd.channel.send(
                         '{0}: A match time has been suggested; please confirm with `.confirm`. I also suggest '
                         'you register a timezone (use `.timezone`), so I can convert to your local time.'.format(
                             racer.member.mention))
@@ -320,15 +298,13 @@ class Unconfirm(CommandType):
 
         author_as_necrouser = await userlib.get_user(discord_id=int(cmd.author.id))
         if author_as_necrouser is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0} is not registered. Please register with `.register` in the main channel. '
                 'If the problem persists, contact CoNDOR Staff.'.format(cmd.author.mention))
             return
 
         if not match.is_confirmed_by(author_as_necrouser):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: You haven\'t yet confirmed the suggested time.'.format(cmd.author.mention))
             return
 
@@ -339,19 +315,16 @@ class Unconfirm(CommandType):
         if match_was_scheduled:
             # ...and still is
             if match.is_scheduled:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     '{0} wishes to remove the current scheduled time. The other racer must also '
                     '`.unconfirm`.'.format(cmd.author.mention))
             # ...and now is not
             else:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'The match has been unscheduled. Please `.suggest` a new time when one has been agreed upon.')
         # if match was not scheduled
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0} has unconfirmed the current suggested time.'.format(cmd.author.mention))
 
         await self.bot_channel.update()
@@ -367,16 +340,14 @@ class CancelRace(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) > 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Too many args for `{0}`.'.format(self.mention)
             )
             return
 
         if len(cmd.args) == 0:
             if self.bot_channel.current_race.complete:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'There is no currently ongoing race. Use `{0} N` to cancel a specific previous race.'
                     .format(self.mention)
                 )
@@ -388,21 +359,18 @@ class CancelRace(CommandType):
             try:
                 race_number = int(cmd.args[0])
             except ValueError:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     "Error: couldn't parse {0} as a race number.".format(cmd.args[0])
                 )
                 return
 
             success = await self.bot_channel.cancel_race(race_number)
             if success:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'Canceled race {0}.'.format(race_number)
                 )
             else:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'Error: Failed to cancel race {0}.'.format(race_number)
                 )
 
@@ -416,8 +384,7 @@ class ChangeWinner(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 2:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of args for `{0}`.'.format(self.mention)
             )
             return
@@ -425,8 +392,7 @@ class ChangeWinner(CommandType):
         try:
             race_number = int(cmd.args[0])
         except ValueError:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't parse `{0}` as a race number.".format(cmd.args[0])
             )
             return
@@ -441,21 +407,18 @@ class ChangeWinner(CommandType):
             winner = 2
             winner_name = match.racer_2.display_name
         if winner is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't identify `{0}` as one of the racers in this match.".format(winner_name)
             )
             return
 
         success = await matchdb.change_winner(match=match, race_number=race_number, winner=winner)
         if success:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Changed the winner of race {0} to `{1}`.'.format(race_number, winner_name)
             )
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Failed to change the winner of race {0}.'.format(race_number)
             )
 
@@ -491,7 +454,7 @@ class ForceCloseRoom(CommandType):
                 outfile_name='{0}-{1}'.format(match_id, channel.name)
             )
 
-        await server.client.delete_channel(channel)
+        await channel.delete()
         await matchdb.register_match_channel(match_id, None)
 
 
@@ -513,7 +476,7 @@ class ForceCancelMatch(CommandType):
             )
 
         await matchdb.cancel_match(match)
-        await server.client.delete_channel(channel)
+        await channel.delete()
 
 
 class ForceConfirm(CommandType):
@@ -525,8 +488,7 @@ class ForceConfirm(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
         if not match.has_suggested_time:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: A scheduled time for this match has not been suggested. '
                 'One of the racers should use `.suggest` to suggest a time.')
             return
@@ -534,8 +496,7 @@ class ForceConfirm(CommandType):
         match.force_confirm()
         await NEDispatch().publish('schedule_match', match=match)
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Forced confirmation of match time: {0}.'.format(
                 timestr.str_full_12h(match.suggested_time)))
         await self.bot_channel.update()
@@ -563,8 +524,7 @@ class ForceRecordRace(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of args for `{0}`.'.format(self.mention)
             )
             return
@@ -580,15 +540,13 @@ class ForceRecordRace(CommandType):
             winner_name = match.racer_2.display_name
 
         if winner is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't identify `{0}` as one of the racers in this match.".format(winner_name)
             )
             return
 
         await self.bot_channel.force_record_race(winner=winner)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             "Force-recorded a race with winner {0}.".format(winner_name)
         )
 
@@ -611,8 +569,7 @@ class ForceReschedule(CommandType):
         try:
             suggested_time_utc = dateparse.parse_datetime(cmd.arg_string, pytz.utc)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Failed to parse your input as a time ({0}).'.format(e))
             return
 
@@ -625,8 +582,7 @@ class ForceReschedule(CommandType):
         for racer in match.racers:
             if racer.member is not None:
                 if racer.timezone is not None:
-                    await self.client.send_message(
-                        cmd.channel,
+                    await cmd.channel.send(
                         '{0}: This match is suggested to be scheduled for {1}. Please confirm with '
                         '`.confirm`.'.format(
                             racer.member.mention,
@@ -634,8 +590,7 @@ class ForceReschedule(CommandType):
                         )
                     )
                 else:
-                    await self.client.send_message(
-                        cmd.channel,
+                    await cmd.channel.send(
                         '{0}: A match time has been suggested; please confirm with `.confirm`. I also suggest '
                         'you register a timezone (use `.timezone`), so I can convert to your local time.'.format(
                             racer.member.mention
@@ -658,15 +613,13 @@ class Postpone(CommandType):
     async def _do_execute(self, cmd):
         match = self.bot_channel.match
         if not match.is_scheduled:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: This match hasn\'t been scheduled.'.format(cmd.author.mention))
             return
 
         match.force_unconfirm()
         await self.bot_channel.update()
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'The match has been postponed. An admin can resume with `.forcebeginmatch`, or the racers can '
             '`.suggest` a new time as usual.')
 
@@ -678,8 +631,7 @@ class RebootRoom(CommandType):
         self.admin_only = True
 
     async def _do_execute(self, cmd):
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'This command is currently deprecated.'
         )
         # await match.matchchannelutil.make_match_room(match=self.bot_channel.match)
@@ -702,15 +654,13 @@ class SetMatchType(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 2:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Wrong number of arguments for `.setmatchtype`.')
 
         try:
             num = int(cmd.args[1])
         except ValueError:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Couldn\'t parse {0} as a number.'.format(cmd.args[1]))
             return
 
@@ -719,17 +669,14 @@ class SetMatchType(CommandType):
 
         if matchtype.lower() == 'repeat':
             match.set_repeat(num)
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'This match has been set to be a repeat-{0}.'.format(num))
         elif matchtype.lower() == 'bestof':
             match.set_best_of(num)
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'This match has been set to be a best-of-{0}.'.format(num))
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: I don\'t recognize the argument {0}.'.format(type))
             return
 
@@ -744,21 +691,17 @@ class Update(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.update()
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Updated.'
         )
 
 
 async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
-    await cmd_type.client.send_typing(cmd.channel)
-
     # Parse arguments
     try:
         match = await matchfindparse.find_match(cmd.arg_string, finished_only=False)  # Only selects unfinished matches
     except necrobot.exception.NecroException as e:
-        await cmd_type.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Error: {0}.'.format(e)
         )
         return
@@ -768,8 +711,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     # Check if the match already has cawmentary
     if add:
         if not match.is_scheduled and not cmd_type.bot_channel.is_admin(cmd.author):
-            await cmd_type.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Can\'t add commentary for match {matchroom_name}, because it hasn\'t been scheduled yet.'
                 .format(matchroom_name=match.matchroom_name)
             )
@@ -777,8 +719,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         if match.cawmentator_id is not None:
             cawmentator_user = await userlib.get_user(user_id=match.cawmentator_id)
             if cawmentator_user is not None:
-                await cmd_type.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'This match already has a cawmentator ({0}).'.format(cawmentator_user.display_name)
                 )
                 return
@@ -790,14 +731,12 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
                 # No return here; we'll just write over this mystery ID
     else:  # not add
         if match.cawmentator_id is None:
-            await cmd_type.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'No one is registered for cawmentary for the match {0}.'.format(match.matchroom_name)
             )
             return
         elif match.cawmentator_id != author_user.user_id:
-            await cmd_type.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0}: You are not the registered cawmentator for {1}.'.format(
                     cmd.author.mention, match.matchroom_name
                 )
@@ -808,8 +747,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     if add:
         match.set_cawmentator_id(author_user.user_id)
         await NEDispatch().publish(event_type='set_cawmentary', match=match)
-        await cmd_type.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Added {0} as cawmentary for the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name
             )
@@ -817,8 +755,7 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     else:
         match.set_cawmentator_id(None)
         await NEDispatch().publish(event_type='set_cawmentary', match=match)
-        await cmd_type.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Removed {0} as cawmentary from the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name
             )

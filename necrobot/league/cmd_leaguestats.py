@@ -24,7 +24,7 @@ from necrobot.util import strutil
 #             pass
 #
 #         if len(args) != 3:
-#             await self.client.send_message(
+#             await {matches}send_message(
 #                 cmd.necrobot,
 #                 '{0}: Error: Wrong number of arguments for `.matchup`.'.format(cmd.author.mention))
 #             return
@@ -79,7 +79,7 @@ class LeagueFastest(CommandType):
             strutil.tickless(infotext)
         )
 
-        await self.client.send_message(cmd.channel, infobox)
+        await cmd.channel.send(infobox)
 
 
 class LeagueStats(CommandType):
@@ -94,8 +94,7 @@ class LeagueStats(CommandType):
             username = cmd.arg_string
             user = await userlib.get_user(any_name=username)
             if user is None:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     "Couldn't find the user `{0}`.".format(username)
                 )
                 return
@@ -106,4 +105,4 @@ class LeagueStats(CommandType):
                       username=strutil.tickless(user.display_name),
                       stats=strutil.tickless(stats.infotext)
                   )
-        await self.client.send_message(cmd.channel, infobox)
+        await cmd.channel.send(infobox)

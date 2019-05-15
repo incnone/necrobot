@@ -13,8 +13,7 @@ class LadderLeaderboard(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -31,8 +30,7 @@ class SetAutomatch(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '`{0}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -48,8 +46,7 @@ class Ranked(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args[0]) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{}`. (Enclose racer names with spaces inside quotes.)'
                 .format(self.mention)
             )
@@ -81,24 +78,22 @@ class Rating(CommandType):
         elif len(cmd.args) == 1:
             necro_user = await userlib.get_user(any_name=cmd.args[0])
             if necro_user is None:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'Couldn\'t find user {}.'.format(cmd.args[0])
                 )
                 return
             user_name = necro_user.display_name
             discord_id = necro_user.discord_id
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Too many args for `{}`. (Enclose names with spaces in quotes.)'.format(self.mention)
             )
             return
 
         rating = await ratingsdb.get_rating(discord_id=discord_id)
-        await self.client.send_message(
-            cmd.channel,
-            '**{0}**: {1}'.format(user_name, rating.displayed_rating))
+        await cmd.channel.send(
+            '**{0}**: {1}'.format(user_name, rating.displayed_rating)
+        )
 
 
 class Unranked(CommandType):
@@ -113,8 +108,7 @@ class Unranked(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args[0]) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{}`. (Enclose racer names with spaces inside quotes.)'
                 .format(self.mention)
             )
@@ -138,8 +132,7 @@ class Automatch(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '`{}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -157,8 +150,7 @@ class DropRacer(CommandType):
 
     async def _do_execute(self, cmd):
         # TODO
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '`{}` doesn\'t do anything yet, but if it did, you\'d be doing it.'.format(self.mention)
         )
 
@@ -177,8 +169,7 @@ class ForceRanked(CommandType):
     async def _do_execute(self, cmd):
         # Parse arguments
         if len(cmd.args) != 2:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Wrong number of arguments for `{}`.'.format(self.mention))
             return
 

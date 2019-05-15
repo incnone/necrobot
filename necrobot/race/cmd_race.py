@@ -234,7 +234,6 @@ class ChangeRules(CommandType):
         try:
             await self.bot_channel.change_race_info(cmd.args)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't parse input: `{0}`.".format(e)
             )

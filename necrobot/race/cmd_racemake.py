@@ -21,8 +21,7 @@ class Make(CommandType):
         try:
             race_info = raceinfo.parse_args(cmd.args)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error parsing inputs: {0}'.format(e)
             )
             return
@@ -37,26 +36,26 @@ class MakePrivate(CommandType):
                          "can create multiple rooms at once by adding `-repeat N`, where `N` is the number of rooms " \
                          "to create (limit 20)."
 
-    async def _do_execute(self, command):
+    async def _do_execute(self, cmd):
         try:
-            cmd_idx = command.args.index('-repeat')
-            repeat_index = int(command.args[cmd_idx + 1])
-            del command.args[cmd_idx + 1]
-            del command.args[cmd_idx]
+            cmd_idx = cmd.args.index('-repeat')
+            repeat_index = int(cmd.args[cmd_idx + 1])
+            del cmd.args[cmd_idx + 1]
+            del cmd.args[cmd_idx]
         except (ValueError, IndexError):
             repeat_index = 1
 
-        author_as_member = server.get_as_member(command.author)     # TODO convert to NecroUser
+        author_as_member = server.get_as_member(cmd.author)     # TODO convert to NecroUser
 
         repeat_index = min(20, max(repeat_index, 1))
 
-        private_race_info = privateraceinfo.parse_args(command.args)
+        private_race_info = privateraceinfo.parse_args(cmd.args)
         if private_race_info is not None:
             for _ in range(repeat_index):
                 await privateraceroom.make_private_room(private_race_info, author_as_member)
         else:
-            await self.client.send_message(
-                command.channel, 'Error parsing arguments to `.makeprivate`.')
+            await cmd.channel.send(
+                cmd.channel, 'Error parsing arguments to `.makeprivate`.')
 
 
 class MakeCondor(CommandType):
@@ -67,24 +66,24 @@ class MakeCondor(CommandType):
                          "to create (limit 20)."
         self.admin_only = True
 
-    async def _do_execute(self, command):
+    async def _do_execute(self, cmd):
         try:
-            cmd_idx = command.args.index('-repeat')
-            repeat_index = int(command.args[cmd_idx + 1])
-            del command.args[cmd_idx + 1]
-            del command.args[cmd_idx]
+            cmd_idx = cmd.args.index('-repeat')
+            repeat_index = int(cmd.args[cmd_idx + 1])
+            del cmd.args[cmd_idx + 1]
+            del cmd.args[cmd_idx]
         except (ValueError, IndexError):
             repeat_index = 1
 
         repeat_index = min(20, max(repeat_index, 1))
 
-        private_race_info = privateraceinfo.parse_args(command.args)
+        private_race_info = privateraceinfo.parse_args(cmd.args)
         private_race_info.race_info.can_be_solo = False
         private_race_info.race_info.post_results = True
         private_race_info.race_info.condor_race = True
         if private_race_info is not None:
             for _ in range(repeat_index):
-                await privateraceroom.make_private_room(private_race_info, command.author)
+                await privateraceroom.make_private_room(private_race_info, cmd.author)
         else:
-            await self.client.send_message(
-                command.channel, 'Error parsing arguments to `.makecondor`.')
+            await cmd.channel.send(
+                cmd.channel, 'Error parsing arguments to `.makecondor`.')

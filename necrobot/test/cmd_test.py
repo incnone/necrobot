@@ -27,7 +27,7 @@ class TestCommandType(CommandType):
             if wait_for is not None:
                 wait_ev = await self.wait_event(wait_for)
 
-            await self.client.send_message(channel, "`{0}` {1}".format(author.display_name, msg))
+            await channel.send("`{0}` {1}".format(author.display_name, msg))
             await Necrobot().force_command(channel=channel, author=author, message_str=msg)
 
             if wait_for is not None:
@@ -48,7 +48,9 @@ class TestCreateCategory(TestCommandType):
         self.help_text = "Make the 'Race Rooms' category channel."
 
     async def _do_execute(self, cmd: Command):
-        await server.create_channel_category(Config.MATCH_CHANNEL_CATEGORY_NAME)
+        await server.guild.create_channel_category(
+            name=Config.MATCH_CHANNEL_CATEGORY_NAME
+        )
 
 
 class TestOverwriteGSheet(TestCommandType):
@@ -66,14 +68,13 @@ class TestOverwriteGSheet(TestCommandType):
                     sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error accessing GSheet: `{0}`'.format(e)
             )
             return
 
         if matchup_sheet is None:
-            await self.client.send_message(cmd.channel, 'Error: MatchupSheet is None.')
+            await cmd.channel.send('Error: MatchupSheet is None.')
             return
 
         await matchup_sheet.overwrite_gsheet()
@@ -94,8 +95,7 @@ class TestMatch(TestCommandType):
         racer_2 = match.racer_2.member
         admin = server.find_admin(ignore=[racer_1.name, racer_2.name])
         if racer_1 is None or racer_2 is None or admin is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Can't find one of the racers (as a Discord member) in this match."
             )
             return
@@ -191,8 +191,7 @@ class TestRace(TestCommandType):
         admin = server.find_member(discord_name='incnone')
 
         if alice is None or bob is None or carol is None or admin is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Can't find one of the racers (as a Discord member) in this match."
             )
             return
@@ -234,12 +233,12 @@ class TestRace(TestCommandType):
         await send(admin, '.unenter', wait_for='GO!')
         await send(admin, '.pause', wait_for='Race paused')
         await send(bob, '.time', wait_for='The current race time')
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
         await send(carol, '.time', wait_for='The current race time')
         await send(admin, '.forceforfeit "{0}"'.format(carol.display_name), wait_for='has forfeit')
         await send(alice, '.missing', wait_for='Still racing')
         await send(alice, '.d')
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
         await send(admin, '.unpause', wait_for='GO!')
         await send(carol, '.d', wait_for='has finished')
         await send(bob, '.d 5-4 i can\'t deep blues', wait_for='has forfeit')

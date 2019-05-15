@@ -75,5 +75,5 @@ class TestMatchParse(unittest.TestCase):
         parsed_args = parse_matchtype_args(shlex.split(parse_string_success))
 
         self.assertEqual(parsed_args, parsed_dict)
-        self.assertRaises(parse_matchtype_args, DoubledArgException, parse_string_fail_dup)
-        self.assertRaises(parse_matchtype_args, NumParametersException, parse_string_fail_num)
+        self.assertRaises(DoubledArgException, parse_matchtype_args, parse_string_fail_dup)
+        self.assertRaises(NumParametersException, parse_matchtype_args, parse_string_fail_num)

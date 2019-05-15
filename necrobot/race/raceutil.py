@@ -11,20 +11,18 @@ from necrobot.user import userdb
 
 # Make a room with the given RaceInfo
 async def make_room(race_info):
+    # Find the races category
+    race_channel_category = server.find_category(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
+
     # Make a channel for the room
-    race_channel = await server.client.create_channel(
-        server.server,
+    race_channel = await server.guild.create_text_channel(
         get_raceroom_name(race_info),
-        type=discord.ChannelType.text)
+        category=race_channel_category
+    )
 
     if race_channel is None:
         console.warning('Failed to make a race channel.')
         return None
-
-    # Put the race channel in the races category
-    race_channel_category = server.find_channel(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
-    if race_channel_category is not None:
-        await server.set_channel_category(channel=race_channel, category=race_channel_category)
 
     # Make the actual RaceRoom and initialize it
     new_room = RaceRoom(race_discord_channel=race_channel, race_info=race_info)
@@ -41,7 +39,7 @@ async def make_room(race_info):
         member = server.find_member(discord_id=member_id)
         if member is not None:
             try:
-                await server.client.send_message(member, alert_string)
+                await member.send(alert_string)
             except discord.errors.Forbidden:
                 continue
 
@@ -53,7 +51,7 @@ def get_raceroom_name(race_info):
     name_prefix = race_info.raceroom_name
     cut_length = len(name_prefix) + 1
     largest_postfix = 0
-    for channel in server.server.channels:
+    for channel in server.guild.channels:
         if channel.name.startswith(name_prefix):
             try:
                 val = int(channel.name[cut_length:])

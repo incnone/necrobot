@@ -191,7 +191,8 @@ async def get_fastest_times_leaderboard(character_name: str, amplified: bool, li
                         AND NOT {races}.`private`
                     GROUP BY user_id
                 ) mintimes
-                INNER JOIN {race_runs} ON ({race_runs}.`user_id` = mintimes.`user_id` AND {race_runs}.`time` = mintimes.`min_time`)
+                INNER JOIN {race_runs} 
+                    ON ({race_runs}.`user_id` = mintimes.`user_id` AND {race_runs}.`time` = mintimes.`min_time`)
                 INNER JOIN {races} ON {races}.`race_id` = {race_runs}.`race_id`
                 INNER JOIN race_types ON race_types.`type_id` = {races}.`type_id`
                 INNER JOIN users ON users.`user_id` = mintimes.`user_id`

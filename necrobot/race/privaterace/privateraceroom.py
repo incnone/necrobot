@@ -19,11 +19,11 @@ async def make_private_room(race_private_info, discord_member):
 
     # Make a channel for the room
     # noinspection PyUnresolvedReferences
-    race_channel = await server.client.create_channel(
-        server.server,
+    race_channel = await guild.client.create_channel(
+        guild.guild,
         get_raceroom_name(race_private_info.race_info),
-        discord.ChannelPermissions(target=server.server.default_role, overwrite=deny_read),
-        discord.ChannelPermissions(target=server.server.me, overwrite=permit_read),
+        discord.ChannelPermissions(target=guild.guild.default_role, overwrite=deny_read),
+        discord.ChannelPermissions(target=guild.guild.me, overwrite=permit_read),
         discord.ChannelPermissions(target=discord_member, overwrite=permit_read),
         type=discord.ChannelType.text
     )
@@ -32,7 +32,7 @@ async def make_private_room(race_private_info, discord_member):
         return None
 
     # Put the race channel in the races category
-    race_channel_category = server.find_channel(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
+    race_channel_category = server.find_category(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
     if race_channel_category is not None:
         await server.set_channel_category(channel=race_channel, category=race_channel_category)
 
@@ -51,7 +51,7 @@ class PrivateRaceRoom(RaceRoom):
         RaceRoom.__init__(self, race_discord_channel, race_private_info.race_info)
         self._room_creator = admin_as_member
 
-        self.permission_info = permissioninfo.get_permission_info(server.server, race_private_info)
+        self.permission_info = permissioninfo.get_permission_info(server.guild, race_private_info)
         if admin_as_member not in self.permission_info.admins:
             self.permission_info.admins.append(admin_as_member)
 
@@ -92,15 +92,11 @@ class PrivateRaceRoom(RaceRoom):
 
     # Allow the member to see the necrobot
     async def allow(self, member_or_role):
-        read_permit = discord.PermissionOverwrite()
-        read_permit.read_messages = True
-        await self.client.edit_channel_permissions(self.channel, member_or_role, read_permit)
+        await self.channel.set_permissions(target=member_or_role, read_permit=True)
 
     # Restrict the member from seeing the necrobot
     async def deny(self, member_or_role):
-        read_deny = discord.PermissionOverwrite()
-        read_deny.read_messages = False
-        await self.client.edit_channel_permissions(self.channel, member_or_role, read_deny)
+        await self.channel.set_permissions(target=member_or_role, read_permit=False)
 
     # True if the user has admin permissions for this race
     def _virtual_is_admin(self, member):

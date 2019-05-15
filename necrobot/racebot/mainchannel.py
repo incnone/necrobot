@@ -1,7 +1,6 @@
 from necrobot.botbase import cmd_seedgen
 from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
-from necrobot.daily import cmd_daily
 from necrobot.race import cmd_racemake
 from necrobot.race import cmd_racestats
 # from necrobot.ladder import cmd_ladder
@@ -14,14 +13,9 @@ class MainBotChannel(BotChannel):
         BotChannel.__init__(self)
         self.channel_commands = [
             cmd_admin.Die(self),
-            cmd_admin.Reboot(self),
+            # cmd_admin.Reboot(self),
 
             cmd_color.ColorMe(self),
-
-            cmd_daily.DailyChar(self),
-            cmd_daily.DailyRules(self),
-            cmd_daily.DailySeed(self),
-            cmd_daily.DailyWhen(self),
 
             # cmd_ladder.ForceRanked(self),
             # cmd_ladder.Ranked(self),

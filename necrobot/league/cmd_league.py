@@ -26,8 +26,7 @@ class ScrubDatabase(CommandType):
     async def _do_execute(self, cmd: Command):
         await matchdb.scrub_unchanneled_unraced_matches()
         matchutil.invalidate_cache()
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Database scrubbed.'
         )
 
@@ -47,8 +46,7 @@ class CloseAllMatches(CommandType):
     async def _do_execute(self, cmd: Command):
         log = 'nolog' not in cmd.args
 
-        status_message = await self.client.send_message(
-            cmd.channel,
+        status_message = await cmd.channel.send(
             'Closing all match channels...'
         )
         await self.client.send_typing(cmd.channel)
@@ -72,16 +70,14 @@ class CloseFinished(CommandType):
     async def _do_execute(self, cmd: Command):
         log = not (len(cmd.args) == 1 and cmd.args[0].lstrip('-').lower() == 'nolog')
 
-        status_message = await self.client.send_message(
-            cmd.channel,
+        status_message = await cmd.channel.send(
             'Closing all completed match channels...'
         )
-        await self.client.send_typing(cmd.channel)
 
-        await matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
+        async with cmd.channel.typing():
+            await matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
 
-        await self.client.edit_message(
-            status_message,
+        await status_message.edit(
             'Closing all completed match channels... done.'
         )
 
@@ -94,8 +90,7 @@ class Deadline(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if LeagueMgr().league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: No league set.'
             )
             return
@@ -103,8 +98,7 @@ class Deadline(CommandType):
         deadline_str = LeagueMgr().league.deadline
 
         if deadline_str is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'No deadline is set for the current league.'
             )
             return
@@ -112,11 +106,10 @@ class Deadline(CommandType):
         try:
             deadline = dateparse.parse_datetime(deadline_str)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(cmd.channel, str(e))
+            await cmd.channel.send(str(e))
             return
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'The current league deadline is "{deadline_str}". As of now, this is '
             '{deadline:%b %d (%A) at %I:%M %p} (UTC).'
             .format(
@@ -135,8 +128,7 @@ class DropRacer(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if not len(cmd.args) == 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of args for `{0}`.'.format(self.mention)
             )
             return
@@ -144,8 +136,7 @@ class DropRacer(CommandType):
         username = cmd.args[0]
         user = await userlib.get_user(any_name=username)
         if user is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't find a user with name `{0}`.".format(cmd.args[0])
             )
             return
@@ -155,18 +146,16 @@ class DropRacer(CommandType):
         for the_match in matches:
             channel = server.find_channel(channel_id=the_match.channel_id)
             if channel is not None:
-                await self.client.delete_channel(channel)
+                await channel.delete()
                 await matchutil.delete_match(match_id=the_match.match_id)
                 deleted_any = True
 
         if deleted_any:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Dropped `{0}` from all their current matches.".format(user.display_name)
             )
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "Couldn't find any current matches for `{0}`.".format(user.display_name)
             )
 
@@ -181,14 +170,12 @@ class GetCurrentEvent(CommandType):
     async def _do_execute(self, cmd: Command):
         league = LeagueMgr().league
         if league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
             )
             return
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '```\n'
             'Current event:\n'
             '    ID: {0}\n'
@@ -206,14 +193,12 @@ class GetMatchRules(CommandType):
     async def _do_execute(self, cmd: Command):
         league = LeagueMgr().league
         if league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
             )
             return
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Current event (`{0}`) default rules: {1}'.format(league.schema_name, league.match_info.format_str)
         )
 
@@ -232,15 +217,13 @@ class ForceMakeMatch(CommandType):
     async def _do_execute(self, cmd):
         # Parse arguments
         if len(cmd.args) != 2:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
         league = LeagueMgr().league
         if league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
             )
             return
@@ -267,15 +250,13 @@ class MakeMatch(CommandType):
     async def _do_execute(self, cmd):
         # Parse arguments
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
         league = LeagueMgr().league
         if league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
             )
             return
@@ -290,8 +271,7 @@ class MakeMatch(CommandType):
                 allow_duplicates=False
             )
         except necrobot.exception.DuplicateMatchException:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'A match between `{r1}` and `{r2}` already exists! Contact incnone if this is in error.'.format(
                     r1=cmd.author.display_name,
                     r2=cmd.args[0]
@@ -315,113 +295,107 @@ class MakeMatchesFromFile(CommandType):
 
     async def _do_execute(self, cmd):
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
 
         filename = cmd.args[0]
         if not filename.endswith('.csv'):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Matchup file should be a `.csv` file.'
             )
             return
         file_path = os.path.join(filename)
         if not os.path.isfile(file_path):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Cannot find file `{}`.'.format(filename)
             )
             return
 
         match_info = LeagueMgr().league.match_info
-        status_message = await self.client.send_message(
-            cmd.channel,
+        status_message = await cmd.channel.send(
             'Creating matches from file `{0}`... (Reading file)'.format(filename)
         )
-        await self.client.send_typing(cmd.channel)
 
-        # Store file data
-        desired_match_pairs = []
-        with open(file_path) as file:
-            for line in file:
-                racernames = line.rstrip('\n').split(',')
-                desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
+        with cmd.channel.typing():
+            # Store file data
+            desired_match_pairs = []
+            with open(file_path) as file:
+                for line in file:
+                    racernames = line.rstrip('\n').split(',')
+                    desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
 
-        # Find all racers
-        all_racers = dict()
-        for racerpair in desired_match_pairs:
-            all_racers[racerpair[0]] = None
-            all_racers[racerpair[1]] = None
+            # Find all racers
+            all_racers = dict()
+            for racerpair in desired_match_pairs:
+                all_racers[racerpair[0]] = None
+                all_racers[racerpair[1]] = None
 
-        await userlib.fill_user_dict(all_racers)
-        console.debug('MakeMatchesFromFile: Filled user dict: {}'.format(all_racers))
+            await userlib.fill_user_dict(all_racers)
+            console.debug('MakeMatchesFromFile: Filled user dict: {}'.format(all_racers))
 
-        # Create Match objects
-        matches = []
-        not_found_matches = []
+            # Create Match objects
+            matches = []
+            not_found_matches = []
 
-        async def make_single_match(racers):
-            console.debug('MakeMatchesFromFile: Making match {0}-{1}'.format(racers[0], racers[1]))
-            racer_1 = all_racers[racers[0]]
-            racer_2 = all_racers[racers[1]]
-            if racer_1 is None or racer_2 is None:
-                console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
-                    racers[0], racers[1]
-                ))
-                not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
-                return
+            async def make_single_match(racers):
+                console.debug('MakeMatchesFromFile: Making match {0}-{1}'.format(racers[0], racers[1]))
+                racer_1 = all_racers[racers[0]]
+                racer_2 = all_racers[racers[1]]
+                if racer_1 is None or racer_2 is None:
+                    console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
+                        racers[0], racers[1]
+                    ))
+                    not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
+                    return
 
-            new_match = await matchutil.make_match(
-                register=True,
-                racer_1_id=racer_1.user_id,
-                racer_2_id=racer_2.user_id,
-                match_info=match_info,
-                autogenned=True
+                new_match = await matchutil.make_match(
+                    register=True,
+                    racer_1_id=racer_1.user_id,
+                    racer_2_id=racer_2.user_id,
+                    match_info=match_info,
+                    autogenned=True
+                )
+                if new_match is None:
+                    console.debug('MakeMatchesFromFile: Match {0}-{1} not created.'.format(racers[0], racers[1]))
+                    not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
+                    return
+
+                matches.append(new_match)
+                console.debug('MakeMatchesFromFile: Created {0}-{1}'.format(
+                    new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
+                )
+
+            for racer_pair in desired_match_pairs:
+                await make_single_match(racer_pair)
+
+            matches = sorted(matches, key=lambda m: m.matchroom_name)
+
+            await status_message.edit(
+                'Creating matches from file `{0}`... (Creating race rooms)'.format(filename)
             )
-            if new_match is None:
-                console.debug('MakeMatchesFromFile: Match {0}-{1} not created.'.format(racers[0], racers[1]))
-                not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
-                return
+            console.debug('MakeMatchesFromFile: Matches to make: {0}'.format(matches))
 
-            matches.append(new_match)
-            console.debug('MakeMatchesFromFile: Created {0}-{1}'.format(
-                new_match.racer_1.rtmp_name, new_match.racer_2.rtmp_name)
-            )
+            # Create match channels
+            for match in matches:
+                console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
+                new_room = await matchchannelutil.make_match_room(match=match, register=False)
+                await new_room.send_channel_start_text()
 
-        for racer_pair in desired_match_pairs:
-            await make_single_match(racer_pair)
+            # Report on uncreated matches
+            uncreated_str = ''
+            for match_str in not_found_matches:
+                uncreated_str += match_str + ', '
+            if uncreated_str:
+                uncreated_str = uncreated_str[:-2]
 
-        matches = sorted(matches, key=lambda m: m.matchroom_name)
+            if uncreated_str:
+                report_str = 'The following matches were not made: {0}'.format(uncreated_str)
+            else:
+                report_str = 'All matches created successfully.'
 
-        await self.client.edit_message(
-            status_message,
-            'Creating matches from file `{0}`... (Creating race rooms)'.format(filename)
-        )
-        console.debug('MakeMatchesFromFile: Matches to make: {0}'.format(matches))
-
-        # Create match channels
-        for match in matches:
-            console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
-            new_room = await matchchannelutil.make_match_room(match=match, register=False)
-            await new_room.send_channel_start_text()
-
-        # Report on uncreated matches
-        uncreated_str = ''
-        for match_str in not_found_matches:
-            uncreated_str += match_str + ', '
-        if uncreated_str:
-            uncreated_str = uncreated_str[:-2]
-
-        if uncreated_str:
-            report_str = 'The following matches were not made: {0}'.format(uncreated_str)
-        else:
-            report_str = 'All matches created successfully.'
-
-        await self.client.edit_message(
-            status_message,
+        await status_message.edit(
             'Creating matches from file `{0}`... done. {1}'.format(filename, report_str)
         )
 
@@ -437,8 +411,7 @@ class NextRace(CommandType):
 
         matches = await matchutil.get_upcoming_and_current()
         if not matches:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Didn\'t find any scheduled matches!')
             return
 
@@ -452,8 +425,7 @@ class NextRace(CommandType):
         else:
             upcoming_matches = matches
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             await matchutil.get_nextrace_displaytext(upcoming_matches)
         )
 
@@ -482,8 +454,7 @@ class RegisterCondorEvent(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
@@ -492,21 +463,18 @@ class RegisterCondorEvent(CommandType):
         try:
             await LeagueMgr().create_league(schema_name=schema_name)
         except necrobot.exception.LeagueAlreadyExists as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Schema `{0}`: {1}'.format(schema_name, e)
             )
             return
         except necrobot.exception.InvalidSchemaName:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: `{0}` is an invalid schema name. (`a-z`, `A-Z`, `0-9`, `_` and `$` are allowed characters.)'
                 .format(schema_name)
             )
             return
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Registered new CoNDOR event `{0}`, and set it to be the bot\'s current event.'.format(schema_name)
         )
 
@@ -524,8 +492,7 @@ class SetCondorEvent(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
@@ -534,16 +501,14 @@ class SetCondorEvent(CommandType):
         try:
             await LeagueMgr().set_league(schema_name=schema_name)
         except necrobot.exception.LeagueDoesNotExist:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: Event `{0}` does not exist.'.format(schema_name)
             )
             return
 
         league_name = LeagueMgr().league.name
         league_name_str = ' ({0})'.format(league_name) if league_name is not None else ''
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Set the current CoNDOR event to `{0}`{1}.'.format(schema_name, league_name_str)
         )
 
@@ -562,8 +527,7 @@ class SetDeadline(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if LeagueMgr().league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: No league set.'
             )
             return
@@ -571,14 +535,13 @@ class SetDeadline(CommandType):
         try:
             deadline = dateparse.parse_datetime(cmd.arg_string)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(cmd.channel, str(e))
+            await cmd.channel.send(str(e))
             return
 
         LeagueMgr().league.deadline = cmd.arg_string
         LeagueMgr().league.commit()
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Set the current league\'s deadline to "{deadline_str}". As of now, this is '
             '{deadline:%b %d (%A) at %I:%M %p (%Z)}.'
             .format(
@@ -603,8 +566,7 @@ class SetEventName(CommandType):
     async def _do_execute(self, cmd: Command):
         league = LeagueMgr().league
         if league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
             )
             return
@@ -612,8 +574,7 @@ class SetEventName(CommandType):
         league.name = cmd.arg_string
         league.commit()
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Set the name of current CoNDOR event (`{0}`) to {1}.'.format(league.schema_name, league.name)
         )
 
@@ -637,8 +598,7 @@ class SetMatchRules(CommandType):
     async def _do_execute(self, cmd: Command):
         league = LeagueMgr().league
         if league is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
             )
             return
@@ -646,15 +606,13 @@ class SetMatchRules(CommandType):
         try:
             match_info = matchinfo.parse_args(cmd.args)
         except necrobot.exception.ParseException as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error parsing inputs: {0}'.format(e)
             )
             return
 
         league.match_info = match_info
         league.commit()
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Set the default match rules for `{0}` to {1}.'.format(league.schema_name, match_info.format_str)
         )

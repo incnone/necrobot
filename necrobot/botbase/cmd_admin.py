@@ -13,14 +13,14 @@ class Die(CommandType):
         await Necrobot().logout()
 
 
-class Reboot(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'reboot')
-        self.help_text = 'Reboot the necrobot.'
-        self.admin_only = True
-
-    async def _do_execute(self, cmd):
-        await Necrobot().reboot()
+# class Reboot(CommandType):
+#     def __init__(self, bot_channel):
+#         CommandType.__init__(self, bot_channel, 'reboot')
+#         self.help_text = 'Reboot the necrobot.'
+#         self.admin_only = True
+#
+#     async def _do_execute(self, cmd):
+#         await Necrobot().reboot()
 
 
 class RedoInit(CommandType):

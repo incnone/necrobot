@@ -134,7 +134,7 @@ class RaceRoom(BotChannel):
     def dont_notify(self, user: discord.Member):
         self._mention_on_new_race = [u for u in self._mention_on_new_race if u != user]
 
-    def refresh(self, channel: discord.Channel):
+    def refresh(self, channel: discord.TextChannel):
         self._channel = channel
 
 # Coroutine methods ---------------------------------------------------
@@ -147,7 +147,7 @@ class RaceRoom(BotChannel):
 
     # Write text to the raceroom. Return a Message for the text written
     async def write(self, text: str):
-        await self.client.send_message(self._channel, text)
+        await self._channel.send(text)
 
     # Processes a race event
     async def process(self, race_event: RaceEvent):
@@ -173,12 +173,11 @@ class RaceRoom(BotChannel):
 
     # Updates the leaderboard
     async def update(self):
-        await self.client.edit_channel(self._channel, topic=self.leaderboard)
+        await self._channel.edit(topic=self.leaderboard)
 
     # Post the race result to the race necrobot
     async def post_result(self, race: Race):
-        await self.client.send_message(
-            self.results_channel,
+        await self.results_channel.send(
             'Race begun at {0}:\n```\n{1}{2}\n```'.format(
                 race.start_datetime.strftime("%d %B %Y, UTC %H:%M"),
                 strutil.tickless(self._leaderboard_header(race)),
@@ -209,7 +208,7 @@ class RaceRoom(BotChannel):
     # Close the channel.
     async def close(self):
         Necrobot().unregister_bot_channel(self._channel)
-        await server.client.delete_channel(self._channel)
+        await self._channel.delete()
 
     # Makes a rematch of this race if the current race is finished
     async def make_rematch(self):
@@ -260,13 +259,11 @@ class RaceRoom(BotChannel):
         self._mention_on_new_race = []
 
         if self.race_info.seeded:
-            await self.client.send_message(
-                self._channel,
+            await self._channel.send(
                 '{0}\nRace number {1} is open for entry. Seed: {2}.'.format(
                     mention_text, self._race_number, self.current_race.race_info.seed))
         else:
-            await self.client.send_message(
-                self._channel,
+            await self._channel.send(
                 '{0}\nRace number {1} is open for entry.'.format(mention_text, self._race_number))
 
     # Checks to see whether the room should be cleaned.
@@ -290,7 +287,7 @@ class RaceRoom(BotChannel):
 
             # Post-race
             elif self._current_race.complete:
-                async for msg in self.client.logs_from(self._channel, 1):
+                async for msg in self._channel.history(limit=1):
                     if (datetime.datetime.utcnow() - msg.timestamp) > Config.CLEANUP_TIME:
                         await self.close()
                         return

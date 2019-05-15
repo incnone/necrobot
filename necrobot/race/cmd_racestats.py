@@ -27,15 +27,13 @@ class Fastest(CommandType):
             pass
 
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Wrong number of arguments for `.fastest`.'.format(cmd.author.mention))
             return
 
         ndchar = NDChar.fromstr(args[0])
         if ndchar is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, args[0]))
             return
 
@@ -44,9 +42,7 @@ class Fastest(CommandType):
             ndchar.name,
             strutil.tickless(infotext),
             'Amplified' if amplified else 'base-game')
-        await self.client.send_message(
-            cmd.channel,
-            infobox)
+        await cmd.channel.send(infobox)
 
 
 class MostRaces(CommandType):
@@ -56,17 +52,14 @@ class MostRaces(CommandType):
                          'all-zones) races for that character.'
 
     async def _do_execute(self, cmd):
-        await server.client.send_typing(cmd.channel)
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Wrong number of arguments for `.mostraces`.'.format(cmd.author.mention))
             return
 
         ndchar = NDChar.fromstr(cmd.args[0])
         if ndchar is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, cmd.args[0]))
             return
 
@@ -75,8 +68,7 @@ class MostRaces(CommandType):
             ndchar.name,
             strutil.tickless(infotext)
         )
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             infobox
         )
 
@@ -89,8 +81,6 @@ class Stats(CommandType):
                          'call `.stats <username> nodlc`.'
 
     async def _do_execute(self, cmd):
-        await server.client.send_typing(cmd.channel)
-
         amplified = True
 
         # Parse arguments
@@ -103,8 +93,7 @@ class Stats(CommandType):
             pass
 
         if len(args) > 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 '{0}: Error: wrong number of arguments for `.stats`.'.format(cmd.author.mention))
             return
 
@@ -114,15 +103,13 @@ class Stats(CommandType):
             racer_name = args[0]
             user = await userlib.get_user(any_name=racer_name)
             if user is None:
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     'Could not find user "{0}".'.format(racer_name))
                 return
 
         # Show stats
         general_stats = await racestats.get_general_stats(user.user_id, amplified=amplified)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             '```\n{0}\'s stats ({1}, public all-zones races):\n{2}\n```'.format(
                 strutil.tickless(user.display_name),
                 'Amplified' if amplified else 'Base game',

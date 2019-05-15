@@ -23,17 +23,10 @@ Channels
 --------
 MAIN_CHANNEL_NAME: str
     The general public channel where the bot accepts commands.
-DAILY_LEADERBOARDS_CHANNEL_NAME: str
-    The channel where the bot posts daily leaderboards.
 LADDER_ADMIN_CHANNEL_NAME: str
     The channel for general ladder admin commands.
 RACE_RESULTS_CHANNEL_NAME: str
     The channel where the bot posts public race results.
-
-Daily
------
-DAILY_GRACE_PERIOD: datetime.timedelta
-    The amount of time after a new daily opens before the previous daily closes.
 
 Database
 --------
@@ -119,6 +112,7 @@ RECORDING_ACTIVATED: bool
 
 import datetime
 import unittest
+from typing import Optional
 
 from enum import IntEnum
 from necrobot.util import console
@@ -138,16 +132,14 @@ class Config(object):
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
     BOT_COMMAND_PREFIX = '.'
-    BOT_VERSION = '0.12.1'
+    BOT_VERSION = '0.13.0'
     DEBUG_LEVEL = DebugLevel.TEST
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff', 'Necrobot']  # list of names of roles to give admin access
-    STAFF_ROLE = 'CoNDOR Staff Fake'
 
     # Channels --------------------------------------------------------------------------------
     MAIN_CHANNEL_NAME = 'necrobot_main'
-    DAILY_LEADERBOARDS_CHANNEL_NAME = 'daily_leaderboards'
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     LADDER_MAIN_CHANNEL_NAME = 'ladder_main'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
@@ -158,9 +150,6 @@ class Config(object):
     MYSQL_DB_USER = 'root'
     MYSQL_DB_PASSWD = ''
     MYSQL_DB_NAME = 'necrobot'
-
-    # Daily -----------------------------------------------------------------------------------
-    DAILY_GRACE_PERIOD = datetime.timedelta(minutes=60)
 
     # GSheet ----------------------------------------------------------------------------------
     OAUTH_CREDENTIALS_JSON = 'data/necrobot-service-acct.json'
@@ -174,7 +163,7 @@ class Config(object):
 
     # Login -----------------------------------------------------------------------------------
     LOGIN_TOKEN = ''
-    SERVER_ID = ''
+    SERVER_ID = None    # type: Optional[int]
 
     # Matches ---------------------------------------------------------------------------------
     MATCH_AUTOCONTEST_IF_WITHIN_HUNDREDTHS = 500
@@ -195,17 +184,17 @@ class Config(object):
     NO_ENTRANTS_CLEANUP_WARNING = datetime.timedelta(minutes=1, seconds=30)
     RACE_POKE_DELAY = int(10)
 
-    # Vod recording ---------------------------------------------------------------------------
-    VODRECORD_USERNAME = ''
-    VODRECORD_PASSWD = ''
-    RECORDING_ACTIVATED = False
+    # # Vod recording ---------------------------------------------------------------------------
+    # VODRECORD_USERNAME = ''
+    # VODRECORD_PASSWD = ''
+    # RECORDING_ACTIVATED = False
 
     # Methods ---------------------------------------------------------------------------------
     @staticmethod
     def write():
         vals = [
             ['login_token', Config.LOGIN_TOKEN],
-            ['server_id', Config.SERVER_ID],
+            ['server_id', str(Config.SERVER_ID)],
             ['test_level', Config.DEBUG_LEVEL],
 
             ['mysql_db_host', Config.MYSQL_DB_HOST],
@@ -213,9 +202,9 @@ class Config(object):
             ['mysql_db_passwd', Config.MYSQL_DB_PASSWD],
             ['mysql_db_name', Config.MYSQL_DB_NAME],
 
-            ['vodrecord_username', Config.VODRECORD_USERNAME],
-            ['vodrecord_passwd', Config.VODRECORD_PASSWD],
-            ['activate_vodrecord', Config.RECORDING_ACTIVATED],
+            # ['vodrecord_username', Config.VODRECORD_USERNAME],
+            # ['vodrecord_passwd', Config.VODRECORD_PASSWD],
+            # ['activate_vodrecord', Config.RECORDING_ACTIVATED],
 
             ['league_name', Config.LEAGUE_NAME],
         ]
@@ -264,16 +253,16 @@ def init(config_filename):
                 console.warning("Error in {0} reading line: \"{1}\".".format(config_filename, line))
 
     Config.LOGIN_TOKEN = defaults['login_token']
-    Config.SERVER_ID = defaults['server_id']
+    Config.SERVER_ID = int(defaults['server_id'])
 
     Config.MYSQL_DB_HOST = defaults['mysql_db_host']
     Config.MYSQL_DB_USER = defaults['mysql_db_user']
     Config.MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
     Config.MYSQL_DB_NAME = defaults['mysql_db_name']
 
-    Config.VODRECORD_USERNAME = defaults['vodrecord_username']
-    Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
-    Config.RECORDING_ACTIVATED = defaults['activate_vodrecord'].lower() == 'true'
+    # Config.VODRECORD_USERNAME = defaults['vodrecord_username']
+    # Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
+    # Config.RECORDING_ACTIVATED = defaults['activate_vodrecord'].lower() == 'true'
 
     Config.LEAGUE_NAME = defaults['league_name']
 

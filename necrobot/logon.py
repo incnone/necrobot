@@ -13,14 +13,12 @@ import sys
 import types
 import warnings
 
-import aiohttp
 import discord
-import websockets
 
 from necrobot import config
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.stream.vodrecord import VodRecorder
-from necrobot.util import backoff, console
+# from necrobot.stream.vodrecord import VodRecorder
+from necrobot.util import console
 from necrobot.util.necrodancer import seedgen
 
 
@@ -110,58 +108,56 @@ def logon(
     seedgen.init_seed()
 
     # Run client---------------------------------------------
-    retry = backoff.ExponentialBackoff()
-
     try:
-        while True:
-            logger.info('Beginning main loop.')
-            # Create the discord.py Client object and the Necrobot----
-            client = discord.Client()
-            the_necrobot = Necrobot()
-            the_necrobot.clean_init()
-            the_necrobot.ready_client_events(client=client, load_config_fn=load_config_fn, on_ready_fn=on_ready_fn)
+        logger.info('Beginning main loop.')
+        # Create the discord.py Client object and the Necrobot----
+        client = discord.Client()
+        the_necrobot = Necrobot()
+        the_necrobot.clean_init()
+        the_necrobot.ready_client_events(client=client, load_config_fn=load_config_fn, on_ready_fn=on_ready_fn)
 
-            while not client.is_logged_in:
-                try:
-                    asyncio.get_event_loop().run_until_complete(client.login(config.Config.LOGIN_TOKEN))
-                except (discord.HTTPException, aiohttp.ClientError):
-                    logger.exception('Exception while logging in.')
-                    asyncio.get_event_loop().run_until_complete(asyncio.sleep(retry.delay()))
-                else:
-                    break
+        client.run(config.Config.LOGIN_TOKEN)
 
-            while client.is_logged_in:
-                if client.is_closed:
-                    # noinspection PyProtectedMember
-                    client._closed.clear()
-                    client.http.recreate()
-
-                try:
-                    logger.info('Connecting.')
-                    asyncio.get_event_loop().run_until_complete(client.connect())
-
-                except (discord.HTTPException,
-                        aiohttp.ClientError,
-                        discord.GatewayNotFound,
-                        discord.ConnectionClosed,
-                        websockets.InvalidHandshake,
-                        websockets.WebSocketProtocolError) as e:
-
-                    if isinstance(e, discord.ConnectionClosed) and e.code == 4004:
-                        raise  # Do not reconnect on authentication failure
-
-                    logger.exception('Exception while running.')
-
-                finally:
-                    for task in asyncio.Task.all_tasks(asyncio.get_event_loop()):
-                        task.cancel()
-
-                    asyncio.get_event_loop().run_until_complete(asyncio.sleep(retry.delay()))
-
-            if the_necrobot.quitting:
-                break
+        # while not client.is_logged_in:
+        #     try:
+        #         asyncio.get_event_loop().run_until_complete(client.login(config.Config.LOGIN_TOKEN))
+        #     except (discord.HTTPException, aiohttp.ClientError):
+        #         logger.exception('Exception while logging in.')
+        #         asyncio.get_event_loop().run_until_complete(asyncio.sleep(retry.delay()))
+        #     else:
+        #         break
+        #
+        # while client.is_logged_in:
+        #     if client.is_closed:
+        #         # noinspection PyProtectedMember
+        #         client._closed.clear()
+        #         client.http.recreate()
+        #
+        #     try:
+        #         logger.info('Connecting.')
+        #         asyncio.get_event_loop().run_until_complete(client.connect())
+        #
+        #     except (discord.HTTPException,
+        #             aiohttp.ClientError,
+        #             discord.GatewayNotFound,
+        #             discord.ConnectionClosed,
+        #             websockets.InvalidHandshake,
+        #             websockets.WebSocketProtocolError) as e:
+        #
+        #         if isinstance(e, discord.ConnectionClosed) and e.code == 4004:
+        #             raise  # Do not reconnect on authentication failure
+        #
+        #         logger.exception('Exception while running.')
+        #
+        #     finally:
+        #         for task in asyncio.Task.all_tasks(asyncio.get_event_loop()):
+        #             task.cancel()
+        #
+        #         asyncio.get_event_loop().run_until_complete(asyncio.sleep(retry.delay()))
+        #
+        # if the_necrobot.quitting:
+        #     break
 
     finally:
-        asyncio.get_event_loop().close()
-        VodRecorder().end_all_async_unsafe()
+        # VodRecorder().end_all_async_unsafe()
         config.Config.write()

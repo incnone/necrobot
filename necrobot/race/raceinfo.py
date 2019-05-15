@@ -162,7 +162,7 @@ def parse_from_dict(args_dict: dict, race_info: RaceInfo) -> RaceInfo:
                 raise necrobot.exception.ParseException("Couldn't parse {0} as a character.".format(params[0]))
             new_race_info.character = character_
         elif keyword == 'nodlc':
-                new_race_info.amplified = False
+            new_race_info.amplified = False
         elif keyword == 'dlc':
             new_race_info.amplified = True
         elif keyword == 'nopost':

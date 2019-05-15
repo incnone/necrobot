@@ -33,7 +33,7 @@ ROLES_COLORS = {
 
 async def color_user(member):
     protected_colors = []
-    for role in server.server.roles:
+    for role in server.guild.roles:
         if role.name in PROTECTED_ROLENAMES:
             protected_colors.append(role.colour)            
 
@@ -43,22 +43,21 @@ async def color_user(member):
             roles_to_remove.append(role)
             protected_colors.append(role.colour)
 
-    await server.client.remove_roles(member, *roles_to_remove)
+    await member.remove_roles(*roles_to_remove)
 
     new_colorname = get_random_colorname(protected_colors)
     role_to_use = None
-    for role in server.server.roles:
+    for role in server.guild.roles:
         if role.name == new_colorname:
             role_to_use = role
 
     if role_to_use is None:
-        role_to_use = await server.client.create_role(
-            server,
+        role_to_use = await server.guild.create_role(
             name=new_colorname,
             color=ROLES_COLORS[new_colorname],
             hoist=False)
 
-    await server.client.add_roles(member, role_to_use)
+    await member.add_roles(role_to_use)
 
 
 def get_random_colorname(protected_colors):
@@ -69,7 +68,7 @@ def get_random_colorname(protected_colors):
 
 class ColorMe(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'dankify')
+        CommandType.__init__(self, bot_channel, 'dankify', 'colorme')
 
     @property
     def show_in_help(self):
@@ -77,4 +76,4 @@ class ColorMe(CommandType):
 
     async def _do_execute(self, command):
         asyncio.ensure_future(color_user(command.author))
-        asyncio.ensure_future(self.client.delete_message(command.message))
+        asyncio.ensure_future(command.message.delete())

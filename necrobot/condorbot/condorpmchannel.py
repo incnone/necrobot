@@ -12,7 +12,7 @@ class CondorPMChannel(BotChannel):
         self.channel_commands = [
             cmd_admin.Die(self),
             cmd_admin.RaiseException(self),
-            cmd_admin.Reboot(self),
+            # cmd_admin.Reboot(self),
             cmd_admin.RedoInit(self),
 
             cmd_match.Vod(self),

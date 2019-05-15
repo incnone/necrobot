@@ -1,5 +1,7 @@
 """
-Module for managing the daily speedrun. Mostly unmaintained/deprecated.
+Deprecated 2019-05
+
+Module for managing the daily speedrun.
 
 Package Dependencies
 --------------------

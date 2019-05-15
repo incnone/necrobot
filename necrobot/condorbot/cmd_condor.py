@@ -13,12 +13,11 @@ class StaffAlert(CommandType):
         msg = 'Alert: `.staff` called by `{0}` in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention)
         await NEDispatch().publish('notify', message=msg)
 
-        if server.staff_role is not None:
-            await self.client.send_message(
-                cmd.channel,
+        if guild.staff_role is not None:
+            await cmd.channel.send(
                 '{0}: Alerting CoNDOR Staff: {1}.'.format(
                     cmd.author.mention,
-                    server.staff_role.mention
+                    guild.staff_role.mention
                 )
             )
 

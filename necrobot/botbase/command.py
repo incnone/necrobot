@@ -1,6 +1,6 @@
 import discord
 import shlex
-from typing import List
+from typing import List, Optional, Union
 
 from necrobot.config import Config
 
@@ -8,7 +8,7 @@ from necrobot.config import Config
 class Command(object):
     """Represents a full user command input (e.g. `.make -c Cadence -seed 12345 -custom 4-shrine`)"""
     def __init__(self, message: discord.Message):
-        self.command = None         # type: str
+        self.command = None         # type: Optional[str]
         self.args = []              # type: List[str]
         self._message = message     # type: discord.Message
         self._arg_string = ''       # type: str
@@ -31,16 +31,16 @@ class Command(object):
         return self._message.author
 
     @property
-    def server(self) -> discord.Server:
-        return self._message.server
+    def server(self) -> Optional[discord.Guild]:
+        return self._message.guild
 
     @property
-    def channel(self) -> discord.Channel:
+    def channel(self) -> discord.TextChannel:
         return self._message.channel
 
     @property
     def is_private(self) -> bool:
-        return self.channel.is_private
+        return isinstance(self.channel, discord.abc.PrivateChannel)
 
     @property
     def content(self) -> str:
@@ -63,10 +63,10 @@ class TestCommand(Command):
         Command.__init__(self, message=None)
 
         self.command = None
-        self.args = []
-        self._author = author
-        self._channel = channel
-        self._message_str = message_str
+        self.args = []                      # type: List[str]
+        self._author = author               # type: Union[discord.User, discord.Member]
+        self._channel = channel             # type: discord.TextChannel
+        self._message_str = message_str     # type: str
 
         if message_str.startswith(Config.BOT_COMMAND_PREFIX):
             try:
@@ -81,16 +81,16 @@ class TestCommand(Command):
         return self._author
 
     @property
-    def server(self) -> discord.Server:
-        return self._channel.server
+    def server(self) -> Optional[discord.Guild]:
+        return self._channel.guild
 
     @property
-    def channel(self) -> discord.Channel:
+    def channel(self) -> discord.TextChannel:
         return self._channel
 
     @property
     def is_private(self) -> bool:
-        return self._channel.is_private
+        return isinstance(self._channel, discord.abc.PrivateChannel)
 
     @property
     def content(self) -> str:

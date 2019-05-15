@@ -1,3 +1,4 @@
+from typing import Optional, List
 import necrobot.exception
 
 
@@ -6,13 +7,13 @@ class Keyword(object):
             self,
             keyword: str,
             num_args: int = 0,
-            param_for: str = None,
-            aliases: list = list()
+            param_for: Optional[str] = None,
+            aliases: Optional[List[str]] = None
     ):
         self.keyword = keyword.lower()
         self.num_args = num_args
         self.param_for = param_for
-        self.aliases = aliases
+        self.aliases = aliases if aliases is not None else []
 
     def __hash__(self):
         return hash(self.keyword)

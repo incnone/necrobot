@@ -29,7 +29,7 @@ def get_matchroom_name(match: Match) -> str:
     largest_postfix = 1
 
     found = False
-    for channel in server.server.channels:
+    for channel in guild.guild.channels:
         if channel.name.startswith(name_prefix):
             found = True
             try:
@@ -63,7 +63,7 @@ async def get_matches_with_channels(racer: NecroUser = None) -> list:
 
     for row in raw_data:
         channel_id = int(row[13])
-        channel = server.find_channel(channel_id=channel_id)
+        channel = guild.find_channel(channel_id=channel_id)
         if channel is not None:
             match = await matchutil.make_match_from_raw_db_data(row=row)
             matches.append(match)
@@ -89,7 +89,7 @@ async def delete_all_match_channels(
     for row in await matchdb.get_channeled_matches_raw_data():
         match_id = int(row[0])
         channel_id = int(row[13])
-        channel = server.find_channel(channel_id=channel_id)
+        channel = guild.find_channel(channel_id=channel_id)
         delete_this = True
         if channel is not None:
             match_room = Necrobot().get_bot_channel(channel)
@@ -101,11 +101,11 @@ async def delete_all_match_channels(
             if delete_this:
                 if log:
                     await writechannel.write_channel(
-                        client=server.client,
+                        client=guild.client,
                         channel=channel,
                         outfile_name='{0}-{1}'.format(match_id, channel.name)
                     )
-                await server.client.delete_channel(channel)
+                await guild.client.delete_channel(channel)
 
         if delete_this:
             await matchdb.register_match_channel(match_id, None)
@@ -136,7 +136,7 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
 
     # Check to see if we already have the match channel
     channel_id = match.channel_id
-    match_channel = server.find_channel(channel_id=channel_id) if channel_id is not None else None
+    match_channel = guild.find_channel(channel_id=channel_id) if channel_id is not None else None
 
     # If we couldn't find the channel or it didn't exist, make a new one
     if match_channel is None:
@@ -150,11 +150,11 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
 
         # Make a channel for the room
         # noinspection PyUnresolvedReferences
-        match_channel = await server.client.create_channel(
-            server.server,
+        match_channel = await guild.client.create_channel(
+            guild.guild,
             get_matchroom_name(match),
-            discord.ChannelPermissions(target=server.server.default_role, overwrite=deny_read),
-            discord.ChannelPermissions(target=server.server.me, overwrite=permit_read),
+            discord.ChannelPermissions(target=guild.guild.default_role, overwrite=deny_read),
+            discord.ChannelPermissions(target=guild.guild.me, overwrite=permit_read),
             *racer_permissions,
             type=discord.ChannelType.text
         )
@@ -168,14 +168,14 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
         if channel_categories is None:
             category_name = Config.MATCH_CHANNEL_CATEGORY_NAME
             if len(category_name) > 0:
-                channel_category = await server.create_channel_category(category_name)
+                channel_category = await guild.create_channel_category(category_name)
                 MatchGlobals().set_channel_categories([channel_category])
 
         if channel_categories is not None:
             success = False
             for channel_category in reversed(channel_categories):
                 try:
-                    await server.set_channel_category(channel=match_channel, category=channel_category)
+                    await guild.set_channel_category(channel=match_channel, category=channel_category)
                     success = True
                     break
                 except discord.HTTPException:
@@ -183,9 +183,9 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
 
             # Out of space, so register a new matches category
             if not success:
-                new_channel_category = await server.create_channel_category(name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+                new_channel_category = await guild.create_channel_category(name=Config.MATCH_CHANNEL_CATEGORY_NAME)
                 MatchGlobals().add_channel_category(channel=new_channel_category)
-                await server.set_channel_category(channel=match_channel, category=new_channel_category)
+                await guild.set_channel_category(channel=match_channel, category=new_channel_category)
 
     # Make the actual RaceRoom and initialize it
     match.set_channel_id(int(match_channel.id))
@@ -209,12 +209,12 @@ async def close_match_room(match: Match) -> None:
         return
 
     channel_id = match.channel_id
-    channel = server.find_channel(channel_id=channel_id)
+    channel = guild.find_channel(channel_id=channel_id)
     if channel is None:
         console.warning('Coudn\'t find channel with id {0} in close_match_room '
                         '(match_id={1}).'.format(channel_id, match.match_id))
         return
 
     await Necrobot().unregister_bot_channel(channel)
-    await server.client.delete_channel(channel)
+    await guild.client.delete_channel(channel)
     match.set_channel_id(None)

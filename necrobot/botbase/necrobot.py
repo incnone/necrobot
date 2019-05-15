@@ -1,6 +1,6 @@
 import discord
 import sys
-from typing import Dict, Callable, List
+from typing import Callable, List, Optional, Union
 
 from necrobot.test import msgqueue
 
@@ -16,54 +16,47 @@ from necrobot.util.singleton import Singleton
 
 class Necrobot(object, metaclass=Singleton):
     def __init__(self):
-        self._pm_bot_channel = None  # type: BotChannel
-        self._bot_channels = dict()  # type: Dict[discord.Channel, BotChannel]
+        self._pm_bot_channel = None  # .. type: BotChannel
+        self._bot_channels = dict()  # .. type: Dict[discord.TextChannel, BotChannel]
         self._managers = list()  # type: List[Manager]
 
         self._initted = False  # type: bool
-        self._quitting = False  # type: bool
-        self._load_config_fn = None  # type: Callable[[], None]
+        self._load_config_fn = None  # type: Optional[Callable[[], None]]
 
     @property
     def client(self) -> discord.Client:
         return server.client
 
     @property
-    def server(self) -> discord.Server:
-        return server.server
+    def server(self) -> discord.Guild:
+        return server.guild
 
     @property
     def all_channels(self):  # -> ValuesView[BotChannel]:
         """Get a list of all BotChannels"""
         return self._bot_channels.values()
 
-    @property
-    def quitting(self) -> bool:
-        """True if the bot wants to quit (i.e. if logout() has been called)"""
-        return self._quitting
-
     def clean_init(self) -> None:
         self._pm_bot_channel = None
         self._bot_channels.clear()
         self._managers.clear()
         self._initted = False
-        self._quitting = False
         self._load_config_fn = None
 
-    def get_bot_channel(self, discord_channel: discord.Channel):  # -> BotChannel:
+    def get_bot_channel(self, discord_channel: Union[discord.TextChannel, discord.DMChannel]):  # -> BotChannel:
         """Returns the BotChannel corresponding to the given discord.Channel, if one exists"""
-        if discord_channel.is_private:
+        if isinstance(discord_channel, discord.DMChannel):
             return self._pm_bot_channel
         else:
             return self._bot_channels[discord_channel]
 
-    def register_bot_channel(self, discord_channel: discord.Channel, bot_channel) -> None:
+    def register_bot_channel(self, discord_channel: discord.TextChannel, bot_channel) -> None:
         """Register a BotChannel"""
         self._bot_channels[discord_channel] = bot_channel
         for mgr in self._managers:
             mgr.on_botchannel_create(discord_channel, bot_channel)
 
-    def unregister_bot_channel(self, discord_channel: discord.Channel) -> None:
+    def unregister_bot_channel(self, discord_channel: discord.TextChannel) -> None:
         """Unegister a BotChannel"""
         del self._bot_channels[discord_channel]
 
@@ -86,24 +79,16 @@ class Necrobot(object, metaclass=Singleton):
         self._load_config_fn = load_config_fn
 
         # Find the correct server
-        try:
-            int(server_id)
-            id_is_int = True
-        except ValueError:
-            id_is_int = False
+        the_guild = None  # type: Optional[discord.Guild]
+        for s in client.guilds:
+            if s.id == server_id:
+                the_guild = s
 
-        the_server = None  # type: discord.Server
-        for s in client.servers:
-            if id_is_int and s.id == server_id:
-                the_server = s
-            elif s.name == server_id:
-                the_server = s
-
-        if the_server is None:
-            console.warning('Could not find the server.')
+        if the_guild is None:
+            console.warning('Could not find guild with ID {guild_id}.'.format(guild_id=server_id))
             exit(1)
 
-        server.init(client, the_server)
+        server.init(client, the_guild)
 
         if not self._initted:
             await self._load_config_fn(self)
@@ -118,7 +103,7 @@ class Necrobot(object, metaclass=Singleton):
             '-Logged in---------------\n'
             '   User name: {0}\n'
             ' Server name: {1}\n'
-            '-------------------------'.format(the_server.me.display_name, the_server.name)
+            '-------------------------'.format(the_guild.me.display_name, the_guild.name)
         )
 
     async def redo_init(self) -> None:
@@ -145,16 +130,14 @@ class Necrobot(object, metaclass=Singleton):
 
     async def logout(self) -> None:
         """Log out of discord"""
-        self._quitting = True
         await self.cleanup()
         await self.client.logout()
 
-    async def reboot(self) -> None:
-        """Log out of discord without cleaning up or setting self._quitting flag"""
-        await self.cleanup()
-        await self.client.logout()
+    # async def reboot(self) -> None:
+    #     await self.cleanup()
+    #     await self.client.logout()
 
-    async def force_command(self, channel: discord.Channel, author: discord.Member, message_str: str) -> None:
+    async def force_command(self, channel: discord.TextChannel, author: discord.Member, message_str: str) -> None:
         """Causes the bot to act as if the given author had posted the given message in the given channel, and
         reacts to it as if it were a command.
         

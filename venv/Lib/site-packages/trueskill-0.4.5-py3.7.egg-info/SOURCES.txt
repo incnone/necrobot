@@ -1,0 +1,17 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.cfg
+setup.py
+trueskilltest.py
+trueskill/__about__.py
+trueskill/__init__.py
+trueskill/backends.py
+trueskill/deprecated.py
+trueskill/factorgraph.py
+trueskill/mathematics.py
+trueskill.egg-info/PKG-INFO
+trueskill.egg-info/SOURCES.txt
+trueskill.egg-info/dependency_links.txt
+trueskill.egg-info/requires.txt
+trueskill.egg-info/top_level.txt

@@ -3,7 +3,7 @@ import discord
 import pytz
 import re
 import unittest
-from typing import Callable
+from typing import Callable, Optional
 
 from necrobot.util import console, server, strutil
 from necrobot.user.userprefs import UserPrefs
@@ -19,17 +19,17 @@ class NecroUser(object):
         commit_fn: function(NecroUser) -> None
             This should write the NecroUser to the database.
         """
-        self._user_id = None            # type: int
-        self._discord_id = None         # type: int
-        self._discord_name = None       # type: str
-        self._discord_member = None     # type: discord.Member
-        self._twitch_name = None        # type: str
-        self._rtmp_name = None          # type: str
-        self._timezone = None           # type: pytz.timezone
-        self._user_info = None          # type: str
+        self._user_id = None            # type: Optional[int]
+        self._discord_id = None         # type: Optional[int]
+        self._discord_name = None       # type: Optional[str]
+        self._discord_member = None     # type: Optional[discord.Member]
+        self._twitch_name = None        # type: Optional[str]
+        self._rtmp_name = None          # type: Optional[str]
+        self._timezone = None           # type: Optional[pytz.timezone]
+        self._user_info = None          # type: Optional[str]
         self._user_prefs = UserPrefs(daily_alert=False, race_alert=False)   # type: UserPrefs
 
-        self._commit = commit_fn        # type: Callable[None, None]
+        self._commit = commit_fn        # type: Callable[[], None]
 
     def __eq__(self, other):
         return self.user_id == other.user_id

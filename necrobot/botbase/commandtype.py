@@ -65,16 +65,16 @@ class CommandType(object):
         """
         return name in self.command_name_list
 
-    async def execute(self, command: Command) -> None:
+    async def execute(self, cmd: Command) -> None:
         """If the Command's command is this object's command, calls the (virtual) method _do_execute on it
-        
+
         Parameters
         ----------
-        command: Command
+        cmd: Command
             The command to maybe execute.
         """
-        if command.command in self.command_name_list \
-                and ((not self.admin_only) or self.bot_channel.is_admin(command.author)) \
+        if cmd.command in self.command_name_list \
+                and ((not self.admin_only) or self.bot_channel.is_admin(cmd.author)) \
                 and (not self.testing_command or Config.testing()):
             async with self.execution_id_lock:
                 self.execution_id += 1
@@ -84,14 +84,14 @@ class CommandType(object):
                 'Call {0}: <ID={1}> <Caller={2}> <Channel={3}> <Message={4}>'.format(
                     type(self).__name__,
                     this_id,
-                    command.author.name,
-                    command.channel.name,
-                    command.content
+                    cmd.author.name,
+                    cmd.channel.name,
+                    cmd.content
                 )
             )
 
             try:
-                await self._do_execute(command)
+                await self._do_execute(cmd)
                 console.info('Exit {0}: <ID={1}>'.format(type(self).__name__, this_id))
             except Exception as e:
                 console.warning(
@@ -101,8 +101,7 @@ class CommandType(object):
                         error_msg=repr(e)
                     )
                 )
-                asyncio.ensure_future(self.client.send_message(
-                    command.channel,
+                asyncio.ensure_future(cmd.channel.send(
                     "Unexpected error while executing command `{mention}`.".format(mention=self.mention)
                 ))
                 raise

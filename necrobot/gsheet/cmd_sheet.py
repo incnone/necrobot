@@ -29,12 +29,9 @@ class GetGSheet(CommandType):
         return 'Current GSheet info.'
 
     async def _do_execute(self, cmd: Command):
-        await self.client.send_typing(cmd.channel)
-
         gsheet_id = LeagueMgr().league.gsheet_id
         if gsheet_id is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: GSheet for this league is not yet set. Use `.setgsheet`.'
             )
             return
@@ -42,21 +39,18 @@ class GetGSheet(CommandType):
         try:
             perm_info = await sheetutil.has_read_write_permissions(LeagueMgr().league.gsheet_id)
         except googleapiclient.errors.Error as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: {0}'.format(e)
             )
             return
 
         if not perm_info[0]:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Cannot access GSheet: {0}'.format(perm_info[1])
             )
             return
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'The GSheet for `{league_name}` is "{sheet_name}". <{sheet_url}>'.format(
                     league_name=LeagueMgr().league.schema_name,
                     sheet_name=perm_info[1],
@@ -79,83 +73,77 @@ class MakeFromSheet(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
 
         wks_name = cmd.args[0]
-        status_message = await self.client.send_message(
-            cmd.channel,
+        status_message = await cmd.channel.send(
             'Creating matches from worksheet `{0}`... (Getting GSheet info)'.format(wks_name)
         )
-        await self.client.send_typing(cmd.channel)
 
-        match_info = LeagueMgr().league.match_info
+        async with cmd.channel.typing():
+            match_info = LeagueMgr().league.match_info
 
-        console.info('MakeFromSheet: Getting GSheet info...')
-        try:
-            matchup_sheet = await sheetlib.get_sheet(
-                    gsheet_id=LeagueMgr().league.gsheet_id,
-                    wks_name=wks_name,
-                    sheet_type=sheetlib.SheetType.MATCHUP
-                )  # type: MatchupSheet
-            matches = await matchup_sheet.get_matches(register=True, match_info=match_info)
-        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await self.client.send_message(
-                cmd.channel,
-                'Error while making matchups: `{0}`'.format(e)
+            console.info('MakeFromSheet: Getting GSheet info...')
+            try:
+                matchup_sheet = await sheetlib.get_sheet(
+                        gsheet_id=LeagueMgr().league.gsheet_id,
+                        wks_name=wks_name,
+                        sheet_type=sheetlib.SheetType.MATCHUP
+                    )  # type: MatchupSheet
+                matches = await matchup_sheet.get_matches(register=True, match_info=match_info)
+            except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+                await cmd.channel.send(
+                    'Error while making matchups: `{0}`'.format(e)
+                )
+                return
+
+            console.info('MakeFromSheet: Creating Match objects...')
+            await status_message.edit(
+                'Creating matches from worksheet `{0}`... (Creating match list)'.format(wks_name)
             )
-            return
+            not_found_matches = matchup_sheet.uncreated_matches()
+            matches_with_channels = await matchchannelutil.get_matches_with_channels()
 
-        console.info('MakeFromSheet: Creating Match objects...')
-        await self.client.edit_message(
-            status_message,
-            'Creating matches from worksheet `{0}`... (Creating match list)'.format(wks_name)
-        )
-        not_found_matches = matchup_sheet.uncreated_matches()
-        matches_with_channels = await matchchannelutil.get_matches_with_channels()
+            console.info('MakeFromSheet: Removing duplicate matches...')
+            # Remove matches from the list that already have channels
+            unchanneled_matches = []
+            for match in matches:
+                found = False
+                for channeled_match in matches_with_channels:
+                    if match.match_id == channeled_match.match_id:
+                        found = True
+                if not found:
+                    unchanneled_matches.append(match)
 
-        console.info('MakeFromSheet: Removing duplicate matches...')
-        # Remove matches from the list that already have channels
-        unchanneled_matches = []
-        for match in matches:
-            found = False
-            for channeled_match in matches_with_channels:
-                if match.match_id == channeled_match.match_id:
-                    found = True
-            if not found:
-                unchanneled_matches.append(match)
+            console.info('MakeFromSheet: Sorting matches...')
+            # Sort the remaining matches
+            unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
 
-        console.info('MakeFromSheet: Sorting matches...')
-        # Sort the remaining matches
-        unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
+            await status_message.edit(
+                'Creating matches from worksheet `{0}`... (Creating race rooms)'.format(wks_name)
+            )
+            console.debug('MakeFromSheet: Matches to make: {0}'.format(unchanneled_matches))
+            console.info('MakeFromSheet: Creating match channels...')
+            for match in unchanneled_matches:
+                console.info('MakeFromSheet: Creating {0}...'.format(match.matchroom_name))
+                new_room = await matchchannelutil.make_match_room(match=match, register=False)
+                await new_room.send_channel_start_text()
 
-        await self.client.edit_message(
-            status_message,
-            'Creating matches from worksheet `{0}`... (Creating race rooms)'.format(wks_name)
-        )
-        console.debug('MakeFromSheet: Matches to make: {0}'.format(unchanneled_matches))
-        console.info('MakeFromSheet: Creating match channels...')
-        for match in unchanneled_matches:
-            console.info('MakeFromSheet: Creating {0}...'.format(match.matchroom_name))
-            new_room = await matchchannelutil.make_match_room(match=match, register=False)
-            await new_room.send_channel_start_text()
+            uncreated_str = ''
+            for match_str in not_found_matches:
+                uncreated_str += match_str + ', '
+            if uncreated_str:
+                uncreated_str = uncreated_str[:-2]
 
-        uncreated_str = ''
-        for match_str in not_found_matches:
-            uncreated_str += match_str + ', '
-        if uncreated_str:
-            uncreated_str = uncreated_str[:-2]
+            if uncreated_str:
+                report_str = 'The following matches were not made: {0}'.format(uncreated_str)
+            else:
+                report_str = 'All matches created successfully.'
 
-        if uncreated_str:
-            report_str = 'The following matches were not made: {0}'.format(uncreated_str)
-        else:
-            report_str = 'All matches created successfully.'
-
-        await self.client.edit_message(
-            status_message,
+        await status_message.edit(
             'Creating matches from worksheet `{0}`... done. {1}'.format(wks_name, report_str)
         )
 
@@ -170,16 +158,14 @@ class PushMatchToSheet(CommandType):
         match = self.bot_channel.match      # type: Match
         wks_id = match.sheet_id
         if wks_id is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: No worksheet is assigned to this match (contact incnone).'
             )
             return
 
         match_row = match.sheet_row
         if match_row is None:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error: This match doesn\'t have a designated sheet row (contact incnone).'
             )
             return
@@ -196,8 +182,7 @@ class PushMatchToSheet(CommandType):
                     sheet_type=sheetlib.SheetType.STANDINGS
                 )  # type: StandingsSheet
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error accessing GSheet: `{0}`'.format(e)
             )
             return
@@ -237,8 +222,7 @@ class PushMatchToSheet(CommandType):
                 r2_wins=match_race_data.r2_wins
             )
 
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Sheet updated.'
         )
 
@@ -260,8 +244,7 @@ class SetGSheet(CommandType):
 
     async def _do_execute(self, cmd: Command):
         if len(cmd.args) != 1:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
@@ -270,16 +253,14 @@ class SetGSheet(CommandType):
         perm_info = await sheetutil.has_read_write_permissions(sheet_id)
 
         if not perm_info[0]:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Cannot access GSheet: {0}'.format(perm_info[1])
             )
             return
 
         LeagueMgr().league.gsheet_id = sheet_id
         LeagueMgr().league.commit()
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Set default GSheet to "{0}". <{1}>'.format(
                 perm_info[1],
                 'https://docs.google.com/spreadsheets/d/{0}'.format(sheet_id)
@@ -303,14 +284,13 @@ class OverwriteGSheet(CommandType):
                     sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 'Error accessing GSheet: `{0}`'.format(e)
             )
             return
 
         if matchup_sheet is None:
-            await self.client.send_message(cmd.channel, 'Error: MatchupSheet is None.')
+            await cmd.channel.send('Error: MatchupSheet is None.')
             return
 
         await matchup_sheet.overwrite_gsheet()

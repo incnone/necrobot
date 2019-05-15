@@ -13,10 +13,10 @@ Dependency Tree
           race
            |  \_______
            |          \
-          match      daily
-           |          |
-           |          |
-          league     racebot
+          match      racebot
+           |
+           |
+          league
            |
            |
           ladder

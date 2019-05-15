@@ -14,7 +14,7 @@ from necrobot.league import leaguestats
 from necrobot.match import matchutil
 from necrobot.match.match import Match
 from necrobot.match.matchroom import MatchRoom
-from necrobot.stream.vodrecord import VodRecorder
+# from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util import server, strutil, rtmputil
 from necrobot.util.singleton import Singleton
 
@@ -29,17 +29,17 @@ class CondorMgr(Manager, metaclass=Singleton):
         NEDispatch().subscribe(self)
 
     async def initialize(self):
-        self._main_channel = server.main_channel
-        self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
-        self._schedule_channel = server.find_channel(channel_name='schedule')
-        self._client = server.client
+        self._main_channel = guild.main_channel
+        self._notifications_channel = guild.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
+        self._schedule_channel = guild.find_channel(channel_name='schedule')
+        self._client = guild.client
 
         await self.update_schedule_channel()
 
     async def refresh(self):
-        self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
-        self._schedule_channel = server.find_channel(channel_name='schedule')
-        self._client = server.client
+        self._notifications_channel = guild.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
+        self._schedule_channel = guild.find_channel(channel_name='schedule')
+        self._client = guild.client
         await self.update_schedule_channel()
 
     async def close(self):
@@ -52,13 +52,13 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':
-            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_1.rtmp_name))
-            asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_2.rtmp_name))
+            pass
+            # asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_1.rtmp_name))
+            # asyncio.ensure_future(VodRecorder().start_record(ev.match.racer_2.rtmp_name))
 
         elif ev.event_type == 'end_match':
             async def send_mainchannel_message():
-                await server.client.send_message(
-                    self._main_channel,
+                await self._main_channel.send(
                     'Match complete: **{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
                         r1=ev.match.racer_1.display_name,
                         r2=ev.match.racer_2.display_name,
@@ -71,8 +71,9 @@ class CondorMgr(Manager, metaclass=Singleton):
             asyncio.ensure_future(send_mainchannel_message())
 
         elif ev.event_type == 'end_match_race':
-            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_1.rtmp_name))
-            asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_2.rtmp_name))
+            pass
+            # asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_1.rtmp_name))
+            # asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_2.rtmp_name))
 
         elif ev.event_type == 'match_alert':
             if ev.final:
@@ -82,7 +83,7 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'notify':
             if self._notifications_channel is not None:
-                await self._client.send_message(self._notifications_channel, ev.message)
+                await self._notifications_channel.send(ev.message)
 
         elif ev.event_type == 'create_match':
             pass
@@ -104,8 +105,7 @@ class CondorMgr(Manager, metaclass=Singleton):
             #     sheet = await self._get_gsheet(wks_id=ev.match.sheet_id)
             #     await sheet.set_vod(match=ev.match, vod_link=ev.url)
             cawmentator = await ev.match.get_cawmentator()
-            await server.client.send_message(
-                self._main_channel,
+            await self._main_channel.send(
                 '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
                     cawmentator=cawmentator.display_name if cawmentator is not None else '<unknown>',
                     r1=ev.match.racer_1.display_name,
@@ -163,7 +163,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         alert_text += '```' + strutil.tickless(racer_1_infotext) + '\n```'
         alert_text += '```' + strutil.tickless(racer_2_infotext) + '\n```'
 
-        await self._client.send_message(cawmentator.member, alert_text)
+        await cawmentator.member.send(alert_text)
 
     async def match_alert(self, match: Match) -> None:
         """Post an alert that the match is about to begin in the main channel
@@ -182,10 +182,8 @@ class CondorMgr(Manager, metaclass=Singleton):
             stream = 'Cawmentary: <http://www.twitch.tv/{0}>'.format(cawmentator.twitch_name)
         else:
             stream = 'Kadgar: {}'.format(rtmputil.kadgar_link(match.racer_1.twitch_name, match.racer_2.twitch_name))
-            # stream = 'RTMP: {}'.format(rtmputil.rtmp_link(match.racer_1.rtmp_name, match.racer_2.rtmp_name))
 
-        await self._client.send_message(
-            self._main_channel,
+        await self._main_channel.send(
             alert_format_str.format(
                 racer_1=match.racer_1.display_name,
                 racer_2=match.racer_2.display_name,
@@ -199,21 +197,15 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         # Find the message:
         the_msg = None
-        async for msg in server.client.logs_from(self._schedule_channel):
+        async for msg in self._schedule_channel.history():
             if msg.author.id == server.client.user.id:
                 the_msg = msg
                 break
 
         if the_msg is None:
-            await server.client.send_message(
-                self._schedule_channel,
-                infotext
-            )
+            await self._schedule_channel.send(infotext)
         else:
-            await server.client.edit_message(
-                message=the_msg,
-                new_content=infotext
-            )
+            await the_msg.edit(infotext)
 
 
 class TestCondorMgr(unittest.TestCase):

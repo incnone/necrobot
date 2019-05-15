@@ -49,14 +49,14 @@ class Daily(object):
     def __init__(self, daily_type: DailyType):
         self._daily_type = daily_type
         self._daily_update_future = asyncio.ensure_future(self._daily_update())
-        self._leaderboard_channel = server.find_channel(channel_name=Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
+        self._leaderboard_channel = guild.find_channel(channel_name=Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
 
     def close(self):
         self._daily_update_future.cancel()
 
     @property
     def client(self) -> discord.Client:
-        return server.client
+        return guild.client
 
     @property
     def daily_type(self) -> DailyType:
@@ -328,18 +328,18 @@ class Daily(object):
         # If no message, make one
         if not msg_id:
             text = await self.leaderboard_text(daily_number, display_seed)
-            msg = await self.client.send_message(self._leaderboard_channel, text)
+            msg = await self._leaderboard_channel.send(text)
             await self.register_message(daily_number, msg.id)
         else:
-            async for msg in self.client.logs_from(self._leaderboard_channel, limit=10):
+            async for msg in self._leaderboard_channel.history(limit=10):
                 if int(msg.id) == msg_id:
-                    await self.client.edit_message(msg, await self.leaderboard_text(daily_number, display_seed))
+                    await msg.edit(await self.leaderboard_text(daily_number, display_seed))
 
     async def on_new_daily(self) -> None:
         """Run when a new daily happens"""
         # Make the leaderboard message
         text = await self.leaderboard_text(self.today_number, display_seed=False)
-        msg = await self.client.send_message(self._leaderboard_channel, text)
+        msg = await self._leaderboard_channel.send(text)
         await self.register_message(self.today_number, msg.id)
 
         # Update yesterday's leaderboard with the seed
@@ -351,8 +351,7 @@ class Daily(object):
             member = server.find_member(discord_id=member_id)
             if member is not None:
                 await self.register(self.today_number, member.id)
-                await self.client.send_message(
-                    member,
+                await member.send(
                     "({0}) Today's {2} speedrun seed: {1}".format(
                         self.today_date.strftime("%d %b"),
                         await self.get_seed(self.today_number),

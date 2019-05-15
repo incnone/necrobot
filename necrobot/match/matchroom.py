@@ -2,7 +2,7 @@
 
 import asyncio
 import datetime
-import typing
+from typing import Optional
 
 import discord
 import pytz
@@ -28,7 +28,7 @@ from necrobot.race import racedb
 
 
 class MatchRoom(BotChannel):
-    def __init__(self, match_discord_channel: discord.Channel, match: Match):
+    def __init__(self, match_discord_channel: discord.TextChannel, match: Match):
         """BotChannel where a match is taking place.
         
         Parameters
@@ -39,20 +39,20 @@ class MatchRoom(BotChannel):
             The Match object for the match.
         """
         BotChannel.__init__(self)
-        self._channel = match_discord_channel   # type: discord.Channel
+        self._channel = match_discord_channel   # type: discord.TextChannel
         self._match = match                     # type: Match
 
-        self._current_race = None               # type: Race
-        self._last_begun_race = None            # type: Race
+        self._current_race = None               # type: Optional[Race]
+        self._last_begun_race = None            # type: Optional[Race]
 
-        self._countdown_to_match_future = None  # type: asyncio.Future
+        self._countdown_to_match_future = None  # type: Optional[asyncio.Future]
 
-        self._current_race_number = None        # type: typing.Optional[int]
+        self._current_race_number = None        # type: Optional[int]
 
-        self._last_begun_race_number = None     # type: typing.Optional[int]
+        self._last_begun_race_number = None     # type: Optional[int]
         self._current_race_contested = False    # type: bool
 
-        self._match_race_data = None            # type: typing.Optional[MatchRaceData]
+        self._match_race_data = None            # type: Optional[MatchRaceData]
 
         self._prematch_channel_commands = [
             cmd_match.Confirm(self),
@@ -127,7 +127,7 @@ class MatchRoom(BotChannel):
 
 # Properties
     @property
-    def channel(self) -> discord.Channel:
+    def channel(self) -> discord.TextChannel:
         return self._channel
 
     @property
@@ -135,12 +135,12 @@ class MatchRoom(BotChannel):
         return self._match
 
     @property
-    def current_race(self) -> typing.Optional[Race]:
+    def current_race(self) -> Optional[Race]:
         """The "main" Race; the one that most commands should apply to. Not None if self.before_races is False."""
         return self._current_race
 
     @property
-    def last_begun_race(self) -> typing.Optional[Race]:
+    def last_begun_race(self) -> Optional[Race]:
         """The last race to begin (sent a RaceEvent.RACE_BEGIN to this room). Useful for allowing commands to apply
         to a finished race during the ready-up phase of the subsequent race.
         """
@@ -242,7 +242,7 @@ class MatchRoom(BotChannel):
         # noinspection PyUnresolvedReferences
         msg += '\N{BULLET} This match is a {0}.'.format(self.match.format_str)
 
-        await self.client.send_message(self.channel, msg)
+        await self.channel.send(msg)
 
     async def update(self) -> None:
         if self.match.is_scheduled and self.current_race is None:
@@ -306,8 +306,6 @@ class MatchRoom(BotChannel):
             # Write end-of-race message
             end_race_msg = 'The race has ended.'
             if auto_contest:
-                if server.staff_role is not None:
-                    end_race_msg += ' {0}:'.format(server.staff_role.mention)
                 end_race_msg += ' This match has been automatically marked as contested because the finish times ' \
                                 'were close.'
             await self.write(end_race_msg)
@@ -324,7 +322,7 @@ class MatchRoom(BotChannel):
 
     async def write(self, text: str) -> None:
         """Write text to the channel"""
-        await self.client.send_message(self.channel, text)
+        await self.channel.send(text)
 
     async def alert_racers(self) -> None:
         """Post an alert pinging both racers in the match"""

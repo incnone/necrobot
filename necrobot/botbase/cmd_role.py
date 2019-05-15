@@ -8,7 +8,7 @@ class AddCRoWRole(CommandType):
         self.help_text = "Use `{cmd} crow` to give yourself the CRoW role.".format(cmd=self.mention)
 
     async def _do_execute(self, cmd):
-        await _modify_roles(self, cmd, add=True)
+        await _modify_roles(cmd, add=True)
 
 
 class RemoveCRoWRole(CommandType):
@@ -17,17 +17,16 @@ class RemoveCRoWRole(CommandType):
         self.help_text = "Use `{cmd} crow` to remove the CRoW role from yourself.".format(cmd=self.mention)
 
     async def _do_execute(self, cmd):
-        await _modify_roles(self, cmd, add=False)
+        await _modify_roles(cmd, add=False)
 
 
-async def _modify_roles(cmdtype: CommandType, cmd, add: bool):
+async def _modify_roles(cmd, add: bool):
     role_map = {
         'crow': 'CRoW Racers',
     }
 
     if len(cmd.args) == 0:
-        await cmdtype.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Error: Use `{c} crow` for the CRoW role. (No other roles currently function with this command.)'
         )
         return
@@ -39,19 +38,19 @@ async def _modify_roles(cmdtype: CommandType, cmd, add: bool):
             failed_roles.append(rolename)
         else:
             role_full_name = role_map[rolename]
-            for role in server.server.roles:
+            for role in server.guild.roles:
                 if role.name.lower() == role_full_name.lower():
                     roles_to_add.append(role)
 
     if not roles_to_add:
-        await cmdtype.client.send_message('Error: Could not find any of the specified roles.')
+        await cmd.channel.send('Error: Could not find any of the specified roles.')
         return
 
     if add:
-        await cmdtype.client.add_roles(cmd.author, *roles_to_add)
+        await cmd.author.add_roles(*roles_to_add)
         confirm_msg = 'Roles added: '
     else:
-        await cmdtype.client.remove_roles(cmd.author, *roles_to_add)
+        await cmd.author.remove_roles(*roles_to_add)
         confirm_msg = 'Roles removed: '
 
     for role in roles_to_add:
@@ -64,4 +63,4 @@ async def _modify_roles(cmdtype: CommandType, cmd, add: bool):
             confirm_msg += '`{rolename}`, '.format(rolename=failed_role)
         confirm_msg = confirm_msg[:-2] + '.'
 
-    await cmdtype.client.send_message(cmd.channel, confirm_msg)
+    await cmd.channel.send(confirm_msg)
