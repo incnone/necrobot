@@ -1,5 +1,4 @@
 from necrobot.botbase import cmd_admin
-from necrobot.ladder import cmd_ladder
 from necrobot.league import cmd_league
 from necrobot.league import cmd_leaguestats
 from necrobot.match import cmd_match
@@ -15,7 +14,6 @@ class CondorMainChannel(BotChannel):
         if ladder:
             self.channel_commands = [
                 cmd_admin.Die(self),
-                # cmd_admin.Reboot(self),
                 cmd_admin.RedoInit(self),
 
                 cmd_league.MakeMatch(self),
@@ -36,7 +34,6 @@ class CondorMainChannel(BotChannel):
         else:
             self.channel_commands = [
                 cmd_admin.Die(self),
-                # cmd_admin.Reboot(self),
                 cmd_admin.RedoInit(self),
 
                 cmd_league.NextRace(self),

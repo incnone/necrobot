@@ -110,5 +110,5 @@ class PrivateRaceRoom(RaceRoom):
             for racer in self.current_race.racers:
                 outfile_name += '{0}-'.format(racer.member.display_name)
             outfile_name += str(self.channel.id)
-            await writechannel.write_channel(self.client, self.channel, outfile_name)
+            await writechannel.write_channel(self.channel, outfile_name)
         await RaceRoom.close(self)

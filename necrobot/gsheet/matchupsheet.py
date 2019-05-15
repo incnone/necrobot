@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import shlex
 import unittest
-from typing import List
 
 import pytz
 

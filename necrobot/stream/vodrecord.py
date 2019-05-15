@@ -1,3 +1,4 @@
+""" deprecated 2019-05
 import asyncio
 import certifi
 import datetime
@@ -162,3 +163,4 @@ class VodRecorder(object, metaclass=Singleton):
     def _set_def_curl_opts(curl):
         curl.setopt(pycurl.CONNECTTIMEOUT, 8)
         curl.setopt(pycurl.CAINFO, certifi.where())
+"""

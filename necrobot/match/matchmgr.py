@@ -1,5 +1,3 @@
-import discord
-
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
 from necrobot.botbase.necrobot import Necrobot
@@ -17,7 +15,7 @@ class MatchMgr(Manager, metaclass=Singleton):
 
     async def initialize(self):
         await self._recover_stored_match_rooms()
-        category_channels = guild.find_all_channels(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
+        category_channels = server.find_all_categories(channel_name=Config.MATCH_CHANNEL_CATEGORY_NAME)
         MatchGlobals().set_channel_categories(category_channels)
 
     async def refresh(self):
@@ -35,13 +33,11 @@ class MatchMgr(Manager, metaclass=Singleton):
             for row in await matchdb.get_channeled_matches_raw_data():
                 if int(row[2]) == ev.user.user_id or int(row[3]) == ev.user.user_id:
                     channel_id = int(row[13])
-                    channel = guild.find_channel(channel_id=channel_id)
+                    channel = server.find_channel(channel_id=channel_id)
                     if channel is not None:
-                        read_perms = discord.PermissionOverwrite(read_messages=True)
-                        await guild.client.edit_channel_permissions(
-                            channel=channel,
+                        await channel.set_permissions(
                             target=ev.user.member,
-                            overwrite=read_perms
+                            read_messages=True
                         )
 
     @staticmethod
@@ -54,7 +50,7 @@ class MatchMgr(Manager, metaclass=Singleton):
         console.info('Recovering stored match rooms------------')
         for row in await matchdb.get_channeled_matches_raw_data():
             channel_id = int(row[13])
-            channel = guild.find_channel(channel_id=channel_id)
+            channel = server.find_channel(channel_id=channel_id)
             if channel is not None:
                 match = await matchutil.make_match_from_raw_db_data(row=row)
                 new_room = MatchRoom(match_discord_channel=channel, match=match)

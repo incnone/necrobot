@@ -1,13 +1,14 @@
 import codecs
 import os
+import discord
 
 from necrobot.config import Config
 
 
-async def write_channel(client, channel, outfile_name):
+async def write_channel(channel: discord.TextChannel, outfile_name: str):
     try:
         messages = []
-        async for message in client.logs_from(channel, 5000):
+        async for message in channel.history(limit=5000):
             messages.insert(0, message)
 
         outfile_name = outfile_name.encode('utf-8').decode('ascii', 'replace')

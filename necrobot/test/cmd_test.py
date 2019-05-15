@@ -7,7 +7,6 @@ from necrobot.util import server
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
-from necrobot.match import matchdb
 from necrobot.test import msgqueue
 from necrobot.config import Config
 

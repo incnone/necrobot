@@ -1,6 +1,5 @@
 import datetime
 import os
-import asyncio
 import pytz
 
 import necrobot.exception
@@ -49,12 +48,10 @@ class CloseAllMatches(CommandType):
         status_message = await cmd.channel.send(
             'Closing all match channels...'
         )
-        await self.client.send_typing(cmd.channel)
+        async with cmd.channel.typing():
+            await matchchannelutil.delete_all_match_channels(log=log)
 
-        await matchchannelutil.delete_all_match_channels(log=log)
-
-        await self.client.edit_message(
-            status_message,
+        await status_message.edit(
             'Closing all match channels... done.'
         )
 
@@ -230,7 +227,6 @@ class ForceMakeMatch(CommandType):
 
         new_match = await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
-            cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],
             match_info=league.match_info
         )
@@ -265,7 +261,6 @@ class MakeMatch(CommandType):
         try:
             new_match = await cmd_matchmake.make_match_from_cmd(
                 cmd=cmd,
-                cmd_type=self,
                 racer_names=[cmd.author.display_name, cmd.args[0]],
                 match_info=league.match_info,
                 allow_duplicates=False

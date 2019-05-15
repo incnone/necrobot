@@ -1,3 +1,4 @@
+httplib2 >= 0.12.3
 python_version >= '3.7'
 pytz >= 2019.1
 aiohttp >= 3.5.4
@@ -7,4 +8,4 @@ certifi >= 2019.3.9
 google-api-python-client >= 1.7.8
 python-dateutil >= 2.8.0
 mysql-connector >= 2.2.9
-trueskill
+trueskill >= 0.4.5

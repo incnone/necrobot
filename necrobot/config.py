@@ -144,6 +144,7 @@ class Config(object):
     LADDER_MAIN_CHANNEL_NAME = 'ladder_main'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
     NOTIFICATIONS_CHANNEL_NAME = 'bot_notifications'
+    SCHEDULE_CHANNEL_NAME = 'schedule'
 
     # Database --------------------------------------------------------------------------------
     MYSQL_DB_HOST = 'localhost'

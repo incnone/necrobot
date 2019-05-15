@@ -13,6 +13,7 @@ class DailyType(Enum):
         elif self == DailyType.ROTATING:
             return 'rotating-character'
 
+
 rotating_daily_chars = [
     'Eli',
     'Diamond',

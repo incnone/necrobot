@@ -49,7 +49,7 @@ class Daily(object):
     def __init__(self, daily_type: DailyType):
         self._daily_type = daily_type
         self._daily_update_future = asyncio.ensure_future(self._daily_update())
-        self._leaderboard_channel = guild.find_channel(channel_name=Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
+        self._leaderboard_channel = server.find_channel(channel_name=Config.DAILY_LEADERBOARDS_CHANNEL_NAME)
 
     def close(self):
         self._daily_update_future.cancel()

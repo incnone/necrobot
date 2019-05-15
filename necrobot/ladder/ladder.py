@@ -21,7 +21,7 @@ class Ladder(object):
 
     @property
     def client(self):
-        return guild.client
+        return server.client
 
     async def _wait_and_automatch(self):
         if not DO_AUTOMATCHING:

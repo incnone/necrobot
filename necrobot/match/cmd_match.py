@@ -9,7 +9,7 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.match import matchdb, matchfindparse
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.user import userlib
-from necrobot.util import console, server, timestr, writechannel
+from necrobot.util import console, timestr, writechannel
 from necrobot.util.parse import dateparse
 
 
@@ -138,10 +138,7 @@ class Contest(CommandType):
 
     async def _do_execute(self, cmd):
         await self.bot_channel.contest_last_begun_race()
-        if guild.staff_role is not None:
-            contest_str = '{0}: The previous race has been marked as contested.'.format(guild.staff_role.mention)
-        else:
-            contest_str = 'The previous race has been marked as contested.'
+        contest_str = 'The previous race has been marked as contested.'
 
         await cmd.channel.send(contest_str)
         contest_str = '`{0}` has contested a race in channel {1}.'.format(cmd.author.display_name, cmd.channel.mention)
@@ -449,7 +446,6 @@ class ForceCloseRoom(CommandType):
 
         if 'nolog' not in cmd.args:
             await writechannel.write_channel(
-                client=server.client,
                 channel=channel,
                 outfile_name='{0}-{1}'.format(match_id, channel.name)
             )
@@ -470,7 +466,6 @@ class ForceCancelMatch(CommandType):
 
         if 'nolog' not in cmd.args:
             await writechannel.write_channel(
-                client=server.client,
                 channel=channel,
                 outfile_name='{0}-{1}'.format(match.match_id, channel.name)
             )

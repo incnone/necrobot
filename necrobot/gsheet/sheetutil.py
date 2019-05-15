@@ -1,4 +1,5 @@
 import string
+from typing import Tuple
 # import unittest
 
 import googleapiclient.errors
@@ -26,7 +27,7 @@ def num_to_colname(num: int) -> str:
     return colname[::-1]    # [::-1] reverses the sequence
 
 
-async def has_read_write_permissions(gsheet_id: str) -> (bool, str):
+async def has_read_write_permissions(gsheet_id: str) -> Tuple[bool, str]:
     """Checks that the bot has read/write permissions to the GSheet.
     
     Parameters

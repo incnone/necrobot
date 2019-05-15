@@ -1,5 +1,5 @@
 import datetime
-from typing import Callable
+from typing import Callable, Optional
 
 import pytz
 
@@ -70,13 +70,13 @@ class Match(object):
 
         # Racers in the match
         self._racer_1_id = racer_1_id                       # type: int
-        self._racer_1 = None                                # type: NecroUser
+        self._racer_1 = None                                # type: Optional[NecroUser]
         self._racer_2_id = racer_2_id                       # type: int
-        self._racer_2 = None                                # type: NecroUser
+        self._racer_2 = None                                # type: Optional[NecroUser]
 
         # Scheduling data
-        self._suggested_time = None                         # type: datetime.datetime
-        self._finish_time = None                            # type: datetime.datetime
+        self._suggested_time = None                         # type: Optional[datetime.datetime]
+        self._finish_time = None                            # type: Optional[datetime.datetime]
         self._set_suggested_time(suggested_time)
         self._set_finish_time(finish_time)
         self._confirmed_by_r1 = r1_confirmed                # type: bool

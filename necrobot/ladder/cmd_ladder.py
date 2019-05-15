@@ -54,7 +54,6 @@ class Ranked(CommandType):
 
         await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
-            cmd_type=self,
             racer_members=[cmd.author],
             racer_names=[cmd.args[0]],
             match_info=MatchInfo(ranked=True)
@@ -116,7 +115,6 @@ class Unranked(CommandType):
 
         await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
-            cmd_type=self,
             racer_members=[cmd.author],
             racer_names=[cmd.args[0]],
             match_info=MatchInfo(ranked=False)
@@ -175,7 +173,6 @@ class ForceRanked(CommandType):
 
         await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
-            cmd_type=self,
             racer_names=[cmd.args[0], cmd.args[1]],
             match_info=MatchInfo(ranked=True)
         )

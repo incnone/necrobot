@@ -59,10 +59,19 @@ def find_category(channel_name: str = None) -> Optional[discord.CategoryChannel]
     return None
 
 
-def find_all_channels(channel_name: str) -> List[discord.abc.GuildChannel]:
+def find_all_channels(channel_name: str) -> List[discord.TextChannel]:
     """Returns all channels with the given name on the server"""
     found_channels = []
-    for channel in guild.channels:
+    for channel in guild.text_channels:
+        if channel.name.lower() == channel_name.lower():
+            found_channels.append(channel)
+    return found_channels
+
+
+def find_all_categories(channel_name: str) -> List[discord.CategoryChannel]:
+    """Returns all channels with the given name on the server"""
+    found_channels = []
+    for channel in guild.categories:
         if channel.name.lower() == channel_name.lower():
             found_channels.append(channel)
     return found_channels

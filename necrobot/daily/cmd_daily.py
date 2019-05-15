@@ -19,8 +19,7 @@ class DailyCommandType(CommandType):
         if daily is not None:
             await self._daily_do_execute(cmd, daily)
         else:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: I couldn't figure out which daily you wanted to call a command for.".format(
                     cmd.author.mention
                 )
@@ -42,8 +41,7 @@ class DailyChar(DailyCommandType):
     async def _daily_do_execute(self, cmd, _):
         rotating_daily = DailyMgr().daily(DailyType.ROTATING)
         character = dailytype.character(DailyType.ROTATING, rotating_daily.today_number)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Today\'s character is {0}.'.format(character)
         )
 
@@ -65,12 +63,10 @@ class DailyResubmit(DailyCommandType):
         character = dailytype.character(daily.daily_type, last_submitted)
 
         if last_submitted == 0:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: You've never submitted for a daily of this type.".format(cmd.author.mention))
         elif not daily.is_open(last_submitted):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: The {1} {2} daily has closed.".format(
                     cmd.author.mention,
                     daily.daily_to_shortstr(last_submitted),
@@ -81,16 +77,14 @@ class DailyResubmit(DailyCommandType):
             )
             if submission_string:   # parse succeeded
                 await daily.update_leaderboard(last_submitted)
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     "Reubmitted for {0}, {2}: You {1}.".format(
                         daily.daily_to_shortstr(last_submitted),
                         submission_string,
                         character))
 
             else:                   # parse failed
-                await self.client.send_message(
-                    cmd.channel,
+                await cmd.channel.send(
                     "{0}: I had trouble parsing your submission. Please use one of the forms: `{1} 12:34.56` "
                     "or `{1} death 4-4`.".format(cmd.author.mention, self.mention))
 
@@ -132,14 +126,12 @@ class DailySeed(DailyCommandType):
         character = dailytype.character(daily.daily_type, today)
 
         if await daily.has_submitted(today, user.user_id):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: You have already submitted for today's {1} daily.".format(cmd.author.mention, character))
         else:
             await daily.register(today, user.user_id)
             seed = await daily.get_seed(today)
-            await self.client.send_message(
-                cmd.author,
+            await cmd.channel.send(
                 "({0}) {2} speedrun seed: {1}. This is a single-attempt {2} seeded all zones run. (See `.dailyrules` "
                 "for complete rules.)".format(today_date.strftime("%d %b"), seed, character))
 
@@ -179,7 +171,7 @@ class DailyStatus(DailyCommandType):
                 status += "You have not yet submitted to the {1} daily: Use `.dailysubmit` to submit a result. " \
                           "Today's {1} daily is open for another {0}. ".format(daily.daily_close_timestr, character)
 
-        await self.client.send_message(cmd.channel, '{0}: {1}'.format(cmd.author.mention, status))
+        await cmd.channel.send('{0}: {1}'.format(cmd.author.mention, status))
 
 
 class DailySubmit(DailyCommandType):
@@ -203,16 +195,14 @@ class DailySubmit(DailyCommandType):
         character = dailytype.character(daily.daily_type, daily_number)
 
         if daily_number == 0:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: Please get today's {1} daily seed before submitting (use `.dailyseed`).".format(
                     cmd.author.mention,
                     character))
             return
 
         if not daily.is_open(daily_number):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: Too late to submit for the {1} {2} daily. Get today's seed with `.dailyseed`.".format(
                     cmd.author.mention,
                     daily.daily_to_shortstr(daily_number),
@@ -220,8 +210,7 @@ class DailySubmit(DailyCommandType):
             return
 
         if await daily.has_submitted(daily_number, user.user_id):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: You have already submitted for the {1} {2} daily. "
                 "Use `.dailyresubmit` to edit your submission.".format(
                     cmd.author.mention,
@@ -231,8 +220,7 @@ class DailySubmit(DailyCommandType):
 
         submission_string = await daily.parse_submission(daily_number=daily_number, user_id=user.user_id, args=cmd.args)
         if not submission_string:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: I had trouble parsing your submission. "
                 "Please use one of the forms: `{1} 12:34.56` or `{1} death 4-4`.".format(
                     cmd.author.mention,
@@ -242,8 +230,7 @@ class DailySubmit(DailyCommandType):
             return
 
         await daily.update_leaderboard(daily_number)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             "Submitted for {0}, {2}: You {1}.".format(
                 daily.daily_to_shortstr(daily_number),
                 submission_string,
@@ -269,15 +256,13 @@ class DailyUnsubmit(DailyCommandType):
         character = dailytype.character(daily.daily_type, daily_number)
 
         if daily_number == 0:
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: You've never submitted for {1} daily.".format(cmd.author.mention, daily.daily_type)
             )
             return
 
         if not daily.is_open(daily_number):
-            await self.client.send_message(
-                cmd.channel,
+            await cmd.channel.send(
                 "{0}: The {1} {2} daily has closed.".format(
                     cmd.author.mention,
                     daily.daily_to_shortstr(daily_number),
@@ -287,8 +272,7 @@ class DailyUnsubmit(DailyCommandType):
             return
 
         await daily.delete_from_daily(daily_number, user.user_id)
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             "Deleted your daily submission for {0}, {1}.".format(
                 daily.daily_to_shortstr(daily_number),
                 character
@@ -311,21 +295,18 @@ class DailyWhen(DailyCommandType):
             if charname in dailytype.rotating_daily_chars:
                 days_until = dailytype.days_until(charname, today_number)
                 if days_until == 0:
-                    await self.client.send_message(
-                        cmd.channel,
+                    await cmd.channel.send(
                         'The {0} daily is today!'.format(charname)
                     )
                     return
                 elif days_until == 1:
-                    await self.client.send_message(
-                        cmd.channel,
+                    await cmd.channel.send(
                         'The {0} daily is tomorrow!'.format(charname)
                     )
                     return
                 elif days_until is not None:
                     date = datetime.datetime.utcnow().date() + datetime.timedelta(days=days_until)
-                    await self.client.send_message(
-                        cmd.channel,
+                    await cmd.channel.send(
                         'The {0} daily is in {1} days ({2}, {3}).'.format(
                             charname,
                             days_until,
@@ -350,8 +331,7 @@ class DailyWhen(DailyCommandType):
             else:
                 char_list_str += charname + ' -- '
         char_list_str = char_list_str[:-4]
-        await self.client.send_message(
-            cmd.channel,
+        await cmd.channel.send(
             'Upcoming characters, starting today: {0}.'.format(char_list_str)
         )
 

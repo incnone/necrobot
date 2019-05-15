@@ -16,12 +16,6 @@ stream
 
 Dependencies
 ------------
-cmd_condor
-    botbase/
-        necroevent
-        commandtype
-    util/
-        server
 condoradminchannel
     botbase/
         cmd_seedgen
@@ -46,8 +40,6 @@ condormgr
     botbase/
         necroevent
         manager
-    condor/
-        cmd_condor
     gsheet/
         cmd_sheet
         sheetlib

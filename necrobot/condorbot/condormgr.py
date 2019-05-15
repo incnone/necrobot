@@ -3,9 +3,7 @@ import unittest
 
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
-from necrobot.condorbot import cmd_condor
 from necrobot.config import Config
-from necrobot.gsheet import cmd_sheet
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
@@ -13,8 +11,6 @@ from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguestats
 from necrobot.match import matchutil
 from necrobot.match.match import Match
-from necrobot.match.matchroom import MatchRoom
-# from necrobot.stream.vodrecord import VodRecorder
 from necrobot.util import server, strutil, rtmputil
 from necrobot.util.singleton import Singleton
 
@@ -29,26 +25,24 @@ class CondorMgr(Manager, metaclass=Singleton):
         NEDispatch().subscribe(self)
 
     async def initialize(self):
-        self._main_channel = guild.main_channel
-        self._notifications_channel = guild.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
-        self._schedule_channel = guild.find_channel(channel_name='schedule')
-        self._client = guild.client
+        self._main_channel = server.find_channel(channel_name=Config.MAIN_CHANNEL_NAME)
+        self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
+        self._schedule_channel = server.find_channel(channel_name=Config.SCHEDULE_CHANNEL_NAME)
+        self._client = server.client
 
         await self.update_schedule_channel()
 
     async def refresh(self):
-        self._notifications_channel = guild.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
-        self._schedule_channel = guild.find_channel(channel_name='schedule')
-        self._client = guild.client
+        self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
+        self._schedule_channel = server.find_channel(channel_name=Config.SCHEDULE_CHANNEL_NAME)
+        self._client = server.client
         await self.update_schedule_channel()
 
     async def close(self):
         pass
 
     def on_botchannel_create(self, channel, bot_channel):
-        bot_channel.default_commands.append(cmd_condor.StaffAlert(bot_channel))
-        # if isinstance(bot_channel, MatchRoom):
-        #     bot_channel.default_commands.append(cmd_sheet.PushMatchToSheet(bot_channel))
+        pass
 
     async def ne_process(self, ev: NecroEvent):
         if ev.event_type == 'begin_match_race':
@@ -135,7 +129,8 @@ class CondorMgr(Manager, metaclass=Singleton):
             sheet_type=sheetlib.SheetType.STANDINGS
         )
 
-    async def cawmentator_alert(self, match: Match):
+    @staticmethod
+    async def cawmentator_alert(match: Match):
         """PM an alert to the match cawmentator, if any, that the match is soon to begin
         
         Parameters

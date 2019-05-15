@@ -14,8 +14,6 @@ class CondorAdminChannel(BotChannel):
     def __init__(self):
         BotChannel.__init__(self)
         self.channel_commands = [
-            # cmd_condor.Automatch(self),
-
             cmd_league.CloseAllMatches(self),
             cmd_league.CloseFinished(self),
             cmd_league.Deadline(self),

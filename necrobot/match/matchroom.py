@@ -22,7 +22,6 @@ from necrobot.test import cmd_test
 from necrobot.user import cmd_user
 from necrobot.util import console
 from necrobot.util import ordinal
-from necrobot.util import server
 from necrobot.util import timestr
 from necrobot.race import racedb
 

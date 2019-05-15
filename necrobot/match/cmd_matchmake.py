@@ -1,6 +1,7 @@
+from typing import List, Optional, Union
+import discord
 import necrobot.exception
 from necrobot.botbase.command import Command
-from necrobot.botbase.commandtype import CommandType
 from necrobot.match import matchinfo, matchutil
 from necrobot.match import matchchannelutil
 from necrobot.user import userlib
@@ -8,12 +9,16 @@ from necrobot.user import userlib
 
 async def make_match_from_cmd(
         cmd: Command,
-        cmd_type: CommandType,
-        racer_members=list(),
-        racer_names=list(),
-        match_info=matchinfo.MatchInfo(),
-        allow_duplicates=True
+        racer_members: Optional[List[Union[discord.User, discord.Member]]] = None,
+        racer_names: Optional[List[str]] = None,
+        match_info: matchinfo.MatchInfo = matchinfo.MatchInfo(),
+        allow_duplicates: bool = True
 ):
+    if racer_members is None:
+        racer_members = []
+    if racer_names is None:
+        racer_names = []
+
     racers = []
 
     # Add the racers from member objects
