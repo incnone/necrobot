@@ -29,14 +29,14 @@ class VodRecorder(object, metaclass=Singleton):
                 return None
 
     async def start_record(self, rtmp_name):
-        if not Config.RECORDING_ACTIVATED:
+        if (not Config.RECORDING_ACTIVATED) or rtmp_name is None:
             return
 
         async with self._lock:
             self._start_record_nolock(rtmp_name)
 
     async def end_record(self, rtmp_name):
-        if not Config.RECORDING_ACTIVATED:
+        if (not Config.RECORDING_ACTIVATED) or rtmp_name is None:
             return
 
         async with self._lock:
