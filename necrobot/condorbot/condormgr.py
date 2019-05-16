@@ -200,7 +200,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         if the_msg is None:
             await self._schedule_channel.send(infotext)
         else:
-            await the_msg.edit(infotext)
+            await the_msg.edit(content=infotext)
 
 
 class TestCondorMgr(unittest.TestCase):

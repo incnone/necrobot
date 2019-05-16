@@ -103,6 +103,7 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.matchinfo', wait_for='')
         await send(admin, '.setmatchtype bestof 5', wait_for='This match has been set')
         await send(admin, '.setmatchtype repeat 3', wait_for='This match has been set')
+        await asyncio.sleep(0)
 
         # Time suggestion
         await send(racer_1, '.suggest friday 8p', wait_for='This match is suggested')
@@ -110,12 +111,14 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.confirm', wait_for='officially scheduled')
         await send(racer_2, '.unconfirm', wait_for='wishes to remove')
         await send(racer_1, '.unconfirm', wait_for='has been unscheduled')
+        await asyncio.sleep(0)
 
         # Prematch admin commands
         await send(admin, '.f-schedule tomorrow 21:15', wait_for='This match is suggested')
         await send(admin, '.f-confirm', wait_for='Forced confirmation')
         await send(admin, '.postpone', wait_for='has been postponed')
         await send(admin, '.f-begin', wait_for='Please input')
+        await asyncio.sleep(0)
 
         # Race 1
         await send(racer_1, '.ready', wait_for='is ready')
@@ -123,6 +126,7 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.unready', wait_for='is no longer ready')
         await send(racer_1, '.r', wait_for='GO!')
         await send(racer_1, '.d', wait_for='Please input')
+        await asyncio.sleep(0)
 
         # Race 2
         await send(admin, '.reseed', wait_for='Changed seed')
@@ -133,12 +137,15 @@ class TestMatch(TestCommandType):
         await send(racer_1, '.time', wait_for='The current race time')
         await send(racer_2, '.d', wait_for='has finished in')
         await send(racer_1, '.d', wait_for='Please input')
+        await asyncio.sleep(0)
 
         # Race 3:
         if not fancy:
             await send(racer_1, '.ready', wait_for='is ready')
             await send(racer_2, '.ready', wait_for='GO!')
             await send(racer_1, '.d', wait_for='Match complete')
+            await asyncio.sleep(0)
+
         else:
             await send(admin, '.cancelrace 1', wait_for='')
             await send(admin, '.recordrace "{0}"'.format(racer_2.display_name), wait_for='')
@@ -153,12 +160,14 @@ class TestMatch(TestCommandType):
             await send(racer_2, '.r', wait_for='GO!')
             await send(admin, '.pause', wait_for='Race paused')
             await send(admin, '.cancelrace', wait_for='Please input')
+            await asyncio.sleep(0)
 
             # Race 4:
             await send(racer_1, '.r', wait_for='is ready')
             await send(racer_2, '.r', wait_for='GO!')
             await send(admin, '.pause', wait_for='Race paused')
             await send(admin, '.newrace', wait_for='Please input')
+            await asyncio.sleep(0)
 
             # Race 5:
             await send(racer_1, '.r', wait_for='is ready')
@@ -166,11 +175,13 @@ class TestMatch(TestCommandType):
             await send(racer_1, '.d', wait_for='Match complete')
             await send(admin, '.matchinfo', wait_for='')
             await send(admin, '.newrace', wait_for='Please input')
+            await asyncio.sleep(0)
 
             # Race 6:
             await send(racer_1, '.r', wait_for='is ready')
             await send(racer_2, '.r', wait_for='GO!')
             await send(racer_2, '.d', wait_for='Match complete')
+            await asyncio.sleep(0)
 
             await send(admin, '.cancelrace 3')
 

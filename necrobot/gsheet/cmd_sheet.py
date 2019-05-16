@@ -102,7 +102,7 @@ class MakeFromSheet(CommandType):
 
             console.info('MakeFromSheet: Creating Match objects...')
             await status_message.edit(
-                'Creating matches from worksheet `{0}`... (Creating match list)'.format(wks_name)
+                content='Creating matches from worksheet `{0}`... (Creating match list)'.format(wks_name)
             )
             not_found_matches = matchup_sheet.uncreated_matches()
             matches_with_channels = await matchchannelutil.get_matches_with_channels()
@@ -123,7 +123,7 @@ class MakeFromSheet(CommandType):
             unchanneled_matches = sorted(unchanneled_matches, key=lambda m: m.matchroom_name)
 
             await status_message.edit(
-                'Creating matches from worksheet `{0}`... (Creating race rooms)'.format(wks_name)
+                content='Creating matches from worksheet `{0}`... (Creating race rooms)'.format(wks_name)
             )
             console.debug('MakeFromSheet: Matches to make: {0}'.format(unchanneled_matches))
             console.info('MakeFromSheet: Creating match channels...')
@@ -144,7 +144,7 @@ class MakeFromSheet(CommandType):
                 report_str = 'All matches created successfully.'
 
         await status_message.edit(
-            'Creating matches from worksheet `{0}`... done. {1}'.format(wks_name, report_str)
+            content='Creating matches from worksheet `{0}`... done. {1}'.format(wks_name, report_str)
         )
 
 

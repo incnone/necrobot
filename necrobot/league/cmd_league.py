@@ -52,7 +52,7 @@ class CloseAllMatches(CommandType):
             await matchchannelutil.delete_all_match_channels(log=log)
 
         await status_message.edit(
-            'Closing all match channels... done.'
+            content='Closing all match channels... done.'
         )
 
 
@@ -75,7 +75,7 @@ class CloseFinished(CommandType):
             await matchchannelutil.delete_all_match_channels(log=log, completed_only=True)
 
         await status_message.edit(
-            'Closing all completed match channels... done.'
+            content='Closing all completed match channels... done.'
         )
 
 
@@ -368,7 +368,7 @@ class MakeMatchesFromFile(CommandType):
             matches = sorted(matches, key=lambda m: m.matchroom_name)
 
             await status_message.edit(
-                'Creating matches from file `{0}`... (Creating race rooms)'.format(filename)
+                content='Creating matches from file `{0}`... (Creating race rooms)'.format(filename)
             )
             console.debug('MakeMatchesFromFile: Matches to make: {0}'.format(matches))
 
@@ -391,7 +391,7 @@ class MakeMatchesFromFile(CommandType):
                 report_str = 'All matches created successfully.'
 
         await status_message.edit(
-            'Creating matches from file `{0}`... done. {1}'.format(filename, report_str)
+            content='Creating matches from file `{0}`... done. {1}'.format(filename, report_str)
         )
 
 

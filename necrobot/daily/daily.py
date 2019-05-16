@@ -333,7 +333,7 @@ class Daily(object):
         else:
             async for msg in self._leaderboard_channel.history(limit=10):
                 if int(msg.id) == msg_id:
-                    await msg.edit(await self.leaderboard_text(daily_number, display_seed))
+                    await msg.edit(content=await self.leaderboard_text(daily_number, display_seed))
 
     async def on_new_daily(self) -> None:
         """Run when a new daily happens"""

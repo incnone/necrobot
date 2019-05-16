@@ -185,11 +185,6 @@ class Config(object):
     NO_ENTRANTS_CLEANUP_WARNING = datetime.timedelta(minutes=1, seconds=30)
     RACE_POKE_DELAY = int(10)
 
-    # # Vod recording ---------------------------------------------------------------------------
-    # VODRECORD_USERNAME = ''
-    # VODRECORD_PASSWD = ''
-    # RECORDING_ACTIVATED = False
-
     # Methods ---------------------------------------------------------------------------------
     @staticmethod
     def write():
@@ -203,10 +198,8 @@ class Config(object):
             ['mysql_db_passwd', Config.MYSQL_DB_PASSWD],
             ['mysql_db_name', Config.MYSQL_DB_NAME],
 
-            # ['vodrecord_username', Config.VODRECORD_USERNAME],
-            # ['vodrecord_passwd', Config.VODRECORD_PASSWD],
-            # ['activate_vodrecord', Config.RECORDING_ACTIVATED],
-
+            ['main_channel_name', Config.MAIN_CHANNEL_NAME],
+            ['match_category_name', Config.MATCH_CHANNEL_CATEGORY_NAME],
             ['league_name', Config.LEAGUE_NAME],
         ]
 
@@ -235,11 +228,10 @@ def init(config_filename):
         'mysql_db_user': 'root',
         'mysql_db_passwd': '',
         'mysql_db_name': 'necrobot',
-        'vodrecord_username': '',
-        'vodrecord_passwd': '',
-        'activate_vodrecord': 'false',
         'league_name': '',
         'test_level': '',
+        'main_channel_name': 'necrobot_main',
+        'match_category_name': 'Race Rooms',
         }
 
     with open(config_filename, 'r') as file:
@@ -261,10 +253,8 @@ def init(config_filename):
     Config.MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
     Config.MYSQL_DB_NAME = defaults['mysql_db_name']
 
-    # Config.VODRECORD_USERNAME = defaults['vodrecord_username']
-    # Config.VODRECORD_PASSWD = defaults['vodrecord_passwd']
-    # Config.RECORDING_ACTIVATED = defaults['activate_vodrecord'].lower() == 'true'
-
+    Config.MAIN_CHANNEL_NAME = defaults['main_channel_name']
+    Config.MATCH_CHANNEL_CATEGORY_NAME = defaults['match_category_name']
     Config.LEAGUE_NAME = defaults['league_name']
 
     if defaults['test_level'] == '0':

@@ -1,3 +1,4 @@
+import asyncio
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
 from necrobot.botbase.necrobot import Necrobot
@@ -59,4 +60,5 @@ class MatchMgr(Manager, metaclass=Singleton):
                 console.info('  Channel ID: {0}  Match: {1}'.format(channel_id, match))
             else:
                 console.info('  Couldn\'t find channel with ID {0}.'.format(channel_id))
+            await asyncio.sleep(0)  # Pass control back to the main event loop
         console.info('-----------------------------------------')

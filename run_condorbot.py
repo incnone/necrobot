@@ -8,6 +8,7 @@ from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match.matchmgr import MatchMgr
 from necrobot.util import console
 from necrobot import logon
+from necrobot.config import Config
 
 
 async def load_condorbot_config(necrobot):
@@ -15,10 +16,11 @@ async def load_condorbot_config(necrobot):
     necrobot.register_pm_channel(CondorPMChannel())
 
     # Main Channel
-    necrobot.register_bot_channel(guild.main_channel, CondorMainChannel(ladder=True))
+    main_channel = server.find_channel(Config.MAIN_CHANNEL_NAME)
+    necrobot.register_bot_channel(main_channel, CondorMainChannel(ladder=True))
 
     # Admin Channel
-    condor_admin_channel = guild.find_channel(channel_name='adminchat')
+    condor_admin_channel = server.find_channel(channel_name='adminchat')
     if condor_admin_channel is None:
         console.warning('Could not find the "{0}" channel.'.format('adminchat'))
     necrobot.register_bot_channel(condor_admin_channel, CondorAdminChannel())
