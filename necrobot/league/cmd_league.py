@@ -393,6 +393,7 @@ class MakeMatchesFromFile(CommandType):
 
         for racer_pair in desired_match_pairs:
             await make_single_match(racer_pair)
+            await asyncio.sleep(0)
 
         matches = sorted(matches, key=lambda m: m.matchroom_name)
 
@@ -407,6 +408,7 @@ class MakeMatchesFromFile(CommandType):
             console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
             new_room = await matchchannelutil.make_match_room(match=match, register=False)
             await new_room.send_channel_start_text()
+            await asyncio.sleep(0)
 
         # Report on uncreated matches
         uncreated_str = ''
