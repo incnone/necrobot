@@ -48,7 +48,7 @@ async def record_match_race(
 
 
 async def get_matches_between(user_1_id, user_2_id):
-    params = (user_1_id, user_2_id, user_2_id, user_1_id,)
+    params = (user_1_id, user_2_id, user_1_id, user_2_id,)
 
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
