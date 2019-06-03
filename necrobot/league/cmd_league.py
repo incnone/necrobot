@@ -287,7 +287,7 @@ class MakeMatch(CommandType):
                 cmd_type=self,
                 racer_names=[cmd.author.display_name, cmd.args[0]],
                 match_info=league.match_info,
-                allow_duplicates=False
+                allow_duplicates=True
             )
         except necrobot.exception.DuplicateMatchException:
             await self.client.send_message(
