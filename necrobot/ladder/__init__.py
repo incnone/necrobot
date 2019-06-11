@@ -6,7 +6,6 @@ Package Requirements
 --------------------
 botbase
 match
-stats
 user
 
 

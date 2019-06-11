@@ -3,7 +3,6 @@ python_version >= '3.7'
 pytz >= 2019.1
 aiohttp >= 3.5.4
 discord.py >= 1.1.1
-websockets >= 6.0
 certifi >= 2019.3.9
 google-api-python-client >= 1.7.8
 python-dateutil >= 2.8.0

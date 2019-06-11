@@ -1,25 +1,15 @@
 # Necrobot TODO
 
-Current version: 0.12
+Current version: 0.13
 
 ## Current TODO
 
-### More urgent
-- Better database setup on new league creation; see Alexis's comments
-
 ### General
 - Replace NoneType returns with exceptions where appropriate
-- Fix frequent caching errors
-- Better handling of rate-limiting issues on countdown (fix delay before 'Go!' text)
-- Add admin command to delete racerooms (for remaking), instead of just closing them
-
-### Dependencies
-- Remove `stats` dependency from `ladder` (perhaps split into a "ratings" and "ladder" package?)
-- Clarify `league` dependency in `ladder`?
+- More efficient database requests (especially on Condorbot startup)
 
 ### GSheet
-- Give the bot a command to set up a GSheet from blank
-- Better standings update code
+- Drastically simplify GSheet interaction (full overwrite updates, no reading from sheet)
 
 ### Match
 - Make bot say races awaiting review in match score announcement when contested races

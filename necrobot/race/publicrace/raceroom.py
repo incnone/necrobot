@@ -55,7 +55,6 @@ class RaceRoom(BotChannel):
 
             cmd_publicrace.Rematch(self),
             cmd_publicrace.Kick(self),
-            # cmd_publicrace.DelayRecord(self),
             cmd_publicrace.Notify(self),
             cmd_publicrace.Unnotify(self),
             cmd_publicrace.Missing(self),
@@ -191,9 +190,9 @@ class RaceRoom(BotChannel):
         if self.current_race.before_race:
             self.current_race.race_info = raceinfo.RaceInfo.copy(self._race_info)
         if do_post:
-            await self.write('Races in this necrobot will have their results posted to the results necrobot.')
+            await self.write('Races in this channel will have their results posted to the results channel.')
         else:
-            await self.write('Races in this necrobot will not have their results posted to the results necrobot.')
+            await self.write('Races in this channel will not have their results posted to the results channel.')
 
     # Change the RaceInfo for this room
     async def change_race_info(self, command_args: list):
@@ -288,7 +287,7 @@ class RaceRoom(BotChannel):
             # Post-race
             elif self._current_race.complete:
                 async for msg in self._channel.history(limit=1):
-                    if (datetime.datetime.utcnow() - msg.timestamp) > Config.CLEANUP_TIME:
+                    if (datetime.datetime.utcnow() - msg.created_at) > Config.CLEANUP_TIME:
                         await self.close()
                         return
 
