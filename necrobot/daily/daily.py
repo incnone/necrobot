@@ -56,7 +56,7 @@ class Daily(object):
 
     @property
     def client(self) -> discord.Client:
-        return guild.client
+        return server.client
 
     @property
     def daily_type(self) -> DailyType:

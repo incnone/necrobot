@@ -80,12 +80,21 @@ class CommandType(object):
                 self.execution_id += 1
                 this_id = self.execution_id
 
+            if isinstance(cmd.channel, discord.TextChannel):
+                # noinspection PyUnresolvedReferences
+                channel_name = cmd.channel.name
+            elif isinstance(cmd.channel, discord.DMChannel):
+                # noinspection PyUnresolvedReferences
+                channel_name = 'DM-{}'.format(cmd.channel.recipient.display_name)
+            else:
+                channel_name = "<Unknown channel>"
+
             console.info(
                 'Call {0}: <ID={1}> <Caller={2}> <Channel={3}> <Message={4}>'.format(
                     type(self).__name__,
                     this_id,
                     cmd.author.name,
-                    cmd.channel.name,
+                    channel_name,
                     cmd.content
                 )
             )

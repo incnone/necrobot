@@ -35,7 +35,7 @@ class Command(object):
         return self._message.guild
 
     @property
-    def channel(self) -> discord.TextChannel:
+    def channel(self) -> Union[discord.abc.Messageable]:
         return self._message.channel
 
     @property
