@@ -1,6 +1,7 @@
 data/*
 ignore/
 tmp/
+venv/
 *.db
 *.pyc
 *.log
