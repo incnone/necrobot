@@ -3,6 +3,7 @@ from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.race import cmd_racemake
 from necrobot.race import cmd_racestats
+from necrobot.speedrun import cmd_speedrun
 # from necrobot.ladder import cmd_ladder
 from necrobot.botbase import cmd_color, cmd_role
 from necrobot.user import cmd_user
@@ -26,14 +27,16 @@ class MainBotChannel(BotChannel):
             cmd_racemake.MakeCondor(self),
             cmd_racemake.MakePrivate(self),
 
+            cmd_racestats.Fastest(self),
+            cmd_racestats.MostRaces(self),
+            cmd_racestats.Stats(self),
+
             cmd_role.AddCRoWRole(self),
             cmd_role.RemoveCRoWRole(self),
 
             cmd_seedgen.RandomSeed(self),
 
-            cmd_racestats.Fastest(self),
-            cmd_racestats.MostRaces(self),
-            cmd_racestats.Stats(self),
+            # cmd_speedrun.Submit(self),
 
             cmd_user.DailyAlert(self),
             cmd_user.RaceAlert(self),

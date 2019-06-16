@@ -9,7 +9,7 @@ from necrobot.race.raceinfo import RaceInfo
 from necrobot.user.necrouser import NecroUser
 
 
-def submit(
+async def submit(
         necro_user: NecroUser,
         category_race_info: RaceInfo,
         category_score: int,

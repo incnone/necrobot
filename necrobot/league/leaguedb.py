@@ -99,7 +99,7 @@ async def create_league(schema_name: str) -> League:
             """.format(schema_name=schema_name)
         )
 
-        for tablename in ['matches', 'match_races', 'races', 'race_runs']:
+        for tablename in ['matches', 'match_races', 'races', 'race_runs', 'submitted_runs']:
             cursor.execute(
                 "CREATE TABLE `{league_schema}`.`{table}` LIKE `{necrobot_schema}`.`{table}`".format(
                     league_schema=schema_name,
