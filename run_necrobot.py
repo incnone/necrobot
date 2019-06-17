@@ -1,10 +1,10 @@
 from necrobot.util import server
 from necrobot.config import Config
-from necrobot.ladder import ratingutil
+# from necrobot.ladder import ratingutil
 # from necrobot.ladder.ladderadminchannel import LadderAdminChannel
 # from necrobot.ladder.laddermainchannel import LadderMainChannel
-from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.match.matchmgr import MatchMgr
+# from necrobot.league.leaguemgr import LeagueMgr
+# from necrobot.match.matchmgr import MatchMgr
 from necrobot.racebot.mainchannel import MainBotChannel
 from necrobot.racebot.pmbotchannel import PMBotChannel
 from necrobot.util import console

@@ -3,7 +3,7 @@ from necrobot.botbase import cmd_admin
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.race import cmd_racemake
 from necrobot.race import cmd_racestats
-from necrobot.speedrun import cmd_speedrun
+# from necrobot.speedrun import cmd_speedrun
 # from necrobot.ladder import cmd_ladder
 from necrobot.botbase import cmd_color, cmd_role
 from necrobot.user import cmd_user

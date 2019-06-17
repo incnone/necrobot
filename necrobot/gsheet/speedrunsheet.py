@@ -5,7 +5,7 @@ from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 from necrobot.race import racedb
 from necrobot.speedrun import speedrundb, categories
 from necrobot.user import userlib
-from necrobot.util import racetime
+# from necrobot.util import racetime
 
 
 class SpeedrunSheetIndexData(WorksheetIndexData):

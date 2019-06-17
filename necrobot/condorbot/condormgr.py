@@ -7,6 +7,7 @@ from necrobot.config import Config
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
+from necrobot.gsheet.speedrunsheet import SpeedrunSheet
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguestats
 from necrobot.match import matchutil
@@ -108,10 +109,22 @@ class CondorMgr(Manager, metaclass=Singleton):
                 )
             )
 
+        elif ev.event_type == 'submitted_run':
+            asyncio.ensure_future(self._overwrite_speedrun_sheet())
+
     async def _overwrite_gsheet(self):
         # noinspection PyShadowingNames
         sheet = await self._get_gsheet(wks_id='0')
         await sheet.overwrite_gsheet()
+
+    @staticmethod
+    async def _overwrite_speedrun_sheet():
+        speedrun_sheet = await sheetlib.get_sheet(
+            gsheet_id=LeagueMgr().league.speedrun_gsheet_id,
+            wks_id='0',
+            sheet_type=sheetlib.SheetType.SPEEDRUN
+        )  # type: SpeedrunSheet
+        await speedrun_sheet.overwrite_gsheet()
 
     @staticmethod
     async def _get_gsheet(wks_id: str) -> MatchupSheet:

@@ -62,7 +62,7 @@ def convert_score_to_text(category_race_info_descriptor: str, score: int) -> Opt
     if category_race_info_descriptor in time_categories:
         return racetime.to_str(score)
     elif category_race_info_descriptor == 'CoH: Fixed Beat':
-        return score
+        return str(score)
     else:
         return None
 
