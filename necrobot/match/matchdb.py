@@ -291,7 +291,8 @@ async def get_channeled_matches_raw_data(
                  channel_id,
                  sheet_id,
                  sheet_row,
-                 finish_time
+                 finish_time,
+                 autogenned
             FROM {matches} 
             WHERE {where_query} {order_query}
             """.format(matches=tn('matches'), where_query=where_query, order_query=order_query), params)
