@@ -72,30 +72,6 @@ class MatchupSheet(object):
     async def initialize(self, wks_name: str = None, wks_id: str = None):
         await self.column_data.initialize(wks_name=wks_name, wks_id=wks_id)
 
-    # async def add_match(self, match: Match) -> bool:
-    #     """
-    #     Parameters
-    #     ----------
-    #     match: Match
-    #         The match to be added to the GSheet. Will do nothing if the match is already on the sheet.
-    #
-    #     Returns
-    #     -------
-    #     bool
-    #         True if the match was successfully added to the sheet.
-    #     """
-    #     console.debug('MatchupSheet.add_match: Begin.')
-    #
-    #     async with Spreadsheets() as spreadsheets:
-    #         value_range = await self.column_data.get_values(spreadsheets)
-    #         console.debug('MatchupSheet.add_match: Got values from spreadsheets.')
-    #
-    #         if 'values' not in value_range:
-    #             console.debug('MatchupSheet.add_match: Values is empty.')
-    #             return False
-    #         else:
-    #             console.debug('MatchupSheet.add_match: Values: {0}'.format(value_range['values']))
-
     async def overwrite_gsheet(self):
         await self.column_data.refresh_all()
         header_row = ['Match ID', 'Autogenned', 'Racer 1', 'Racer 2', 'Date', 'Winner', 'Score', 'Cawmentary', 'Vod']

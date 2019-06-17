@@ -2,6 +2,7 @@ from necrobot.botbase import cmd_seedgen
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.gsheet import cmd_sheet
 from necrobot.league import cmd_league
+from necrobot.speedrun import cmd_speedrun
 from necrobot.user import cmd_user
 from necrobot.test import cmd_test
 
@@ -34,6 +35,10 @@ class CondorAdminChannel(BotChannel):
             cmd_sheet.SetGSheet(self),
 
             cmd_seedgen.RandomSeed(self),
+
+            cmd_speedrun.OverwriteSpeedrunGSheet(self),
+            cmd_speedrun.SetSpeedrunGSheet(self),
+            cmd_speedrun.Verify(self),
 
             cmd_user.ForceRTMP(self),
             cmd_user.RTMP(self),

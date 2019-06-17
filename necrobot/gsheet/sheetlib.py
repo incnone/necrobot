@@ -4,6 +4,7 @@ from enum import Enum
 import necrobot.exception
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
+from necrobot.gsheet.speedrunsheet import SpeedrunSheet
 
 
 _matchup_sheet_lib = {}
@@ -13,6 +14,7 @@ _sheets_by_id_lib = {}
 class SheetType(Enum):
     MATCHUP = 0
     STANDINGS = 1
+    SPEEDRUN = 2
 
 
 async def get_sheet(
@@ -20,7 +22,7 @@ async def get_sheet(
         wks_name: Optional[str] = None,
         wks_id: Optional[Union[int, str]] = None,
         sheet_type: SheetType = SheetType.MATCHUP
-) -> Union[MatchupSheet, StandingsSheet]:
+) -> Union[MatchupSheet, StandingsSheet, SpeedrunSheet]:
     """Get the Sheet representing the specified Google Worksheet
     
     Can specify either the worksheet name or the worksheet ID.
@@ -57,6 +59,8 @@ async def get_sheet(
         sheet = MatchupSheet(gsheet_id=gsheet_id)
     elif sheet_type == SheetType.STANDINGS:
         sheet = StandingsSheet(gsheet_id=gsheet_id)
+    elif sheet_type == SheetType.SPEEDRUN:
+        sheet = SpeedrunSheet(gsheet_id=gsheet_id)
     else:
         raise necrobot.exception.BadInputException('get_sheet: Not a recognized sheet type.')
 
