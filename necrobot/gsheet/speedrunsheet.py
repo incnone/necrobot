@@ -3,7 +3,7 @@ import pytz
 from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 from necrobot.race import racedb
-from necrobot.speedrun import speedrundb
+from necrobot.speedrun import speedrundb, categories
 from necrobot.user import userlib
 from necrobot.util import racetime
 
@@ -82,7 +82,7 @@ class SpeedrunSheet(object):
             race_info_str = race_info.descriptor
 
             # Convert run time to a string
-            run_time_str = racetime.to_str(run_time)
+            run_time_str = categories.convert_score_to_text(race_info.descriptor, run_time)
 
             # Convert submission time to string
             if submission_time is None:

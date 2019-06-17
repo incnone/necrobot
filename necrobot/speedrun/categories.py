@@ -36,8 +36,7 @@ def convert_to_score(category_keyword: str, score: str) -> Optional[int]:
     time_categories = [
         'story',
         'permadeath',
-        'doubletempo',
-        'fixedbeat'
+        'doubletempo'
     ]
     if category_keyword in time_categories:
         ret = racetime.from_str(score)
@@ -45,6 +44,25 @@ def convert_to_score(category_keyword: str, score: str) -> Optional[int]:
             return None
         else:
             return ret
+    elif category_keyword == 'fixedbeat':
+        try:
+            return int(score)
+        except ValueError:
+            return None
+    else:
+        return None
+
+
+def convert_score_to_text(category_race_info_descriptor: str, score: int) -> Optional[str]:
+    time_categories = [
+        'CoH: Story',
+        'CoH: Permadeath',
+        'CoH: Double Tempo'
+    ]
+    if category_race_info_descriptor in time_categories:
+        return racetime.to_str(score)
+    elif category_race_info_descriptor == 'CoH: Fixed Beat':
+        return score
     else:
         return None
 
