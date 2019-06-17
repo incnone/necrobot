@@ -99,7 +99,7 @@ async def create_league(schema_name: str) -> League:
             """.format(schema_name=schema_name)
         )
 
-        for tablename in ['matches', 'match_races', 'races', 'race_runs', 'submitted_runs']:
+        for tablename in ['matches', 'match_races', 'races', 'race_runs', 'speedruns']:
             cursor.execute(
                 "CREATE TABLE `{league_schema}`.`{table}` LIKE `{necrobot_schema}`.`{table}`".format(
                     league_schema=schema_name,
@@ -265,7 +265,8 @@ async def get_league(schema_name: str) -> League:
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
                `race_types`.`amplified`, 
-               `race_types`.`seed_fixed` 
+               `race_types`.`seed_fixed`,
+               `leagues`.`speedrun_gsheet_id` 
             FROM `leagues` 
             LEFT JOIN `race_types` ON `leagues`.`race_type` = `race_types`.`type_id` 
             WHERE `leagues`.`schema_name` = %s 
@@ -299,6 +300,7 @@ async def get_league(schema_name: str) -> League:
                 league_name=row[0],
                 match_info=match_info,
                 gsheet_id=row[4],
+                speedrun_gsheet_id=row[11],
                 deadline=row[5]
             )
 
@@ -349,6 +351,7 @@ async def write_league(league: League) -> None:
             match_info.is_best_of,
             match_info.ranked,
             race_type_id,
+            league.speedrun_gsheet_id
         )
 
         cursor.execute(
@@ -362,9 +365,10 @@ async def write_league(league: League) -> None:
                 `number_of_races`, 
                 `is_best_of`, 
                 `ranked`, 
-                `race_type`
+                `race_type`,
+                `speedrun_gsheet_id`
             ) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE
                `league_name` = VALUES(`league_name`), 
                `gsheet_id` = VALUES(`gsheet_id`),
@@ -372,7 +376,8 @@ async def write_league(league: League) -> None:
                `number_of_races` = VALUES(`number_of_races`), 
                `is_best_of` = VALUES(`is_best_of`), 
                `ranked` = VALUES(`ranked`), 
-               `race_type` = VALUES(`race_type`)
+               `race_type` = VALUES(`race_type`),
+               `speedrun_gsheet_id` = VALUES(`speedrun_gsheet_id`)
             """,
             params
         )

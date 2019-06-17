@@ -1,8 +1,11 @@
+import pytz
+
 from necrobot.gsheet.sheetrange import SheetRange
 from necrobot.gsheet.worksheetindexdata import WorksheetIndexData
 from necrobot.race import racedb
 from necrobot.speedrun import speedrundb
 from necrobot.user import userlib
+from necrobot.util import racetime
 
 
 class SpeedrunSheetIndexData(WorksheetIndexData):
@@ -43,12 +46,12 @@ class SpeedrunSheet(object):
     def wks_id(self):
         return self.column_data.wks_id
 
-    async def initialize(self, wks_name: str = None, wks_id: str = None):
+    async def initialize(self, wks_name: str = None, wks_id: str = 0):
         await self.column_data.initialize(wks_name=wks_name, wks_id=wks_id)
 
     async def overwrite_gsheet(self):
         await self.column_data.refresh_all()
-        header_row = ['Run ID', 'Racer', 'Category', 'Time', 'Date', 'Vod']
+        header_row = ['Run ID', 'Verified', 'Racer', 'Category', 'Time', 'Date', 'Vod']
 
         # Get the match data
         speedrun_data = await speedrundb.get_raw_data()
@@ -78,17 +81,27 @@ class SpeedrunSheet(object):
             race_info = await racedb.get_race_info_from_type_id(race_type=run_type_id)
             race_info_str = race_info.descriptor
 
+            # Convert run time to a string
+            run_time_str = racetime.to_str(run_time)
+
+            # Convert submission time to string
+            if submission_time is None:
+                submission_time_str = ''
+            else:
+                submission_time_str = pytz.utc.localize(submission_time).astimezone(pytz.timezone('US/Eastern'))\
+                    .strftime('%Y-%m-%d %H:%M:%S')
+
             # Convert verified info to string
             verified_str = 'Yes' if verified_bool else 'No'
 
             values.append([
                 run_id,
+                verified_str,
                 racer_user.display_name,
                 race_info_str,
-                run_time,
+                run_time_str,
+                submission_time_str,
                 vod_url,
-                submission_time,
-                verified_str
             ])
 
         await self.column_data.update_cells(

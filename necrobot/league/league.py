@@ -18,6 +18,7 @@ class League(object):
             league_name: str,
             match_info: MatchInfo,
             gsheet_id: str = None,
+            speedrun_gsheet_id: str = None,
             deadline: str = None
     ):
         self._commit = commit_fn
@@ -25,6 +26,7 @@ class League(object):
         self.name = league_name
         self.match_info = match_info
         self.gsheet_id = gsheet_id
+        self.speedrun_gsheet_id = speedrun_gsheet_id
         self.deadline = deadline
 
     @property

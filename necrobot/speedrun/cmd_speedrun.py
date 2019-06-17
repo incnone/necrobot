@@ -11,7 +11,6 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necroevent import NEDispatch
 from necrobot.gsheet.speedrunsheet import SpeedrunSheet
 from necrobot.league.leaguemgr import LeagueMgr
-from necrobot.speedrun.speedrunmgr import SpeedrunMgr
 from necrobot.user.necrouser import NecroUser
 
 
@@ -24,7 +23,7 @@ class Submit(CommandType):
         if len(allowed_category_str) >= 2:
             allowed_category_str = allowed_category_str[:-2]
         self.help_text = 'Submit a PB run for a given category. Usage is `{0} category_name category_score vod_url`, ' \
-                         'where category_name is the name of the category (e.g. `speed` or `score`); category_score ' \
+                         'where category_name is the name of the category, category_score ' \
                          'is the time or score you got, and vod_url is a full URL link to the vod for the run. The ' \
                          'allowed categories are: {1}.' \
                          .format(self.mention, allowed_category_str)
@@ -82,6 +81,10 @@ class Submit(CommandType):
             event_type='submitted_run',
         )
 
+        await cmd.channel.send(
+            'Submitted a run.'
+        )
+
 
 # class GetRuns(CommandType):
 #     def __init__(self, bot_channel):
@@ -109,7 +112,7 @@ class OverwriteSpeedrunGSheet(CommandType):
         wks_id = 0
         try:
             speedrun_sheet = await sheetlib.get_sheet(
-                gsheet_id=SpeedrunMgr().gsheet_id,
+                gsheet_id=LeagueMgr().league.speedrun_gsheet_id,
                 wks_id=wks_id,
                 sheet_type=sheetlib.SheetType.SPEEDRUN
             )  # type: SpeedrunSheet
@@ -153,12 +156,14 @@ class SetSpeedrunGSheet(CommandType):
             )
             return
 
-        SpeedrunMgr().gsheet_id = sheet_id
+        LeagueMgr().league.speedrun_gsheet_id = sheet_id
+        LeagueMgr().league.commit()
+
         await cmd.channel.send(
             'The speedrun GSheet for `{league_name}` has been set to "{sheet_name}". <{sheet_url}>'.format(
                 league_name=LeagueMgr().league.schema_name,
                 sheet_name=perm_info[1],
-                sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(SpeedrunMgr().gsheet_id)
+                sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(LeagueMgr().league.speedrun_gsheet_id)
             )
         )
 
@@ -167,8 +172,7 @@ class Verify(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'verify')
         self.help_text = 'Mark a submitted run as verified. Usage is `{0} run_id`, where `run_id` is the unique ID ' \
-                         'of the run to be verified. (See the GSheet for a list of IDs.) You may also use ' \
-                         '`{0} run_id no` to un-verify a run.'
+                         'of the run to be verified. (See the GSheet for a list of IDs.)'
         self.admin_only = True
 
     @property
@@ -176,28 +180,45 @@ class Verify(CommandType):
         return 'Mark a submitted run as verified.'
 
     async def _do_execute(self, cmd: Command) -> None:
-        if not 1 <= len(cmd.args) <= 2:
-            await cmd.channel.send(
-                'Error: `{0}` requires either one or two arguments.'.format(self.mention)
-            )
-            return
 
-        verify = True
-        if len(cmd.args) == 2:
-            if cmd.args[1].lower() == 'no':
-                verify = False
-            else:
-                await cmd.channel.send(
-                    'Error: I don\'t recognize the parameter {}.'.format(cmd.args[1])
-                )
-                return
+        await _do_verify(cmd, True)
 
-        run_id = cmd.args[0]
-        await speedrundb.set_verified(run_id=run_id, verified=verify)
 
-        if verify:
-            confirm_text = 'Verified run with ID {}.'.format(run_id)
-        else:
-            confirm_text = 'Removed verification for run with ID {}.'.format(run_id)
+class Unverify(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'unverify')
+        self.help_text = 'Mark a submitted run as unverified. Usage is `{0} run_id`, where `run_id` is the unique ID ' \
+                         'of the run to be unverified. (See the GSheet for a list of IDs.)'
+        self.admin_only = True
 
-        await cmd.channel.send(confirm_text)
+    @property
+    def short_help_text(self) -> str:
+        return 'Mark a submitted run as verified.'
+
+    async def _do_execute(self, cmd: Command) -> None:
+        await _do_verify(cmd, False)
+
+
+async def _do_verify(cmd: Command, verify: bool):
+    if len(cmd.args) != 1:
+        await cmd.channel.send(
+            'Error: This command requires exactly one argument.'
+        )
+        return
+
+    try:
+        run_id = int(cmd.args[0])
+    except ValueError:
+        await cmd.channel.send(
+            'Error: Can\'t convert {} to an integer.'.format(cmd.args[0])
+        )
+        return
+
+    await speedrundb.set_verified(run_id=run_id, verified=verify)
+
+    if verify:
+        confirm_text = 'Verified run with ID {}.'.format(run_id)
+    else:
+        confirm_text = 'Removed verification for run with ID {}.'.format(run_id)
+
+    await cmd.channel.send(confirm_text)

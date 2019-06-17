@@ -17,11 +17,11 @@ async def write_channel(channel: discord.TextChannel, outfile_name: str):
             for message in messages:
                 try:
                     outfile.write('{1} ({0}): {2}\n'.format(
-                        message.timestamp.strftime("%m/%d %H:%M:%S"), message.author.name, message.clean_content))
+                        message.created_at.strftime("%m/%d %H:%M:%S"), message.author.name, message.clean_content))
                 except UnicodeEncodeError:
                     try:
                         outfile.write('{1} ({0}): {2}\n'.format(
-                            message.timestamp.strftime("%m/%d %H:%M:%S"), message.author.name, message.content))
+                            message.created_at.strftime("%m/%d %H:%M:%S"), message.author.name, message.content))
                     except UnicodeEncodeError:
                         pass
     except UnicodeEncodeError:
