@@ -81,8 +81,8 @@ class SpeedrunSheet(object):
             race_info = await racedb.get_race_info_from_type_id(race_type=run_type_id)
             race_info_str = race_info.descriptor
 
-            # Convert run time to a string
-            run_time_str = categories.convert_score_to_text(race_info.descriptor, run_time)
+            # Convert run time to a string; note GSheet ' operator for inputting as raw (no conversion to a datetime)
+            run_time_str = "'{}".format(categories.convert_score_to_text(race_info.descriptor, run_time))
 
             # Convert submission time to string
             if submission_time is None:
