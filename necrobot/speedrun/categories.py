@@ -18,8 +18,10 @@ def get_raceinfo_for_keyword(keyword: str) -> Optional[RaceInfo]:
     race_info.private_race = True
 
     # Keyword-specific values (custom descriptor)
-    if keyword == 'story':
-        race_info.descriptor = 'CoH: Story'
+    if keyword == 'story-any':
+        race_info.descriptor = 'CoH: Story (any%)'
+    if keyword == 'story-nobs':
+        race_info.descriptor = 'CoH: Story (all instruments)'
     elif keyword == 'permadeath':
         race_info.descriptor = 'CoH: Permadeath'
     elif keyword == 'doubletempo':
@@ -34,7 +36,8 @@ def get_raceinfo_for_keyword(keyword: str) -> Optional[RaceInfo]:
 
 def convert_to_score(category_keyword: str, score: str) -> Optional[int]:
     time_categories = [
-        'story',
+        'story-any',
+        'story-nobs',
         'permadeath',
         'doubletempo'
     ]
@@ -55,7 +58,8 @@ def convert_to_score(category_keyword: str, score: str) -> Optional[int]:
 
 def convert_score_to_text(category_race_info_descriptor: str, score: int) -> Optional[str]:
     time_categories = [
-        'CoH: Story',
+        'CoH: Story (any%)'
+        'CoH: Story (all instruments)',
         'CoH: Permadeath',
         'CoH: Double Tempo'
     ]
@@ -69,7 +73,8 @@ def convert_score_to_text(category_race_info_descriptor: str, score: int) -> Opt
 
 def category_list() -> List[str]:
     return [
-        'story',
+        'story-any',
+        'story-nobs'
         'permadeath',
         'doubletempo',
         'fixedbeat',
