@@ -54,7 +54,7 @@ class Submit(CommandType):
         race_info = categories.get_raceinfo_for_keyword(category_name)
         if race_info is None:
             await cmd.channel.send(
-                'Error: I don\'t recognize the category `{0}`. Use `.help {1}` for a list of categories.'
+                'Error: I don\'t recognize the category `{0}`. Use `.help submit` for a list of categories.'
                 .format(category_name, self.mention)
             )
             return

@@ -20,7 +20,7 @@ def get_raceinfo_for_keyword(keyword: str) -> Optional[RaceInfo]:
     # Keyword-specific values (custom descriptor)
     if keyword == 'story-any':
         race_info.descriptor = 'CoH: Story (any%)'
-    if keyword == 'story-nobs':
+    elif keyword == 'story-nobs':
         race_info.descriptor = 'CoH: Story (all instruments)'
     elif keyword == 'permadeath':
         race_info.descriptor = 'CoH: Permadeath'
