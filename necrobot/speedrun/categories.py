@@ -58,7 +58,7 @@ def convert_to_score(category_keyword: str, score: str) -> Optional[int]:
 
 def convert_score_to_text(category_race_info_descriptor: str, score: int) -> Optional[str]:
     time_categories = [
-        'CoH: Story (any%)'
+        'CoH: Story (any%)',
         'CoH: Story (all instruments)',
         'CoH: Permadeath',
         'CoH: Double Tempo'
