@@ -74,7 +74,7 @@ def convert_score_to_text(category_race_info_descriptor: str, score: int) -> Opt
 def category_list() -> List[str]:
     return [
         'story-any',
-        'story-nobs'
+        'story-nobs',
         'permadeath',
         'doubletempo',
         'fixedbeat',
