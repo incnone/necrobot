@@ -19,11 +19,11 @@ async def make_private_room(race_private_info, discord_member):
 
     # Make a channel for the room
     # noinspection PyUnresolvedReferences
-    race_channel = await guild.client.create_channel(
-        guild.guild,
+    race_channel = await server.client.create_channel(
+        server.guild,
         get_raceroom_name(race_private_info.race_info),
-        discord.ChannelPermissions(target=guild.guild.default_role, overwrite=deny_read),
-        discord.ChannelPermissions(target=guild.guild.me, overwrite=permit_read),
+        discord.ChannelPermissions(target=server.guild.default_role, overwrite=deny_read),
+        discord.ChannelPermissions(target=server.guild.me, overwrite=permit_read),
         discord.ChannelPermissions(target=discord_member, overwrite=permit_read),
         type=discord.ChannelType.text
     )
