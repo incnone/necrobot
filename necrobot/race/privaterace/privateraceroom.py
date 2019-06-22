@@ -19,13 +19,14 @@ async def make_private_room(race_private_info, discord_member):
 
     # Make a channel for the room
     # noinspection PyUnresolvedReferences
+    overwrites_dict = {
+        server.guild.default_role: deny_read,
+        server.guild.me: permit_read,
+        discord_member: permit_read
+    }
     race_channel = await server.guild.create_text_channel(
-        server.guild,
-        get_raceroom_name(race_private_info.race_info),
-        discord.ChannelPermissions(target=server.guild.default_role, overwrite=deny_read),
-        discord.ChannelPermissions(target=server.guild.me, overwrite=permit_read),
-        discord.ChannelPermissions(target=discord_member, overwrite=permit_read),
-        type=discord.ChannelType.text
+        name=get_raceroom_name(race_private_info.race_info),
+        overwrites=overwrites_dict
     )
 
     if race_channel is None:
@@ -92,11 +93,11 @@ class PrivateRaceRoom(RaceRoom):
 
     # Allow the member to see the necrobot
     async def allow(self, member_or_role):
-        await self.channel.set_permissions(target=member_or_role, read_permit=True)
+        await self.channel.set_permissions(target=member_or_role, read_messages=True)
 
     # Restrict the member from seeing the necrobot
     async def deny(self, member_or_role):
-        await self.channel.set_permissions(target=member_or_role, read_permit=False)
+        await self.channel.set_permissions(target=member_or_role, read_messages=False)
 
     # True if the user has admin permissions for this race
     def _virtual_is_admin(self, member):
