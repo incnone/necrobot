@@ -162,6 +162,7 @@ async def create_league(schema_name: str) -> League:
                     {matches}.`is_best_of` AS `is_best_of`,
                     {matches}.`number_of_races` AS `number_of_races`,
                     {matches}.`autogenned` AS `autogenned`,
+                    ({matches}.`r1_confirmed` AND {matches}.`r2_confirmed`) AS `scheduled`,
                     COUNT(0) AS `num_finished`,
                     SUM((CASE
                         WHEN ({match_races}.`winner` = 1) THEN 1

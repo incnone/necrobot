@@ -92,7 +92,7 @@ class MatchupSheet(object):
             cawmentator_name = raw_match[4]
 
             cawmentator_str = 'twitch.tv/{0}'.format(cawmentator_name) if cawmentator_name else ''
-            if raw_match[3] is None:
+            if raw_match[3] is None or not raw_match[10]:
                 time_str = ''
             else:
                 time_str = pytz.utc.localize(raw_match[3]).astimezone(pytz.timezone('US/Eastern'))\

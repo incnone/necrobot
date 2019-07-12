@@ -313,7 +313,8 @@ async def get_matchview_raw_data():
                 racer_2_wins,
                 completed,
                 vod,
-                autogenned
+                autogenned,
+                scheduled
             FROM {match_info}
             ORDER BY -scheduled_time DESC
             """.format(match_info=tn('match_info'))
