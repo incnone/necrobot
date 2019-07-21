@@ -17,7 +17,7 @@ async def load_condorbot_config(necrobot):
 
     # Main Channel
     main_channel = server.find_channel(Config.MAIN_CHANNEL_NAME)
-    necrobot.register_bot_channel(main_channel, CondorMainChannel(ladder=False))
+    necrobot.register_bot_channel(main_channel, CondorMainChannel(ladder=True))
 
     # Admin Channel
     condor_admin_channel = server.find_channel(channel_name='adminchat')
