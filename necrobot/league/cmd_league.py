@@ -313,7 +313,7 @@ class MakeMatchesFromFile(CommandType):
             'Creating matches from file `{0}`... (Reading file)'.format(filename)
         )
 
-        with cmd.channel.typing():
+        async with cmd.channel.typing():
             # Store file data
             desired_match_pairs = []
             with open(file_path) as file:

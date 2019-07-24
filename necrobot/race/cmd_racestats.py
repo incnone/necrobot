@@ -14,35 +14,35 @@ class Fastest(CommandType):
                          'base-game times.'
 
     async def _do_execute(self, cmd):
-        await server.client.send_typing(cmd.channel)
-        amplified = True
+        async with cmd.channel.typing():
+            amplified = True
 
-        # Parse arguments
-        args = cmd.args
-        try:
-            base_arg_pos = args.index('nodlc')
-            amplified = False
-            args.pop(base_arg_pos)
-        except ValueError:
-            pass
+            # Parse arguments
+            args = cmd.args
+            try:
+                base_arg_pos = args.index('nodlc')
+                amplified = False
+                args.pop(base_arg_pos)
+            except ValueError:
+                pass
 
-        if len(cmd.args) != 1:
-            await cmd.channel.send(
-                '{0}: Wrong number of arguments for `.fastest`.'.format(cmd.author.mention))
-            return
+            if len(cmd.args) != 1:
+                await cmd.channel.send(
+                    '{0}: Wrong number of arguments for `.fastest`.'.format(cmd.author.mention))
+                return
 
-        ndchar = NDChar.fromstr(args[0])
-        if ndchar is None:
-            await cmd.channel.send(
-                '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, args[0]))
-            return
+            ndchar = NDChar.fromstr(args[0])
+            if ndchar is None:
+                await cmd.channel.send(
+                    '{0}: Couldn\'t parse {1} as a character.'.format(cmd.author.mention, args[0]))
+                return
 
-        infotext = await racestats.get_fastest_times_infotext(ndchar, amplified, 20)
-        infobox = 'Fastest public all-zones {2} {0} times:\n```\n{1}```'.format(
-            ndchar.name,
-            strutil.tickless(infotext),
-            'Amplified' if amplified else 'base-game')
-        await cmd.channel.send(infobox)
+            infotext = await racestats.get_fastest_times_infotext(ndchar, amplified, 20)
+            infobox = 'Fastest public all-zones {2} {0} times:\n```\n{1}```'.format(
+                ndchar.name,
+                strutil.tickless(infotext),
+                'Amplified' if amplified else 'base-game')
+            await cmd.channel.send(infobox)
 
 
 class MostRaces(CommandType):
