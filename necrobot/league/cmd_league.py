@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import os
 import pytz
@@ -263,7 +264,7 @@ class MakeMatch(CommandType):
                 cmd=cmd,
                 racer_names=[cmd.author.display_name, cmd.args[0]],
                 match_info=league.match_info,
-                allow_duplicates=False
+                allow_duplicates=True
             )
         except necrobot.exception.DuplicateMatchException:
             await cmd.channel.send(
@@ -364,6 +365,7 @@ class MakeMatchesFromFile(CommandType):
 
             for racer_pair in desired_match_pairs:
                 await make_single_match(racer_pair)
+                await asyncio.sleep(0)
 
             matches = sorted(matches, key=lambda m: m.matchroom_name)
 

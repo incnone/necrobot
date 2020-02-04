@@ -171,3 +171,46 @@ league_name (schema) -- the tables here mirror the corresponding tables in necro
     match_races -- races in this event, and data about how they relate to the match they're in
     races -- races in this event, all non-match-related data
     race_runs -- each row is a racer's data for an individual race
+
+    # Convenience Views
+    league_info -- Has exactly one row, which is the row from necrobot.leagues corresponding to this league
+    match_info -- One row per match
+        match_id: int
+            id of the match (same as matches.match_id)
+        racer_1_name: text
+            Display name of racer 1 (currently, twitch name)
+        racer_2_name: text
+            Display name of racer 2
+        scheduled_time: datetime (or NULL)
+            same as matches.scheduled_time
+        cawmentator_name: text (or NULL)
+            Display name of the cawmentator, if one (twitch name)
+        vod: text (or NULL)
+            Link to a vod for this match, if one (set via the .vod command by this matches cawmentator)
+        autogenned: boolean
+            Whether the match was auto-generated or a "challenge" match (Season 8 only)
+        is_best_of: boolean
+            Whether the match is a best-of-X (if True) or a repeat-X (if false)
+        number_of_races: int
+            X, where the match is a best-of-X or a repeat-X
+        num_finished: int
+            The number of races that have been finished in this match.
+        racer_1_wins: int
+            The number of wins racer 1 has.
+        racer_2_wins: int
+            The number of wins racer 2 has.
+        completed: boolean
+            Whether the match is completed (derived from is_best_of, number_of_races, and win counts).
+    race_summary -- One row per race
+        match_id: int
+            The ID of the match this race belongs to
+        race_number: int
+            The number the race is for this match. (match_id and race_number uniquely identify the race.)
+        winner_id: int
+            The necrobot.users.user_id of the race winner
+        loser_id: int
+            The necrobot.users.user_id of the race loser
+        winner_time: int
+            The time achieved by the race winner, in hundredths of a second, if any
+        loser_time: int
+            The time achieved by the race loser, in hundredths of a second, if any
