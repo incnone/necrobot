@@ -1,36 +1,19 @@
-import datetime
-from typing import Optional
-
 import necrobot.exception
-from necrobot.league import leaguedb
 from necrobot.botbase.manager import Manager
-from necrobot.config import Config
-from necrobot.database import dbutil
-from necrobot.util import console
-from necrobot.util.parse import dateparse
+from necrobot.league.league import League
+from necrobot.league import leaguedb
 from necrobot.util.singleton import Singleton
-from necrobot.match.matchglobals import MatchGlobals
 
 
 class LeagueMgr(Manager, metaclass=Singleton):
-    _the_league = None
+    _league_lib = dict()
 
     """Manager object for the global League, if any."""
     def __init__(self):
         pass
 
-    @property
-    def league(self):
-        return self._the_league
-
     async def initialize(self):
-        if Config.LEAGUE_NAME:
-            try:
-                await self.set_league(schema_name=Config.LEAGUE_NAME, save_to_config=False)
-            except necrobot.exception.LeagueDoesNotExist:
-                console.warning(
-                    'League "{0}" does not exist.'.format(Config.LEAGUE_NAME)
-                )
+        await self._recover_leagues()
 
     async def refresh(self):
         pass
@@ -42,59 +25,60 @@ class LeagueMgr(Manager, metaclass=Singleton):
         pass
 
     @classmethod
-    async def create_league(cls, schema_name: str, save_to_config=True):
+    async def make_league(cls, league_tag: str, **kwargs) -> League:
+        # noinspection PyIncorrectDocstring
         """Registers a new league
         
         Parameters
         ----------
-        schema_name: str
-            The schema name for the league
-        save_to_config: bool
-            Whether to make this the default league, i.e., save the schema name to the bot's config file
-    
+        league_tag: str
+            A unique tag for the league, used for commands (e.g. "coh")
+        league_name: str
+            The name of the league (e.g. "Cadence of Hyrule Story Mode"
+        match_info: MatchInfo
+            The default MatchInfo for a match in this league
+        gsheet_id: str
+            The GSheet ID of the standings sheet for this league
+
         Raises
         ------
-        necrobot.database.leaguedb.LeagueAlreadyExists
-            If the schema name refers to a registered league
-        necrobot.database.leaguedb.InvalidSchemaName
-            If the schema name is not a valid MySQL schema name
+        LeagueAlreadyExists: If the league tag is already registered to a league
         """
-        cls._the_league = await leaguedb.create_league(schema_name)
-        dbutil.league_schema_name = schema_name
 
-        if save_to_config:
-            Config.LEAGUE_NAME = schema_name
-            Config.write()
+        if league_tag in cls._league_lib:
+            raise necrobot.exception.LeagueAlreadyExists()
+
+        league = League(league_tag=league_tag, commit_fn=leaguedb.write_league, **kwargs)
+        league.commit()
+        cls._league_lib[league_tag] = league
+        return league
 
     @classmethod
-    async def set_league(cls, schema_name: str, save_to_config=True):
-        """Set the current league
-        
+    async def get_league(cls, league_tag: str) -> League:
+        """Registers a new league
+
         Parameters
         ----------
-        schema_name: str
-            The schema name for the league
-        save_to_config: bool
-            Whether to make this the default league, i.e., save the schema name to the bot's config file
-    
+        league_tag: str
+            The unique tag for the league
+
         Raises
         ------
-        necrobot.database.leaguedb.LeagueDoesNotExist
-            If the schema name does not refer to a registered league
+        LeagueDoesNotExist: If the league tag is already registered to a league
         """
-        cls._the_league = await leaguedb.get_league(schema_name)
-        dbutil.league_schema_name = schema_name
+        if league_tag in cls._league_lib:
+            return cls._league_lib[league_tag]
 
-        MatchGlobals().set_deadline_fn(LeagueMgr.deadline)
+        return await leaguedb.get_league(league_tag)
 
-        if save_to_config:
-            Config.LEAGUE_NAME = schema_name
-            Config.write()
+    @classmethod
+    async def assign_match_to_league(cls, match_id: int, league_tag: str):
+        # Check that it's a valid league
+        await cls.get_league(league_tag)
 
-    @staticmethod
-    def deadline() -> Optional[datetime.datetime]:
-        if LeagueMgr._the_league is not None:
-            deadline_str = LeagueMgr._the_league.deadline
-            if deadline_str is not None:
-                return dateparse.parse_datetime(deadline_str)
-        return None
+        await leaguedb.assign_match(match_id, league_tag)
+
+    async def _recover_leagues(self):
+        self._league_lib = dict()
+        for league in await leaguedb.get_all_leagues():
+            self._league_lib[league.tag] = league

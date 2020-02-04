@@ -47,6 +47,14 @@ class DatabaseException(NecroException):
     pass
 
 
+class SchemaAlreadyExists(DatabaseException):
+    pass
+
+
+class SchemaDoesNotExist(DatabaseException):
+    pass
+
+
 class LeagueAlreadyExists(DatabaseException):
     pass
 

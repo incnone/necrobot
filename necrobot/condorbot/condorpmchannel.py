@@ -21,7 +21,7 @@ class CondorPMChannel(BotChannel):
             cmd_leaguestats.LeagueFastest(self),
             cmd_leaguestats.LeagueStats(self),
 
-            cmd_speedrun.Submit(self),
+            # cmd_speedrun.Submit(self),
 
             cmd_user.RTMP(self),
             cmd_user.SetInfo(self),

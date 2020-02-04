@@ -14,24 +14,16 @@ class League(object):
     def __init__(
             self,
             commit_fn: types.FunctionType,
-            schema_name: str,
+            league_tag: str,
             league_name: str,
             match_info: MatchInfo,
             gsheet_id: str = None,
-            speedrun_gsheet_id: str = None,
-            deadline: str = None
     ):
         self._commit = commit_fn
-        self._schema_name = schema_name
+        self.tag = league_tag
         self.name = league_name
         self.match_info = match_info
         self.gsheet_id = gsheet_id
-        self.speedrun_gsheet_id = speedrun_gsheet_id
-        self.deadline = deadline
-
-    @property
-    def schema_name(self):
-        return self._schema_name
 
     def commit(self):
         asyncio.ensure_future(self._commit(self))

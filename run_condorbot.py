@@ -26,9 +26,9 @@ async def load_condorbot_config(necrobot):
     necrobot.register_bot_channel(condor_admin_channel, CondorAdminChannel())
 
     # Managers (Order is important!)
+    necrobot.register_manager(CondorMgr())
     necrobot.register_manager(LeagueMgr())
     necrobot.register_manager(MatchMgr())
-    necrobot.register_manager(CondorMgr())
 
     # Ratings
     ratingutil.init()

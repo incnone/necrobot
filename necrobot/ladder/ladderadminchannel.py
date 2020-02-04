@@ -1,3 +1,4 @@
+import condorbot.cmd_event
 from necrobot.botbase import cmd_seedgen
 from necrobot.botbase.botchannel import BotChannel
 from necrobot.ladder import cmd_ladder
@@ -14,8 +15,8 @@ class LadderAdminChannel(BotChannel):
             cmd_league.CloseFinished(self),
             cmd_league.GetCurrentEvent(self),
             cmd_league.GetMatchRules(self),
-            cmd_league.ScrubDatabase(self),
-            cmd_league.SetCondorEvent(self),
+            condorbot.cmd_event.ScrubDatabase(self),
+            condorbot.cmd_event.SetCondorEvent(self),
             cmd_league.SetEventName(self),
             cmd_league.SetMatchRules(self),
 

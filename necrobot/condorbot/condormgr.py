@@ -1,9 +1,14 @@
 import asyncio
+import datetime
 import unittest
+from typing import Optional
 
+import necrobot.exception
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
 from necrobot.config import Config
+from necrobot.condorbot import condordb
+from necrobot.database import dbutil
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
@@ -12,7 +17,9 @@ from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguestats
 from necrobot.match import matchutil
 from necrobot.match.match import Match
-from necrobot.util import server, strutil, rtmputil
+from necrobot.match.matchglobals import MatchGlobals
+from necrobot.util import console, server, strutil, rtmputil
+from necrobot.util.parse import dateparse
 from necrobot.util.singleton import Singleton
 
 
@@ -23,6 +30,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         self._notifications_channel = None
         self._schedule_channel = None
         self._client = None
+        self._event = None
         NEDispatch().subscribe(self)
 
     async def initialize(self):
@@ -31,13 +39,22 @@ class CondorMgr(Manager, metaclass=Singleton):
         self._schedule_channel = server.find_channel(channel_name=Config.SCHEDULE_CHANNEL_NAME)
         self._client = server.client
 
-        await self.update_schedule_channel()
+        if Config.LEAGUE_NAME:
+            try:
+                self._event = condordb.get_event(Config.LEAGUE_NAME)
+            except necrobot.exception.SchemaDoesNotExist:
+                console.warning('League "{0}" does not exist.'.format(Config.LEAGUE_NAME))
+        else:
+            console.warning('No league given in Config.')
+
+        # TODO: this has to be done after matches are initted, otherwise it's useless!
+        # await self._update_schedule_channel()
 
     async def refresh(self):
         self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
         self._schedule_channel = server.find_channel(channel_name=Config.SCHEDULE_CHANNEL_NAME)
         self._client = server.client
-        await self.update_schedule_channel()
+        await self._update_schedule_channel()
 
     async def close(self):
         pass
@@ -72,9 +89,9 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'match_alert':
             if ev.final:
-                await self.match_alert(ev.match)
+                await self._match_alert(ev.match)
             else:
-                await self.cawmentator_alert(ev.match)
+                await self._cawmentator_alert(ev.match)
 
         elif ev.event_type == 'notify':
             if self._notifications_channel is not None:
@@ -88,17 +105,13 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'schedule_match':
             asyncio.ensure_future(self._overwrite_gsheet())
-            asyncio.ensure_future(self.update_schedule_channel())
+            asyncio.ensure_future(self._update_schedule_channel())
 
         elif ev.event_type == 'set_cawmentary':
             asyncio.ensure_future(self._overwrite_gsheet())
 
         elif ev.event_type == 'set_vod':
             asyncio.ensure_future(self._overwrite_gsheet())
-            # Old code for on-sheet updates; deprecated
-            # if ev.match.sheet_id is not None:
-            #     sheet = await self._get_gsheet(wks_id=ev.match.sheet_id)
-            #     await sheet.set_vod(match=ev.match, vod_link=ev.url)
             cawmentator = await ev.match.get_cawmentator()
             await self._main_channel.send(
                 '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
@@ -111,6 +124,85 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'submitted_run':
             asyncio.ensure_future(self._overwrite_speedrun_sheet())
+
+    @property
+    def has_event(self):
+        return self._event.schema_name is not None
+
+    @property
+    def event_name(self):
+        return self._event.event_name
+
+    async def create_event(self, schema_name: str, save_to_config=True):
+        """Registers a new CoNDOR event
+
+        Parameters
+        ----------
+        schema_name: str
+            The schema name for the event
+        save_to_config: bool
+            Whether to make this the default event, i.e., save the schema name to the bot's config file
+
+        Raises
+        ------
+        necrobot.database.leaguedb.SchemaAlreadyExists
+            If the schema name already exists in the database
+        necrobot.database.leaguedb.InvalidSchemaName
+            If the schema name is not a valid MySQL schema name
+        """
+        self._event = await condordb.create_event(schema_name)
+        dbutil.league_schema_name = schema_name
+
+        if save_to_config:
+            Config.LEAGUE_NAME = schema_name
+            Config.write()
+
+    async def set_event(self, schema_name: str, save_to_config=True):
+        """Set the current CoNDOR event
+
+        Parameters
+        ----------
+        schema_name: str
+            The schema name for the league
+        save_to_config: bool
+            Whether to make this the default league, i.e., save the schema name to the bot's config file
+
+        Raises
+        ------
+        necrobot.database.leaguedb.LeagueDoesNotExist
+            If the schema name does not refer to a registered league
+        """
+        if not condordb.is_condor_event(Config.LEAGUE_NAME):
+            raise necrobot.exception.SchemaDoesNotExist('Schema "{0}" does not exist.'.format(schema_name))
+
+        self._event = condordb.get_event(schema_name=schema_name)
+        dbutil.league_schema_name = schema_name
+        MatchGlobals().set_deadline_fn(lambda: self.deadline())
+
+        if save_to_config:
+            Config.LEAGUE_NAME = schema_name
+            Config.write()
+
+    async def set_deadline(self, deadline_str):
+        await condordb.set_event_params(self._event.schema_name, deadline=deadline_str)
+        self._event.deadline_str = deadline_str
+
+    async def set_event_name(self, event_name):
+        await condordb.set_event_params(self._event.schema_name, event_name=event_name)
+        self._event.event_name = event_name
+
+    @property
+    def schema_name(self) -> Optional[str]:
+        return self._event.schema_name
+
+    @property
+    def deadline_str(self) -> Optional[str]:
+        return self._event.deadline_str
+
+    def deadline(self) -> Optional[datetime.datetime]:
+        if self._event.deadline_str is not None:
+            return dateparse.parse_datetime(self._event.deadline_str)
+        return None
 
     async def _overwrite_gsheet(self):
         # noinspection PyShadowingNames
@@ -143,7 +235,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         )
 
     @staticmethod
-    async def cawmentator_alert(match: Match):
+    async def _cawmentator_alert(match: Match):
         """PM an alert to the match cawmentator, if any, that the match is soon to begin
         
         Parameters
@@ -173,7 +265,7 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         await cawmentator.member.send(alert_text)
 
-    async def match_alert(self, match: Match) -> None:
+    async def _match_alert(self, match: Match) -> None:
         """Post an alert that the match is about to begin in the main channel
         
         Parameters
@@ -200,7 +292,7 @@ class CondorMgr(Manager, metaclass=Singleton):
             )
         )
 
-    async def update_schedule_channel(self):
+    async def _update_schedule_channel(self):
         infotext = await matchutil.get_schedule_infotext()
 
         # Find the message:
@@ -242,4 +334,4 @@ class TestCondorMgr(unittest.TestCase):
 
     @async_test(asyncio.get_event_loop())
     async def test_cawmentary_pm(self):
-        await CondorMgr().cawmentator_alert(self.fake_match)
+        await CondorMgr()._cawmentator_alert(self.fake_match)

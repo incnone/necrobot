@@ -21,9 +21,9 @@ def invalidate_cache():
     match_library = {}
 
 
-# noinspection PyIncorrectDocstring
-async def make_match(*args, register=False, update=False, **kwargs) -> Optional[Match]:
-    """Create a Match object. 
+async def make_match(register=False, update=False, **kwargs) -> Optional[Match]:
+    # noinspection PyIncorrectDocstring
+    """Create a Match object.
 
     Parameters
     ----------
@@ -70,7 +70,7 @@ async def make_match(*args, register=False, update=False, **kwargs) -> Optional[
             await cached_match.commit()
         return cached_match
 
-    match = Match(*args, commit_fn=matchdb.write_match, **kwargs)
+    match = Match(commit_fn=matchdb.write_match, **kwargs)
     await match.initialize()
     if register:
         await match.commit()
