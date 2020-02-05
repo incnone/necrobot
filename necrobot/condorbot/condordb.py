@@ -270,11 +270,11 @@ async def create_event(schema_name: str) -> CondorEvent:
 
         cursor.execute(
             """
-            CREATE VIEW {league_info} AS
+            CREATE VIEW {event_info} AS
                 SELECT *
-                FROM `leagues`
-                WHERE (`leagues`.`schema_name` = %s)
-            """.format(league_info=tablename('league_info')),
+                FROM `events`
+                WHERE (`events`.`schema_name` = %s)
+            """.format(event_info=tablename('event_info')),
             params
         )
 

@@ -1,9 +1,9 @@
 import necrobot.exception
-from botbase.command import Command
-from botbase.commandtype import CommandType
-from condorbot.condormgr import CondorMgr
-from match import matchdb, matchutil
-from util.parse import dateparse
+from necrobot.botbase.command import Command
+from necrobot.botbase.commandtype import CommandType
+from necrobot.condorbot.condormgr import CondorMgr
+from necrobot.match import matchdb, matchutil
+from necrobot.util.parse import dateparse
 
 
 class ScrubDatabase(CommandType):
@@ -54,6 +54,31 @@ class Deadline(CommandType):
                 deadline_str=deadline_str,
                 deadline=deadline
             )
+        )
+
+
+class GetCurrentEvent(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'eventinfo')
+        self.help_text = 'Get the identifier and name of the current CoNDOR event.' \
+            .format(self.mention)
+        self.admin_only = True
+
+    async def _do_execute(self, cmd: Command):
+        event = CondorMgr().event
+        if event is None:
+            await cmd.channel.send(
+                'Error: The current event (`{0}`) does not exist.'
+            )
+            return
+
+        await cmd.channel.send(
+            '```\n'
+            'Current event:\n'
+            '        ID: {0}\n'
+            '      Name: {1}\n'
+            '  Deadline: {2}\n'
+            '```'.format(event.schema_name, event.event_name, event.deadline_str)
         )
 
 
@@ -123,7 +148,7 @@ class SetCondorEvent(CommandType):
             )
             return
 
-        event_name = CondorMgr().event_name
+        event_name = CondorMgr().event.event_name
         league_name_str = ' ({0})'.format(event_name) if event_name is not None else ''
         await cmd.channel.send(
             'Set the current CoNDOR event to `{0}`{1}.'.format(schema_name, league_name_str)

@@ -77,7 +77,7 @@ async def get_league(league_tag: str) -> League:
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
                `race_types`.`amplified`, 
-               `race_types`.`seed_fixed`,
+               `race_types`.`seed_fixed`
             FROM {leagues}
             LEFT JOIN `race_types` ON `leagues`.`race_type` = `race_types`.`type_id` 
             WHERE {leagues}.`league_tag` = %s 
@@ -88,15 +88,15 @@ async def get_league(league_tag: str) -> League:
         for row in cursor:
             race_info = RaceInfo()
             if row[5] is not None:
-                race_info.set_char(row[6])
+                race_info.set_char(row[5])
             if row[6] is not None:
-                race_info.descriptor = row[7]
+                race_info.descriptor = row[6]
             if row[7] is not None:
-                race_info.seeded = bool(row[8])
+                race_info.seeded = bool(row[7])
             if row[8] is not None:
-                race_info.amplified = bool(row[9])
+                race_info.amplified = bool(row[8])
             if row[9] is not None:
-                race_info.seed_fixed = bool(row[10])
+                race_info.seed_fixed = bool(row[9])
 
             match_info = MatchInfo(
                 max_races=int(row[2]) if row[2] is not None else None,
@@ -130,7 +130,7 @@ async def get_all_leagues() -> List[League]:
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
                `race_types`.`amplified`, 
-               `race_types`.`seed_fixed`,
+               `race_types`.`seed_fixed`
             FROM {leagues}
             LEFT JOIN `race_types` ON `leagues`.`race_type` = `race_types`.`type_id` 
             """.format(leagues=tn('leagues'))
@@ -139,15 +139,15 @@ async def get_all_leagues() -> List[League]:
         for row in cursor:
             race_info = RaceInfo()
             if row[5] is not None:
-                race_info.set_char(row[6])
+                race_info.set_char(row[5])
             if row[6] is not None:
-                race_info.descriptor = row[7]
+                race_info.descriptor = row[6]
             if row[7] is not None:
-                race_info.seeded = bool(row[8])
+                race_info.seeded = bool(row[7])
             if row[8] is not None:
-                race_info.amplified = bool(row[9])
+                race_info.amplified = bool(row[8])
             if row[9] is not None:
-                race_info.seed_fixed = bool(row[10])
+                race_info.seed_fixed = bool(row[9])
 
             match_info = MatchInfo(
                 max_races=int(row[2]) if row[2] is not None else None,

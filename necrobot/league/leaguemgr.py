@@ -1,7 +1,10 @@
+from typing import Optional
+
 import necrobot.exception
 from necrobot.botbase.manager import Manager
 from necrobot.league.league import League
 from necrobot.league import leaguedb
+from necrobot.match.matchinfo import MatchInfo
 from necrobot.util.singleton import Singleton
 
 
@@ -25,7 +28,13 @@ class LeagueMgr(Manager, metaclass=Singleton):
         pass
 
     @classmethod
-    async def make_league(cls, league_tag: str, **kwargs) -> League:
+    async def make_league(
+            cls,
+            league_tag: str,
+            league_name: str,
+            match_info: Optional[MatchInfo] = None,
+            gsheet_id: str = None
+    ) -> League:
         # noinspection PyIncorrectDocstring
         """Registers a new league
         
@@ -48,7 +57,16 @@ class LeagueMgr(Manager, metaclass=Singleton):
         if league_tag in cls._league_lib:
             raise necrobot.exception.LeagueAlreadyExists()
 
-        league = League(league_tag=league_tag, commit_fn=leaguedb.write_league, **kwargs)
+        if match_info is None:
+            match_info = MatchInfo()
+
+        league = League(
+            commit_fn=leaguedb.write_league,
+            league_tag=league_tag,
+            league_name=league_name,
+            match_info=match_info,
+            gsheet_id=gsheet_id
+        )
         league.commit()
         cls._league_lib[league_tag] = league
         return league

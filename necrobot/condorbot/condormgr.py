@@ -22,6 +22,8 @@ from necrobot.util import console, server, strutil, rtmputil
 from necrobot.util.parse import dateparse
 from necrobot.util.singleton import Singleton
 
+print('import cmgr')
+
 
 class CondorMgr(Manager, metaclass=Singleton):
     """Manager object for the CoNDOR Events server"""
@@ -41,7 +43,8 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         if Config.LEAGUE_NAME:
             try:
-                self._event = condordb.get_event(Config.LEAGUE_NAME)
+                await self.set_event(Config.LEAGUE_NAME)
+                console.info('Event recovered: "{0}"'.format(self._event.schema_name))
             except necrobot.exception.SchemaDoesNotExist:
                 console.warning('League "{0}" does not exist.'.format(Config.LEAGUE_NAME))
         else:
@@ -130,8 +133,8 @@ class CondorMgr(Manager, metaclass=Singleton):
         return self._event.schema_name is not None
 
     @property
-    def event_name(self):
-        return self._event.event_name
+    def event(self):
+        return self._event
 
     async def create_event(self, schema_name: str, save_to_config=True):
         """Registers a new CoNDOR event
@@ -172,10 +175,10 @@ class CondorMgr(Manager, metaclass=Singleton):
         necrobot.database.leaguedb.LeagueDoesNotExist
             If the schema name does not refer to a registered league
         """
-        if not condordb.is_condor_event(Config.LEAGUE_NAME):
+        if not await condordb.is_condor_event(Config.LEAGUE_NAME):
             raise necrobot.exception.SchemaDoesNotExist('Schema "{0}" does not exist.'.format(schema_name))
 
-        self._event = condordb.get_event(schema_name=schema_name)
+        self._event = await condordb.get_event(schema_name=schema_name)
         dbutil.league_schema_name = schema_name
         MatchGlobals().set_deadline_fn(lambda: self.deadline())
 

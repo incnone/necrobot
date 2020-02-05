@@ -66,6 +66,7 @@ class CloseFinished(CommandType):
 
 
 class DropRacer(CommandType):
+    # TODO: Update this command for multiple leagues (so that racers can be dropped from a single league only)
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'dropracer')
         self.help_text = '`{0} racername`: Drop a racer from all current match channels and delete the matches. ' \
@@ -106,55 +107,116 @@ class DropRacer(CommandType):
             )
 
 
-class GetCurrentEvent(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'eventinfo')
-        self.help_text = 'Get the identifier and name of the current CoNDOR event.' \
-            .format(self.mention)
-        self.admin_only = True
-
-    async def _do_execute(self, cmd: Command):
-        league = LeagueMgr().league
-        if league is None:
-            await cmd.channel.send(
-                'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
-            )
-            return
-
-        await cmd.channel.send(
-            '```\n'
-            'Current event:\n'
-            '    ID: {0}\n'
-            '  Name: {1}\n'
-            '```'.format(league.schema_name, league.name)
-        )
-
-
-class GetMatchRules(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'rules')
-        self.help_text = "Get the current event's default match rules."
-        self.admin_only = True
-
-    async def _do_execute(self, cmd: Command):
-        league = LeagueMgr().league
-        if league is None:
-            await cmd.channel.send(
-                'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
-            )
-            return
-
-        await cmd.channel.send(
-            'Current event (`{0}`) default rules: {1}'.format(league.schema_name, league.match_info.format_str)
-        )
-
-
 class ForceMakeMatch(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'f-makematch')
         self.help_text = 'Create a new match room between two racers with ' \
-                         '`{0} racer_1_name racer_2_name`.'.format(self.mention)
+                         '`{0} league_tag racer_1_name racer_2_name`.'.format(self.mention)
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Create new match room.'
+
+    async def _do_execute(self, cmd):
+        # Parse arguments
+        if len(cmd.args) != 3:
+            await cmd.channel.send(
+                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: The league with tag `{0}` does not exist.'.format(league_tag)
+            )
+            return
+
+        new_match = await cmd_matchmake.make_match_from_cmd(
+            cmd=cmd,
+            racer_names=[cmd.args[1], cmd.args[2]],
+            match_info=league.match_info
+        )
+        if new_match is not None:
+            await LeagueMgr().assign_match_to_league(match_id=new_match.match_id, league_tag=league_tag)
+            await NEDispatch().publish(event_type='create_match', match=new_match)
+
+
+class GetLeagueInfo(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'leagueinfo')
+        self.help_text = '`{0}` league_tag: Display the given league\'s info.'.format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Get league info.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1:
+            await cmd.channel.send('Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag=league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send('Error: League `{0}` does not exist.'.format(league_tag))
+            return
+
+        await cmd.channel.send(
+            '```\n'
+            '{name}\n'
+            '     Tag: {tag}\n'
+            '  Format: {match_info}\n'
+            '```'.format(
+                name=league.name,
+                tag=league.tag,
+                match_info=league.match_info.format_str
+            )
+        )
+
+
+class MakeLeague(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makeleague')
+        self.help_text = '`{0}` league_tag: Make a new league with the given tag. Tags must be short. ' \
+                         'Example: `.makeleague coh`.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Create new league.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1:
+            await cmd.channel.send('Error: Wrong number of arguments for `{0}`.'.format(self.mention))
+            return
+
+        league_tag = cmd.args[0]
+        # TODO implement this check properly
+        if len(league_tag) > 8:
+            await cmd.channel.send('Error: Tag `{0}` is too long.'.format(league_tag))
+            return
+
+        try:
+            await LeagueMgr.make_league(league_tag=league_tag, league_name=league_tag)
+        except necrobot.exception.LeagueAlreadyExists:
+            await cmd.channel.send('Error: The league tag `{0}` already exists.'.format(league_tag))
+            return
+
+        await cmd.channel.send('League with tag `{0}` created.'.format(league_tag))
+
+
+class MakeMatch(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makematch')
+        self.help_text = '`{0} league_tag username`: Make a new match in the given league between yourself and the ' \
+                         'given user.' \
+                         .format(self.mention)
 
     @property
     def short_help_text(self):
@@ -167,46 +229,16 @@ class ForceMakeMatch(CommandType):
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        league = LeagueMgr().league
-        if league is None:
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
             await cmd.channel.send(
-                'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
-            )
-            return
-
-        new_match = await cmd_matchmake.make_match_from_cmd(
-            cmd=cmd,
-            racer_names=[cmd.args[0], cmd.args[1]],
-            match_info=league.match_info
-        )
-        if new_match is not None:
-            await NEDispatch().publish(event_type='create_match', match=new_match)
-
-
-class MakeMatch(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'makematch')
-        self.help_text = '`{0}` username: Make a new match between yourself and the given user.'.format(self.mention)
-
-    @property
-    def short_help_text(self):
-        return 'Create new match room.'
-
-    async def _do_execute(self, cmd):
-        # Parse arguments
-        if len(cmd.args) != 1:
-            await cmd.channel.send(
-                'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
-            return
-
-        league = LeagueMgr().league
-        if league is None:
-            await cmd.channel.send(
-                'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
-            )
+                'Error: League with tag `{0}` does not exist.'.format(league_tag))
             return
 
         # Make the match
+        # TODO only check for duplicates within-league
         try:
             new_match = await cmd_matchmake.make_match_from_cmd(
                 cmd=cmd,
@@ -224,27 +256,38 @@ class MakeMatch(CommandType):
             return
 
         if new_match is not None:
+            await LeagueMgr().assign_match_to_league(match_id=new_match.match_id, league_tag=league_tag)
             await NEDispatch().publish(event_type='create_match', match=new_match)
 
 
 class MakeMatchesFromFile(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'makematchesfromfile')
-        self.help_text = '`{0}` filename: Make a set of matches as given in the filename. The file should be a .csv ' \
-            'file, one match per row, whose rows are of the form `racer_1_name,racer_2_name`.'.format(self.mention)
+        self.help_text = '`{0} league_tag filename`: Make a set of matches as given in the filename. The file should ' \
+                         'be a .csv file, one match per row, whose rows are of the form `racer_1_name,racer_2_name`.' \
+                         .format(self.mention)
+        self.admin_only = True
 
     @property
     def short_help_text(self):
         return 'Make a set of matches from a file.'
 
     async def _do_execute(self, cmd):
-        if len(cmd.args) != 1:
+        if len(cmd.args) != 2:
             await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
 
-        filename = cmd.args[0]
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: League with tag `{0}` does not exist.'.format(league_tag))
+            return
+
+        filename = cmd.args[1]
         if not filename.endswith('.csv'):
             await cmd.channel.send(
                 'Matchup file should be a `.csv` file.'
@@ -257,7 +300,7 @@ class MakeMatchesFromFile(CommandType):
             )
             return
 
-        match_info = LeagueMgr().league.match_info
+        match_info = league.match_info
         status_message = await cmd.channel.send(
             'Creating matches from file `{0}`... (Reading file)'.format(filename)
         )
@@ -325,6 +368,7 @@ class MakeMatchesFromFile(CommandType):
             # Create match channels
             for match in matches:
                 console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
+                await LeagueMgr().assign_match_to_league(match_id=match.match_id, league_tag=league_tag)
                 new_room = await matchchannelutil.make_match_room(match=match, register=False)
                 await new_room.send_channel_start_text()
 
@@ -388,9 +432,7 @@ class Register(CommandType):
 class SetLeagueName(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'set-league-name')
-        self.help_text = '`{0} event_name`: Set the name of bot\'s current event. Note: This does not ' \
-                         'change or create a new event! Use `.register-condor-event` and `.set-condor-event`.' \
-            .format(self.mention)
+        self.help_text = '`{0} league_tag "league_name"`: Set the name of the given league.'.format(self.mention)
         self.admin_only = True
 
     @property
@@ -398,36 +440,62 @@ class SetLeagueName(CommandType):
         return 'Change a league\'s name.'
 
     async def _do_execute(self, cmd: Command):
-        pass
-        # TODO
+        if len(cmd.args) != 2:
+            await cmd.channel.send(
+                'Error: Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: League with tag `{0}` does not exist.'.format(league_tag)
+            )
+            return
+
+        league.name = cmd.args[1]
+        league.commit()
+        await cmd.channel.send(
+            'Set name of league `{0}` to "{1}".'.format(league_tag, league.name)
+        )
 
 
 class SetMatchRules(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setrules')
         self.help_text = \
-            'Set the current event\'s default match rules. Flags:\n' \
+            '`{0} tag flags`: Set the tagged league\'s default match rules. Flags:\n' \
             '`bestof X | repeat X`: Set the match to be a best-of-X or a repeat-X.\n' \
             '`charname`: Set the default match character.\n' \
             '`u | s | seed X`: Set the races to be unseeded, seeded, or with a fixed seed.\n' \
             '`custom desc`: Give the matches a custom description.\n' \
-            '`nodlc`: Matches are marked as being without the Amplified DLC.'
+            '`nodlc`: Matches are marked as being without the Amplified DLC.'.format(self.mention)
         self.admin_only = True
 
     @property
     def short_help_text(self):
-        return 'Set current event\'s default match rules.'
+        return 'Set tagged league\'s default match rules.'
 
     async def _do_execute(self, cmd: Command):
-        league = LeagueMgr().league
-        if league is None:
+        if len(cmd.args) < 1:
             await cmd.channel.send(
-                'Error: The current event (`{0}`) does not exist.'.format(Config.LEAGUE_NAME)
+                'Error: No arguments given!'
+            )
+            return
+
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: League `{}` does not exist.'.format(league_tag)
             )
             return
 
         try:
-            match_info = matchinfo.parse_args(cmd.args)
+            match_info = matchinfo.parse_args(cmd.args[1:])
         except necrobot.exception.ParseException as e:
             await cmd.channel.send(
                 'Error parsing inputs: {0}'.format(e)
@@ -437,5 +505,5 @@ class SetMatchRules(CommandType):
         league.match_info = match_info
         league.commit()
         await cmd.channel.send(
-            'Set the default match rules for `{0}` to {1}.'.format(league.schema_name, match_info.format_str)
+            'Set the default match rules for `{0}` to {1}.'.format(league.tag, match_info.format_str)
         )

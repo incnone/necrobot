@@ -4,10 +4,7 @@ from necrobot.match.matchinfo import MatchInfo
 
 
 class League(object):
-    """A league, which is a group of matches and/or races all stored in a common database.
-    
-    Current policy is that there can only be a single active league. Therefore, it should not be necessary to construct 
-    these manually; use LeagueManager to get the currently active league.
+    """A league, which is a group of matches using the same MatchInfo and possibly recorded to some GSheet.
     
     WARNING: You must call commit() after making changes if you want the changes to be saved to the database.
     """
