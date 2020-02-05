@@ -7,7 +7,6 @@ import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necroevent import NEDispatch
-from necrobot.config import Config
 from necrobot.league import leaguedb
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match import matchutil, cmd_matchmake, matchinfo, matchchannelutil
@@ -238,11 +237,12 @@ class MakeMatch(CommandType):
             return
 
         # Make the match
-        # TODO only check for duplicates within-league
+        # TODO Check for duplicates within-league
+        other_racer_name = cmd.args[1]
         try:
             new_match = await cmd_matchmake.make_match_from_cmd(
                 cmd=cmd,
-                racer_names=[cmd.author.display_name, cmd.args[0]],
+                racer_names=[cmd.author.display_name, other_racer_name],
                 match_info=league.match_info,
                 allow_duplicates=True
             )
@@ -250,7 +250,7 @@ class MakeMatch(CommandType):
             await cmd.channel.send(
                 'A match between `{r1}` and `{r2}` already exists! Contact incnone if this is in error.'.format(
                     r1=cmd.author.display_name,
-                    r2=cmd.args[0]
+                    r2=other_racer_name
                 )
             )
             return

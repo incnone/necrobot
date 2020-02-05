@@ -197,7 +197,7 @@ async def assign_match(match_id: int, league_tag: str):
                 (`match_id`, `league_tag`)
             VALUES (%s, %s)
             ON DUPLICATE KEY UPDATE
-                `match_id` = VALUES(`match_id`)
+                `match_id` = VALUES(`match_id`),
                 `league_tag` = VALUES(`league_tag`)
             """.format(league_matches=tn('league_matches')),
             params
