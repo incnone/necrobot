@@ -86,16 +86,6 @@ matchdb
         matchracedata
     race/
         racedb
-matchfindparse
-    exception
-    match/
-        match
-        matchdb
-        matchutil
-    user/
-        userlib
-        parse/
-            dateparse
 matchinfo
     exception
     race/

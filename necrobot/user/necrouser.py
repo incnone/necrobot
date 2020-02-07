@@ -153,18 +153,24 @@ class NecroUser(object):
 
     @property
     def infotext(self) -> str:
-        if self.twitch_name == self.rtmp_name:
-            return '  Twitch/RTMP: {0}\n' \
-                   '     Timezone: {1}'.format(
-                    self.rtmp_name,
-                    self.timezone)
-        else:
-            return '    Twitch: {0}\n' \
-                   '      RTMP: {1}\n' \
-                   '  Timezone: {2}'.format(
+        return '    Twitch: {0}\n' \
+               '  Timezone: {1}' \
+               .format(
                     self.twitch_name,
-                    self.rtmp_name,
-                    self.timezone)
+                    self.timezone
+               )
+        # if self.twitch_name == self.rtmp_name:
+        #     return '  Twitch/RTMP: {0}\n' \
+        #            '     Timezone: {1}'.format(
+        #             self.rtmp_name,
+        #             self.timezone)
+        # else:
+        #     return '    Twitch: {0}\n' \
+        #            '      RTMP: {1}\n' \
+        #            '  Timezone: {2}'.format(
+        #             self.twitch_name,
+        #             self.rtmp_name,
+        #             self.timezone)
 
     @property
     def infobox(self) -> str:

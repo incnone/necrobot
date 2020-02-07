@@ -20,7 +20,8 @@ LeagueAlreadyExists
 LeagueDoesNotExist
 InvalidSchemaName
 """
-from typing import List
+import datetime
+from typing import Optional, List
 
 import necrobot.exception
 from necrobot.database.dbconnect import DBConnect
@@ -248,3 +249,162 @@ async def write_league(league: League) -> None:
             """.format(leagues=tn('leagues')),
             params
         )
+
+
+async def get_matchstats_raw(league_tag: str, user_id: int) -> list:
+    params = (user_id, league_tag,)
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) AS wins,
+                MIN(winner_time) AS best_win,
+                AVG(winner_time) AS average_win
+            FROM {race_summary}
+            INNER JOIN {league_matches} ON {league_matches}.`match_id` = {race_summary}.`match_id`
+            WHERE {race_summary}.`winner_id` = %s AND {league_matches}.`league_tag` = %s
+            LIMIT 1
+            """.format(race_summary=tn('race_summary'), league_matches=tn('league_matches')),
+            params
+        )
+        winner_data = cursor.fetchone()
+        if winner_data is None:
+            winner_data = [0, None, None]
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS losses
+            FROM {race_summary}
+            INNER JOIN {league_matches} ON {league_matches}.`match_id` = {race_summary}.`match_id`
+            WHERE loser_id = %s AND {league_matches}.`league_tag` = %s
+            LIMIT 1
+            """.format(race_summary=tn('race_summary'), league_matches=tn('league_matches')),
+            params
+        )
+        loser_data = cursor.fetchone()
+        if loser_data is None:
+            loser_data = [0]
+        return winner_data + loser_data
+
+
+async def get_fastest_wins_raw(league_tag: str, limit: int = None) -> list:
+    params = (league_tag, limit,)
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                {race_runs}.`time` AS `time`,
+                users_winner.twitch_name AS winner_name,
+                users_loser.twitch_name AS loser_name,
+                {matches}.suggested_time AS match_time
+            FROM 
+                {match_races}
+                INNER JOIN {matches}
+                    ON {matches}.match_id = {match_races}.match_id
+                INNER JOIN {races} 
+                    ON {races}.race_id = {match_races}.race_id
+                INNER JOIN users users_winner 
+                    ON IF(
+                        {match_races}.winner = 1,
+                        users_winner.`user_id` = {matches}.racer_1_id,
+                        users_winner.`user_id` = {matches}.racer_2_id
+                    )
+                INNER JOIN users users_loser 
+                    ON IF(
+                        {match_races}.winner = 1,
+                        users_loser.user_id = {matches}.racer_2_id,
+                        users_loser.user_id = {matches}.racer_1_id
+                    )
+                INNER JOIN {race_runs}
+                    ON ( 
+                        {race_runs}.race_id = {races}.race_id
+                        AND {race_runs}.user_id = users_winner.user_id
+                    )
+                INNER JOIN {league_matches}
+                    ON {league_matches}.`match_id` = {matches}.`match_id`
+            WHERE
+                {match_races}.winner != 0
+                AND {league_matches}.`league_tag` = %s
+            ORDER BY `time` ASC
+            LIMIT %s
+            """.format(
+                league_matches=tn('league_matches'),
+                race_runs=tn('race_runs'),
+                matches=tn('matches'),
+                match_races=tn('match_races'),
+                races=tn('races')
+            ),
+            params
+        )
+        return cursor.fetchall()
+
+
+async def get_match_id(
+        league_tag: str,
+        racer_1_id: int,
+        racer_2_id: int,
+        scheduled_time: datetime.datetime = None,
+        finished_only: Optional[bool] = None
+) -> int or None:
+    """Attempt to find a match between the two racers
+
+    If multiple matches are found, prioritize as follows:
+        1. Prefer matches closer to scheduled_time, if scheduled_time is not None
+        2. Prefer channeled matches
+        3. Prefer the most recent scheduled match
+        4. Randomly
+
+    Parameters
+    ----------
+    league_tag: str
+        The tag for the league to search in
+    racer_1_id: int
+        The user ID of the first racer
+    racer_2_id: int
+        The user ID of the second racer
+    scheduled_time: datetime.datetime or None
+        The approximate time to search around, or None to skip this priority
+    finished_only: bool
+        If not None, then: If True, only return matches that have a finish_time; if False, only return matches without
+
+    Returns
+    -------
+    Optional[int]
+        The match ID, if one is found.
+    """
+    param_dict = {
+        'league_tag': league_tag,
+        'racer1': racer_1_id,
+        'racer2': racer_2_id,
+        'time': scheduled_time
+    }
+
+    where_str = '((racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
+                'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)) ' \
+                'AND (league_tag=%(league_tag)s)'
+    if finished_only is not None:
+        where_str = '({old_str}) AND (finish_time IS {nullstate})'.format(
+            old_str=where_str,
+            nullstate=('NOT NULL' if finished_only else 'NULL')
+        )
+
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT 
+                {matches}.match_id, 
+                {matches}.suggested_time, 
+                {matches}.channel_id,
+                ABS({matches}.`suggested_time` - '2017-23-04 12:00:00') AS abs_del
+            FROM {matches}
+            INNER JOIN {league_matches} ON {league_matches}.match_id = {matches}.match_id
+            WHERE {where_str}
+            ORDER BY
+                IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
+                `channel_id` IS NULL ASC, 
+                `suggested_time` DESC
+            LIMIT 1
+            """.format(matches=tn('matches'), league_matches=tn('league_matches'), where_str=where_str),
+            param_dict
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else None

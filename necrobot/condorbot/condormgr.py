@@ -3,6 +3,7 @@ import datetime
 import unittest
 from typing import Optional
 
+import league.leagueutil
 import necrobot.exception
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
@@ -296,7 +297,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         )
 
     async def _update_schedule_channel(self):
-        infotext = await matchutil.get_schedule_infotext()
+        infotext = await league.leagueutil.get_schedule_infotext()
 
         # Find the message:
         the_msg = None

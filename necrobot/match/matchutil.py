@@ -1,17 +1,12 @@
 import datetime
 from typing import Optional
 
-import pytz
-
 from necrobot.match.matchgsheetinfo import MatchGSheetInfo
-from necrobot.botbase.necrobot import Necrobot
 from necrobot.match import matchdb
 from necrobot.match.match import Match
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race import racedb
 from necrobot.race.raceinfo import RaceInfo
-from necrobot.util import console, timestr, strutil, rtmputil
-from necrobot.util import server
 
 match_library = {}
 
@@ -104,66 +99,6 @@ async def get_match_from_id(match_id: int) -> Match or None:
         return None
 
 
-async def get_upcoming_and_current() -> list:
-    """    
-    Returns
-    -------
-    list[Match]
-        A list of all upcoming and ongoing matches, in order. 
-    """
-    matches = []
-    for row in await matchdb.get_channeled_matches_raw_data(must_be_scheduled=True, order_by_time=True):
-        channel_id = int(row[13]) if row[13] is not None else None
-        if channel_id is not None:
-            channel = server.find_channel(channel_id=channel_id)
-            if channel is not None:
-                match = await make_match_from_raw_db_data(row=row)
-                if match.suggested_time is None:
-                    console.warning('Found match object {} has no suggested time.'.format(repr(match)))
-                    continue
-                if match.suggested_time > pytz.utc.localize(datetime.datetime.utcnow()):
-                    matches.append(match)
-                else:
-                    match_room = Necrobot().get_bot_channel(channel)
-                    if match_room is not None and await match_room.during_races():
-                        matches.append(match)
-
-    return matches
-
-
-async def get_nextrace_displaytext(match_list: list) -> str:
-    utcnow = pytz.utc.localize(datetime.datetime.utcnow())
-    if len(match_list) > 1:
-        display_text = 'Upcoming matches: \n'
-    else:
-        display_text = 'Next match: \n'
-
-    for match in match_list:
-        # noinspection PyUnresolvedReferences
-        display_text += '\N{BULLET} **{0}** - **{1}**'.format(
-            match.racer_1.display_name,
-            match.racer_2.display_name)
-        if match.suggested_time is None:
-            display_text += '\n'
-            continue
-
-        display_text += ': {0} \n'.format(timestr.timedelta_to_str(match.suggested_time - utcnow, punctuate=True))
-        match_cawmentator = await match.get_cawmentator()
-        if match_cawmentator is not None:
-            display_text += '    Cawmentary: <http://www.twitch.tv/{0}> \n'.format(match_cawmentator.twitch_name)
-        elif match.racer_1.twitch_name is not None and match.racer_2.twitch_name is not None:
-            display_text += '    Kadgar: {} \n'.format(
-                rtmputil.kadgar_link(match.racer_1.twitch_name, match.racer_2.twitch_name)
-            )
-            # display_text += '    RTMP: {} \n'.format(
-            #     rtmputil.rtmp_link(match.racer_1.rtmp_name, match.racer_2.rtmp_name)
-            # )
-
-    display_text += '\nFull schedule: <https://condor.host/schedule>'
-
-    return display_text
-
-
 async def delete_match(match_id: int) -> None:
     await matchdb.delete_match(match_id=match_id)
     if match_id in match_library:
@@ -207,36 +142,6 @@ async def make_match_from_raw_db_data(row: list) -> Match:
     await new_match.initialize()
     match_library[new_match.match_id] = new_match
     return new_match
-
-
-async def get_schedule_infotext():
-    utcnow = pytz.utc.localize(datetime.datetime.utcnow())
-    matches = await get_upcoming_and_current()
-
-    max_r1_len = 0
-    max_r2_len = 0
-    for match in matches:
-        max_r1_len = max(max_r1_len, len(strutil.tickless(match.racer_1.display_name)))
-        max_r2_len = max(max_r2_len, len(strutil.tickless(match.racer_2.display_name)))
-
-    schedule_text = '``` \nUpcoming matches: \n'
-    for match in matches:
-        if len(schedule_text) > 1800:
-            break
-        schedule_text += '{r1:>{w1}} v {r2:<{w2}} : '.format(
-            r1=strutil.tickless(match.racer_1.display_name),
-            w1=max_r1_len,
-            r2=strutil.tickless(match.racer_2.display_name),
-            w2=max_r2_len
-        )
-        if match.suggested_time - utcnow < datetime.timedelta(minutes=0):
-            schedule_text += 'Right now!'
-        else:
-            schedule_text += timestr.str_full_24h(match.suggested_time)
-        schedule_text += '\n'
-    schedule_text += '```'
-
-    return schedule_text
 
 
 async def get_race_data(match: Match):

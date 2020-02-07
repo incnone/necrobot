@@ -1,6 +1,6 @@
 from necrobot.botbase import cmd_admin
+from necrobot.league import cmd_league
 from necrobot.league import cmd_leaguestats
-from necrobot.match import cmd_match
 from necrobot.speedrun import cmd_speedrun
 from necrobot.user import cmd_user
 
@@ -16,7 +16,7 @@ class CondorPMChannel(BotChannel):
             # cmd_admin.Reboot(self),
             cmd_admin.RedoInit(self),
 
-            cmd_match.Vod(self),
+            cmd_league.Vod(self),
 
             cmd_leaguestats.LeagueFastest(self),
             cmd_leaguestats.LeagueStats(self),
