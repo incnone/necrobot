@@ -652,4 +652,3 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
                 cmd.author.mention, match.matchroom_name
             )
         )
-

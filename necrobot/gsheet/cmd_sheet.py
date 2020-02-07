@@ -20,8 +20,7 @@ from necrobot.league.leaguemgr import LeagueMgr
 class GetGSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'gsheet', 'getgsheet')
-        self.help_text = 'Return the name of the current GSheet, and a link to it, if the bot has ' \
-                         'permissions; otherwise, returns an error message.'
+        self.help_text = '`{0} league_tag`: Return the name of the league\'s GSheet, and a link to it.'
         self.admin_only = True
 
     @property
@@ -29,7 +28,16 @@ class GetGSheet(CommandType):
         return 'Current GSheet info.'
 
     async def _do_execute(self, cmd: Command):
-        gsheet_id = LeagueMgr().league.gsheet_id
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: The league with tag `{0}` does not exist.'.format(league_tag)
+            )
+            return
+
+        gsheet_id = league.gsheet_id
         if gsheet_id is None:
             await cmd.channel.send(
                 'Error: GSheet for this league is not yet set. Use `.setgsheet`.'
@@ -37,7 +45,7 @@ class GetGSheet(CommandType):
             return
 
         try:
-            perm_info = await sheetutil.has_read_write_permissions(LeagueMgr().league.gsheet_id)
+            perm_info = await sheetutil.has_read_write_permissions(league.gsheet_id)
         except googleapiclient.errors.Error as e:
             await cmd.channel.send(
                 'Error: {0}'.format(e)
@@ -52,9 +60,9 @@ class GetGSheet(CommandType):
         else:
             await cmd.channel.send(
                 'The GSheet for `{league_name}` is "{sheet_name}". <{sheet_url}>'.format(
-                    league_name=LeagueMgr().league.schema_name,
+                    league_name=league.tag,
                     sheet_name=perm_info[1],
-                    sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(LeagueMgr().league.gsheet_id)
+                    sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(league.gsheet_id)
                 )
             )
 
@@ -62,7 +70,7 @@ class GetGSheet(CommandType):
 class MakeFromSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'makematches', 'makefromsheet', 'makeweek')
-        self.help_text = '`{0} sheetname`: make races from the worksheet `sheetname`. (Note that the ' \
+        self.help_text = '`{0} league_tag sheetname`: make races from the worksheet `sheetname`. (Note that the ' \
                          'bot must be pointed at the correct GSheet for this to work; this can be set via the bot\'s ' \
                          'config file, or by calling `.setgsheet`.'.format(self.mention)
         self.admin_only = True
@@ -72,24 +80,33 @@ class MakeFromSheet(CommandType):
         return 'Make match rooms.'
 
     async def _do_execute(self, cmd: Command):
-        if len(cmd.args) != 1:
+        if len(cmd.args) != 2:
             await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
             )
             return
 
-        wks_name = cmd.args[0]
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: The league with tag `{0}` does not exist.'.format(league_tag)
+            )
+            return
+
+        wks_name = cmd.args[1]
         status_message = await cmd.channel.send(
             'Creating matches from worksheet `{0}`... (Getting GSheet info)'.format(wks_name)
         )
 
         async with cmd.channel.typing():
-            match_info = LeagueMgr().league.match_info
+            match_info = league.match_info
 
             console.info('MakeFromSheet: Getting GSheet info...')
             try:
                 matchup_sheet = await sheetlib.get_sheet(
-                        gsheet_id=LeagueMgr().league.gsheet_id,
+                        gsheet_id=league.gsheet_id,
                         wks_name=wks_name,
                         sheet_type=sheetlib.SheetType.MATCHUP
                     )  # type: MatchupSheet
@@ -170,14 +187,29 @@ class PushMatchToSheet(CommandType):
             )
             return
 
+        league_tag = match.league_tag
+        if league_tag is None:
+            await cmd.channel.send(
+                'Error: This match is not attached to a league.'
+            )
+            return
+
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: This match is attached to league `{}`, but that league cannot be found.'.format(league_tag)
+            )
+            return
+
         try:
             matchup_sheet = await sheetlib.get_sheet(
-                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    gsheet_id=league.gsheet_id,
                     wks_id=wks_id,
                     sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
             standings_sheet = await sheetlib.get_sheet(
-                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    gsheet_id=league.gsheet_id,
                     wks_name='Standings',
                     sheet_type=sheetlib.SheetType.STANDINGS
                 )  # type: StandingsSheet
@@ -230,11 +262,10 @@ class PushMatchToSheet(CommandType):
 class SetGSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setgsheet')
-        self.help_text = '`{0} sheet_id` : Set the bot to read from the GSheet with the given ID. This ' \
-                         'will modify the bot\'s config file, and this sheet will become the default. Note: the ID ' \
-                         'of a GSheet is the long sequence of letters and numbers in its URL. (The URL looks like ' \
-                         'docs.google.com/spreadsheets/d/`sheet_id`/edit#gid=`worksheet_id`; you want `sheet_id`.) ' \
-                         'Note that the bot must have read-write access to the GSheet.' \
+        self.help_text = '`{0} league_tag sheet_id` : Set the bot to use the GSheet with the given ID for the given ' \
+                         'league. Note: the ID of a GSheet is the long sequence of letters and numbers in its URL. ' \
+                         '(The URL looks like docs.google.com/spreadsheets/d/`sheet_id`/edit#gid=`worksheet_id`; ' \
+                         'you want `sheet_id`.) Note that the bot must have read-write access to the GSheet.' \
                          .format(self.mention)
         self.admin_only = True
 
@@ -243,9 +274,18 @@ class SetGSheet(CommandType):
         return "Set the bot's GSheet."
 
     async def _do_execute(self, cmd: Command):
-        if len(cmd.args) != 1:
+        if len(cmd.args) != 2:
             await cmd.channel.send(
                 'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: The league with tag `{0}` does not exist.'.format(league_tag)
             )
             return
 
@@ -258,8 +298,8 @@ class SetGSheet(CommandType):
             )
             return
 
-        LeagueMgr().league.gsheet_id = sheet_id
-        LeagueMgr().league.commit()
+        league.gsheet_id = sheet_id
+        league.commit()
         await cmd.channel.send(
             'Set default GSheet to "{0}". <{1}>'.format(
                 perm_info[1],
@@ -271,15 +311,24 @@ class SetGSheet(CommandType):
 class OverwriteGSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'overwritegsheet')
-        self.help_text = "Refresh the GSheet (overwrites all data)."
+        self.help_text = "`{} league_tag`: Refresh the GSheet (overwrites all data)."
         self.admin_only = True
 
     async def _do_execute(self, cmd: Command):
         # Get the matchup sheet
+        league_tag = cmd.args[0]
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: The league with tag `{0}` does not exist.'.format(league_tag)
+            )
+            return
+
         wks_id = 0
         try:
             matchup_sheet = await sheetlib.get_sheet(
-                    gsheet_id=LeagueMgr().league.gsheet_id,
+                    gsheet_id=league.gsheet_id,
                     wks_id=wks_id,
                     sheet_type=sheetlib.SheetType.MATCHUP
                 )  # type: MatchupSheet
