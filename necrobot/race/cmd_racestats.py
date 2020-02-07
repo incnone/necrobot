@@ -1,7 +1,6 @@
 from necrobot.botbase.commandtype import CommandType
 from necrobot.race import racestats
 from necrobot.user import userlib
-from necrobot.util import server
 from necrobot.util import strutil
 from necrobot.util.necrodancer.character import NDChar
 

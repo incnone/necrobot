@@ -3,7 +3,6 @@ import datetime
 import unittest
 from typing import Optional
 
-import league.leagueutil
 import necrobot.exception
 from necrobot.botbase.necroevent import NEDispatch, NecroEvent
 from necrobot.botbase.manager import Manager
@@ -13,17 +12,16 @@ from necrobot.database import dbutil
 from necrobot.gsheet import sheetlib
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
-from necrobot.gsheet.speedrunsheet import SpeedrunSheet
+# from necrobot.gsheet.speedrunsheet import SpeedrunSheet
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguestats
-from necrobot.match import matchutil
+from necrobot.league import leagueutil
+from necrobot.league.league import League
 from necrobot.match.match import Match
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.util import console, server, strutil, rtmputil
 from necrobot.util.parse import dateparse
 from necrobot.util.singleton import Singleton
-
-print('import cmgr')
 
 
 class CondorMgr(Manager, metaclass=Singleton):
@@ -83,7 +81,11 @@ class CondorMgr(Manager, metaclass=Singleton):
                     )
                 )
 
-            asyncio.ensure_future(self._overwrite_gsheet())
+            try:
+                league = await LeagueMgr().get_league(ev.match.league_tag)
+                asyncio.ensure_future(self._overwrite_gsheet(league=league))
+            except necrobot.exception.LeagueDoesNotExist:
+                pass
             asyncio.ensure_future(send_mainchannel_message())
 
         elif ev.event_type == 'end_match_race':
@@ -108,14 +110,27 @@ class CondorMgr(Manager, metaclass=Singleton):
             pass
 
         elif ev.event_type == 'schedule_match':
-            asyncio.ensure_future(self._overwrite_gsheet())
+            try:
+                league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
+                asyncio.ensure_future(self._overwrite_gsheet(league=league))
+            except necrobot.exception.LeagueDoesNotExist:
+                pass
             asyncio.ensure_future(self._update_schedule_channel())
 
         elif ev.event_type == 'set_cawmentary':
-            asyncio.ensure_future(self._overwrite_gsheet())
+            try:
+                league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
+                asyncio.ensure_future(self._overwrite_gsheet(league=league))
+            except necrobot.exception.LeagueDoesNotExist:
+                pass
 
         elif ev.event_type == 'set_vod':
-            asyncio.ensure_future(self._overwrite_gsheet())
+            try:
+                league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
+                asyncio.ensure_future(self._overwrite_gsheet(league=league))
+            except necrobot.exception.LeagueDoesNotExist:
+                pass
+
             cawmentator = await ev.match.get_cawmentator()
             await self._main_channel.send(
                 '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
@@ -126,8 +141,8 @@ class CondorMgr(Manager, metaclass=Singleton):
                 )
             )
 
-        elif ev.event_type == 'submitted_run':
-            asyncio.ensure_future(self._overwrite_speedrun_sheet())
+        # elif ev.event_type == 'submitted_run':
+        #     asyncio.ensure_future(self._overwrite_speedrun_sheet())
 
     @property
     def has_event(self):
@@ -208,32 +223,32 @@ class CondorMgr(Manager, metaclass=Singleton):
             return dateparse.parse_datetime(self._event.deadline_str)
         return None
 
-    async def _overwrite_gsheet(self):
+    async def _overwrite_gsheet(self, league: League):
         # noinspection PyShadowingNames
-        sheet = await self._get_gsheet(wks_id='0')
+        sheet = await self._get_gsheet(league=league, wks_id='0')
         await sheet.overwrite_gsheet()
 
-    @staticmethod
-    async def _overwrite_speedrun_sheet():
-        speedrun_sheet = await sheetlib.get_sheet(
-            gsheet_id=LeagueMgr().league.speedrun_gsheet_id,
-            wks_id='0',
-            sheet_type=sheetlib.SheetType.SPEEDRUN
-        )  # type: SpeedrunSheet
-        await speedrun_sheet.overwrite_gsheet()
+    # @staticmethod
+    # async def _overwrite_speedrun_sheet(league: League):
+    #     speedrun_sheet = await sheetlib.get_sheet(
+    #         gsheet_id=league.speedrun_gsheet_id,
+    #         wks_id='0',
+    #         sheet_type=sheetlib.SheetType.SPEEDRUN
+    #     )  # type: SpeedrunSheet
+    #     await speedrun_sheet.overwrite_gsheet()
 
     @staticmethod
-    async def _get_gsheet(wks_id: str) -> MatchupSheet:
+    async def _get_gsheet(league: League, wks_id: str) -> MatchupSheet:
         return await sheetlib.get_sheet(
-            gsheet_id=LeagueMgr().league.gsheet_id,
+            gsheet_id=league.gsheet_id,
             wks_id=wks_id,
             sheet_type=sheetlib.SheetType.MATCHUP
         )
 
     @staticmethod
-    async def _get_standings_sheet() -> StandingsSheet:
+    async def _get_standings_sheet(league: League) -> StandingsSheet:
         return await sheetlib.get_sheet(
-            gsheet_id=LeagueMgr().league.gsheet_id,
+            gsheet_id=league.gsheet_id,
             wks_name='Standings',
             sheet_type=sheetlib.SheetType.STANDINGS
         )
@@ -259,13 +274,18 @@ class CondorMgr(Manager, metaclass=Singleton):
             minutes=int((match.time_until_match.total_seconds() + 30) // 60)
         )
 
-        racer_1_stats = await leaguestats.get_league_stats(match.racer_1.user_id)
-        racer_2_stats = await leaguestats.get_league_stats(match.racer_2.user_id)
+        league_tag = match.league_tag
+        try:
+            await LeagueMgr().get_league(league_tag=league_tag)
+            racer_1_stats = await leaguestats.get_league_stats(league_tag=league_tag, user_id=match.racer_1.user_id)
+            racer_2_stats = await leaguestats.get_league_stats(league_tag=league_tag, user_id=match.racer_2.user_id)
 
-        racer_1_infotext = await leaguestats.get_big_infotext(user=match.racer_1, stats=racer_1_stats)
-        racer_2_infotext = await leaguestats.get_big_infotext(user=match.racer_2, stats=racer_2_stats)
-        alert_text += '```' + strutil.tickless(racer_1_infotext) + '\n```'
-        alert_text += '```' + strutil.tickless(racer_2_infotext) + '\n```'
+            racer_1_infotext = await leaguestats.get_big_infotext(user=match.racer_1, stats=racer_1_stats)
+            racer_2_infotext = await leaguestats.get_big_infotext(user=match.racer_2, stats=racer_2_stats)
+            alert_text += '```' + strutil.tickless(racer_1_infotext) + '\n```'
+            alert_text += '```' + strutil.tickless(racer_2_infotext) + '\n```'
+        except necrobot.exception.LeagueDoesNotExist:
+            pass
 
         await cawmentator.member.send(alert_text)
 
@@ -297,7 +317,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         )
 
     async def _update_schedule_channel(self):
-        infotext = await league.leagueutil.get_schedule_infotext()
+        infotext = await leagueutil.get_schedule_infotext()
 
         # Find the message:
         the_msg = None

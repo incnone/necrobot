@@ -1,5 +1,4 @@
 import asyncio
-import types
 from necrobot.match.matchinfo import MatchInfo
 
 
@@ -10,7 +9,7 @@ class League(object):
     """
     def __init__(
             self,
-            commit_fn: types.FunctionType,
+            commit_fn,  # Callable[League, Coroutine[Any]]
             league_tag: str,
             league_name: str,
             match_info: MatchInfo,

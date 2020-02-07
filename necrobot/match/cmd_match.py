@@ -8,7 +8,7 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.match import matchdb
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.user import userlib
-from necrobot.util import console, timestr, writechannel
+from necrobot.util import timestr, writechannel
 from necrobot.util.parse import dateparse
 
 

@@ -13,11 +13,11 @@ class LadderAdminChannel(BotChannel):
         self.channel_commands = [
             cmd_league.CloseAllMatches(self),
             cmd_league.CloseFinished(self),
-            cmd_league.GetCurrentEvent(self),
-            cmd_league.GetMatchRules(self),
+            # cmd_league.GetCurrentEvent(self),
+            # cmd_league.GetMatchRules(self),
             condorbot.cmd_event.ScrubDatabase(self),
             condorbot.cmd_event.SetCondorEvent(self),
-            cmd_league.SetEventName(self),
+            # cmd_league.SetEventName(self),
             cmd_league.SetMatchRules(self),
 
             # cmd_ladder.Automatch(self),

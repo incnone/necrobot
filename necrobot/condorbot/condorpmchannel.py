@@ -1,7 +1,7 @@
 from necrobot.botbase import cmd_admin
 from necrobot.league import cmd_league
 from necrobot.league import cmd_leaguestats
-from necrobot.speedrun import cmd_speedrun
+# from necrobot.speedrun import cmd_speedrun
 from necrobot.user import cmd_user
 
 from necrobot.botbase.botchannel import BotChannel
