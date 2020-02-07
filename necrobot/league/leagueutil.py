@@ -90,8 +90,12 @@ async def find_match(
     return await matchutil.get_match_from_id(match_id)
 
 
-async def get_upcoming_and_current() -> list:
+async def get_upcoming_and_current(league_tag: Optional[str] = None) -> list:
     """
+    Parameters
+    ----------
+    league_tag: Optional[str]
+        If not None, only look for matches in the given league.
     Returns
     -------
     list[Match]
@@ -104,6 +108,8 @@ async def get_upcoming_and_current() -> list:
             channel = server.find_channel(channel_id=channel_id)
             if channel is not None:
                 match = await make_match_from_raw_db_data(row=row)
+                if league_tag is not None and match.league_tag != league_tag:
+                    continue
                 if match.suggested_time is None:
                     console.warning('Found match object {} has no suggested time.'.format(repr(match)))
                     continue

@@ -471,13 +471,35 @@ class MakeMatchesFromFile(CommandType):
 class NextRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'next', 'nextrace', 'nextmatch')
-        self.help_text = 'Show upcoming matches.'
+        self.help_text = '`{0}` shows all upcoming matches; `{0} league_tag` shows only those upcoming matches for ' \
+                         'the given league.'.format(self.mention)
+
+    @property
+    def short_help_text(self):
+        return 'Show upcoming matches.'
 
     async def _do_execute(self, cmd: Command):
-        utcnow = pytz.utc.localize(datetime.datetime.utcnow())
+        if len(cmd.args) > 1:
+            await cmd.channel.send(
+                'Too many arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        league_tag = None
+        if len(cmd.args) == 1:
+            league_tag = cmd.args[0]
+            try:
+                await LeagueMgr().get_league(league_tag)
+            except necrobot.exception.LeagueDoesNotExist:
+                await cmd.channel.send(
+                    'The league `{0}` does not exist.'.format(league_tag)
+                )
+                return
+
+        utcnow = pytz.utc.localize(datetime.datetime.utcnow() - datetime.timedelta(minutes=1))
         num_to_show = 3
 
-        matches = await leagueutil.get_upcoming_and_current()
+        matches = await leagueutil.get_upcoming_and_current(league_tag=league_tag)
         if not matches:
             await cmd.channel.send(
                 'Didn\'t find any scheduled matches!')
