@@ -20,9 +20,10 @@ from necrobot.util import console
 class Cawmentate(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'cawmentate', 'commentate', 'cawmmentate')
-        self.help_text = 'Register yourself for cawmentary for a given match. Usage is `{0} rtmp1 ' \
-                         'rtmn2`, where `rtmp1` and `rtmn2` are the RTMP names of the racers in the match. ' \
-                         '(Call `.userinfo` for RTMP names.)'.format(self.mention)
+        self.help_text = 'Register yourself for cawmentary for a given match. Usage is `{0} [league_tag] racer_1 ' \
+                         'racer_2`, where `league_tag` is the league for the match, and `racer_1` and `racer_2` are ' \
+                         'the racers in the match. ' \
+                         .format(self.mention)
 
     @property
     def short_help_text(self):
@@ -35,7 +36,8 @@ class Cawmentate(CommandType):
 class Uncawmentate(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
-        self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} rtmp1 rtmp2`.'.format(self.mention)
+        self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} [league_tag] racer_1 racer_2`.' \
+                         .format(self.mention)
 
     @property
     def short_help_text(self):
@@ -48,7 +50,7 @@ class Uncawmentate(CommandType):
 class Vod(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'vod')
-        self.help_text = 'Add a link to a vod for a given match. Usage is `{0} league racer_1 racer_2 URL`.'\
+        self.help_text = 'Add a link to a vod for a given match. Usage is `{0} league_tag racer_1 racer_2 URL`.'\
                          .format(self.mention)
 
     @property
@@ -213,10 +215,10 @@ class ForceMakeMatch(CommandType):
         new_match = await cmd_matchmake.make_match_from_cmd(
             cmd=cmd,
             racer_names=[cmd.args[1], cmd.args[2]],
-            match_info=league.match_info
+            match_info=league.match_info,
+            league_tag=league_tag
         )
         if new_match is not None:
-            await LeagueMgr().assign_match_to_league(match_id=new_match.match_id, league_tag=league_tag)
             await NEDispatch().publish(event_type='create_match', match=new_match)
 
 
@@ -321,6 +323,7 @@ class MakeMatch(CommandType):
                 cmd=cmd,
                 racer_names=[cmd.author.display_name, other_racer_name],
                 match_info=league.match_info,
+                league_tag=league_tag,
                 allow_duplicates=True
             )
         except necrobot.exception.DuplicateMatchException:
@@ -333,7 +336,6 @@ class MakeMatch(CommandType):
             return
 
         if new_match is not None:
-            await LeagueMgr().assign_match_to_league(match_id=new_match.match_id, league_tag=league_tag)
             await NEDispatch().publish(event_type='create_match', match=new_match)
 
 
@@ -419,6 +421,7 @@ class MakeMatchesFromFile(CommandType):
                     racer_1_id=racer_1.user_id,
                     racer_2_id=racer_2.user_id,
                     match_info=match_info,
+                    league_tag=league_tag,
                     autogenned=True
                 )
                 if new_match is None:
@@ -445,7 +448,6 @@ class MakeMatchesFromFile(CommandType):
             # Create match channels
             for match in matches:
                 console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
-                await LeagueMgr().assign_match_to_league(match_id=match.match_id, league_tag=league_tag)
                 new_room = await matchchannelutil.make_match_room(match=match, register=False)
                 await new_room.send_channel_start_text()
 

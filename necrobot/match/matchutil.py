@@ -48,6 +48,8 @@ async def make_match(register=False, update=False, **kwargs) -> Optional[Match]:
         The DB unique ID of the cawmentator for this match.
     sheet_id: int
         The sheetID of the worksheet the match was created from, if any.
+    league_tag: str
+        The tag for the league this match is in, if any.
     register: bool
         Whether to register the match in the database. 
     update: bool
@@ -136,7 +138,8 @@ async def make_match_from_raw_db_data(row: list) -> Match:
         cawmentator_id=row[12],
         channel_id=int(row[13]) if row[13] is not None else None,
         gsheet_info=sheet_info,
-        autogenned=bool(row[17])
+        autogenned=bool(row[17]),
+        league_tag=row[18]
     )
 
     await new_match.initialize()

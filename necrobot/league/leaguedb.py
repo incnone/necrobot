@@ -189,22 +189,6 @@ async def register_user(user_id: int) -> None:
         )
 
 
-async def assign_match(match_id: int, league_tag: str):
-    async with DBConnect(commit=True) as cursor:
-        params = (match_id, league_tag)
-        cursor.execute(
-            """
-            INSERT INTO {league_matches}
-                (`match_id`, `league_tag`)
-            VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE
-                `match_id` = VALUES(`match_id`),
-                `league_tag` = VALUES(`league_tag`)
-            """.format(league_matches=tn('league_matches')),
-            params
-        )
-
-
 async def write_league(league: League) -> None:
     """Write the league to the database
     
@@ -261,10 +245,9 @@ async def get_matchstats_raw(league_tag: str, user_id: int) -> list:
                 MIN(winner_time) AS best_win,
                 AVG(winner_time) AS average_win
             FROM {race_summary}
-            INNER JOIN {league_matches} ON {league_matches}.`match_id` = {race_summary}.`match_id`
-            WHERE {race_summary}.`winner_id` = %s AND {league_matches}.`league_tag` = %s
+            WHERE `winner_id` = %s AND `league_tag` = %s
             LIMIT 1
-            """.format(race_summary=tn('race_summary'), league_matches=tn('league_matches')),
+            """.format(race_summary=tn('race_summary')),
             params
         )
         winner_data = cursor.fetchone()
@@ -274,10 +257,9 @@ async def get_matchstats_raw(league_tag: str, user_id: int) -> list:
             """
             SELECT COUNT(*) AS losses
             FROM {race_summary}
-            INNER JOIN {league_matches} ON {league_matches}.`match_id` = {race_summary}.`match_id`
-            WHERE loser_id = %s AND {league_matches}.`league_tag` = %s
+            WHERE loser_id = %s AND `league_tag` = %s
             LIMIT 1
-            """.format(race_summary=tn('race_summary'), league_matches=tn('league_matches')),
+            """.format(race_summary=tn('race_summary')),
             params
         )
         loser_data = cursor.fetchone()
@@ -319,15 +301,12 @@ async def get_fastest_wins_raw(league_tag: str, limit: int = None) -> list:
                         {race_runs}.race_id = {races}.race_id
                         AND {race_runs}.user_id = users_winner.user_id
                     )
-                INNER JOIN {league_matches}
-                    ON {league_matches}.`match_id` = {matches}.`match_id`
             WHERE
                 {match_races}.winner != 0
-                AND {league_matches}.`league_tag` = %s
+                AND {matches}.`league_tag` = %s
             ORDER BY `time` ASC
             LIMIT %s
             """.format(
-                league_matches=tn('league_matches'),
                 race_runs=tn('race_runs'),
                 matches=tn('matches'),
                 match_races=tn('match_races'),
@@ -396,14 +375,13 @@ async def get_match_id(
                 {matches}.channel_id,
                 ABS({matches}.`suggested_time` - '2017-23-04 12:00:00') AS abs_del
             FROM {matches}
-            INNER JOIN {league_matches} ON {league_matches}.match_id = {matches}.match_id
             WHERE {where_str}
             ORDER BY
                 IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
                 `channel_id` IS NULL ASC, 
                 `suggested_time` DESC
             LIMIT 1
-            """.format(matches=tn('matches'), league_matches=tn('league_matches'), where_str=where_str),
+            """.format(matches=tn('matches'), where_str=where_str),
             param_dict
         )
         row = cursor.fetchone()

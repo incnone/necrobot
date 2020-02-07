@@ -193,6 +193,7 @@ async def write_match(match: Match):
         match.sheet_row,
         match.finish_time,
         match.autogenned,
+        match.league_tag,
         match.match_id,
     )
 
@@ -217,7 +218,8 @@ async def write_match(match: Match):
                sheet_id=%s,
                sheet_row=%s,
                finish_time=%s,
-               autogenned=%s
+               autogenned=%s,
+               league_tag=%s
             WHERE match_id=%s
             """.format(matches=tn('matches')),
             params
@@ -292,7 +294,8 @@ async def get_channeled_matches_raw_data(
                  sheet_id,
                  sheet_row,
                  finish_time,
-                 autogenned
+                 autogenned,
+                 league_tag
             FROM {matches} 
             WHERE {where_query} {order_query}
             """.format(matches=tn('matches'), where_query=where_query, order_query=order_query), params)
@@ -322,62 +325,63 @@ async def get_matchview_raw_data():
         return cursor.fetchall()
 
 
-async def get_all_matches_raw_data(
-        must_be_channeled: bool = False,
-        must_be_scheduled: bool = False,
-        order_by_time: bool = False,
-        racer_id: int = None,
-        limit: int = None
-) -> list:
-    params = tuple()
-
-    where_query = 'TRUE'
-    if must_be_channeled:
-        where_query += " AND `channel_id` IS NOT NULL"
-    if must_be_scheduled:
-        where_query += " AND (`suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`)"
-    if racer_id is not None:
-        where_query += " AND (`racer_1_id` = %s OR `racer_2_id` = %s)"
-        params += (racer_id, racer_id,)
-
-    order_query = ''
-    if order_by_time:
-        order_query = "ORDER BY `suggested_time` ASC"
-
-    limit_query = '' if limit is None else 'LIMIT {}'.format(limit)
-
-    async with DBConnect(commit=False) as cursor:
-        cursor.execute(
-            """
-            SELECT 
-                 match_id, 
-                 race_type_id, 
-                 racer_1_id, 
-                 racer_2_id, 
-                 suggested_time, 
-                 r1_confirmed, 
-                 r2_confirmed, 
-                 r1_unconfirmed, 
-                 r2_unconfirmed, 
-                 ranked, 
-                 is_best_of, 
-                 number_of_races, 
-                 cawmentator_id, 
-                 channel_id,
-                 sheet_id,
-                 sheet_row,
-                 finish_time,
-                 autogenned
-            FROM {matches} 
-            WHERE {where_query} {order_query}
-            {limit_query}
-            """.format(
-                matches=tn('matches'),
-                where_query=where_query,
-                order_query=order_query,
-                limit_query=limit_query
-            ), params)
-        return cursor.fetchall()
+# async def get_all_matches_raw_data(
+#         must_be_channeled: bool = False,
+#         must_be_scheduled: bool = False,
+#         order_by_time: bool = False,
+#         racer_id: int = None,
+#         limit: int = None
+# ) -> list:
+#     params = tuple()
+#
+#     where_query = 'TRUE'
+#     if must_be_channeled:
+#         where_query += " AND `channel_id` IS NOT NULL"
+#     if must_be_scheduled:
+#         where_query += " AND (`suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`)"
+#     if racer_id is not None:
+#         where_query += " AND (`racer_1_id` = %s OR `racer_2_id` = %s)"
+#         params += (racer_id, racer_id,)
+#
+#     order_query = ''
+#     if order_by_time:
+#         order_query = "ORDER BY `suggested_time` ASC"
+#
+#     limit_query = '' if limit is None else 'LIMIT {}'.format(limit)
+#
+#     async with DBConnect(commit=False) as cursor:
+#         cursor.execute(
+#             """
+#             SELECT
+#                  match_id,
+#                  race_type_id,
+#                  racer_1_id,
+#                  racer_2_id,
+#                  suggested_time,
+#                  r1_confirmed,
+#                  r2_confirmed,
+#                  r1_unconfirmed,
+#                  r2_unconfirmed,
+#                  ranked,
+#                  is_best_of,
+#                  number_of_races,
+#                  cawmentator_id,
+#                  channel_id,
+#                  sheet_id,
+#                  sheet_row,
+#                  finish_time,
+#                  autogenned,
+#                  league_tag
+#             FROM {matches}
+#             WHERE {where_query} {order_query}
+#             {limit_query}
+#             """.format(
+#                 matches=tn('matches'),
+#                 where_query=where_query,
+#                 order_query=order_query,
+#                 limit_query=limit_query
+#             ), params)
+#         return cursor.fetchall()
 
 
 async def delete_match(match_id: int):
@@ -597,7 +601,8 @@ async def get_raw_match_data(match_id: int) -> list:
                  sheet_id,
                  sheet_row,
                  finish_time,
-                 autogenned
+                 autogenned,
+                 league_tag
             FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1
@@ -679,7 +684,8 @@ async def _register_match(match: Match) -> None:
         match.number_of_races,
         match.cawmentator_id,
         match.finish_time,
-        match.autogenned
+        match.autogenned,
+        match.league_tag
     )
 
     async with DBConnect(commit=True) as cursor:
@@ -700,7 +706,8 @@ async def _register_match(match: Match) -> None:
                number_of_races, 
                cawmentator_id,
                finish_time,
-               autogenned
+               autogenned,
+               league_tag
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """.format(matches=tn('matches')),

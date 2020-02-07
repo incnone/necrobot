@@ -6,16 +6,16 @@ from typing import Optional
 import pytz
 
 import necrobot.exception
-from botbase.necrobot import Necrobot
-from match import matchdb
-from match.matchutil import make_match_from_raw_db_data
+from necrobot.botbase.necrobot import Necrobot
+from necrobot.match import matchdb
+from necrobot.match.matchutil import make_match_from_raw_db_data
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguedb
 from necrobot.match import matchutil
 from necrobot.match.match import Match
 from necrobot.user import userlib
 from necrobot.util.parse import dateparse
-from util import server, console, timestr, rtmputil, strutil
+from necrobot.util import server, console, timestr, rtmputil, strutil
 
 
 async def find_match(
@@ -126,9 +126,11 @@ async def get_nextrace_displaytext(match_list: list) -> str:
 
     for match in match_list:
         # noinspection PyUnresolvedReferences
-        display_text += '\N{BULLET} **{0}** - **{1}**'.format(
+        display_text += '\N{BULLET} **{0}** - **{1}** ({2})'.format(
             match.racer_1.display_name,
-            match.racer_2.display_name)
+            match.racer_2.display_name,
+            match.league_tag
+        )
         if match.suggested_time is None:
             display_text += '\n'
             continue

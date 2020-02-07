@@ -165,7 +165,7 @@ async def create_event(schema_name: str) -> CondorEvent:
             """.format(schema_name=schema_name)
         )
 
-        for table_name in ['leagues', 'league_matches', 'matches', 'match_races', 'races', 'race_runs']:
+        for table_name in ['leagues', 'matches', 'match_races', 'races', 'race_runs']:
             cursor.execute(
                 "CREATE TABLE `{league_schema}`.`{table}` LIKE `{necrobot_schema}`.`{table}`".format(
                     league_schema=schema_name,
@@ -182,6 +182,7 @@ async def create_event(schema_name: str) -> CondorEvent:
             CREATE VIEW {race_summary} AS
                 SELECT 
                     {matches}.`match_id` AS `match_id`,
+                    {matches}.`league_tag` AS `league_tag`,
                     {match_races}.`race_number` AS `race_number`,
                     `users_winner`.`user_id` AS `winner_id`,
                     `users_loser`.`user_id` AS `loser_id`,
@@ -220,6 +221,7 @@ async def create_event(schema_name: str) -> CondorEvent:
             CREATE VIEW {match_info} AS
                 SELECT 
                     {matches}.`match_id` AS `match_id`,
+                    {matches}.`league_tag` AS `league_tag`,
                     `ud1`.`twitch_name` AS `racer_1_name`,
                     `ud2`.`twitch_name` AS `racer_2_name`,
                     {matches}.`suggested_time` AS `scheduled_time`,

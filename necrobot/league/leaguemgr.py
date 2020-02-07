@@ -89,13 +89,6 @@ class LeagueMgr(Manager, metaclass=Singleton):
 
         return await leaguedb.get_league(league_tag)
 
-    @classmethod
-    async def assign_match_to_league(cls, match_id: int, league_tag: str):
-        # Check that it's a valid league
-        await cls.get_league(league_tag)
-
-        await leaguedb.assign_match(match_id, league_tag)
-
     async def _recover_leagues(self):
         self._league_lib = dict()
         for league in await leaguedb.get_all_leagues():
