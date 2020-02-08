@@ -37,7 +37,8 @@ class CondorAdminChannel(BotChannel):
 
             cmd_sheet.GetGSheet(self),
             cmd_sheet.OverwriteGSheet(self),
-            cmd_sheet.SetGSheet(self),
+            cmd_sheet.SetEventGSheet(self),
+            cmd_sheet.SetLeagueWorksheet(self),
 
             cmd_seedgen.RandomSeed(self),
 

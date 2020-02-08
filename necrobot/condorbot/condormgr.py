@@ -10,9 +10,7 @@ from necrobot.config import Config
 from necrobot.condorbot import condordb
 from necrobot.database import dbutil
 from necrobot.gsheet import sheetlib
-from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
-# from necrobot.gsheet.speedrunsheet import SpeedrunSheet
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguestats
 from necrobot.league import leagueutil
@@ -110,12 +108,13 @@ class CondorMgr(Manager, metaclass=Singleton):
             pass
 
         elif ev.event_type == 'schedule_match':
-            try:
-                league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
-                asyncio.ensure_future(self._overwrite_gsheet(league=league))
-            except necrobot.exception.LeagueDoesNotExist:
-                pass
-            asyncio.ensure_future(self._update_schedule_channel())
+            pass
+            # try:
+            #     league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
+            #     asyncio.ensure_future(self._overwrite_gsheet(league=league))
+            # except necrobot.exception.LeagueDoesNotExist:
+            #     pass
+            # asyncio.ensure_future(self._update_schedule_channel())
 
         elif ev.event_type == 'set_cawmentary':
             try:
@@ -210,6 +209,10 @@ class CondorMgr(Manager, metaclass=Singleton):
         await condordb.set_event_params(self._event.schema_name, event_name=event_name)
         self._event.event_name = event_name
 
+    async def set_gsheet_id(self, gsheet_id):
+        await condordb.set_event_params(self._event.schema_name, gsheet_id=gsheet_id)
+        self._event.gsheet_id = gsheet_id
+
     @property
     def schema_name(self) -> Optional[str]:
         return self._event.schema_name
@@ -225,8 +228,8 @@ class CondorMgr(Manager, metaclass=Singleton):
 
     async def _overwrite_gsheet(self, league: League):
         # noinspection PyShadowingNames
-        sheet = await self._get_gsheet(league=league, wks_id='0')
-        await sheet.overwrite_gsheet()
+        sheet = await self._get_gsheet(league=league)
+        await sheet.overwrite_gsheet(league.tag)
 
     # @staticmethod
     # async def _overwrite_speedrun_sheet(league: League):
@@ -237,19 +240,18 @@ class CondorMgr(Manager, metaclass=Singleton):
     #     )  # type: SpeedrunSheet
     #     await speedrun_sheet.overwrite_gsheet()
 
-    @staticmethod
-    async def _get_gsheet(league: League, wks_id: str) -> MatchupSheet:
-        return await sheetlib.get_sheet(
-            gsheet_id=league.gsheet_id,
-            wks_id=wks_id,
-            sheet_type=sheetlib.SheetType.MATCHUP
-        )
+    # async def _get_gsheet(self, league: League) -> MatchupSheet:
+    #     return None
+    #     return await sheetlib.get_sheet(
+    #         gsheet_id=self._event.gsheet_id,
+    #         wks_id=league.worksheet_id,
+    #         sheet_type=sheetlib.SheetType.MATCHUP
+    #     )
 
-    @staticmethod
-    async def _get_standings_sheet(league: League) -> StandingsSheet:
+    async def _get_gsheet(self, league: League) -> StandingsSheet:
         return await sheetlib.get_sheet(
-            gsheet_id=league.gsheet_id,
-            wks_name='Standings',
+            gsheet_id=self._event.gsheet_id,
+            wks_id=league.worksheet_id,
             sheet_type=sheetlib.SheetType.STANDINGS
         )
 

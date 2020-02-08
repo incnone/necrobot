@@ -13,13 +13,13 @@ class League(object):
             league_tag: str,
             league_name: str,
             match_info: MatchInfo,
-            gsheet_id: str = None,
+            worksheet_id: str = None,
     ):
         self._commit = commit_fn
         self.tag = league_tag
         self.name = league_name
         self.match_info = match_info
-        self.gsheet_id = gsheet_id
+        self.worksheet_id = worksheet_id
 
     def commit(self):
         asyncio.ensure_future(self._commit(self))

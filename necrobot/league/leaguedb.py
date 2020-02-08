@@ -73,7 +73,7 @@ async def get_league(league_tag: str) -> League:
                {leagues}.`league_name`, 
                {leagues}.`number_of_races`, 
                {leagues}.`is_best_of`, 
-               {leagues}.`gsheet_id`,
+               {leagues}.`worksheet_id`,
                `race_types`.`character`, 
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
@@ -111,7 +111,7 @@ async def get_league(league_tag: str) -> League:
                 league_tag=row[0],
                 league_name=row[1],
                 match_info=match_info,
-                gsheet_id=row[4]
+                worksheet_id=row[4]
             )
 
         raise necrobot.exception.LeagueDoesNotExist()
@@ -126,7 +126,7 @@ async def get_all_leagues() -> List[League]:
                {leagues}.`league_name`, 
                {leagues}.`number_of_races`, 
                {leagues}.`is_best_of`, 
-               {leagues}.`gsheet_id`,
+               {leagues}.`worksheet_id`,
                `race_types`.`character`, 
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
@@ -162,7 +162,7 @@ async def get_all_leagues() -> List[League]:
                 league_tag=row[0],
                 league_name=row[1],
                 match_info=match_info,
-                gsheet_id=row[4]
+                worksheet_id=row[4]
             ))
         return all_leagues
 
@@ -205,7 +205,7 @@ async def write_league(league: League) -> None:
         params = (
             league.tag,
             league.name,
-            league.gsheet_id,
+            league.worksheet_id,
             match_info.max_races,
             match_info.is_best_of,
             race_type_id,
@@ -217,7 +217,7 @@ async def write_league(league: League) -> None:
             (
                 `league_tag`, 
                 `league_name`, 
-                `gsheet_id`, 
+                `worksheet_id`, 
                 `number_of_races`, 
                 `is_best_of`, 
                 `race_type`
@@ -226,7 +226,7 @@ async def write_league(league: League) -> None:
             ON DUPLICATE KEY UPDATE
                `league_tag` = VALUES(`league_tag`), 
                `league_name` = VALUES(`league_name`), 
-               `gsheet_id` = VALUES(`gsheet_id`),
+               `worksheet_id` = VALUES(`worksheet_id`),
                `number_of_races` = VALUES(`number_of_races`), 
                `is_best_of` = VALUES(`is_best_of`), 
                `race_type` = VALUES(`race_type`)
@@ -386,3 +386,24 @@ async def get_match_id(
         )
         row = cursor.fetchone()
         return int(row[0]) if row is not None else None
+
+
+async def get_standings_data_raw(league_tag: str):
+    param_dict = {
+        'league_tag': league_tag
+    }
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT 
+                {match_info}.racer_1_name,
+                {match_info}.racer_2_name,
+                {match_info}.racer_1_wins,
+                {match_info}.racer_2_wins
+            FROM {match_info}
+            WHERE {match_info}.league_tag = %(league_tag)s AND {match_info}.completed
+            """.format(match_info=tn('match_info')),
+            param_dict
+        )
+
+        return cursor.fetchall()

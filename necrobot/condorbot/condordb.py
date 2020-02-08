@@ -36,7 +36,12 @@ async def is_condor_event(schema_name: str) -> bool:
         return False
 
 
-async def set_event_params(schema_name: str, event_name: Optional[str] = None, deadline: Optional[str] = None):
+async def set_event_params(
+    schema_name: str,
+    event_name: Optional[str] = None,
+    deadline: Optional[str] = None,
+    gsheet_id: Optional[str] = None
+):
     """
     Parameters
     ----------
@@ -46,6 +51,8 @@ async def set_event_params(schema_name: str, event_name: Optional[str] = None, d
         The name to set the event to, if not None (otherwise, does nothing)
     deadline: str
         The string representing the deadline, if not None (otherwise, does nothing)
+    gsheet_id: str
+        The ID of the GSheet, if not None (otherwise, does nothing)
     """
     async with DBConnect(commit=True) as cursor:
         if event_name is not None:
@@ -68,6 +75,16 @@ async def set_event_params(schema_name: str, event_name: Optional[str] = None, d
                 """,
                 params
             )
+        if gsheet_id is not None:
+            params = (gsheet_id, schema_name,)
+            cursor.execute(
+                """
+                UPDATE `events`
+                SET `gsheet_id` = %s
+                WHERE `schema_name` = %s
+                """,
+                params
+            )
 
 
 async def get_event(schema_name: str) -> CondorEvent:
@@ -86,7 +103,7 @@ async def get_event(schema_name: str) -> CondorEvent:
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
-            SELECT `event_name`, `deadline` 
+            SELECT `event_name`, `deadline`, `gsheet_id`
             FROM `events`
             WHERE `schema_name` = %s
             LIMIT 1
@@ -94,7 +111,7 @@ async def get_event(schema_name: str) -> CondorEvent:
             params
         )
         for row in cursor:
-            return CondorEvent(schema_name=schema_name, event_name=row[0], deadline_str=row[1])
+            return CondorEvent(schema_name=schema_name, event_name=row[0], deadline_str=row[1], gsheet_id=row[2])
 
     raise necrobot.exception.SchemaDoesNotExist()
 
@@ -280,4 +297,4 @@ async def create_event(schema_name: str) -> CondorEvent:
             params
         )
 
-    return CondorEvent(schema_name=schema_name, event_name=None, deadline_str=None)
+    return CondorEvent(schema_name=schema_name, event_name=None, deadline_str=None, gsheet_id=None)

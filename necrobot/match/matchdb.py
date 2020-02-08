@@ -706,7 +706,7 @@ async def _register_match(match: Match) -> None:
                autogenned,
                league_tag
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """.format(matches=tn('matches')),
             params
         )
