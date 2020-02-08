@@ -377,8 +377,12 @@ class SetEventGSheet(CommandType):
 class OverwriteGSheet(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'overwritegsheet')
-        self.help_text = "`{} league_tag`: Refresh the GSheet (overwrites all data)."
+        self.help_text = "`{} league_tag`: Refresh the GSheet (overwrites all data).".format(self.mention)
         self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return "Refresh a league's GSheet."
 
     async def _do_execute(self, cmd: Command):
         gsheet_id = CondorMgr().event.gsheet_id
