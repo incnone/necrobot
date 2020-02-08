@@ -58,40 +58,43 @@ class TestOverwriteGSheet(TestCommandType):
         self.help_text = "`{} league_tag`: Write a bunch of data into league\'s GSheet."
 
     async def _do_execute(self, cmd: Command):
-        if len(cmd.args) != 1:
-            await cmd.channel.send(
-                'Incorrect number of arguments for {}.'.format(self.mention)
-            )
-            return
-
-        league_tag = cmd.args[0]
-        try:
-            league = await LeagueMgr().get_league(league_tag=league_tag)
-        except necrobot.exception.LeagueDoesNotExist:
-            await cmd.channel.send(
-                'Error: The league `{}` was not found.'.format(league_tag)
-            )
-            return
-
-        # Get the matchup sheet
-        wks_id = 0
-        try:
-            matchup_sheet = await sheetlib.get_sheet(
-                    gsheet_id=league.gsheet_id,
-                    wks_id=wks_id,
-                    sheet_type=sheetlib.SheetType.MATCHUP
-                )  # type: MatchupSheet
-        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await cmd.channel.send(
-                'Error accessing GSheet: `{0}`'.format(e)
-            )
-            return
-
-        if matchup_sheet is None:
-            await cmd.channel.send('Error: MatchupSheet is None.')
-            return
-
-        await matchup_sheet.overwrite_gsheet()
+        await cmd.channel.send(
+            'Not currently implemented.'
+        )
+        # if len(cmd.args) != 1:
+        #     await cmd.channel.send(
+        #         'Incorrect number of arguments for {}.'.format(self.mention)
+        #     )
+        #     return
+        #
+        # league_tag = cmd.args[0]
+        # try:
+        #     league = await LeagueMgr().get_league(league_tag=league_tag)
+        # except necrobot.exception.LeagueDoesNotExist:
+        #     await cmd.channel.send(
+        #         'Error: The league `{}` was not found.'.format(league_tag)
+        #     )
+        #     return
+        #
+        # # Get the matchup sheet
+        # wks_id = 0
+        # try:
+        #     matchup_sheet = await sheetlib.get_sheet(
+        #             gsheet_id=league.gsheet_id,
+        #             wks_id=league.worksheet_id,
+        #             sheet_type=sheetlib.SheetType.MATCHUP
+        #         )  # type: MatchupSheet
+        # except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+        #     await cmd.channel.send(
+        #         'Error accessing GSheet: `{0}`'.format(e)
+        #     )
+        #     return
+        #
+        # if matchup_sheet is None:
+        #     await cmd.channel.send('Error: MatchupSheet is None.')
+        #     return
+        #
+        # await matchup_sheet.overwrite_gsheet()
 
 
 class TestMatch(TestCommandType):

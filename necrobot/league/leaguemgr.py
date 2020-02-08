@@ -65,7 +65,7 @@ class LeagueMgr(Manager, metaclass=Singleton):
             league_tag=league_tag,
             league_name=league_name,
             match_info=match_info,
-            gsheet_id=gsheet_id
+            worksheet_id=gsheet_id
         )
         league.commit()
         cls._league_lib[league_tag] = league
