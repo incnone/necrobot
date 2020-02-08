@@ -51,23 +51,25 @@ class StandingsSheet(object):
     async def overwrite_gsheet(self, league_tag: str) -> None:
         raw_data = await leaguedb.get_standings_data_raw(league_tag=league_tag)
         racers = set()
-        wins = defaultdict(lambda: 0)
+        record = defaultdict(lambda: [0, 0])
         for row in raw_data:
             if row[0] is not None and row[1] is not None:
                 racers.add(row[0])
                 racers.add(row[1])
-                wins[(row[0], row[1])] += row[2]
-                wins[(row[1], row[0])] += row[3]
+                record[(row[0], row[1])][0] += row[2]
+                record[(row[0], row[1])][1] += row[3]
+                record[(row[1], row[0])][0] += row[3]
+                record[(row[1], row[0])][1] += row[2]
         racers = sorted(racers)
 
         values = [[''] + list(x for x in racers)]
         for racer in racers:
             values.append([racer] + ['' for _ in range(len(racers))])
 
-        for the_racers, num_wins in wins.items():
+        for the_racers, the_record in record.items():
             idx = racers.index(the_racers[0]) + 1
             jdx = racers.index(the_racers[1]) + 1
-            values[idx][jdx] = str(num_wins)
+            values[idx][jdx] = '{wins}-{losses}'.format(wins=the_record[0], losses=the_record[1])
 
         # Construct the SheetRange to update
         range_to_update = SheetRange(
