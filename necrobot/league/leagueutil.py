@@ -133,9 +133,9 @@ async def get_nextrace_displaytext(match_list: list) -> str:
     for match in match_list:
         # TODO: Hacky s9 emote solution
         s9_emotes = {
-            'cad': ':cadence:',
-            'mel': ':melody:',
-            'coh': ':zelda:'
+            'cad': '<:cadence:676159524033527808>',
+            'mel': '<:melody:676159691134337040>',
+            'coh': '<:zelda:676158586975420457>'
         }
         if match.league_tag in s9_emotes:
             display_text += '{2} **{0}** - **{1}**'.format(
