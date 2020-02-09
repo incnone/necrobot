@@ -131,12 +131,25 @@ async def get_nextrace_displaytext(match_list: list) -> str:
         display_text = 'Next match: \n'
 
     for match in match_list:
-        # noinspection PyUnresolvedReferences
-        display_text += '\N{BULLET} **{0}** - **{1}** ({2})'.format(
-            match.racer_1.display_name,
-            match.racer_2.display_name,
-            match.league_tag
-        )
+        # TODO: Hacky s9 emote solution
+        s9_emotes = {
+            'cad': ':cadence:',
+            'mel': ':melody:',
+            'coh': ':zelda:'
+        }
+        if match.league_tag in s9_emotes:
+            display_text += '{2} **{0}** - **{1}**'.format(
+                match.racer_1.display_name,
+                match.racer_2.display_name,
+                s9_emotes[match.league_tag]
+            )
+        else:
+            display_text += '\N{BULLET} **{0}** - **{1}** ({2})'.format(
+                match.racer_1.display_name,
+                match.racer_2.display_name,
+                match.league_tag
+            )
+
         if match.suggested_time is None:
             display_text += '\n'
             continue
