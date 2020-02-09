@@ -60,7 +60,7 @@ class StandingsSheet(object):
                 record[(row[0], row[1])][1] += row[3]
                 record[(row[1], row[0])][0] += row[3]
                 record[(row[1], row[0])][1] += row[2]
-        racers = sorted(racers)
+        racers = sorted(racers, key=lambda x: x.lower())
 
         values = [[''] + list(x for x in racers)]
         for racer in racers:
