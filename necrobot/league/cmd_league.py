@@ -19,7 +19,7 @@ from necrobot.util import console
 # Match-related main-channel commands
 class Cawmentate(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'cawmentate', 'commentate', 'cawmmentate')
+        CommandType.__init__(self, bot_channel, 'cawmentate', 'commentate', 'cawmmentate', 'caw')
         self.help_text = 'Register yourself for cawmentary for a given match. Usage is `{0} [league_tag] racer_1 ' \
                          'racer_2`, where `league_tag` is the league for the match, and `racer_1` and `racer_2` are ' \
                          'the racers in the match. ' \
@@ -35,7 +35,7 @@ class Cawmentate(CommandType):
 
 class Uncawmentate(CommandType):
     def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
+        CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate', 'uncaw')
         self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} [league_tag] racer_1 racer_2`.' \
                          .format(self.mention)
 
