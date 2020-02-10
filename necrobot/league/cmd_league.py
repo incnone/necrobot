@@ -203,7 +203,7 @@ class ForceMakeMatch(CommandType):
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -237,7 +237,7 @@ class GetLeagueInfo(CommandType):
             await cmd.channel.send('Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag=league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -274,7 +274,7 @@ class MakeLeague(CommandType):
             await cmd.channel.send('Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         # TODO implement this check properly
         if len(league_tag) > 8:
             await cmd.channel.send('Error: Tag `{0}` is too long.'.format(league_tag))
@@ -307,7 +307,7 @@ class MakeMatch(CommandType):
                 'Error: Wrong number of arguments for `{0}`.'.format(self.mention))
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -359,7 +359,7 @@ class MakeMatchesFromFile(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -488,7 +488,7 @@ class NextRace(CommandType):
 
         league_tag = None
         if len(cmd.args) == 1:
-            league_tag = cmd.args[0]
+            league_tag = cmd.args[0].lower()
             try:
                 await LeagueMgr().get_league(league_tag)
             except necrobot.exception.LeagueDoesNotExist:
@@ -548,7 +548,7 @@ class SetLeagueName(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -587,7 +587,7 @@ class SetMatchRules(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:

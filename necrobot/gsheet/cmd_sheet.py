@@ -56,7 +56,7 @@ class GetGSheet(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -313,7 +313,7 @@ class SetLeagueWorksheet(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -407,7 +407,7 @@ class OverwriteGSheet(CommandType):
             return
 
         # Get the matchup sheet
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             league = await LeagueMgr().get_league(league_tag)
         except necrobot.exception.LeagueDoesNotExist:

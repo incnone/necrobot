@@ -50,7 +50,7 @@ async def find_match(
     if len(args) < 2:
         raise necrobot.exception.ParseException('Need at least two racer names to find a match.')
 
-    league_tag = args[0]
+    league_tag = args[0].lower()
     try:
         await LeagueMgr().get_league(league_tag=league_tag)
         args.pop(0)

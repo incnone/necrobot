@@ -82,7 +82,7 @@ class LeagueFastest(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             await LeagueMgr().get_league(league_tag=league_tag)
         except necrobot.exception.LeagueDoesNotExist:
@@ -114,7 +114,7 @@ class LeagueStats(CommandType):
             )
             return
 
-        league_tag = cmd.args[0]
+        league_tag = cmd.args[0].lower()
         try:
             await LeagueMgr().get_league(league_tag=league_tag)
         except necrobot.exception.LeagueDoesNotExist:

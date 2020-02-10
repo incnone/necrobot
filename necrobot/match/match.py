@@ -449,7 +449,7 @@ class Match(object):
         if 'finish_time' in kwargs:
             self._finish_time = kwargs['finish_time']
         if 'league_tag' in kwargs:
-            self._league_tag = kwargs['finish_time']
+            self._league_tag = kwargs['league_tag']
 
     def _set_suggested_time(self, time: datetime.datetime or None) -> None:
         if time is None:
