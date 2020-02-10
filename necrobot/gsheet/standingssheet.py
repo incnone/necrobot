@@ -83,7 +83,7 @@ class StandingsSheet(object):
         await self._update_cells(
             sheet_range=range_to_update,
             values=values,
-            raw_input=False
+            raw_input=True
         )
 
     async def _update_cells(self, sheet_range: SheetRange, values: list, raw_input=True) -> bool:
