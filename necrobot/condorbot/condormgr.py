@@ -10,6 +10,7 @@ from necrobot.config import Config
 from necrobot.condorbot import condordb
 from necrobot.database import dbutil
 from necrobot.gsheet import sheetlib
+from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet.standingssheet import StandingsSheet
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.league import leaguestats
@@ -108,6 +109,7 @@ class CondorMgr(Manager, metaclass=Singleton):
             pass
 
         elif ev.event_type == 'schedule_match':
+            asyncio.ensure_future(self._overwrite_schedule_gsheet())
             pass
             # try:
             #     league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
@@ -231,6 +233,11 @@ class CondorMgr(Manager, metaclass=Singleton):
         sheet = await self._get_gsheet(league=league)
         await sheet.overwrite_gsheet(league.tag)
 
+    async def _overwrite_schedule_gsheet(self):
+        # noinspection PyShadowingNames
+        sheet = await self._get_schedule_gsheet()
+        await sheet.overwrite_gsheet()
+
     # @staticmethod
     # async def _overwrite_speedrun_sheet(league: League):
     #     speedrun_sheet = await sheetlib.get_sheet(
@@ -253,6 +260,13 @@ class CondorMgr(Manager, metaclass=Singleton):
             gsheet_id=self._event.gsheet_id,
             wks_id=league.worksheet_id,
             sheet_type=sheetlib.SheetType.STANDINGS
+        )
+
+    async def _get_schedule_gsheet(self) -> MatchupSheet:
+        return await sheetlib.get_sheet(
+            gsheet_id=self._event.gsheet_id,
+            wks_id=0,                                   # TODO: hack
+            sheet_type=sheetlib.SheetType.MATCHUP
         )
 
     @staticmethod

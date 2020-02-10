@@ -318,9 +318,9 @@ async def get_fastest_wins_raw(league_tag: str, limit: int = None) -> list:
 
 
 async def get_match_id(
-        league_tag: str,
         racer_1_id: int,
         racer_2_id: int,
+        league_tag: Optional[str] = None,
         scheduled_time: datetime.datetime = None,
         finished_only: Optional[bool] = None
 ) -> int or None:
@@ -357,9 +357,12 @@ async def get_match_id(
         'time': scheduled_time
     }
 
-    where_str = '((racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
-                'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)) ' \
-                'AND (league_tag=%(league_tag)s)'
+    where_str = '(racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
+                'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)'
+    if league_tag is not None:
+        where_str = '({old_str}) AND (league_tag=%(league_tag)s)'.format(
+            old_str=where_str
+        )
     if finished_only is not None:
         where_str = '({old_str}) AND (finish_time IS {nullstate})'.format(
             old_str=where_str,

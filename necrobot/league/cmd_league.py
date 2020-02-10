@@ -147,7 +147,7 @@ class DropRacer(CommandType):
     # TODO: Update this command for multiple leagues (so that racers can be dropped from a single league only)
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'dropracer')
-        self.help_text = '`{0} racername`: Drop a racer from all current match channels and delete the matches. ' \
+        self.help_text = '`{0} racername`: Drop a racer from all current match channels and delete those matches. ' \
                          'This does not write logs.'.format(self.mention)
         self.admin_only = True
 
@@ -321,7 +321,8 @@ class MakeMatch(CommandType):
         try:
             new_match = await cmd_matchmake.make_match_from_cmd(
                 cmd=cmd,
-                racer_names=[cmd.author.display_name, other_racer_name],
+                racer_members=[cmd.author],
+                racer_names=[other_racer_name],
                 match_info=league.match_info,
                 league_tag=league_tag,
                 allow_duplicates=True

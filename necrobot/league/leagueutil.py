@@ -47,15 +47,16 @@ async def find_match(
         If the input string couldn't be parsed meaningfully.
     """
     args = shlex.split(input_str)
-    if len(args) < 3:
-        raise necrobot.exception.ParseException('Need at least three arguments to find a match.')
+    if len(args) < 2:
+        raise necrobot.exception.ParseException('Need at least two racer names to find a match.')
 
     league_tag = args[0]
     try:
         await LeagueMgr().get_league(league_tag=league_tag)
+        args.pop(0)
     except necrobot.exception.LeagueDoesNotExist:
-        raise necrobot.exception.NotFoundException("Can't find any league by the name `{0}`.".format(args[0]))
-    args.pop(0)
+        league_tag = None
+        # raise necrobot.exception.NotFoundException("Can't find any league by the name `{0}`.".format(args[0]))
 
     racer_1 = await userlib.get_user(any_name=args[0])
     if racer_1 is None:
@@ -76,9 +77,9 @@ async def find_match(
         match_date = dateparse.parse_datetime(match_date_str, tz)
 
     match_id = await leaguedb.get_match_id(
-        league_tag=league_tag,
         racer_1_id=racer_1.user_id,
         racer_2_id=racer_2.user_id,
+        league_tag=league_tag,
         scheduled_time=match_date,
         finished_only=finished_only
     )

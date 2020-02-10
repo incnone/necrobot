@@ -314,7 +314,8 @@ async def get_matchview_raw_data():
                 completed,
                 vod,
                 autogenned,
-                scheduled
+                scheduled,
+                league_tag
             FROM {match_info}
             ORDER BY -scheduled_time DESC
             """.format(match_info=tn('match_info'))
