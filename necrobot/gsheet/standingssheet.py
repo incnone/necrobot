@@ -54,13 +54,15 @@ class StandingsSheet(object):
         record = defaultdict(lambda: [0, 0])
         for row in raw_data:
             if row[0] is not None and row[1] is not None:
-                racers.add(row[0])
-                racers.add(row[1])
-                record[(row[0], row[1])][0] += row[2]
-                record[(row[0], row[1])][1] += row[3]
-                record[(row[1], row[0])][0] += row[3]
-                record[(row[1], row[0])][1] += row[2]
-        racers = sorted(racers, key=lambda x: x.lower())
+                r1_name = row[0].lower
+                r2_name = row[1].lower
+                racers.add(r1_name)
+                racers.add(r2_name)
+                record[(r1_name, r2_name)][0] += row[2]
+                record[(r1_name, r2_name)][1] += row[3]
+                record[(r2_name, r1_name)][0] += row[3]
+                record[(r2_name, r1_name)][1] += row[2]
+        racers = sorted(racers)
 
         values = [[''] + list(x for x in racers)]
         for racer in racers:
