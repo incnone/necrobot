@@ -54,8 +54,8 @@ class StandingsSheet(object):
         record = defaultdict(lambda: [0, 0])
         for row in raw_data:
             if row[0] is not None and row[1] is not None:
-                r1_name = row[0].lower
-                r2_name = row[1].lower
+                r1_name = row[0].lower()
+                r2_name = row[1].lower()
                 racers.add(r1_name)
                 racers.add(r2_name)
                 record[(r1_name, r2_name)][0] += row[2]
