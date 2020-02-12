@@ -85,6 +85,7 @@ class CondorMgr(Manager, metaclass=Singleton):
                 asyncio.ensure_future(self._overwrite_gsheet(league=league))
             except necrobot.exception.LeagueDoesNotExist:
                 pass
+            asyncio.ensure_future(self._overwrite_schedule_gsheet())
             asyncio.ensure_future(send_mainchannel_message())
 
         elif ev.event_type == 'end_match_race':
@@ -110,28 +111,12 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'schedule_match':
             asyncio.ensure_future(self._overwrite_schedule_gsheet())
-            pass
-            # try:
-            #     league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
-            #     asyncio.ensure_future(self._overwrite_gsheet(league=league))
-            # except necrobot.exception.LeagueDoesNotExist:
-            #     pass
-            # asyncio.ensure_future(self._update_schedule_channel())
 
         elif ev.event_type == 'set_cawmentary':
-            try:
-                league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
-                asyncio.ensure_future(self._overwrite_gsheet(league=league))
-            except necrobot.exception.LeagueDoesNotExist:
-                pass
+            asyncio.ensure_future(self._overwrite_schedule_gsheet())
 
         elif ev.event_type == 'set_vod':
-            try:
-                league = await LeagueMgr().get_league(league_tag=ev.match.league_tag)
-                asyncio.ensure_future(self._overwrite_gsheet(league=league))
-            except necrobot.exception.LeagueDoesNotExist:
-                pass
-
+            asyncio.ensure_future(self._overwrite_schedule_gsheet())
             cawmentator = await ev.match.get_cawmentator()
             await self._main_channel.send(
                 '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
