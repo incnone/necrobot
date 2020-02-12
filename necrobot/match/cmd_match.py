@@ -742,6 +742,10 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     if add:
         match.set_cawmentator_id(author_user.user_id)
         await NEDispatch().publish(event_type='set_cawmentary', match=match)
+
+        if author_user.member is not None:
+          await cmd.channel.set_permissions(author_user.member, read_messages=True)
+
         await cmd.channel.send(
             'Added {0} as cawmentary for the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name
@@ -750,6 +754,10 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     else:
         match.set_cawmentator_id(None)
         await NEDispatch().publish(event_type='set_cawmentary', match=match)
+
+        if author_user.member is not None:
+          await cmd.channel.set_permissions(author_user.member, overwrite=None)
+
         await cmd.channel.send(
             'Removed {0} as cawmentary from the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name
