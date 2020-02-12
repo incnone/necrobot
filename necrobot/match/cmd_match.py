@@ -741,23 +741,28 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     # Add/delete the cawmentary
     if add:
         match.set_cawmentator_id(author_user.user_id)
-        await NEDispatch().publish(event_type='set_cawmentary', match=match)
+    else:
+        match.set_cawmentator_id(None)
 
-        if author_user.member is not None:
-          await cmd.channel.set_permissions(author_user.member, read_messages=True)
+    # Add/remove the cawmentator from the race room
+    if !match.is_self_cawmentated and author_user.member is not None:
+        if add:
+            await cmd.channel.set_permissions(author_user.member,
+                read_messages=True, read_message_history=False, send_messages=False,
+            )
+        else:
+            await cmd.channel.set_permissions(author_user.member, overwrite=None)
 
+    await NEDispatch().publish(event_type='set_cawmentary', match=match)
+
+    # Log success
+    if add:
         await cmd.channel.send(
             'Added {0} as cawmentary for the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name
             )
         )
     else:
-        match.set_cawmentator_id(None)
-        await NEDispatch().publish(event_type='set_cawmentary', match=match)
-
-        if author_user.member is not None:
-          await cmd.channel.set_permissions(author_user.member, overwrite=None)
-
         await cmd.channel.send(
             'Removed {0} as cawmentary from the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name
