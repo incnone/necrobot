@@ -137,6 +137,7 @@ class Config(object):
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff', 'Necrobot']  # list of names of roles to give admin access
+    STAFF_ROLE = 'CoNDOR Staff'
 
     # Channels --------------------------------------------------------------------------------
     MAIN_CHANNEL_NAME = 'necrobot_main'

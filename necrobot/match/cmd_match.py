@@ -8,11 +8,43 @@ from necrobot.botbase.necroevent import NEDispatch
 from necrobot.match import matchdb
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.user import userlib
-from necrobot.util import timestr, writechannel
+from necrobot.util import timestr, server, writechannel
 from necrobot.util.parse import dateparse
+from necrobot.config import Config
 
 
 # Matchroom commands
+class AlertStaff(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'staff')
+        self.help_text = 'Alert staff to an issue.'
+
+    async def _do_execute(self, cmd):
+        staff_role = server.find_role(Config.STAFF_ROLE)
+        if staff_role is None:
+            await cmd.channel.send(
+                'Error: Couldn\'t find the staff role. Please contact incnone.'
+            )
+
+        await cmd.channel.send(
+            'Alerting {}.'.format(staff_role.mention)
+        )
+
+        notifications_channel = server.find_channel(Config.NOTIFICATIONS_CHANNEL_NAME)
+        if notifications_channel is None:
+            await cmd.channel.send(
+                'Error: Couldn\'t find the bot notifications channel.'
+            )
+
+        await notifications_channel.send(
+            '{user} has called `{this}` in channel {channel}.'.format(
+                user=cmd.author.display_name,
+                this=self.mention,
+                channel=cmd.channel.mention
+            )
+        )
+
+
 class Confirm(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'confirm')

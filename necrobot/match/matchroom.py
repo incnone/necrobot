@@ -54,6 +54,7 @@ class MatchRoom(BotChannel):
         self._match_race_data = None            # type: Optional[MatchRaceData]
 
         self._prematch_channel_commands = [
+            cmd_match.AlertStaff(self),
             cmd_match.Confirm(self),
             cmd_match.GetMatchInfo(self),
             cmd_match.Suggest(self),
@@ -73,6 +74,7 @@ class MatchRoom(BotChannel):
         ]
 
         self._during_match_channel_commands = [
+            cmd_match.AlertStaff(self),
             cmd_match.CancelRace(self),
             cmd_match.ChangeWinner(self),
             cmd_match.Contest(self),
@@ -102,6 +104,7 @@ class MatchRoom(BotChannel):
         ]
 
         self._postmatch_channel_commands = [
+            cmd_match.AlertStaff(self),
             cmd_match.CancelRace(self),
             cmd_match.ChangeWinner(self),
             cmd_match.Contest(self),
