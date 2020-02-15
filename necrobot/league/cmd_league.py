@@ -524,7 +524,7 @@ class NextRace(CommandType):
 class Register(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'register')
-        self.help_text = 'Register for the current event.'.format(self.mention)
+        self.help_text = 'Register for the current event.'
 
     async def _do_execute(self, cmd: Command):
         user = await userlib.get_user(discord_id=int(cmd.author.id))
