@@ -7,6 +7,7 @@ Current version: 0.13
 ### General
 - Replace NoneType returns with exceptions where appropriate
 - More efficient database requests (especially on Condorbot startup)
+- Do assignment into leagues via role assignment
 
 ### GSheet
 - Drastically simplify GSheet interaction (full overwrite updates, no reading from sheet)
