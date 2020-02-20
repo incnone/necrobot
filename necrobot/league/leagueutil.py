@@ -84,9 +84,22 @@ async def find_match(
         finished_only=finished_only
     )
     if match_id is None:
-        raise necrobot.exception.NotFoundException(
-            "Can't find any match between `{0}` and `{1}`.".format(racer_1.display_name, racer_2.display_name)
-        )
+        if finished_only is None:
+            raise necrobot.exception.NotFoundException(
+                "Can't find any match between `{0}` and `{1}`.".format(racer_1.display_name, racer_2.display_name)
+            )
+        elif finished_only is True:
+            raise necrobot.exception.NotFoundException(
+                "Can't find any completed match between `{0}` and `{1}`.".format(
+                    racer_1.display_name, racer_2.display_name
+                )
+            )
+        elif finished_only is False:
+            raise necrobot.exception.NotFoundException(
+                "Can't find any uncompleted match between `{0}` and `{1}`.".format(
+                    racer_1.display_name, racer_2.display_name
+                )
+            )
 
     return await matchutil.get_match_from_id(match_id)
 

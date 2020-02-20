@@ -304,6 +304,7 @@ async def get_fastest_wins_raw(league_tag: str, limit: int = None) -> list:
             WHERE
                 {match_races}.winner != 0
                 AND {matches}.`league_tag` = %s
+                AND NOT {match_races}.canceled
             ORDER BY `time` ASC
             LIMIT %s
             """.format(
