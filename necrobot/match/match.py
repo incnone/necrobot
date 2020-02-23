@@ -193,6 +193,10 @@ class Match(object):
         return self._cawmentator_id
 
     @property
+    def is_self_cawmentated(self) -> bool:
+        return self._cawmentator_id is not None and (self._cawmentator_id == self._racer_1_id or self._cawmentator_id == self._racer_2_id)
+
+    @property
     def channel_id(self) -> int:
         return self._channel_id
 
