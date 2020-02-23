@@ -2,7 +2,7 @@
 
 import asyncio
 import datetime
-from typing import Optional
+from typing import Optional, Mapping, Union
 
 import discord
 import pytz
@@ -158,6 +158,10 @@ class MatchRoom(BotChannel):
             return self._match_race_data.leader_wins > self.match.number_of_races // 2
         else:
             return self._match_race_data.num_finished >= self.match.number_of_races
+
+    def is_racer_id(self, racer_id: Union[str, int]) -> bool:
+        rid_int = int(racer_id)
+        return rid_int == self.match.racer_1.member.id or rid_int == self.match.racer_2.member.id
 
     async def during_races(self) -> bool:
         """True if the match has started but not finished."""
@@ -375,6 +379,25 @@ class MatchRoom(BotChannel):
         )
         self._update_race_data(race_winner=winner)
         await self.update()
+
+    async def add_cawmentator_permissions(self) -> None:
+        cawmentator = await self.match.get_cawmentator()
+        if cawmentator is not None and not self.is_racer_id(cawmentator.member.id):
+            await self.channel.set_permissions(
+                cawmentator.member,
+                read_messages=True,
+                read_message_history=False,
+                send_messages=False
+            )
+            await asyncio.sleep(5)
+            await self.channel.send(
+                'This race\'s cawmentator {caw} can now read this channel.'.format(caw=cawmentator.member.mention)
+            )
+
+    async def remove_cawmentator_permissions(self) -> None:
+        cawmentator = await self.match.get_cawmentator()
+        if cawmentator is not None and not self.is_racer_id(cawmentator.member.id):
+            await self.channel.set_permissions(cawmentator.member, overwrite=None)
 
     async def _countdown_to_match_start(self, warn: bool = False) -> None:
         """Does things at certain times before the match

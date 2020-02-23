@@ -14,6 +14,7 @@ from necrobot.match import matchutil, cmd_matchmake, matchinfo, matchchannelutil
 from necrobot.user import userlib
 from necrobot.util import server
 from necrobot.util import console
+from necrobot.config import Config
 
 
 # Match-related main-channel commands
@@ -661,15 +662,21 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
     # Add/delete the cawmentary
     if add:
         match.set_cawmentator_id(author_user.user_id)
-        await NEDispatch().publish(event_type='set_cawmentary', match=match)
-        await cmd.channel.send(
-            'Added {0} as cawmentary for the match {1}.'.format(
-                cmd.author.mention, match.matchroom_name
+        await NEDispatch().publish(event_type='set_cawmentary', match=match, add=True, member=cmd.author)
+
+        # If we're within the 5-minute warning, just redo the match alert
+        if match.time_until_match <= Config.MATCH_FINAL_WARNING:
+            await NEDispatch().publish(event_type='match_alert', match=match, final=True)
+        else:
+            await cmd.channel.send(
+                'Added {0} as cawmentary for the match {1}.'.format(
+                    cmd.author.mention, match.matchroom_name
+                )
             )
-        )
     else:
+        await NEDispatch().publish(event_type='set_cawmentary', match=match, add=False, member=cmd.author)
         match.set_cawmentator_id(None)
-        await NEDispatch().publish(event_type='set_cawmentary', match=match)
+
         await cmd.channel.send(
             'Removed {0} as cawmentary from the match {1}.'.format(
                 cmd.author.mention, match.matchroom_name

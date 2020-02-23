@@ -17,6 +17,8 @@ from necrobot.league import leaguestats
 from necrobot.league import leagueutil
 from necrobot.league.league import League
 from necrobot.match.match import Match
+from necrobot.match.matchroom import MatchRoom
+from necrobot.match import matchchannelutil
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.util import console, server, strutil, rtmputil
 from necrobot.util.parse import dateparse
@@ -88,6 +90,10 @@ class CondorMgr(Manager, metaclass=Singleton):
             asyncio.ensure_future(self._overwrite_schedule_gsheet())
             asyncio.ensure_future(send_mainchannel_message())
 
+            matchroom = await matchchannelutil.get_match_room(ev.match)  # type: Optional[MatchRoom]
+            if matchroom is not None:
+                await matchroom.remove_cawmentator_permissions()
+
         elif ev.event_type == 'end_match_race':
             pass
             # asyncio.ensure_future(VodRecorder().end_record(ev.match.racer_1.rtmp_name))
@@ -114,6 +120,10 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'set_cawmentary':
             asyncio.ensure_future(self._overwrite_schedule_gsheet())
+            if not ev.add:
+                matchroom = await matchchannelutil.get_match_room(ev.match)  # type: Optional[MatchRoom]
+                if matchroom is not None:
+                    await matchroom.remove_cawmentator_permissions()
 
         elif ev.event_type == 'set_vod':
             asyncio.ensure_future(self._overwrite_schedule_gsheet())
@@ -316,6 +326,10 @@ class CondorMgr(Manager, metaclass=Singleton):
                 stream=stream
             )
         )
+
+        matchroom = await matchchannelutil.get_match_room(match)    # type: Optional[MatchRoom]
+        if matchroom is not None:
+            await matchroom.add_cawmentator_permissions()
 
     async def _update_schedule_channel(self):
         infotext = await leagueutil.get_schedule_infotext()

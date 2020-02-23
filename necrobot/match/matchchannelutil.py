@@ -1,5 +1,5 @@
 import discord
-from typing import List
+from typing import List, Optional
 
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match import matchdb
@@ -223,3 +223,47 @@ async def close_match_room(match: Match) -> None:
     await Necrobot().unregister_bot_channel(channel)
     await channel.delete()
     match.set_channel_id(None)
+
+
+async def get_match_room(match: Match) -> Optional[MatchRoom]:
+    """Get the MatchRoom corresponding to the given match, if any.
+
+    Parameters
+    ----------
+    match: Match
+        The Match to get the MatchRoom for.
+    """
+    if not match.is_registered:
+        console.warning('Trying to get a MatchRoom for an unregistered Match.')
+        return None
+
+    channel_id = match.channel_id
+    if channel_id is None:
+        console.warning('Called get_match_room on an unchanneled match.')
+        return None
+
+    channel = server.find_channel(channel_id=channel_id)
+    if channel is None:
+        console.warning(
+            'Couldn\'t find channel with id {0} in close_match_room (match_id={1}).'
+            .format(channel_id, match.match_id)
+        )
+        return None
+
+    try:
+        matchroom = Necrobot().get_bot_channel(discord_channel=channel)
+    except KeyError:
+        console.warning(
+            'Couldn\'t find MatchRoom for match with ID (match_id={1}), due to KeyError.'
+            .format(channel_id, match.match_id)
+        )
+        return None
+
+    if matchroom is None:
+        console.warning(
+            'Couldn\'t find MatchRoom with id {0} in close_match_room (match_id={1}).'
+            .format(channel_id, match.match_id)
+        )
+        return None
+
+    return matchroom
