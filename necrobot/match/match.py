@@ -89,7 +89,7 @@ class Match(object):
         self._r2_wishes_to_unconfirm = r2_unconfirmed       # type: bool
 
         # Format and race data
-        self._match_info = match_info                       # type: MatchInfo
+        self._match_info = MatchInfo.copy(match_info)       # type: MatchInfo
 
         # Other
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None  # type: int
