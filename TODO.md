@@ -9,6 +9,9 @@ Current version: 0.13
 - More efficient database requests (especially on Condorbot startup)
 - Do assignment into leagues via role assignment
 - Link cawmentator on matches that are past their alert notice when the command is fired
+- Convenince commands giving one's schedule and maybe link to all one's race rooms? Callable in PM only ofc
+- Immediate race alerts for races that are scheduled for within the next 5 minutes
+- A way to view your most recent results in a big list? Talk to elad/cancel
 
 ### GSheet
 - Drastically simplify GSheet interaction (full overwrite updates, no reading from sheet)
