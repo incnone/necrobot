@@ -68,6 +68,8 @@ class MatchRoom(BotChannel):
             cmd_match.SetMatchType(self),
             cmd_match.Update(self),
 
+            cmd_race.ChangeRules(self),
+
             cmd_test.TestMatch(self),
 
             cmd_user.UserInfo(self),
@@ -273,7 +275,7 @@ class MatchRoom(BotChannel):
         )
         if new_race_info:
             self.match.set_race_info(new_race_info)
-            if self.current_race.before_race:
+            if self.current_race is not None and self.current_race.before_race:
                 self.current_race.race_info = raceinfo.RaceInfo.copy(self.match.race_info)
             await self.write('Changed rules for the next race.')
             await self.update()
