@@ -161,7 +161,7 @@ async def get_nextrace_displaytext(match_list: list) -> str:
             display_text += '\N{BULLET} **{0}** - **{1}** ({2})'.format(
                 match.racer_1.display_name,
                 match.racer_2.display_name,
-                match.league_tag
+                match.format_str
             )
 
         if match.suggested_time is None:

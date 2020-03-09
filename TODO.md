@@ -12,6 +12,12 @@ Current version: 0.13
 - Convenince commands giving one's schedule and maybe link to all one's race rooms? Callable in PM only ofc
 - Immediate race alerts for races that are scheduled for within the next 5 minutes
 - A way to view your most recent results in a big list? Talk to elad/cancel
+- A way to get links to all your matchrooms? Probably only useful for admin
+
+### Grudgedor stuff
+- A way to mark matches with names/custom tags so people in .next can see what's up
+- A way to allow racers to set rules
+- Matches with more than two people (big!)
 
 ### GSheet
 - Drastically simplify GSheet interaction (full overwrite updates, no reading from sheet)

@@ -597,7 +597,7 @@ class SetMatchType(CommandType):
         CommandType.__init__(self, bot_channel, 'setmatchtype')
         self.help_text = 'Set the type of the match. Use `.setmatchtype repeat X` to make the match be ' \
                          'racers play X races; use `.setmatchtype bestof Y` to make the match a best-of-Y.'
-        self.admin_only = True
+        self.admin_only = not Config.GRUDGEDOR
 
     @property
     def short_help_text(self):
