@@ -35,9 +35,9 @@ class MatchInfo(object):
         else:
             match_format_info = '{0} races'.format(self.max_races)
 
-        ranked_str = 'ranked' if self.ranked else 'unranked'
+        # ranked_str = 'ranked' if self.ranked else 'unranked'
 
-        return '{0}, {1}, {2}'.format(self.race_info.format_str, match_format_info, ranked_str)
+        return '{0}, {1}'.format(self.race_info.format_str, match_format_info)
 
 
 def parse_args(args: list) -> MatchInfo:
