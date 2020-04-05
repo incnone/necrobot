@@ -17,12 +17,15 @@ async def load_condorbot_config(necrobot):
 
     # Main Channel
     main_channel = server.find_channel(Config.MAIN_CHANNEL_NAME)
+    if main_channel is None:
+        console.warning('Could not find the main channel "{0}".'.format(Config.MAIN_CHANNEL_NAME))
     necrobot.register_bot_channel(main_channel, CondorMainChannel(ladder=False))
 
     # Admin Channel
-    condor_admin_channel = server.find_channel(channel_name='adminchat')
+    admin_channel_name = 'adminchat'
+    condor_admin_channel = server.find_channel(channel_name=admin_channel_name)
     if condor_admin_channel is None:
-        console.warning('Could not find the "{0}" channel.'.format('adminchat'))
+        console.warning('Could not find the admin channel "{0}".'.format(admin_channel_name))
     necrobot.register_bot_channel(condor_admin_channel, CondorAdminChannel())
 
     # Managers (Order is important!)
