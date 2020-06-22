@@ -5,14 +5,16 @@ Current version: 0.13
 ## Current TODO
 
 ### General
+- Better code for managing non-unique username issues
 - Replace NoneType returns with exceptions where appropriate
 - More efficient database requests (especially on Condorbot startup)
 - Do assignment into leagues via role assignment
 - Link cawmentator on matches that are past their alert notice when the command is fired
-- Convenince commands giving one's schedule and maybe link to all one's race rooms? Callable in PM only ofc
+- Convenience commands giving one's schedule and maybe link to all one's race rooms? Callable in PM only ofc
 - Immediate race alerts for races that are scheduled for within the next 5 minutes
 - A way to view your most recent results in a big list? Talk to elad/cancel
 - A way to get links to all your matchrooms? Probably only useful for admin
+- A refresh cache command so that manual DB updates can be made without reboots
 
 ### Grudgedor stuff
 - A way to mark matches with names/custom tags so people in .next can see what's up
@@ -61,10 +63,9 @@ just finished or the race that people are currently entering. It maybe also does
 - Time limits, with an auto-ping when the time expires
 
 ### Stream support / Twitch integration
-Allow for users to register their streams and to tag certain races as "streamed". For such races, generate 
-a multitwitch or kadgar link upon asking. As an even bigger project, make the bot able to check whether said 
-users are actually streaming. Also, make the bot able to report in your twitch chat when people in your race 
-have finished or forfeit (and who won, etc.)
+ - Allow for users to tag certain races as "streamed". For such races, generate a multitwitch or kadgar link upon 
+asking. As an even bigger project, make the bot able to check whether said users are actually streaming. Also, make 
+the bot able to report in your twitch chat when people in your race have finished or forfeit (and who won, etc.)
 
 ### Daily improvements
 - A weekly that's intended for optimizing a seed.
