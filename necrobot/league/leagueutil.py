@@ -150,7 +150,7 @@ async def get_nextrace_displaytext(match_list: list) -> str:
             'cad': '<:cadence:676159524033527808>',
             'mel': '<:melody:676159691134337040>',
             'coh': '<:zelda:676158586975420457>',
-            'noc': '<:nocturna:724458364125446204>'
+            'noc': '<:nocturna:724439270047219713>'
         }
         if match.league_tag in s9_emotes:
             display_text += '{2} **{0}** - **{1}**'.format(
