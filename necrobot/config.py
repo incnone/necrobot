@@ -129,7 +129,7 @@ class DebugLevel(IntEnum):
 
 
 class Config(object):
-    GRUDGEDOR = True
+    GRUDGEDOR = False
 
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
