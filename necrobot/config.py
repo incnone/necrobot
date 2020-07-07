@@ -170,7 +170,7 @@ class Config(object):
     SERVER_ID = None    # type: Optional[int]
 
     # Matches ---------------------------------------------------------------------------------
-    MATCH_AUTOCONTEST_IF_WITHIN_HUNDREDTHS = 500
+    MATCH_AUTOCONTEST_IF_WITHIN_HUNDREDTHS = 300
     MATCH_FIRST_WARNING = datetime.timedelta(minutes=15)
     MATCH_FINAL_WARNING = datetime.timedelta(minutes=5)
     MATCH_CHANNEL_CATEGORY_NAME = "Race rooms"
