@@ -332,19 +332,20 @@ class CondorMgr(Manager, metaclass=Singleton):
             await matchroom.add_cawmentator_permissions()
 
     async def _update_schedule_channel(self):
-        infotext = await leagueutil.get_schedule_infotext()
-
-        # Find the message:
-        the_msg = None
-        async for msg in self._schedule_channel.history():
-            if msg.author.id == server.client.user.id:
-                the_msg = msg
-                break
-
-        if the_msg is None:
-            await self._schedule_channel.send(infotext)
-        else:
-            await the_msg.edit(content=infotext)
+        pass
+        # infotext = await leagueutil.get_schedule_infotext()
+        #
+        # # Find the message:
+        # the_msg = None
+        # async for msg in self._schedule_channel.history():
+        #     if msg.author.id == server.client.user.id:
+        #         the_msg = msg
+        #         break
+        #
+        # if the_msg is None:
+        #     await self._schedule_channel.send(infotext)
+        # else:
+        #     await the_msg.edit(content=infotext)
 
 
 class TestCondorMgr(unittest.TestCase):
