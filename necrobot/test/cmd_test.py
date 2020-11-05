@@ -9,6 +9,7 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.test import msgqueue
 from necrobot.config import Config
+from necrobot.util import console
 
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet import sheetlib
@@ -95,6 +96,18 @@ class TestOverwriteGSheet(TestCommandType):
         #     return
         #
         # await matchup_sheet.overwrite_gsheet()
+
+
+class TestDebugMembers(TestCommandType):
+    def __init__(self, bot_channel):
+        TestCommandType.__init__(self, bot_channel, 'testdebug')
+        self.help_text = "For temporary debugging. Functionality depends on what the bug is."
+
+    async def _do_execute(self, cmd: Command):
+        console.info("--MEMBER LIST:---------------------------------------")
+        for member in server.guild.members:
+            console.info(str(member))
+        console.info("--END MEMBER LIST------------------------------------")
 
 
 class TestMatch(TestCommandType):
