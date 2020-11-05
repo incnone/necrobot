@@ -111,7 +111,9 @@ def logon(
     try:
         logger.info('Beginning main loop.')
         # Create the discord.py Client object and the Necrobot----
-        client = discord.Client()
+        intents = discord.Intents.default()
+        intents.members = True
+        client = discord.Client(intents=intents)
         the_necrobot = Necrobot()
         the_necrobot.clean_init()
         the_necrobot.ready_client_events(client=client, load_config_fn=load_config_fn, on_ready_fn=on_ready_fn)

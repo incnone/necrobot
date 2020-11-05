@@ -104,6 +104,11 @@ class TestDebugMembers(TestCommandType):
         self.help_text = "For temporary debugging. Functionality depends on what the bug is."
 
     async def _do_execute(self, cmd: Command):
+        console.info("--CHANNEL LIST:---------------------------------------")
+        for channel in server.guild.channels:
+            console.info(str(channel))
+        console.info("--END CHANNEL LIST------------------------------------")
+
         console.info("--MEMBER LIST:---------------------------------------")
         for member in server.guild.members:
             console.info(str(member))
