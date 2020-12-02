@@ -15,6 +15,7 @@ Current version: 0.13
 - A way to view your most recent results in a big list? Talk to elad/cancel
 - A way to get links to all your matchrooms? Probably only useful for admin
 - A refresh cache command so that manual DB updates can be made without reboots
+- Don't weirdly overwrite config file on shutdown
 
 ### Grudgedor stuff
 - A way to mark matches with names/custom tags so people in .next can see what's up
