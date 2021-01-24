@@ -180,7 +180,7 @@ async def get_nextrace_displaytext(match_list: list) -> str:
                 rtmputil.kadgar_link(match.racer_1.twitch_name, match.racer_2.twitch_name)
             )
 
-    display_text += '\nFull schedule: <https://condor.host/schedule>'
+    display_text += '\nFull schedule: <https://condor.live/schedule>'
 
     return display_text
 
