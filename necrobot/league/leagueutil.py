@@ -145,12 +145,14 @@ async def get_nextrace_displaytext(match_list: list) -> str:
         display_text = 'Next match: \n'
 
     for match in match_list:
-        # TODO: Hacky s9 emote solution
+        # TODO: Hacky emote solution
         s9_emotes = {
             'cad': '<:cadence:676159524033527808>',
             'mel': '<:melody:676159691134337040>',
-            'coh': '<:zelda:676158586975420457>',
-            'noc': '<:nocturna:724439270047219713>'
+            # 'coh': '<:zelda:676158586975420457>',
+            'coh': '<:NecroPuzzle:802722636832440330>',
+            'noc': '<:nocturna:724439270047219713>',
+            'dia': '<:diamond:798591449146327150>'
         }
         if match.league_tag in s9_emotes:
             display_text += '{2} **{0}** - **{1}**'.format(
