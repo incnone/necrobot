@@ -275,6 +275,7 @@ class Unconfirm(CommandType):
             else:
                 await cmd.channel.send(
                     'The match has been unscheduled. Please `.suggest` a new time when one has been agreed upon.')
+                await NEDispatch().publish('unschedule_match', match=match)
         # if match was not scheduled
         else:
             await cmd.channel.send(
