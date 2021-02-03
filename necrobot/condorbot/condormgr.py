@@ -117,6 +117,7 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         elif ev.event_type == 'schedule_match':
             asyncio.ensure_future(self._overwrite_schedule_gsheet())
+            await self._cawmentator_alert_reschedule(ev.match)
 
         elif ev.event_type == 'unschedule_match':
             await self._cawmentator_alert_unschedule(ev.match)
@@ -284,6 +285,29 @@ class CondorMgr(Manager, metaclass=Singleton):
                            '(**{racer_1}** - **{racer_2}**)\n' \
                            '(Note: You are still the cawmentator for this race. If the racers ' \
                            'reschedule to a time that doesn\'t work for you, use .uncawmentate)\n\n'
+
+        alert_text = alert_format_str.format(
+            racer_1=match.racer_1.display_name,
+            racer_2=match.racer_2.display_name
+        )
+
+        await cawmentator.member.send(alert_text)
+
+    @staticmethod
+    async def _cawmentator_alert_reschedule(match: Match):
+        """PM an alert to the match cawmentator, if any, that the previously unscheduled match has been rescheduled
+
+        Parameters
+        ----------
+        match: Match
+        """
+        # PM a cawmentator alert
+        cawmentator = await match.get_cawmentator()
+        if cawmentator is None:
+            return
+
+        alert_format_str = 'A race you\'re scheduled to cawmentate has been rescheduled. ' \
+                           '(**{racer_1}** - **{racer_2}**)\n\n'
 
         alert_text = alert_format_str.format(
             racer_1=match.racer_1.display_name,
