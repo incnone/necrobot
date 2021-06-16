@@ -3,6 +3,7 @@ from necrobot.botbase.botchannel import BotChannel
 from necrobot.condorbot import cmd_event
 from necrobot.gsheet import cmd_sheet
 from necrobot.league import cmd_league
+from necrobot.race import cmd_racemake
 # from necrobot.speedrun import cmd_speedrun
 from necrobot.user import cmd_user
 from necrobot.test import cmd_test
@@ -34,6 +35,9 @@ class CondorAdminChannel(BotChannel):
             cmd_league.MakeMatchesFromFile(self),
             cmd_league.SetLeagueName(self),
             cmd_league.SetMatchRules(self),
+
+            cmd_racemake.MakeCondor(self),
+            cmd_racemake.MakePrivate(self),
 
             cmd_sheet.GetGSheet(self),
             cmd_sheet.OverwriteGSheet(self),

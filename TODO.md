@@ -36,10 +36,12 @@ Current version: 0.13
 - `util.level.py` and `util.racetime.py` might work better as classes, when wanting to generalize to other games
 
 ### Parsing
+- Allow specifying a match ID in .vod and .cawmentate, and make match IDs easier to see publically
 - More consistent/flexible command-line syntax
 - Better public-facing command-line documentation (i.e. `.help` command)
 - Deal with duplicated Discord names in commands like `.add` (allow for discriminator)
 - More friendly parsing of spaces in command arguments
+- Parse the word 'noon' as a time
 
 ### Testing
 - Make more small/unit tests (may wish to use a mock DB and/or a mock discord client)
@@ -49,6 +51,7 @@ Current version: 0.13
 - `.register-condor-event` should do more to set up convenient views in database
 - Necrobot and Condorbot should not attempt to write to the same log file
 - Fix identical times causing a racer to be listed twice on `.fastest`
+- Get rid of `.dailyalert` command
 
 ### Unclear issues
 - `.forcecancel` doesn't seem to work as intended; racerooms can get stuck
