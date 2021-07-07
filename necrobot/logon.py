@@ -25,8 +25,8 @@ from necrobot.util.necrodancer import seedgen
 def logon(
         config_filename: str,
         logging_prefix: str,
-        load_config_fn: types.FunctionType,
-        on_ready_fn: types.FunctionType = None
+        load_config_fn: types.CoroutineType,
+        on_ready_fn: types.CoroutineType = None
 ) -> None:
     """Log on to Discord. Block until logout.
     

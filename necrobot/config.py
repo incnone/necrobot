@@ -142,7 +142,7 @@ class Config(object):
     STAFF_ROLE = 'CoNDOR Staff'
 
     # Channels --------------------------------------------------------------------------------
-    MAIN_CHANNEL_NAME = 'necrobot_main'
+    MAIN_CHANNEL_ID = None
     LADDER_ADMIN_CHANNEL_NAME = 'ladder_admin'
     LADDER_MAIN_CHANNEL_NAME = 'ladder_main'
     RACE_RESULTS_CHANNEL_NAME = 'race_results'
@@ -201,7 +201,7 @@ class Config(object):
             ['mysql_db_passwd', Config.MYSQL_DB_PASSWD],
             ['mysql_db_name', Config.MYSQL_DB_NAME],
 
-            ['main_channel_name', Config.MAIN_CHANNEL_NAME],
+            ['main_channel_id', Config.MAIN_CHANNEL_ID],
             ['match_category_name', Config.MATCH_CHANNEL_CATEGORY_NAME],
             ['league_name', Config.LEAGUE_NAME],
         ]
@@ -233,7 +233,7 @@ def init(config_filename):
         'mysql_db_name': 'necrobot',
         'league_name': '',
         'test_level': '',
-        'main_channel_name': 'necrobot_main',
+        'main_channel_id': '',
         'match_category_name': 'Race Rooms',
         }
 
@@ -256,7 +256,7 @@ def init(config_filename):
     Config.MYSQL_DB_PASSWD = defaults['mysql_db_passwd']
     Config.MYSQL_DB_NAME = defaults['mysql_db_name']
 
-    Config.MAIN_CHANNEL_NAME = defaults['main_channel_name']
+    Config.MAIN_CHANNEL_ID = defaults['main_channel_id']
     Config.MATCH_CHANNEL_CATEGORY_NAME = defaults['match_category_name']
     Config.LEAGUE_NAME = defaults['league_name']
 

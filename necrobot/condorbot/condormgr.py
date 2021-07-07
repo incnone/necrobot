@@ -36,7 +36,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         NEDispatch().subscribe(self)
 
     async def initialize(self):
-        self._main_channel = server.find_channel(channel_name=Config.MAIN_CHANNEL_NAME)
+        self._main_channel = server.find_channel(channel_id=Config.MAIN_CHANNEL_ID)
         self._notifications_channel = server.find_channel(channel_name=Config.NOTIFICATIONS_CHANNEL_NAME)
         self._schedule_channel = server.find_channel(channel_name=Config.SCHEDULE_CHANNEL_NAME)
         self._client = server.client

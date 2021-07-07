@@ -18,9 +18,9 @@ async def load_necrobot_config(necrobot):
     necrobot.register_pm_channel(PMBotChannel())
 
     # Main Channel
-    main_discord_channel = server.find_channel(channel_name=Config.MAIN_CHANNEL_NAME)
+    main_discord_channel = server.find_channel(channel_id=Config.MAIN_CHANNEL_ID)
     if main_discord_channel is None:
-        console.warning('Could not find the "{0}" channel.'.format(Config.MAIN_CHANNEL_NAME))
+        console.warning(f'Could not find the main channel <#{Config.MAIN_CHANNEL_ID}>.')
     necrobot.register_bot_channel(main_discord_channel, MainBotChannel())
 
     # Ladder Channels
