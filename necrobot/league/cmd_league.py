@@ -282,7 +282,7 @@ class MakeLeague(CommandType):
             return
 
         try:
-            await LeagueMgr.make_league(league_tag=league_tag, league_name=league_tag)
+            await LeagueMgr().make_league(league_tag=league_tag, league_name=league_tag)
         except necrobot.exception.LeagueAlreadyExists:
             await cmd.channel.send('Error: The league tag `{0}` already exists.'.format(league_tag))
             return
@@ -341,6 +341,80 @@ class MakeMatch(CommandType):
             await NEDispatch().publish(event_type='create_match', match=new_match)
 
 
+class MakeMatches(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'makematches')
+        self.help_text = '`{0} league_tag`: Make a set of matches as given in the attached file. The file should ' \
+                         'be a .csv file, one match per row, whose rows are of the form `racer_1_name,racer_2_name`.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Make a set of matches from an attachment.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 1:
+            await cmd.channel.send(
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        # Check the league
+        league_tag = cmd.args[0].lower()
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: League with tag `{0}` does not exist.'.format(league_tag))
+            return
+
+        # Check there's a single attachment
+        if len(cmd.message.attachments) == 0:
+            await cmd.channel.send(
+                f'No file attached to command {self.mention}.'
+            )
+            return
+        elif len(cmd.message.attachments) > 1:
+            await cmd.channel.send(
+                f'Too many files attached to command {self.mention}.'
+            )
+            return
+
+        # Check the attachment type
+        attached = cmd.message.attachments[0]
+        attached_content_type_params = attached.content_type.split(';')
+        content_type = attached_content_type_params[0] \
+            if (attached_content_type_params is not None and len(attached_content_type_params) > 0)\
+            else None
+        if content_type != 'text/csv':
+            await cmd.channel.send(
+                f'Incorrect file type {content_type} for {self.mention}; please attach a `.csv` file.'
+            )
+            return
+
+        # Get the attachment's encoding
+        content_params = dict()
+        for param in attached_content_type_params[1:]:
+            vals = param.split('=')
+            if len(vals) == 2:
+                content_params[vals[0]] = vals[1]
+        charset = content_params['charset'] if 'charset' in content_params else 'utf-8'
+
+        # Decode the attachment
+        attached_bytes = await attached.read()
+        attached_str = attached_bytes.decode(charset)
+
+        # Make the desired match pairs
+        desired_match_pairs = []
+        for line in attached_str.splitlines(keepends=False):
+            racernames = line.rstrip('\n').split(',')
+            desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
+
+        # Make the matches
+        await _makematches_from_pairs(cmd=cmd, league=league, desired_match_pairs=desired_match_pairs)
+
+
 class MakeMatchesFromFile(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'makematchesfromfile')
@@ -381,93 +455,13 @@ class MakeMatchesFromFile(CommandType):
             )
             return
 
-        match_info = league.match_info
-        status_message = await cmd.channel.send(
-            'Creating matches from file `{0}`... (Reading file)'.format(filename)
-        )
+        desired_match_pairs = []
+        with open(file_path) as file:
+            for line in file:
+                racernames = line.rstrip('\n').split(',')
+                desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
 
-        async with cmd.channel.typing():
-            # Store file data
-            desired_match_pairs = []
-            with open(file_path) as file:
-                for line in file:
-                    racernames = line.rstrip('\n').split(',')
-                    desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
-
-            # Find all racers
-            all_racers = dict()
-            for racerpair in desired_match_pairs:
-                all_racers[racerpair[0]] = None
-                all_racers[racerpair[1]] = None
-
-            await userlib.fill_user_dict(all_racers)
-            console.debug('MakeMatchesFromFile: Filled user dict: {}'.format(all_racers))
-
-            # Create Match objects
-            matches = []
-            not_found_matches = []
-
-            async def make_single_match(racers):
-                console.debug('MakeMatchesFromFile: Making match {0}-{1}'.format(racers[0], racers[1]))
-                racer_1 = all_racers[racers[0]]
-                racer_2 = all_racers[racers[1]]
-                if racer_1 is None or racer_2 is None:
-                    console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
-                        racers[0], racers[1]
-                    ))
-                    not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
-                    return
-
-                new_match = await matchutil.make_match(
-                    register=True,
-                    racer_1_id=racer_1.user_id,
-                    racer_2_id=racer_2.user_id,
-                    match_info=match_info,
-                    league_tag=league_tag,
-                    autogenned=True
-                )
-                if new_match is None:
-                    console.debug('MakeMatchesFromFile: Match {0}-{1} not created.'.format(racers[0], racers[1]))
-                    not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
-                    return
-
-                matches.append(new_match)
-                console.debug('MakeMatchesFromFile: Created {0}-{1}'.format(
-                    new_match.racer_1.matchroom_name, new_match.racer_2.matchroom_name)
-                )
-
-            for racer_pair in desired_match_pairs:
-                await make_single_match(racer_pair)
-                await asyncio.sleep(0)
-
-            matches = sorted(matches, key=lambda m: m.matchroom_name)
-
-            await status_message.edit(
-                content='Creating matches from file `{0}`... (Creating race rooms)'.format(filename)
-            )
-            console.debug('MakeMatchesFromFile: Matches to make: {0}'.format(matches))
-
-            # Create match channels
-            for match in matches:
-                console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
-                new_room = await matchchannelutil.make_match_room(match=match, register=False)
-                await new_room.send_channel_start_text()
-
-            # Report on uncreated matches
-            uncreated_str = ''
-            for match_str in not_found_matches:
-                uncreated_str += match_str + ', '
-            if uncreated_str:
-                uncreated_str = uncreated_str[:-2]
-
-            if uncreated_str:
-                report_str = 'The following matches were not made: {0}'.format(uncreated_str)
-            else:
-                report_str = 'All matches created successfully.'
-
-        await status_message.edit(
-            content='Creating matches from file `{0}`... done. {1}'.format(filename, report_str)
-        )
+        await _makematches_from_pairs(cmd=cmd, league=league, desired_match_pairs=desired_match_pairs)
 
 
 class NextRace(CommandType):
@@ -682,3 +676,86 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
                 cmd.author.mention, match.matchroom_name
             )
         )
+
+
+async def _makematches_from_pairs(cmd, league, desired_match_pairs):
+    status_message = await cmd.channel.send(
+        'Creating matches... (Checking usernames)'
+    )
+
+    match_info = league.match_info
+    async with cmd.channel.typing():
+        # Find all racers
+        all_racers = dict()
+        for racerpair in desired_match_pairs:
+            all_racers[racerpair[0]] = None
+            all_racers[racerpair[1]] = None
+
+        await userlib.fill_user_dict(all_racers)
+        console.debug('_makematches_from_pairs: Filled user dict: {}'.format(all_racers))
+
+        # Create Match objects
+        matches = []
+        not_found_matches = []
+
+        async def make_single_match(racers):
+            console.debug('_makematches_from_pairs: Making match {0}-{1}'.format(racers[0], racers[1]))
+            racer_1 = all_racers[racers[0]]
+            racer_2 = all_racers[racers[1]]
+            if racer_1 is None or racer_2 is None:
+                console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
+                    racers[0], racers[1]
+                ))
+                not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
+                return
+
+            new_match = await matchutil.make_match(
+                register=True,
+                racer_1_id=racer_1.user_id,
+                racer_2_id=racer_2.user_id,
+                match_info=match_info,
+                league_tag=league.tag,
+                autogenned=True
+            )
+            if new_match is None:
+                console.debug('_makematches_from_pairs: Match {0}-{1} not created.'.format(racers[0], racers[1]))
+                not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
+                return
+
+            matches.append(new_match)
+            console.debug('_makematches_from_pairs: Created {0}-{1}'.format(
+                new_match.racer_1.matchroom_name, new_match.racer_2.matchroom_name)
+            )
+
+        for racer_pair in desired_match_pairs:
+            await make_single_match(racer_pair)
+            await asyncio.sleep(0)
+
+        matches = sorted(matches, key=lambda m: m.matchroom_name)
+
+        await status_message.edit(
+            content='Creating matches... (Creating race rooms)'
+        )
+        console.debug('_makematches_from_pairs: Matches to make: {0}'.format(matches))
+
+        # Create match channels
+        for match in matches:
+            console.info('MakeMatchesFromFile: Creating {0}...'.format(match.matchroom_name))
+            new_room = await matchchannelutil.make_match_room(match=match, register=False)
+            await new_room.send_channel_start_text()
+
+        # Report on uncreated matches
+        uncreated_str = ''
+        for match_str in not_found_matches:
+            uncreated_str += match_str + ', '
+        if uncreated_str:
+            uncreated_str = uncreated_str[:-2]
+
+        if uncreated_str:
+            report_str = 'The following matches were not made: {0}'.format(uncreated_str)
+        else:
+            report_str = 'All matches created successfully.'
+
+    await status_message.edit(
+        content=f'Creating matches... done. {report_str}'
+    )

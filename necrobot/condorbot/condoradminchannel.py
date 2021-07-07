@@ -32,6 +32,7 @@ class CondorAdminChannel(BotChannel):
             cmd_league.ForceMakeMatch(self),
             cmd_league.GetLeagueInfo(self),
             cmd_league.MakeLeague(self),
+            cmd_league.MakeMatches(self),
             cmd_league.MakeMatchesFromFile(self),
             cmd_league.SetLeagueName(self),
             cmd_league.SetMatchRules(self),

@@ -9,10 +9,9 @@ from necrobot.util.singleton import Singleton
 
 
 class LeagueMgr(Manager, metaclass=Singleton):
-    _league_lib = dict()
-
     """Manager object for the global League, if any."""
     def __init__(self):
+        self._league_lib = dict()
         pass
 
     async def initialize(self):
@@ -27,9 +26,11 @@ class LeagueMgr(Manager, metaclass=Singleton):
     def on_botchannel_create(self, channel, bot_channel):
         pass
 
-    @classmethod
+    def leagues(self):
+        return self._league_lib.keys()
+
     async def make_league(
-            cls,
+            self,
             league_tag: str,
             league_name: str,
             match_info: Optional[MatchInfo] = None,
@@ -54,7 +55,7 @@ class LeagueMgr(Manager, metaclass=Singleton):
         LeagueAlreadyExists: If the league tag is already registered to a league
         """
 
-        if league_tag in cls._league_lib:
+        if league_tag in self._league_lib:
             raise necrobot.exception.LeagueAlreadyExists()
 
         if match_info is None:
@@ -68,11 +69,10 @@ class LeagueMgr(Manager, metaclass=Singleton):
             worksheet_id=gsheet_id
         )
         league.commit()
-        cls._league_lib[league_tag] = league
+        self._league_lib[league_tag] = league
         return league
 
-    @classmethod
-    async def get_league(cls, league_tag: str) -> League:
+    async def get_league(self, league_tag: str) -> League:
         """Registers a new league
 
         Parameters
@@ -84,8 +84,8 @@ class LeagueMgr(Manager, metaclass=Singleton):
         ------
         LeagueDoesNotExist: If the league tag is already registered to a league
         """
-        if league_tag in cls._league_lib:
-            return cls._league_lib[league_tag]
+        if league_tag in self._league_lib:
+            return self._league_lib[league_tag]
 
         return await leaguedb.get_league(league_tag)
 

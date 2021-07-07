@@ -2,6 +2,7 @@ import necrobot.exception
 from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.condorbot.condormgr import CondorMgr
+from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match import matchdb, matchutil
 from necrobot.util.parse import dateparse
 
@@ -73,12 +74,13 @@ class GetCurrentEvent(CommandType):
             return
 
         await cmd.channel.send(
-            '```\n'
-            'Current event:\n'
-            '        ID: {0}\n'
-            '      Name: {1}\n'
-            '  Deadline: {2}\n'
-            '```'.format(event.schema_name, event.event_name, event.deadline_str)
+            f'```\n'
+            f'Current event:\n'
+            f'        ID: {event.schema_name}\n'
+            f'      Name: {event.event_name}\n'
+            f'  Deadline: {event.deadline_str}\n'
+            f'   Leagues: {", ".join(LeagueMgr().leagues())}\n'
+            f'```'
         )
 
 
