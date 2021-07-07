@@ -30,7 +30,8 @@ class Match(object):
             channel_id=None,
             gsheet_info=None,
             finish_time=None,
-            autogenned=False
+            autogenned=False,
+            league_tag=None
     ):
         """Create a `Match` object. There should be no need to call this directly; use `matchutil.make_match` instead, 
         since this needs to interact with the database.
@@ -65,8 +66,11 @@ class Match(object):
             If this match was created from a GSheet, the worksheet and row it was created from.
         finish_time: datetime.datetime
             The time the match finished at. If no tzinfo, UTC is assumed.
+        league_tag: str
+            The tag for the league this is a match in, or None if no such
         """
-        self._match_id = match_id
+        self._match_id = match_id                           # type: int
+        self._league_tag = league_tag                       # type: Optional[str]
 
         # Racers in the match
         self._racer_1_id = racer_1_id                       # type: int
@@ -85,7 +89,7 @@ class Match(object):
         self._r2_wishes_to_unconfirm = r2_unconfirmed       # type: bool
 
         # Format and race data
-        self._match_info = match_info                       # type: MatchInfo
+        self._match_info = MatchInfo.copy(match_info)       # type: MatchInfo
 
         # Other
         self._cawmentator_id = int(cawmentator_id) if cawmentator_id is not None else None  # type: int
@@ -209,6 +213,10 @@ class Match(object):
         return self._autogenned
 
     @property
+    def league_tag(self) -> str:
+        return self._league_tag
+
+    @property
     def matchroom_name(self) -> str:
         """Get a name for a channel for this match."""
         racer_names = []
@@ -219,7 +227,7 @@ class Match(object):
 
         if len(racer_names) == 2:
             racer_names.sort()
-            return '{0}-{1}-{2}'.format(racer_names[0], racer_names[1], self.match_id)
+            return '{0}-{1}-{2}-{3}'.format(racer_names[0], racer_names[1], self.league_tag, self.match_id)
         else:
             return self.race_info.raceroom_name
 
@@ -408,6 +416,17 @@ class Match(object):
         self._channel_id = int(channel_id)
 
     @commits
+    def set_league_tag(self, league_tag: Optional[str]):
+        """Sets a league tag for the match.
+
+        Parameters
+        ----------
+        league_tag: Optional[str]
+            A league's tag
+        """
+        self._league_tag = league_tag
+
+    @commits
     def raw_update(self, **kwargs):
         if 'suggested_time' in kwargs:
             self._set_suggested_time(kwargs['suggested_time'])
@@ -429,6 +448,8 @@ class Match(object):
             self._gsheet_info = kwargs['gsheet_info']
         if 'finish_time' in kwargs:
             self._finish_time = kwargs['finish_time']
+        if 'league_tag' in kwargs:
+            self._league_tag = kwargs['league_tag']
 
     def _set_suggested_time(self, time: datetime.datetime or None) -> None:
         if time is None:

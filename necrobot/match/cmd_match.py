@@ -3,92 +3,48 @@ import datetime
 import pytz
 
 import necrobot.exception
-from necrobot.botbase.command import Command
 from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necroevent import NEDispatch
-from necrobot.match import matchdb, matchfindparse
+from necrobot.match import matchdb
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.user import userlib
-from necrobot.util import console, timestr, writechannel
+from necrobot.util import timestr, server, writechannel
 from necrobot.util.parse import dateparse
-
-
-# Match-related main-channel commands
-class Cawmentate(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'cawmentate', 'commentate', 'cawmmentate')
-        self.help_text = 'Register yourself for cawmentary for a given match. Usage is `{0} rtmp1 ' \
-                         'rtmn2`, where `rtmp1` and `rtmn2` are the RTMP names of the racers in the match. ' \
-                         '(Call `.userinfo` for RTMP names.)'.format(self.mention)
-
-    @property
-    def short_help_text(self):
-        return 'Register for cawmentary.'
-
-    async def _do_execute(self, cmd):
-        await _do_cawmentary_command(cmd, self, add=True)
-
-
-class Uncawmentate(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'uncawmentate', 'uncommentate', 'uncawmmentate')
-        self.help_text = 'Remove yourself as cawmentator for a match. Usage is `{0} rtmp1 rtmp2`.'.format(self.mention)
-
-    @property
-    def short_help_text(self):
-        return 'Unregister for cawmentary.'
-
-    async def _do_execute(self, cmd):
-        await _do_cawmentary_command(cmd=cmd, cmd_type=self, add=False)
-
-
-class Vod(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'vod')
-        self.help_text = 'Add a link to a vod for a given match. Usage is `{0} rtmp1 rtmp2 URL`.'.format(self.mention)
-
-    @property
-    def short_help_text(self):
-        return 'Add a link to a vod.'
-
-    async def _do_execute(self, cmd):
-        # Parse arguments
-        if len(cmd.args) < 3:
-            await cmd.channel.send(
-                'Not enough arguments for `{0}`.'.format(self.mention)
-            )
-            return
-
-        url = cmd.args[len(cmd.args) - 1]
-        cmd.args.pop(len(cmd.args) - 1)
-        arg_string = ''
-        for arg in cmd.args:
-            arg_string += arg + ' '
-
-        try:
-            match = await matchfindparse.find_match(arg_string, finished_only=True)
-        except necrobot.exception.NecroException as e:
-            await cmd.channel.send(
-                'Error: {0}.'.format(e)
-            )
-            return
-
-        author_user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
-        if match.cawmentator_id is None or match.cawmentator_id != author_user.user_id:
-            await cmd.channel.send(
-                '{0}: You are not the cawmentator for the match {1} (and so cannot add a vod).'
-                .format(cmd.author.mention, match.matchroom_name)
-            )
-            return
-
-        await matchdb.add_vod(match=match, vodlink=url)
-        await NEDispatch().publish(event_type='set_vod', match=match, url=url)
-        await cmd.channel.send(
-            'Added a vod for the match {0}.'.format(match.matchroom_name)
-        )
+from necrobot.config import Config
 
 
 # Matchroom commands
+class AlertStaff(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'staff')
+        self.help_text = 'Alert staff to an issue.'
+
+    async def _do_execute(self, cmd):
+        staff_role = server.find_role(Config.STAFF_ROLE)
+        if staff_role is None:
+            await cmd.channel.send(
+                'Error: Couldn\'t find the staff role. Please contact incnone.'
+            )
+
+        await cmd.channel.send(
+            'Alerting {}.'.format(staff_role.mention)
+        )
+
+        notifications_channel = server.find_channel(Config.NOTIFICATIONS_CHANNEL_NAME)
+        if notifications_channel is None:
+            await cmd.channel.send(
+                'Error: Couldn\'t find the bot notifications channel.'
+            )
+
+        await notifications_channel.send(
+            '{user} has called `{this}` in channel {channel}.'.format(
+                user=cmd.author.display_name,
+                this=self.mention,
+                channel=cmd.channel.mention
+            )
+        )
+
+
 class Confirm(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'confirm')
@@ -319,6 +275,7 @@ class Unconfirm(CommandType):
             else:
                 await cmd.channel.send(
                     'The match has been unscheduled. Please `.suggest` a new time when one has been agreed upon.')
+                await NEDispatch().publish('unschedule_match', match=match)
         # if match was not scheduled
         else:
             await cmd.channel.send(
@@ -641,7 +598,7 @@ class SetMatchType(CommandType):
         CommandType.__init__(self, bot_channel, 'setmatchtype')
         self.help_text = 'Set the type of the match. Use `.setmatchtype repeat X` to make the match be ' \
                          'racers play X races; use `.setmatchtype bestof Y` to make the match a best-of-Y.'
-        self.admin_only = True
+        self.admin_only = not Config.GRUDGEDOR
 
     @property
     def short_help_text(self):
@@ -689,71 +646,3 @@ class Update(CommandType):
         await cmd.channel.send(
             'Updated.'
         )
-
-
-async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
-    # Parse arguments
-    try:
-        match = await matchfindparse.find_match(cmd.arg_string, finished_only=False)  # Only selects unfinished matches
-    except necrobot.exception.NecroException as e:
-        await cmd.channel.send(
-            'Error: {0}.'.format(e)
-        )
-        return
-
-    author_user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
-
-    # Check if the match already has cawmentary
-    if add:
-        if not match.is_scheduled and not cmd_type.bot_channel.is_admin(cmd.author):
-            await cmd.channel.send(
-                'Can\'t add commentary for match {matchroom_name}, because it hasn\'t been scheduled yet.'
-                .format(matchroom_name=match.matchroom_name)
-            )
-            return
-        if match.cawmentator_id is not None:
-            cawmentator_user = await userlib.get_user(user_id=match.cawmentator_id)
-            if cawmentator_user is not None:
-                await cmd.channel.send(
-                    'This match already has a cawmentator ({0}).'.format(cawmentator_user.display_name)
-                )
-                return
-            else:
-                console.warning(
-                    'Unexpected error in Cawmentate._do_execute(): Couldn\'t find NecroUser for '
-                    'cawmentator ID {0}'.format(match.cawmentator_id)
-                )
-                # No return here; we'll just write over this mystery ID
-    else:  # not add
-        if match.cawmentator_id is None:
-            await cmd.channel.send(
-                'No one is registered for cawmentary for the match {0}.'.format(match.matchroom_name)
-            )
-            return
-        elif match.cawmentator_id != author_user.user_id:
-            await cmd.channel.send(
-                'Error: {0}: You are not the registered cawmentator for {1}.'.format(
-                    cmd.author.mention, match.matchroom_name
-                )
-            )
-            return
-
-    # Add/delete the cawmentary
-    if add:
-        match.set_cawmentator_id(author_user.user_id)
-        await NEDispatch().publish(event_type='set_cawmentary', match=match)
-        await cmd.channel.send(
-            'Added {0} as cawmentary for the match {1}.'.format(
-                cmd.author.mention, match.matchroom_name
-            )
-        )
-    else:
-        match.set_cawmentator_id(None)
-        await NEDispatch().publish(event_type='set_cawmentary', match=match)
-        await cmd.channel.send(
-            'Removed {0} as cawmentary from the match {1}.'.format(
-                cmd.author.mention, match.matchroom_name
-            )
-        )
-
-

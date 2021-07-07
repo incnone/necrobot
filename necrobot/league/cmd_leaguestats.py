@@ -1,5 +1,7 @@
+import necrobot.exception
 from necrobot.botbase.commandtype import CommandType
 from necrobot.league import leaguestats
+from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.user import userlib
 from necrobot.util import strutil
 
@@ -71,10 +73,23 @@ from necrobot.util import strutil
 class LeagueFastest(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'fastest')
-        self.help_text = 'Get fastest wins.'
+        self.help_text = 'Get fastest wins. Usage is `{} league_tag`.'.format(self.mention)
 
     async def _do_execute(self, cmd):
-        infotext = await leaguestats.get_fastest_times_league_infotext(20)
+        if len(cmd.args) != 1:
+            await cmd.channel.send(
+                'Wrong number of arguments for `{}`. (Remember to specify the league.)'.format(self.mention)
+            )
+            return
+
+        league_tag = cmd.args[0].lower()
+        try:
+            await LeagueMgr().get_league(league_tag=league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send('Error: Can\'t find the league `{}`.'.format(league_tag))
+            return
+
+        infotext = await leaguestats.get_fastest_times_league_infotext(league_tag=league_tag, limit=20)
         infobox = '```\nFastest wins:\n{0}```'.format(
             strutil.tickless(infotext)
         )
@@ -85,13 +100,31 @@ class LeagueFastest(CommandType):
 class LeagueStats(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'stats')
-        self.help_text = 'Get user stats.'
+        self.help_text = 'Get user stats. Usage is `{} league_tag "user_name"`.'.format(self.mention)
 
     async def _do_execute(self, cmd):
         if len(cmd.args) == 0:
+            await cmd.channel.send('Please specify a league for `{}`.'.format(self.mention))
+            return
+
+        if len(cmd.args) > 2:
+            await cmd.channel.send(
+                'Too many arguments for `{}`. (Please enclose user names with spaces in quotes.)'
+                .format(self.mention)
+            )
+            return
+
+        league_tag = cmd.args[0].lower()
+        try:
+            await LeagueMgr().get_league(league_tag=league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send('Error: Can\'t find the league `{}`.'.format(league_tag))
+            return
+
+        if len(cmd.args) == 1:
             user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
         else:
-            username = cmd.arg_string
+            username = cmd.args[1]
             user = await userlib.get_user(any_name=username)
             if user is None:
                 await cmd.channel.send(
@@ -99,7 +132,7 @@ class LeagueStats(CommandType):
                 )
                 return
 
-        stats = await leaguestats.get_league_stats(user.user_id)
+        stats = await leaguestats.get_league_stats(league_tag, user.user_id)
         infobox = '```\nStats: {username}\n{stats}\n```'\
                   .format(
                       username=strutil.tickless(user.display_name),

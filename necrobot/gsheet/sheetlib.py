@@ -42,7 +42,8 @@ async def get_sheet(
     -------
     Union[MatchupSheet, StandingsSheet]
     """
-    wks_id = int(wks_id)
+    if wks_id is not None:
+        wks_id = int(wks_id)
 
     if wks_name is None and wks_id is None:
         raise necrobot.exception.NotFoundException(

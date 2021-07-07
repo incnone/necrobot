@@ -101,71 +101,71 @@ class Submit(CommandType):
 #         pass
 
 
-class OverwriteSpeedrunGSheet(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'overwrite-speedrun-sheet')
-        self.help_text = "Refresh the GSheet (overwrites all data)."
-        self.admin_only = True
+# class OverwriteSpeedrunGSheet(CommandType):
+#     def __init__(self, bot_channel):
+#         CommandType.__init__(self, bot_channel, 'overwrite-speedrun-sheet')
+#         self.help_text = "Refresh the GSheet (overwrites all data)."
+#         self.admin_only = True
+#
+#     async def _do_execute(self, cmd: Command):
+#         # Get the matchup sheet
+#         wks_id = 0
+#         try:
+#             speedrun_sheet = await sheetlib.get_sheet(
+#                 gsheet_id=LeagueMgr().league.speedrun_gsheet_id,
+#                 wks_id=wks_id,
+#                 sheet_type=sheetlib.SheetType.SPEEDRUN
+#             )  # type: SpeedrunSheet
+#         except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+#             await cmd.channel.send(
+#                 'Error accessing GSheet: `{0}`'.format(e)
+#             )
+#             return
+#
+#         if speedrun_sheet is None:
+#             await cmd.channel.send('Error: SpeedrunSheet is None.')
+#             return
+#
+#         await speedrun_sheet.overwrite_gsheet()
 
-    async def _do_execute(self, cmd: Command):
-        # Get the matchup sheet
-        wks_id = 0
-        try:
-            speedrun_sheet = await sheetlib.get_sheet(
-                gsheet_id=LeagueMgr().league.speedrun_gsheet_id,
-                wks_id=wks_id,
-                sheet_type=sheetlib.SheetType.SPEEDRUN
-            )  # type: SpeedrunSheet
-        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await cmd.channel.send(
-                'Error accessing GSheet: `{0}`'.format(e)
-            )
-            return
 
-        if speedrun_sheet is None:
-            await cmd.channel.send('Error: SpeedrunSheet is None.')
-            return
-
-        await speedrun_sheet.overwrite_gsheet()
-
-
-class SetSpeedrunGSheet(CommandType):
-    def __init__(self, bot_channel):
-        CommandType.__init__(self, bot_channel, 'set-speedrun-sheet')
-        self.help_text = 'Set the GSheet for displaying submitted speedruns. Usage is `{0} gsheet_id`.' \
-                         .format(self.mention)
-        self.admin_only = True
-
-    @property
-    def short_help_text(self) -> str:
-        return 'Set the GSheet for displaying submitted speedruns.'
-
-    async def _do_execute(self, cmd: Command) -> None:
-        if len(cmd.args) != 1:
-            await cmd.channel.send(
-                'Error: `{0}` requires exactly one argument.'.format(self.mention)
-            )
-            return
-
-        sheet_id = cmd.args[0]
-        perm_info = await sheetutil.has_read_write_permissions(sheet_id)
-
-        if not perm_info[0]:
-            await cmd.channel.send(
-                'Cannot access GSheet: {0}'.format(perm_info[1])
-            )
-            return
-
-        LeagueMgr().league.speedrun_gsheet_id = sheet_id
-        LeagueMgr().league.commit()
-
-        await cmd.channel.send(
-            'The speedrun GSheet for `{league_name}` has been set to "{sheet_name}". <{sheet_url}>'.format(
-                league_name=LeagueMgr().league.schema_name,
-                sheet_name=perm_info[1],
-                sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(LeagueMgr().league.speedrun_gsheet_id)
-            )
-        )
+# class SetSpeedrunGSheet(CommandType):
+#     def __init__(self, bot_channel):
+#         CommandType.__init__(self, bot_channel, 'set-speedrun-sheet')
+#         self.help_text = 'Set the GSheet for displaying submitted speedruns. Usage is `{0} gsheet_id`.' \
+#                          .format(self.mention)
+#         self.admin_only = True
+#
+#     @property
+#     def short_help_text(self) -> str:
+#         return 'Set the GSheet for displaying submitted speedruns.'
+#
+#     async def _do_execute(self, cmd: Command) -> None:
+#         if len(cmd.args) != 1:
+#             await cmd.channel.send(
+#                 'Error: `{0}` requires exactly one argument.'.format(self.mention)
+#             )
+#             return
+#
+#         sheet_id = cmd.args[0]
+#         perm_info = await sheetutil.has_read_write_permissions(sheet_id)
+#
+#         if not perm_info[0]:
+#             await cmd.channel.send(
+#                 'Cannot access GSheet: {0}'.format(perm_info[1])
+#             )
+#             return
+#
+#         LeagueMgr().league.speedrun_gsheet_id = sheet_id
+#         LeagueMgr().league.commit()
+#
+#         await cmd.channel.send(
+#             'The speedrun GSheet for `{league_name}` has been set to "{sheet_name}". <{sheet_url}>'.format(
+#                 league_name=LeagueMgr().league.schema_name,
+#                 sheet_name=perm_info[1],
+#                 sheet_url='https://docs.google.com/spreadsheets/d/{0}'.format(LeagueMgr().league.speedrun_gsheet_id)
+#             )
+#         )
 
 
 class Verify(CommandType):

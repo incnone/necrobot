@@ -113,10 +113,7 @@ def find_role(role_name: str) -> Optional[discord.Role]:
 
 def get_as_member(user: discord.User) -> Optional[discord.Member]:
     """Returns the given Discord user as a member of the server"""
-    for member in guild.members:
-        if member.id == user.id:
-            return member
-    return None
+    return guild.get_member(user.id)
 
 
 def is_admin(user: Union[discord.User, discord.Member]) -> bool:

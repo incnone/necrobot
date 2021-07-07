@@ -92,12 +92,12 @@ class NecroUser(object):
 
     @property
     def display_name(self) -> str:
-        if self.discord_member is not None:
+        if self.twitch_name is not None:
+            return self.twitch_name
+        elif self.discord_member is not None:
             return self.discord_member.display_name
         elif self.rtmp_name is not None:
             return self.rtmp_name
-        elif self.twitch_name is not None:
-            return self.twitch_name
         elif self._discord_name is not None:
             return self._discord_name
         else:
@@ -153,18 +153,24 @@ class NecroUser(object):
 
     @property
     def infotext(self) -> str:
-        if self.twitch_name == self.rtmp_name:
-            return '  Twitch/RTMP: {0}\n' \
-                   '     Timezone: {1}'.format(
-                    self.rtmp_name,
-                    self.timezone)
-        else:
-            return '    Twitch: {0}\n' \
-                   '      RTMP: {1}\n' \
-                   '  Timezone: {2}'.format(
+        return '    Twitch: {0}\n' \
+               '  Timezone: {1}' \
+               .format(
                     self.twitch_name,
-                    self.rtmp_name,
-                    self.timezone)
+                    self.timezone
+               )
+        # if self.twitch_name == self.rtmp_name:
+        #     return '  Twitch/RTMP: {0}\n' \
+        #            '     Timezone: {1}'.format(
+        #             self.rtmp_name,
+        #             self.timezone)
+        # else:
+        #     return '    Twitch: {0}\n' \
+        #            '      RTMP: {1}\n' \
+        #            '  Timezone: {2}'.format(
+        #             self.twitch_name,
+        #             self.rtmp_name,
+        #             self.timezone)
 
     @property
     def infobox(self) -> str:

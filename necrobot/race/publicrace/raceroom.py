@@ -172,7 +172,8 @@ class RaceRoom(BotChannel):
 
     # Updates the leaderboard
     async def update(self):
-        await self._channel.edit(topic=self.leaderboard)
+        pass
+        # await self._channel.edit(topic=self.leaderboard)
 
     # Post the race result to the race necrobot
     async def post_result(self, race: Race):

@@ -12,6 +12,7 @@ async def make_match_from_cmd(
         racer_members: Optional[List[Union[discord.User, discord.Member]]] = None,
         racer_names: Optional[List[str]] = None,
         match_info: matchinfo.MatchInfo = matchinfo.MatchInfo(),
+        league_tag: Optional[str] = None,
         allow_duplicates: bool = True
 ):
     if racer_members is None:
@@ -62,6 +63,7 @@ async def make_match_from_cmd(
         racer_1_id=racers[0].user_id,
         racer_2_id=racers[1].user_id,
         match_info=match_info,
+        league_tag=league_tag,
         register=True
     )
 

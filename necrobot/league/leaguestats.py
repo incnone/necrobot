@@ -1,5 +1,5 @@
 import textwrap
-from necrobot.match import matchdb
+from necrobot.league import leaguedb
 from necrobot.user.necrouser import NecroUser
 from necrobot.util import racetime
 
@@ -36,8 +36,8 @@ class LeagueStats(object):
         )
 
 
-async def get_fastest_times_league_infotext(limit: int) -> str:
-    fastest_times = await matchdb.get_fastest_wins_raw(limit)
+async def get_fastest_times_league_infotext(league_tag: str, limit: int) -> str:
+    fastest_times = await leaguedb.get_fastest_wins_raw(league_tag, limit)
     max_namelen = 0
     namelen_cap = 20
     for row in fastest_times:
@@ -70,8 +70,8 @@ async def get_fastest_times_league_infotext(limit: int) -> str:
     return infotext[:-1] if infotext else ''
 
 
-async def get_league_stats(user_id: int) -> LeagueStats:
-    stats = await matchdb.get_matchstats_raw(user_id)
+async def get_league_stats(league_tag: str, user_id: int) -> LeagueStats:
+    stats = await leaguedb.get_matchstats_raw(league_tag, user_id)
     return LeagueStats(
         wins=stats[0],
         best=stats[1],

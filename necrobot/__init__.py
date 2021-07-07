@@ -12,12 +12,9 @@ Dependency Tree
            |
            |
           race
-           |  \_______
-           |          \
-          match      racebot
-           |
-           |
-          league
+           |  \________________
+           |                   \
+      match+league            racebot
            |
            |
           ladder

@@ -9,6 +9,7 @@ from necrobot.botbase.commandtype import CommandType
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.test import msgqueue
 from necrobot.config import Config
+from necrobot.util import console
 
 from necrobot.gsheet.matchupsheet import MatchupSheet
 from necrobot.gsheet import sheetlib
@@ -55,28 +56,63 @@ class TestCreateCategory(TestCommandType):
 class TestOverwriteGSheet(TestCommandType):
     def __init__(self, bot_channel):
         TestCommandType.__init__(self, bot_channel, 'testoverwritegsheet')
-        self.help_text = "Write a bunch of data into the current GSheet."
+        self.help_text = "`{} league_tag`: Write a bunch of data into league\'s GSheet."
 
     async def _do_execute(self, cmd: Command):
-        # Get the matchup sheet
-        wks_id = 0
-        try:
-            matchup_sheet = await sheetlib.get_sheet(
-                    gsheet_id=LeagueMgr().league.gsheet_id,
-                    wks_id=wks_id,
-                    sheet_type=sheetlib.SheetType.MATCHUP
-                )  # type: MatchupSheet
-        except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
-            await cmd.channel.send(
-                'Error accessing GSheet: `{0}`'.format(e)
-            )
-            return
+        await cmd.channel.send(
+            'Not currently implemented.'
+        )
+        # if len(cmd.args) != 1:
+        #     await cmd.channel.send(
+        #         'Incorrect number of arguments for {}.'.format(self.mention)
+        #     )
+        #     return
+        #
+        # league_tag = cmd.args[0]
+        # try:
+        #     league = await LeagueMgr().get_league(league_tag=league_tag)
+        # except necrobot.exception.LeagueDoesNotExist:
+        #     await cmd.channel.send(
+        #         'Error: The league `{}` was not found.'.format(league_tag)
+        #     )
+        #     return
+        #
+        # # Get the matchup sheet
+        # wks_id = 0
+        # try:
+        #     matchup_sheet = await sheetlib.get_sheet(
+        #             gsheet_id=league.gsheet_id,
+        #             wks_id=league.worksheet_id,
+        #             sheet_type=sheetlib.SheetType.MATCHUP
+        #         )  # type: MatchupSheet
+        # except (googleapiclient.errors.Error, necrobot.exception.NecroException) as e:
+        #     await cmd.channel.send(
+        #         'Error accessing GSheet: `{0}`'.format(e)
+        #     )
+        #     return
+        #
+        # if matchup_sheet is None:
+        #     await cmd.channel.send('Error: MatchupSheet is None.')
+        #     return
+        #
+        # await matchup_sheet.overwrite_gsheet()
 
-        if matchup_sheet is None:
-            await cmd.channel.send('Error: MatchupSheet is None.')
-            return
 
-        await matchup_sheet.overwrite_gsheet()
+class TestDebugMembers(TestCommandType):
+    def __init__(self, bot_channel):
+        TestCommandType.__init__(self, bot_channel, 'testdebug')
+        self.help_text = "For temporary debugging. Functionality depends on what the bug is."
+
+    async def _do_execute(self, cmd: Command):
+        console.info("--CHANNEL LIST:---------------------------------------")
+        for channel in server.guild.channels:
+            console.info(str(channel))
+        console.info("--END CHANNEL LIST------------------------------------")
+
+        console.info("--MEMBER LIST:---------------------------------------")
+        for member in server.guild.members:
+            console.info(str(member))
+        console.info("--END MEMBER LIST------------------------------------")
 
 
 class TestMatch(TestCommandType):

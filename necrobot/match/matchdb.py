@@ -1,9 +1,6 @@
 """
 Interaction with matches and match_races tables (in the necrobot schema, or a condor event schema).
 """
-import datetime
-from typing import Optional
-
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
 from necrobot.match.match import Match
@@ -48,7 +45,7 @@ async def record_match_race(
 
 
 async def get_matches_between(user_1_id, user_2_id):
-    params = (user_1_id, user_2_id, user_2_id, user_1_id,)
+    params = (user_1_id, user_2_id, user_1_id, user_2_id,)
 
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
@@ -193,6 +190,7 @@ async def write_match(match: Match):
         match.sheet_row,
         match.finish_time,
         match.autogenned,
+        match.league_tag,
         match.match_id,
     )
 
@@ -217,7 +215,8 @@ async def write_match(match: Match):
                sheet_id=%s,
                sheet_row=%s,
                finish_time=%s,
-               autogenned=%s
+               autogenned=%s,
+               league_tag=%s
             WHERE match_id=%s
             """.format(matches=tn('matches')),
             params
@@ -292,7 +291,8 @@ async def get_channeled_matches_raw_data(
                  sheet_id,
                  sheet_row,
                  finish_time,
-                 autogenned
+                 autogenned,
+                 league_tag
             FROM {matches} 
             WHERE {where_query} {order_query}
             """.format(matches=tn('matches'), where_query=where_query, order_query=order_query), params)
@@ -314,7 +314,8 @@ async def get_matchview_raw_data():
                 completed,
                 vod,
                 autogenned,
-                scheduled
+                scheduled,
+                league_tag
             FROM {match_info}
             ORDER BY -scheduled_time DESC
             """.format(match_info=tn('match_info'))
@@ -322,62 +323,63 @@ async def get_matchview_raw_data():
         return cursor.fetchall()
 
 
-async def get_all_matches_raw_data(
-        must_be_channeled: bool = False,
-        must_be_scheduled: bool = False,
-        order_by_time: bool = False,
-        racer_id: int = None,
-        limit: int = None
-) -> list:
-    params = tuple()
-
-    where_query = 'TRUE'
-    if must_be_channeled:
-        where_query += " AND `channel_id` IS NOT NULL"
-    if must_be_scheduled:
-        where_query += " AND (`suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`)"
-    if racer_id is not None:
-        where_query += " AND (`racer_1_id` = %s OR `racer_2_id` = %s)"
-        params += (racer_id, racer_id,)
-
-    order_query = ''
-    if order_by_time:
-        order_query = "ORDER BY `suggested_time` ASC"
-
-    limit_query = '' if limit is None else 'LIMIT {}'.format(limit)
-
-    async with DBConnect(commit=False) as cursor:
-        cursor.execute(
-            """
-            SELECT 
-                 match_id, 
-                 race_type_id, 
-                 racer_1_id, 
-                 racer_2_id, 
-                 suggested_time, 
-                 r1_confirmed, 
-                 r2_confirmed, 
-                 r1_unconfirmed, 
-                 r2_unconfirmed, 
-                 ranked, 
-                 is_best_of, 
-                 number_of_races, 
-                 cawmentator_id, 
-                 channel_id,
-                 sheet_id,
-                 sheet_row,
-                 finish_time,
-                 autogenned
-            FROM {matches} 
-            WHERE {where_query} {order_query}
-            {limit_query}
-            """.format(
-                matches=tn('matches'),
-                where_query=where_query,
-                order_query=order_query,
-                limit_query=limit_query
-            ), params)
-        return cursor.fetchall()
+# async def get_all_matches_raw_data(
+#         must_be_channeled: bool = False,
+#         must_be_scheduled: bool = False,
+#         order_by_time: bool = False,
+#         racer_id: int = None,
+#         limit: int = None
+# ) -> list:
+#     params = tuple()
+#
+#     where_query = 'TRUE'
+#     if must_be_channeled:
+#         where_query += " AND `channel_id` IS NOT NULL"
+#     if must_be_scheduled:
+#         where_query += " AND (`suggested_time` IS NOT NULL AND `r1_confirmed` AND `r2_confirmed`)"
+#     if racer_id is not None:
+#         where_query += " AND (`racer_1_id` = %s OR `racer_2_id` = %s)"
+#         params += (racer_id, racer_id,)
+#
+#     order_query = ''
+#     if order_by_time:
+#         order_query = "ORDER BY `suggested_time` ASC"
+#
+#     limit_query = '' if limit is None else 'LIMIT {}'.format(limit)
+#
+#     async with DBConnect(commit=False) as cursor:
+#         cursor.execute(
+#             """
+#             SELECT
+#                  match_id,
+#                  race_type_id,
+#                  racer_1_id,
+#                  racer_2_id,
+#                  suggested_time,
+#                  r1_confirmed,
+#                  r2_confirmed,
+#                  r1_unconfirmed,
+#                  r2_unconfirmed,
+#                  ranked,
+#                  is_best_of,
+#                  number_of_races,
+#                  cawmentator_id,
+#                  channel_id,
+#                  sheet_id,
+#                  sheet_row,
+#                  finish_time,
+#                  autogenned,
+#                  league_tag
+#             FROM {matches}
+#             WHERE {where_query} {order_query}
+#             {limit_query}
+#             """.format(
+#                 matches=tn('matches'),
+#                 where_query=where_query,
+#                 order_query=order_query,
+#                 limit_query=limit_query
+#             ), params)
+#         return cursor.fetchall()
 
 
 async def delete_match(match_id: int):
@@ -425,152 +427,152 @@ async def get_match_race_data(match_id: int) -> MatchRaceData:
                     r2_wins += 1
         return MatchRaceData(finished=finished, canceled=canceled, r1_wins=r1_wins, r2_wins=r2_wins)
 
-
-async def get_match_id(
-        racer_1_id: int,
-        racer_2_id: int,
-        scheduled_time: datetime.datetime = None,
-        finished_only: Optional[bool] = None
-) -> int or None:
-    """Attempt to find a match between the two racers
-    
-    If multiple matches are found, prioritize as follows: 
-        1. Prefer matches closer to scheduled_time, if scheduled_time is not None
-        2. Prefer channeled matches
-        3. Prefer the most recent scheduled match
-        4. Randomly
-    
-    Parameters
-    ----------
-    racer_1_id: int
-        The user ID of the first racer
-    racer_2_id: int
-        The user ID of the second racer
-    scheduled_time: datetime.datetime or None
-        The approximate time to search around, or None to skip this priority
-    finished_only: bool
-        If not None, then: If True, only return matches that have a finish_time; if False, only return matches without
-
-    Returns
-    -------
-    Optional[int]
-        The match ID, if one is found.
-    """
-    param_dict = {
-        'racer1': racer_1_id,
-        'racer2': racer_2_id,
-        'time': scheduled_time
-    }
-
-    where_str = '(racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
-                'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)'
-    if finished_only is not None:
-        where_str = '({old_str}) AND (finish_time IS {nullstate})'.format(
-            old_str=where_str,
-            nullstate=('NOT NULL' if finished_only else 'NULL')
-        )
-
-    async with DBConnect(commit=False) as cursor:
-        cursor.execute(
-            """
-            SELECT 
-                match_id, 
-                suggested_time, 
-                channel_id,
-                ABS(`suggested_time` - '2017-23-04 12:00:00') AS abs_del
-            FROM {matches}
-            WHERE {where_str}
-            ORDER BY
-                IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
-                `channel_id` IS NULL ASC, 
-                `suggested_time` DESC
-            LIMIT 1
-            """.format(matches=tn('matches'), where_str=where_str),
-            param_dict
-        )
-        row = cursor.fetchone()
-        return int(row[0]) if row is not None else None
-
-
-async def get_fastest_wins_raw(limit: int = None) -> list:
-    params = (limit,)
-    async with DBConnect(commit=False) as cursor:
-        cursor.execute(
-            """
-            SELECT
-                {race_runs}.`time` AS `time`,
-                users_winner.twitch_name AS winner_name,
-                users_loser.twitch_name AS loser_name,
-                {matches}.suggested_time AS match_time
-            FROM 
-                {match_races}
-                INNER JOIN {matches}
-                    ON {matches}.match_id = {match_races}.match_id
-                INNER JOIN {races} 
-                    ON {races}.race_id = {match_races}.race_id
-                INNER JOIN users users_winner 
-                    ON IF(
-                        {match_races}.winner = 1,
-                        users_winner.`user_id` = {matches}.racer_1_id,
-                        users_winner.`user_id` = {matches}.racer_2_id
-                    )
-                INNER JOIN users users_loser 
-                    ON IF(
-                        {match_races}.winner = 1,
-                        users_loser.user_id = {matches}.racer_2_id,
-                        users_loser.user_id = {matches}.racer_1_id
-                    )
-                INNER JOIN {race_runs}
-                    ON ( 
-                        {race_runs}.race_id = {races}.race_id
-                        AND {race_runs}.user_id = users_winner.user_id
-                    )
-            WHERE
-                {match_races}.winner != 0
-            ORDER BY `time` ASC
-            LIMIT %s
-            """.format(
-                race_runs=tn('race_runs'),
-                matches=tn('matches'),
-                match_races=tn('match_races'),
-                races=tn('races')
-            ),
-            params
-        )
-        return cursor.fetchall()
-
-
-async def get_matchstats_raw(user_id: int) -> list:
-    params = (user_id,)
-    async with DBConnect(commit=False) as cursor:
-        cursor.execute(
-            """
-            SELECT
-                COUNT(*) AS wins,
-                MIN(winner_time) AS best_win,
-                AVG(winner_time) AS average_win
-            FROM {race_summary}
-            WHERE winner_id = %s
-            LIMIT 1
-            """.format(race_summary=tn('race_summary')),
-            params
-        )
-        winner_data = cursor.fetchone()
-        if winner_data is None:
-            winner_data = [0, None, None]
-        cursor.execute(
-            """
-            SELECT COUNT(*) AS losses
-            FROM {race_summary}
-            WHERE loser_id = %s
-            LIMIT 1
-            """.format(race_summary=tn('race_summary')),
-            params
-        )
-        loser_data = cursor.fetchone()
-        if loser_data is None:
-            loser_data = [0]
-        return winner_data + loser_data
+# Ported to leaguedb
+#
+# async def get_match_id(
+#         racer_1_id: int,
+#         racer_2_id: int,
+#         scheduled_time: datetime.datetime = None,
+#         finished_only: Optional[bool] = None
+# ) -> int or None:
+#     """Attempt to find a match between the two racers
+#
+#     If multiple matches are found, prioritize as follows:
+#         1. Prefer matches closer to scheduled_time, if scheduled_time is not None
+#         2. Prefer channeled matches
+#         3. Prefer the most recent scheduled match
+#         4. Randomly
+#
+#     Parameters
+#     ----------
+#     racer_1_id: int
+#         The user ID of the first racer
+#     racer_2_id: int
+#         The user ID of the second racer
+#     scheduled_time: datetime.datetime or None
+#         The approximate time to search around, or None to skip this priority
+#     finished_only: bool
+#         If not None, then: If True, only return matches that have a finish_time; if False, only return matches without
+#
+#     Returns
+#     -------
+#     Optional[int]
+#         The match ID, if one is found.
+#     """
+#     param_dict = {
+#         'racer1': racer_1_id,
+#         'racer2': racer_2_id,
+#         'time': scheduled_time
+#     }
+#
+#     where_str = '(racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
+#                 'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)'
+#     if finished_only is not None:
+#         where_str = '({old_str}) AND (finish_time IS {nullstate})'.format(
+#             old_str=where_str,
+#             nullstate=('NOT NULL' if finished_only else 'NULL')
+#         )
+#
+#     async with DBConnect(commit=False) as cursor:
+#         cursor.execute(
+#             """
+#             SELECT
+#                 match_id,
+#                 suggested_time,
+#                 channel_id,
+#                 ABS(`suggested_time` - '2017-23-04 12:00:00') AS abs_del
+#             FROM {matches}
+#             WHERE {where_str}
+#             ORDER BY
+#                 IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
+#                 `channel_id` IS NULL ASC,
+#                 `suggested_time` DESC
+#             LIMIT 1
+#             """.format(matches=tn('matches'), where_str=where_str),
+#             param_dict
+#         )
+#         row = cursor.fetchone()
+#         return int(row[0]) if row is not None else None
+#
+# async def get_fastest_wins_raw(limit: int = None) -> list:
+#     params = (limit,)
+#     async with DBConnect(commit=False) as cursor:
+#         cursor.execute(
+#             """
+#             SELECT
+#                 {race_runs}.`time` AS `time`,
+#                 users_winner.twitch_name AS winner_name,
+#                 users_loser.twitch_name AS loser_name,
+#                 {matches}.suggested_time AS match_time
+#             FROM
+#                 {match_races}
+#                 INNER JOIN {matches}
+#                     ON {matches}.match_id = {match_races}.match_id
+#                 INNER JOIN {races}
+#                     ON {races}.race_id = {match_races}.race_id
+#                 INNER JOIN users users_winner
+#                     ON IF(
+#                         {match_races}.winner = 1,
+#                         users_winner.`user_id` = {matches}.racer_1_id,
+#                         users_winner.`user_id` = {matches}.racer_2_id
+#                     )
+#                 INNER JOIN users users_loser
+#                     ON IF(
+#                         {match_races}.winner = 1,
+#                         users_loser.user_id = {matches}.racer_2_id,
+#                         users_loser.user_id = {matches}.racer_1_id
+#                     )
+#                 INNER JOIN {race_runs}
+#                     ON (
+#                         {race_runs}.race_id = {races}.race_id
+#                         AND {race_runs}.user_id = users_winner.user_id
+#                     )
+#             WHERE
+#                 {match_races}.winner != 0
+#             ORDER BY `time` ASC
+#             LIMIT %s
+#             """.format(
+#                 race_runs=tn('race_runs'),
+#                 matches=tn('matches'),
+#                 match_races=tn('match_races'),
+#                 races=tn('races')
+#             ),
+#             params
+#         )
+#         return cursor.fetchall()
+#
+#
+# async def get_matchstats_raw(user_id: int) -> list:
+#     params = (user_id,)
+#     async with DBConnect(commit=False) as cursor:
+#         cursor.execute(
+#             """
+#             SELECT
+#                 COUNT(*) AS wins,
+#                 MIN(winner_time) AS best_win,
+#                 AVG(winner_time) AS average_win
+#             FROM {race_summary}
+#             WHERE winner_id = %s
+#             LIMIT 1
+#             """.format(race_summary=tn('race_summary')),
+#             params
+#         )
+#         winner_data = cursor.fetchone()
+#         if winner_data is None:
+#             winner_data = [0, None, None]
+#         cursor.execute(
+#             """
+#             SELECT COUNT(*) AS losses
+#             FROM {race_summary}
+#             WHERE loser_id = %s
+#             LIMIT 1
+#             """.format(race_summary=tn('race_summary')),
+#             params
+#         )
+#         loser_data = cursor.fetchone()
+#         if loser_data is None:
+#             loser_data = [0]
+#         return winner_data + loser_data
 
 
 async def get_raw_match_data(match_id: int) -> list:
@@ -597,7 +599,8 @@ async def get_raw_match_data(match_id: int) -> list:
                  sheet_id,
                  sheet_row,
                  finish_time,
-                 autogenned
+                 autogenned,
+                 league_tag
             FROM {matches} 
             WHERE match_id=%s 
             LIMIT 1
@@ -679,7 +682,8 @@ async def _register_match(match: Match) -> None:
         match.number_of_races,
         match.cawmentator_id,
         match.finish_time,
-        match.autogenned
+        match.autogenned,
+        match.league_tag
     )
 
     async with DBConnect(commit=True) as cursor:
@@ -700,9 +704,10 @@ async def _register_match(match: Match) -> None:
                number_of_races, 
                cawmentator_id,
                finish_time,
-               autogenned
+               autogenned,
+               league_tag
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """.format(matches=tn('matches')),
             params
         )

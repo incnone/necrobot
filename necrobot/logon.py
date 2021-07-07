@@ -25,8 +25,8 @@ from necrobot.util.necrodancer import seedgen
 def logon(
         config_filename: str,
         logging_prefix: str,
-        load_config_fn: types.FunctionType,
-        on_ready_fn: types.FunctionType = None
+        load_config_fn: types.CoroutineType,
+        on_ready_fn: types.CoroutineType = None
 ) -> None:
     """Log on to Discord. Block until logout.
     
@@ -111,7 +111,9 @@ def logon(
     try:
         logger.info('Beginning main loop.')
         # Create the discord.py Client object and the Necrobot----
-        client = discord.Client()
+        intents = discord.Intents.default()
+        intents.members = True
+        client = discord.Client(intents=intents)
         the_necrobot = Necrobot()
         the_necrobot.clean_init()
         the_necrobot.ready_client_events(client=client, load_config_fn=load_config_fn, on_ready_fn=on_ready_fn)

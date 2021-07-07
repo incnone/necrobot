@@ -7,6 +7,7 @@ from necrobot.race import cmd_racestats
 # from necrobot.ladder import cmd_ladder
 from necrobot.botbase import cmd_color, cmd_role
 from necrobot.user import cmd_user
+from necrobot.test import cmd_test
 
 
 class MainBotChannel(BotChannel):
@@ -37,6 +38,8 @@ class MainBotChannel(BotChannel):
             cmd_seedgen.RandomSeed(self),
 
             # cmd_speedrun.Submit(self),
+
+            cmd_test.TestDebugMembers(self),
 
             cmd_user.DailyAlert(self),
             cmd_user.RaceAlert(self),

@@ -20,204 +20,16 @@ LeagueAlreadyExists
 LeagueDoesNotExist
 InvalidSchemaName
 """
-
-import re
+import datetime
+from typing import Optional, List
 
 import necrobot.exception
-from necrobot.config import Config
 from necrobot.database.dbconnect import DBConnect
 from necrobot.database.dbutil import tn
 from necrobot.league.league import League
 from necrobot.match.matchinfo import MatchInfo
 from necrobot.race.raceinfo import RaceInfo
 from necrobot.race import racedb
-
-
-async def create_league(schema_name: str) -> League:
-    """Creates a new CoNDOR event with the given schema_name as its database.
-    
-    Parameters
-    ----------
-    schema_name: str
-        The name of the database schema for this event, and also the unique identifier for this event.
-
-    Raises
-    ------
-    LeagueAlreadyExists
-        When the schema_name already exists.
-    """
-    table_name_validator = re.compile(r'^[0-9a-zA-Z_$]+$')
-    if not table_name_validator.match(schema_name):
-        raise necrobot.exception.InvalidSchemaName()
-
-    params = (schema_name,)
-    async with DBConnect(commit=True) as cursor:
-        cursor.execute(
-            """
-            SELECT `league_name` 
-            FROM `leagues` 
-            WHERE `schema_name`=%s
-            """,
-            params
-        )
-        for row in cursor:
-            raise necrobot.exception.LeagueAlreadyExists(row[0])
-
-        cursor.execute(
-            """
-            SELECT SCHEMA_NAME 
-            FROM INFORMATION_SCHEMA.SCHEMATA 
-            WHERE SCHEMA_NAME = %s
-            """,
-            params
-        )
-        for _ in cursor:
-            raise necrobot.exception.LeagueAlreadyExists('Schema exists, but is not a CoNDOR event.')
-
-        cursor.execute(
-            """
-            CREATE SCHEMA `{schema_name}` 
-            DEFAULT CHARACTER SET = utf8 
-            DEFAULT COLLATE = utf8_general_ci
-            """.format(schema_name=schema_name)
-        )
-        cursor.execute(
-            """
-            INSERT INTO `leagues` 
-            (`schema_name`) 
-            VALUES (%s)
-            """,
-            params
-        )
-
-        cursor.execute(
-            """
-            CREATE TABLE `{schema_name}`.`entrants` (
-                `user_id` smallint unsigned NOT NULL,
-                PRIMARY KEY (`user_id`)
-            ) DEFAULT CHARSET=utf8
-            """.format(schema_name=schema_name)
-        )
-
-        for tablename in ['matches', 'match_races', 'races', 'race_runs', 'speedruns']:
-            cursor.execute(
-                "CREATE TABLE `{league_schema}`.`{table}` LIKE `{necrobot_schema}`.`{table}`".format(
-                    league_schema=schema_name,
-                    necrobot_schema=Config.MYSQL_DB_NAME,
-                    table=tablename
-                )
-            )
-
-        def tablename(table):
-            return '`{league_schema}`.`{table}`'.format(league_schema=schema_name, table=table)
-
-        cursor.execute(
-            """
-            CREATE VIEW {race_summary} AS
-                SELECT 
-                    {matches}.`match_id` AS `match_id`,
-                    {match_races}.`race_number` AS `race_number`,
-                    `users_winner`.`user_id` AS `winner_id`,
-                    `users_loser`.`user_id` AS `loser_id`,
-                    `race_runs_winner`.`time` AS `winner_time`,
-                    `race_runs_loser`.`time` AS `loser_time`
-                FROM
-                    {matches}
-                    JOIN {match_races} ON {matches}.`match_id` = {match_races}.`match_id`
-                    JOIN `users` `users_winner` ON 
-                        IF( {match_races}.`winner` = 1, 
-                            `users_winner`.`user_id` = {matches}.`racer_1_id`, 
-                            `users_winner`.`user_id` = {matches}.`racer_2_id`
-                        )
-                    JOIN `users` `users_loser` ON 
-                        IF( {match_races}.`winner` = 1, 
-                            `users_loser`.`user_id` = {matches}.`racer_2_id`, 
-                            `users_loser`.`user_id` = {matches}.`racer_1_id`
-                        )
-                    LEFT JOIN {race_runs} `race_runs_winner` ON 
-                        `race_runs_winner`.`user_id` = `users_winner`.`user_id`
-                        AND `race_runs_winner`.`race_id` = {match_races}.`race_id`
-                    LEFT JOIN {race_runs} `race_runs_loser` ON 
-                        `race_runs_loser`.`user_id` = `users_loser`.`user_id`
-                        AND `race_runs_loser`.`race_id` = {match_races}.`race_id`
-                WHERE NOT {match_races}.`canceled`
-            """.format(
-                matches=tablename('matches'),
-                match_races=tablename('match_races'),
-                race_runs=tablename('race_runs'),
-                race_summary=tablename('race_summary')
-            )
-        )
-
-        cursor.execute(
-            """
-            CREATE VIEW {match_info} AS
-                SELECT 
-                    {matches}.`match_id` AS `match_id`,
-                    `ud1`.`twitch_name` AS `racer_1_name`,
-                    `ud2`.`twitch_name` AS `racer_2_name`,
-                    {matches}.`suggested_time` AS `scheduled_time`,
-                    `ud3`.`twitch_name` AS `cawmentator_name`,
-                    {matches}.`vod` AS `vod`,
-                    {matches}.`is_best_of` AS `is_best_of`,
-                    {matches}.`number_of_races` AS `number_of_races`,
-                    {matches}.`autogenned` AS `autogenned`,
-                    ({matches}.`r1_confirmed` AND {matches}.`r2_confirmed`) AS `scheduled`,
-                    COUNT(0) AS `num_finished`,
-                    SUM((CASE
-                        WHEN ({match_races}.`winner` = 1) THEN 1
-                        ELSE 0
-                    END)) AS `racer_1_wins`,
-                    SUM((CASE
-                        WHEN ({match_races}.`winner` = 2) THEN 1
-                        ELSE 0
-                    END)) AS `racer_2_wins`,
-                    (CASE
-                        WHEN
-                            {matches}.`is_best_of`
-                        THEN
-                            (GREATEST(SUM((CASE
-                                        WHEN ({match_races}.`winner` = 1) THEN 1
-                                        ELSE 0
-                                    END)),
-                                    SUM((CASE
-                                        WHEN ({match_races}.`winner` = 2) THEN 1
-                                        ELSE 0
-                                    END))) >= (({matches}.`number_of_races` DIV 2) + 1))
-                        ELSE (COUNT(0) >= {matches}.`number_of_races`)
-                    END) AS `completed`
-                FROM
-                    (((({matches}
-                    LEFT JOIN {match_races} ON (({matches}.`match_id` = {match_races}.`match_id`)))
-                    JOIN `necrobot`.`users` `ud1` ON (({matches}.`racer_1_id` = `ud1`.`user_id`)))
-                    JOIN `necrobot`.`users` `ud2` ON (({matches}.`racer_2_id` = `ud2`.`user_id`)))
-                    LEFT JOIN `necrobot`.`users` `ud3` ON (({matches}.`cawmentator_id` = `ud3`.`user_id`)))
-                WHERE
-                    ({match_races}.`canceled` = 0 OR {match_races}.`canceled` IS NULL)
-                GROUP BY {matches}.`match_id`
-            """.format(
-                match_info=tablename('match_info'),
-                matches=tablename('matches'),
-                match_races=tablename('match_races')
-            )
-        )
-
-        cursor.execute(
-            """
-            CREATE VIEW {league_info} AS
-                SELECT *
-                FROM `leagues`
-                WHERE (`leagues`.`schema_name` = %s)
-            """.format(league_info=tablename('league_info')),
-            params
-        )
-
-    return League(
-        commit_fn=write_league,
-        schema_name=schema_name,
-        league_name='<unnamed league>',
-        match_info=MatchInfo()
-    )
 
 
 async def get_entrant_ids() -> list:
@@ -240,73 +52,119 @@ async def get_entrant_ids() -> list:
         return to_return
 
 
-async def get_league(schema_name: str) -> League:
+async def get_league(league_tag: str) -> League:
     """
     Parameters
     ----------
-    schema_name: str
-        The name of the schema for the event (and also the event's unique identifier).
+    league_tag: str
+        The unique identifier for the league
 
     Returns
     -------
     League
         A League object for the event.
     """
-    params = (schema_name,)
+    params = (league_tag,)
     async with DBConnect(commit=False) as cursor:
         cursor.execute(
             """
             SELECT 
-               `leagues`.`league_name`, 
-               `leagues`.`number_of_races`, 
-               `leagues`.`is_best_of`, 
-               `leagues`.`ranked`, 
-               `leagues`.`gsheet_id`,
-               `leagues`.`deadline`,
+               {leagues}.`league_tag`, 
+               {leagues}.`league_name`, 
+               {leagues}.`number_of_races`, 
+               {leagues}.`is_best_of`, 
+               {leagues}.`worksheet_id`,
                `race_types`.`character`, 
                `race_types`.`descriptor`, 
                `race_types`.`seeded`, 
                `race_types`.`amplified`, 
-               `race_types`.`seed_fixed`,
-               `leagues`.`speedrun_gsheet_id` 
-            FROM `leagues` 
+               `race_types`.`seed_fixed`
+            FROM {leagues}
             LEFT JOIN `race_types` ON `leagues`.`race_type` = `race_types`.`type_id` 
-            WHERE `leagues`.`schema_name` = %s 
+            WHERE {leagues}.`league_tag` = %s 
             LIMIT 1
-            """,
+            """.format(leagues=tn('leagues')),
             params
         )
         for row in cursor:
             race_info = RaceInfo()
+            if row[5] is not None:
+                race_info.set_char(row[5])
             if row[6] is not None:
-                race_info.set_char(row[6])
+                race_info.descriptor = row[6]
             if row[7] is not None:
-                race_info.descriptor = row[7]
+                race_info.seeded = bool(row[7])
             if row[8] is not None:
-                race_info.seeded = bool(row[8])
+                race_info.amplified = bool(row[8])
             if row[9] is not None:
-                race_info.amplified = bool(row[9])
-            if row[10] is not None:
-                race_info.seed_fixed = bool(row[10])
+                race_info.seed_fixed = bool(row[9])
 
             match_info = MatchInfo(
-                max_races=int(row[1]) if row[1] is not None else None,
-                is_best_of=bool(row[2]) if row[2] is not None else None,
-                ranked=bool(row[3]) if row[3] is not None else None,
+                max_races=int(row[2]) if row[2] is not None else None,
+                is_best_of=bool(row[3]) if row[3] is not None else None,
+                ranked=None,
                 race_info=race_info
             )
 
             return League(
                 commit_fn=write_league,
-                schema_name=schema_name,
-                league_name=row[0],
+                league_tag=row[0],
+                league_name=row[1],
                 match_info=match_info,
-                gsheet_id=row[4],
-                speedrun_gsheet_id=row[11],
-                deadline=row[5]
+                worksheet_id=row[4]
             )
 
         raise necrobot.exception.LeagueDoesNotExist()
+
+
+async def get_all_leagues() -> List[League]:
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT 
+               {leagues}.`league_tag`, 
+               {leagues}.`league_name`, 
+               {leagues}.`number_of_races`, 
+               {leagues}.`is_best_of`, 
+               {leagues}.`worksheet_id`,
+               `race_types`.`character`, 
+               `race_types`.`descriptor`, 
+               `race_types`.`seeded`, 
+               `race_types`.`amplified`, 
+               `race_types`.`seed_fixed`
+            FROM {leagues}
+            LEFT JOIN `race_types` ON `leagues`.`race_type` = `race_types`.`type_id` 
+            """.format(leagues=tn('leagues'))
+        )
+        all_leagues = []
+        for row in cursor:
+            race_info = RaceInfo()
+            if row[5] is not None:
+                race_info.set_char(row[5])
+            if row[6] is not None:
+                race_info.descriptor = row[6]
+            if row[7] is not None:
+                race_info.seeded = bool(row[7])
+            if row[8] is not None:
+                race_info.amplified = bool(row[8])
+            if row[9] is not None:
+                race_info.seed_fixed = bool(row[9])
+
+            match_info = MatchInfo(
+                max_races=int(row[2]) if row[2] is not None else None,
+                is_best_of=bool(row[3]) if row[3] is not None else None,
+                ranked=None,
+                race_info=race_info
+            )
+
+            all_leagues.append(League(
+                commit_fn=write_league,
+                league_tag=row[0],
+                league_name=row[1],
+                match_info=match_info,
+                worksheet_id=row[4]
+            ))
+        return all_leagues
 
 
 async def register_user(user_id: int) -> None:
@@ -345,41 +203,211 @@ async def write_league(league: League) -> None:
 
     async with DBConnect(commit=True) as cursor:
         params = (
-            league.schema_name,
+            league.tag,
             league.name,
-            league.gsheet_id,
-            league.deadline,
+            league.worksheet_id,
             match_info.max_races,
             match_info.is_best_of,
-            match_info.ranked,
             race_type_id,
-            league.speedrun_gsheet_id
         )
 
         cursor.execute(
             """
-            INSERT INTO `leagues` 
+            INSERT INTO {leagues}
             (
-                `schema_name`, 
+                `league_tag`, 
                 `league_name`, 
-                `gsheet_id`, 
-                `deadline`, 
+                `worksheet_id`, 
                 `number_of_races`, 
                 `is_best_of`, 
-                `ranked`, 
-                `race_type`,
-                `speedrun_gsheet_id`
+                `race_type`
             ) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) 
+            VALUES (%s, %s, %s, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE
+               `league_tag` = VALUES(`league_tag`), 
                `league_name` = VALUES(`league_name`), 
-               `gsheet_id` = VALUES(`gsheet_id`),
-               `deadline` = VALUES(`deadline`),
+               `worksheet_id` = VALUES(`worksheet_id`),
                `number_of_races` = VALUES(`number_of_races`), 
                `is_best_of` = VALUES(`is_best_of`), 
-               `ranked` = VALUES(`ranked`), 
-               `race_type` = VALUES(`race_type`),
-               `speedrun_gsheet_id` = VALUES(`speedrun_gsheet_id`)
-            """,
+               `race_type` = VALUES(`race_type`)
+            """.format(leagues=tn('leagues')),
             params
         )
+
+
+async def get_matchstats_raw(league_tag: str, user_id: int) -> list:
+    params = (user_id, league_tag,)
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) AS wins,
+                MIN(winner_time) AS best_win,
+                AVG(winner_time) AS average_win
+            FROM {race_summary}
+            WHERE `winner_id` = %s AND `league_tag` = %s
+            LIMIT 1
+            """.format(race_summary=tn('race_summary')),
+            params
+        )
+        winner_data = cursor.fetchone()
+        if winner_data is None:
+            winner_data = [0, None, None]
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS losses
+            FROM {race_summary}
+            WHERE loser_id = %s AND `league_tag` = %s
+            LIMIT 1
+            """.format(race_summary=tn('race_summary')),
+            params
+        )
+        loser_data = cursor.fetchone()
+        if loser_data is None:
+            loser_data = [0]
+        return winner_data + loser_data
+
+
+async def get_fastest_wins_raw(league_tag: str, limit: int = None) -> list:
+    params = (league_tag, limit,)
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT
+                {race_runs}.`time` AS `time`,
+                users_winner.twitch_name AS winner_name,
+                users_loser.twitch_name AS loser_name,
+                {matches}.suggested_time AS match_time
+            FROM 
+                {match_races}
+                INNER JOIN {matches}
+                    ON {matches}.match_id = {match_races}.match_id
+                INNER JOIN {races} 
+                    ON {races}.race_id = {match_races}.race_id
+                INNER JOIN users users_winner 
+                    ON IF(
+                        {match_races}.winner = 1,
+                        users_winner.`user_id` = {matches}.racer_1_id,
+                        users_winner.`user_id` = {matches}.racer_2_id
+                    )
+                INNER JOIN users users_loser 
+                    ON IF(
+                        {match_races}.winner = 1,
+                        users_loser.user_id = {matches}.racer_2_id,
+                        users_loser.user_id = {matches}.racer_1_id
+                    )
+                INNER JOIN {race_runs}
+                    ON ( 
+                        {race_runs}.race_id = {races}.race_id
+                        AND {race_runs}.user_id = users_winner.user_id
+                    )
+            WHERE
+                {match_races}.winner != 0
+                AND {matches}.`league_tag` = %s
+                AND NOT {match_races}.canceled
+            ORDER BY `time` ASC
+            LIMIT %s
+            """.format(
+                race_runs=tn('race_runs'),
+                matches=tn('matches'),
+                match_races=tn('match_races'),
+                races=tn('races')
+            ),
+            params
+        )
+        return cursor.fetchall()
+
+
+async def get_match_id(
+        racer_1_id: int,
+        racer_2_id: int,
+        league_tag: Optional[str] = None,
+        scheduled_time: datetime.datetime = None,
+        finished_only: Optional[bool] = None
+) -> int or None:
+    """Attempt to find a match between the two racers
+
+    If multiple matches are found, prioritize as follows:
+        1. Prefer matches closer to scheduled_time, if scheduled_time is not None
+        2. Prefer channeled matches
+        3. Prefer the most recent scheduled match
+        4. Randomly
+
+    Parameters
+    ----------
+    league_tag: str
+        The tag for the league to search in
+    racer_1_id: int
+        The user ID of the first racer
+    racer_2_id: int
+        The user ID of the second racer
+    scheduled_time: datetime.datetime or None
+        The approximate time to search around, or None to skip this priority
+    finished_only: bool
+        If not None, then: If True, only return matches that have a finish_time; if False, only return matches without
+
+    Returns
+    -------
+    Optional[int]
+        The match ID, if one is found.
+    """
+    param_dict = {
+        'league_tag': league_tag,
+        'racer1': racer_1_id,
+        'racer2': racer_2_id,
+        'time': scheduled_time
+    }
+
+    where_str = '(racer_1_id=%(racer1)s AND racer_2_id=%(racer2)s) ' \
+                'OR (racer_1_id=%(racer2)s AND racer_2_id=%(racer1)s)'
+    if league_tag is not None:
+        where_str = '({old_str}) AND (league_tag=%(league_tag)s)'.format(
+            old_str=where_str
+        )
+    if finished_only is not None:
+        where_str = '({old_str}) AND (finish_time IS {nullstate})'.format(
+            old_str=where_str,
+            nullstate=('NOT NULL' if finished_only else 'NULL')
+        )
+
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT 
+                {matches}.match_id, 
+                {matches}.suggested_time, 
+                {matches}.channel_id,
+                ABS({matches}.`suggested_time` - '2017-23-04 12:00:00') AS abs_del
+            FROM {matches}
+            WHERE {where_str}
+            ORDER BY
+                IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
+                `channel_id` IS NULL ASC, 
+                `suggested_time` DESC
+            LIMIT 1
+            """.format(matches=tn('matches'), where_str=where_str),
+            param_dict
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row is not None else None
+
+
+async def get_standings_data_raw(league_tag: str):
+    param_dict = {
+        'league_tag': league_tag
+    }
+    async with DBConnect(commit=False) as cursor:
+        cursor.execute(
+            """
+            SELECT 
+                {match_info}.racer_1_name,
+                {match_info}.racer_2_name,
+                {match_info}.racer_1_wins,
+                {match_info}.racer_2_wins
+            FROM {match_info}
+            WHERE {match_info}.league_tag = %(league_tag)s AND {match_info}.completed
+            """.format(match_info=tn('match_info')),
+            param_dict
+        )
+
+        return cursor.fetchall()
