@@ -6,6 +6,7 @@ from typing import Optional
 import pytz
 
 import necrobot.exception
+from necrobot.config import Config
 from necrobot.botbase.necrobot import Necrobot
 from necrobot.match import matchdb
 from necrobot.match.matchutil import make_match_from_raw_db_data
@@ -213,3 +214,7 @@ async def get_schedule_infotext():
     schedule_text += '```'
 
     return schedule_text
+
+
+def get_unmade_matches_filename(league_tag: str):
+    return f'{Config.UNMADE_MATCHES_FILE_PREFIX}{league_tag}.csv'

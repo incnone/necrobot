@@ -164,6 +164,7 @@ class Config(object):
     # League ----------------------------------------------------------------------------------
     LEAGUE_NAME = ''
     LOG_DIRECTORY = 'logs'
+    UNMADE_MATCHES_FILE_PREFIX = 'data/unmade_'
 
     # Login -----------------------------------------------------------------------------------
     LOGIN_TOKEN = ''

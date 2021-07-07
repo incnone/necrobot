@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import os
 import pytz
+from typing import List, Tuple
 
 import necrobot.exception
 from necrobot.botbase.command import Command
@@ -464,6 +465,56 @@ class MakeMatchesFromFile(CommandType):
         await _makematches_from_pairs(cmd=cmd, league=league, desired_match_pairs=desired_match_pairs)
 
 
+class MakeUnmadeMatches(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'make-unmade-matches')
+        self.help_text = '`{0}`: Attempt to make the currently unmade matches for all leagues.' \
+                         .format(self.mention)
+        self.admin_only = True
+
+    @property
+    def short_help_text(self):
+        return 'Make the unmade matches.'
+
+    async def _do_execute(self, cmd):
+        if len(cmd.args) != 0:
+            await cmd.channel.send(
+                'Wrong number of arguments for `{0}`.'.format(self.mention)
+            )
+            return
+
+        league_list = LeagueMgr().leagues()
+        await cmd.channel.send(
+                f'Remaking unmade matches for all leagues ({", ".join(f"`{t}`" for t in league_list)})'
+            )
+        for league_tag in league_list:
+            await self._make_unmade_for_league(cmd=cmd, league_tag=league_tag)
+
+    async def _make_unmade_for_league(self, cmd, league_tag):
+        try:
+            league = await LeagueMgr().get_league(league_tag)
+        except necrobot.exception.LeagueDoesNotExist:
+            await cmd.channel.send(
+                'Error: League with tag `{0}` does not exist.'.format(league_tag))
+            return
+
+        filename = leagueutil.get_unmade_matches_filename(league_tag=league_tag)
+        file_path = os.path.join(filename)
+        if not os.path.isfile(file_path):
+            await cmd.channel.send(
+                'Cannot find file `{}`.'.format(filename)
+            )
+            return
+
+        desired_match_pairs = []
+        with open(file_path) as file:
+            for line in file:
+                racernames = line.rstrip('\n').split(',')
+                desired_match_pairs.append((racernames[0].lower(), racernames[1].lower(),))
+
+        await _makematches_from_pairs(cmd=cmd, league=league, desired_match_pairs=desired_match_pairs)
+
+
 class NextRace(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'next', 'nextrace', 'nextmatch')
@@ -696,7 +747,7 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
 
         # Create Match objects
         matches = []
-        not_found_matches = []
+        not_found_matches = []  # type: List[Tuple[str, str]]
 
         async def make_single_match(racers):
             console.debug('_makematches_from_pairs: Making match {0}-{1}'.format(racers[0], racers[1]))
@@ -706,7 +757,7 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
                 console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
                     racers[0], racers[1]
                 ))
-                not_found_matches.append('`{0}`-`{1}`'.format(racers[0], racers[1]))
+                not_found_matches.append((racers[0], racers[1]))
                 return
 
             new_match = await matchutil.make_match(
@@ -719,7 +770,7 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
             )
             if new_match is None:
                 console.debug('_makematches_from_pairs: Match {0}-{1} not created.'.format(racers[0], racers[1]))
-                not_found_matches.append('{0}-{1}'.format(racers[0], racers[1]))
+                not_found_matches.append((racers[0], racers[1]))
                 return
 
             matches.append(new_match)
@@ -745,14 +796,15 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
             await new_room.send_channel_start_text()
 
         # Report on uncreated matches
-        uncreated_str = ''
-        for match_str in not_found_matches:
-            uncreated_str += match_str + ', '
-        if uncreated_str:
-            uncreated_str = uncreated_str[:-2]
+        if not_found_matches:
+            filename = leagueutil.get_unmade_matches_filename(league_tag=league.tag)
+            with open(filename, 'w') as file:
+                for r1, r2 in not_found_matches:
+                    file.write(f'{r1},{r2}\n')
 
-        if uncreated_str:
-            report_str = 'The following matches were not made: {0}'.format(uncreated_str)
+            uncreated_str = ', '.join(f'`{t[0]}-{t[1]}`' for t in not_found_matches)
+            report_str = f'The following matches were not made: {uncreated_str}. These matches were written to ' \
+                         f'`{filename}`. Call `.make-unmade-matches` to attempt to remake these easily.'
         else:
             report_str = 'All matches created successfully.'
 
