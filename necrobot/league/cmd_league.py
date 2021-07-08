@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import os
 import pytz
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import necrobot.exception
 from necrobot.botbase.command import Command
@@ -13,6 +13,7 @@ from necrobot.league import leagueutil
 from necrobot.league.leaguemgr import LeagueMgr
 from necrobot.match import matchutil, cmd_matchmake, matchinfo, matchchannelutil, matchdb
 from necrobot.user import userlib
+from necrobot.user.necrouser import NecroUser
 from necrobot.util import server
 from necrobot.util import console
 from necrobot.config import Config
@@ -737,13 +738,21 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
     match_info = league.match_info
     async with cmd.channel.typing():
         # Find all racers
-        all_racers = dict()
+        all_racers = dict()     # type: Dict[str, List[NecroUser]]
         for racerpair in desired_match_pairs:
-            all_racers[racerpair[0]] = None
-            all_racers[racerpair[1]] = None
+            all_racers[racerpair[0]] = []
+            all_racers[racerpair[1]] = []
 
         await userlib.fill_user_dict(all_racers)
         console.debug('_makematches_from_pairs: Filled user dict: {}'.format(all_racers))
+
+        not_found_racers = []
+        doublename_racers = []
+        for username, userlist in all_racers.items():
+            if len(userlist) == 0:
+                not_found_racers.append(username)
+            elif len(userlist) > 1:
+                doublename_racers.append(username)
 
         # Create Match objects
         matches = []
@@ -751,8 +760,8 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
 
         async def make_single_match(racers):
             console.debug('_makematches_from_pairs: Making match {0}-{1}'.format(racers[0], racers[1]))
-            racer_1 = all_racers[racers[0]]
-            racer_2 = all_racers[racers[1]]
+            racer_1 = all_racers[racers[0]][0] if len(all_racers[racers[0]]) == 1 else None
+            racer_2 = all_racers[racers[1]][0] if len(all_racers[racers[1]]) == 1 else None
             if racer_1 is None or racer_2 is None:
                 console.warning('Couldn\'t find racers for match {0}-{1}.'.format(
                     racers[0], racers[1]
@@ -808,6 +817,15 @@ async def _makematches_from_pairs(cmd, league, desired_match_pairs):
         else:
             report_str = 'All matches created successfully.'
 
+    unfound_racers_str = ', '.join(f'`{n}`' for n in not_found_racers)
+    doubled_racers_str = ', '.join(f'`{n}`' for n in doublename_racers)
+    if not_found_racers:
+        report_str += \
+            f'\n\nThe following racers could not be found: {unfound_racers_str}.'
+    if doubled_racers_str:
+        report_str += \
+            f'\n\nThe following names were associated to more than one Discord account: {doubled_racers_str}.'
+
     await status_message.edit(
-        content=f'Creating matches... done. {report_str}'
+        content=f'Creating matches... done.\n\n{report_str}'
     )
