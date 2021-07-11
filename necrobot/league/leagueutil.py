@@ -153,7 +153,8 @@ async def get_nextrace_displaytext(match_list: list) -> str:
             # 'coh': '<:zelda:676158586975420457>',
             'coh': '<:NecroPuzzle:802722636832440330>',
             'noc': '<:nocturna:724439270047219713>',
-            'dia': '<:diamond:798591449146327150>'
+            'dia': '<:diamond:798591449146327150>',
+            'dor': '<:dorian:860614813456793630>'
         }
         if match.league_tag in s9_emotes:
             display_text += '{2} **{0}** - **{1}**'.format(
