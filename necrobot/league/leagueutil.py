@@ -15,6 +15,7 @@ from necrobot.league import leaguedb
 from necrobot.match import matchutil
 from necrobot.match.match import Match
 from necrobot.user import userlib
+from necrobot.util.necrodancer import emotes
 from necrobot.util.parse import dateparse
 from necrobot.util import server, console, timestr, rtmputil, strutil
 
@@ -146,21 +147,11 @@ async def get_nextrace_displaytext(match_list: list) -> str:
         display_text = 'Next match: \n'
 
     for match in match_list:
-        # TODO: Hacky emote solution
-        s9_emotes = {
-            'cad': '<:cadence:676159524033527808>',
-            'mel': '<:melody:676159691134337040>',
-            # 'coh': '<:zelda:676158586975420457>',
-            'coh': '<:NecroPuzzle:802722636832440330>',
-            'noc': '<:nocturna:724439270047219713>',
-            'dia': '<:diamond:798591449146327150>',
-            'dor': '<:dorian:860614813456793630>'
-        }
-        if match.league_tag in s9_emotes:
+        if match.league_tag in emotes.nd_emotes:
             display_text += '{2} **{0}** - **{1}**'.format(
                 match.racer_1.display_name,
                 match.racer_2.display_name,
-                s9_emotes[match.league_tag]
+                emotes.nd_emotes[match.league_tag]
             )
         else:
             display_text += '\N{BULLET} **{0}** - **{1}** ({2})'.format(

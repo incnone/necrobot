@@ -21,6 +21,7 @@ from necrobot.match.matchroom import MatchRoom
 from necrobot.match import matchchannelutil
 from necrobot.match.matchglobals import MatchGlobals
 from necrobot.util import console, server, strutil, rtmputil
+from necrobot.util.necrodancer import emotes
 from necrobot.util.parse import dateparse
 from necrobot.util.singleton import Singleton
 
@@ -74,7 +75,8 @@ class CondorMgr(Manager, metaclass=Singleton):
         elif ev.event_type == 'end_match':
             async def send_mainchannel_message():
                 await self._main_channel.send(
-                    'Match complete: **{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
+                    'Match complete: {em}**{r1}** [{w1}-{w2}] **{r2}** :tada:'.format(
+                        em=emotes.get_emote_str(ev.match.league_tag),
                         r1=ev.match.racer_1.display_name,
                         r2=ev.match.racer_2.display_name,
                         w1=ev.r1_wins,
@@ -132,8 +134,9 @@ class CondorMgr(Manager, metaclass=Singleton):
             asyncio.ensure_future(self._overwrite_schedule_gsheet())
             cawmentator = await ev.match.get_cawmentator()
             await self._main_channel.send(
-                '{cawmentator} added a vod for **{r1}** - **{r2}**: <{url}>'.format(
+                '{cawmentator} added a vod for {em}**{r1}** - **{r2}**: <{url}>'.format(
                     cawmentator=cawmentator.display_name if cawmentator is not None else '<unknown>',
+                    em=emotes.get_emote_str(ev.match.league_tag),
                     r1=ev.match.racer_1.display_name,
                     r2=ev.match.racer_2.display_name,
                     url=ev.url
@@ -335,7 +338,7 @@ class CondorMgr(Manager, metaclass=Singleton):
         ----------
         match: Match
         """
-        alert_format_str = "The match **{racer_1}** - **{racer_2}** is scheduled to begin in {minutes} " \
+        alert_format_str = "The match {em}**{racer_1}** - **{racer_2}** is scheduled to begin in {minutes} " \
                            "minutes. :timer: \n" \
                            "{stream}"
 
@@ -348,6 +351,7 @@ class CondorMgr(Manager, metaclass=Singleton):
 
         await self._main_channel.send(
             alert_format_str.format(
+                em=emotes.get_emote_str(match.league_tag),
                 racer_1=match.racer_1.display_name,
                 racer_2=match.racer_2.display_name,
                 minutes=minutes_until_match,
