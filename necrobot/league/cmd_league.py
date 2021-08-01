@@ -97,6 +97,78 @@ class Vod(CommandType):
         )
 
 
+# class AssignTierRoles(CommandType):
+#     def __init__(self, bot_channel):
+#         CommandType.__init__(self, bot_channel, 'assign-tier-roles')
+#         self.help_text = f'`{self.mention} num_cry num_obs num_tit num_gol`: Assigns tier roles based on ' \
+#                          f'the attached MMR rankings file, using the given numbers as division sizes.'
+#         self.admin_only = True
+#
+#     @property
+#     def short_help_text(self):
+#         return 'Assigns tier roles based on the attached file.'
+#
+#     async def _do_execute(self, cmd: Command):
+#         if len(cmd.args) != 4:
+#             await cmd.channel.send(f'Wrong number of arguments for {self.mention}.')
+#             return
+#
+#         try:
+#             num_cry = int(cmd.args[0])
+#             num_obs = int(cmd.args[1])
+#             num_tit = int(cmd.args[2])
+#             num_gol = int(cmd.args[3])
+#         except ValueError:
+#             await cmd.channel.send(f'Error parsing the tier sizes.')
+#             return
+#
+#         # Check there's a single attachment
+#         if len(cmd.message.attachments) == 0:
+#             await cmd.channel.send(f'No file attached to command {self.mention}.')
+#             return
+#         elif len(cmd.message.attachments) > 1:
+#             await cmd.channel.send(f'Too many files attached to command {self.mention}.')
+#             return
+#
+#         # Check the attachment type
+#         attached = cmd.message.attachments[0]
+#         attached_content_type_params = attached.content_type.split(';')
+#         content_type = attached_content_type_params[0] \
+#             if (attached_content_type_params is not None and len(attached_content_type_params) > 0)\
+#             else None
+#         if content_type != 'text/csv':
+#             await cmd.channel.send(
+#                 f'Incorrect file type {content_type} for {self.mention}; please attach a `.csv` file.'
+#             )
+#             return
+#
+#         # Get the attachment's encoding
+#         content_params = dict()
+#         for param in attached_content_type_params[1:]:
+#             vals = param.split('=')
+#             if len(vals) == 2:
+#                 content_params[vals[0]] = vals[1]
+#         charset = content_params['charset'] if 'charset' in content_params else 'utf-8'
+#
+#         # Decode the attachment
+#         attached_bytes = await attached.read()
+#         attached_str = attached_bytes.decode(charset)
+#
+#         # Make a dict of the MMRs
+#         mmr_dict = dict()
+#         try:
+#             for line in attached_str.splitlines(keepends=False):
+#                 player, mmr = line.split(',')
+#                 mmr_dict[player] = int(mmr)
+#         except RuntimeError as e:
+#             await cmd.channel.send(f'Error parsing the attached file: {str(e)}.')
+#             return
+#
+#         mmr_dict = sorted(mmr_dict.items(), key=lambda p: p[1], reverse=True)
+#         for player, _ in mmr_dict:
+
+
+
 class CloseAllMatches(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'closeall', 'closeallmatches')
@@ -710,15 +782,15 @@ async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool)
         match.set_cawmentator_id(author_user.user_id)
         await NEDispatch().publish(event_type='set_cawmentary', match=match, add=True, member=cmd.author)
 
+        # If we're within the 15-minute warning, do the cawmentator alert
+        if match.time_until_match <= Config.MATCH_FIRST_WARNING:
+            await NEDispatch().publish(event_type='match_alert', match=match, final=False)
+
         # If we're within the 5-minute warning, just redo the match alert
         if match.time_until_match <= Config.MATCH_FINAL_WARNING:
             await NEDispatch().publish(event_type='match_alert', match=match, final=True)
         else:
-            await cmd.channel.send(
-                'Added {0} as cawmentary for the match {1}.'.format(
-                    cmd.author.mention, match.matchroom_name
-                )
-            )
+            await cmd.channel.send(f'Added {cmd.author.mention} as cawmentary for the match {match.matchroom_name}.')
     else:
         await NEDispatch().publish(event_type='set_cawmentary', match=match, add=False, member=cmd.author)
         match.set_cawmentator_id(None)
