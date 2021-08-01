@@ -376,12 +376,11 @@ async def get_match_id(
             SELECT 
                 {matches}.match_id, 
                 {matches}.suggested_time, 
-                {matches}.channel_id,
-                ABS({matches}.`suggested_time` - '2017-23-04 12:00:00') AS abs_del
+                {matches}.channel_id
             FROM {matches}
             WHERE {where_str}
             ORDER BY
-                IF(%(time)s IS NULL, 0, -ABS(`suggested_time` - %(time)s)) DESC,
+                IF(%(time)s IS NULL, 0, -ABS(TIMESTAMPDIFF(SECOND, `suggested_time`, %(time)s))) DESC,
                 `channel_id` IS NULL ASC, 
                 `suggested_time` DESC
             LIMIT 1
