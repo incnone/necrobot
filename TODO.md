@@ -31,7 +31,7 @@ Current version: 0.13
 - Remove or notify commentator on match reschedule
 - Combine MatchRaceData and Match in a friendly way
 - Better failure messages for cawmentate command when more than one match is identified
-- DM racer info to cawmentators who pick up a match within the five minute alert
+- Allow cawmentators to react inside the race room
 
 ### Util
 - `util.level.py` and `util.racetime.py` might work better as classes, when wanting to generalize to other games

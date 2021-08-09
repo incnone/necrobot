@@ -35,7 +35,10 @@ async def make_private_room(race_private_info, discord_member):
     # Put the race channel in the races category
     race_channel_category = server.find_category(channel_name=Config.RACE_CHANNEL_CATEGORY_NAME)
     if race_channel_category is not None:
-        await server.set_channel_category(channel=race_channel, category=race_channel_category)
+        try:
+            await server.set_channel_category(channel=race_channel, category=race_channel_category)
+        except discord.HTTPException:
+            pass
 
     new_room = PrivateRaceRoom(
         race_discord_channel=race_channel,
