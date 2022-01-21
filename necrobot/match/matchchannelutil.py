@@ -147,6 +147,8 @@ async def make_match_room(match: Match, register=False) -> MatchRoom or None:
         for racer in match.racers:
             if racer.member is not None:
                 racer_permissions[racer.member] = permit_read
+        for ref_role in server.referee_roles:
+            racer_permissions[ref_role] = permit_read
 
         # Find the matches category channel
         channel_categories = MatchGlobals().channel_categories      # type: List[discord.CategoryChannel]
