@@ -20,6 +20,7 @@ class CommandType(object):
         self.command_name_list = args               # the string that calls this command (e.g. 'make')
         self.help_text = 'This command has no help text.'
         self.admin_only = False                     # If true, only botchannel admins can call this command
+        self.ref_can_call = False                   # If true, the referee role can call this command
         self.testing_command = False                # If true, can only be called if Config.TESTING is not RUN
         self.bot_channel = bot_channel
 
@@ -65,6 +66,11 @@ class CommandType(object):
         """
         return name in self.command_name_list
 
+    def can_call_me(self, cmd) -> bool:
+        return not self.admin_only \
+               or self.bot_channel.is_admin(cmd.author) \
+               or (self.ref_can_call and self.bot_channel.is_referee(cmd.author))
+
     async def execute(self, cmd: Command) -> None:
         """If the Command's command is this object's command, calls the (virtual) method _do_execute on it
 
@@ -74,7 +80,7 @@ class CommandType(object):
             The command to maybe execute.
         """
         if cmd.command in self.command_name_list \
-                and ((not self.admin_only) or self.bot_channel.is_admin(cmd.author)) \
+                and self.can_call_me(cmd) \
                 and (not self.testing_command or Config.testing()):
             async with self.execution_id_lock:
                 self.execution_id += 1

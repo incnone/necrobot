@@ -12,6 +12,7 @@ from necrobot.config import Config
 client = None           # type: Optional[discord.Client]
 guild = None           # type: Optional[discord.Guild]
 admin_roles = list()    # type: List[discord.Role]
+referee_roles = list()    # type: List[discord.Role]
 
 
 def init(client_: discord.Client, guild_: discord.Guild) -> None:
@@ -22,6 +23,10 @@ def init(client_: discord.Client, guild_: discord.Guild) -> None:
         for role in guild.roles:
             if role.name == rolename:
                 admin_roles.append(role)
+    for rolename in Config.REFEREE_ROLE_NAMES:
+        for role in guild.roles:
+            if role.name == rolename:
+                referee_roles.append(role)
 
 
 def find_admin(ignore: Optional[List[str]] = None) -> Optional[discord.Member]:
@@ -125,6 +130,19 @@ def is_admin(user: Union[discord.User, discord.Member]) -> bool:
 
     for role in member.roles:
         if role in admin_roles:
+            return True
+    return False
+
+
+def is_referee(user: Union[discord.User, discord.Member]) -> bool:
+    """True if user is a server referee"""
+    if isinstance(user, discord.User):
+        member = get_as_member(user)    # type: discord.Member
+    else:
+        member = user                   # type: discord.Member
+
+    for role in member.roles:
+        if role in referee_roles:
             return True
     return False
 

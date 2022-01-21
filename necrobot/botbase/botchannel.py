@@ -40,6 +40,10 @@ class BotChannel(object):
         """Whether the user can access admin commands for this channel"""
         return server.is_admin(discord_member) or self._virtual_is_admin(discord_member)
 
+    @staticmethod
+    def is_referee(self, discord_member: discord.Member) -> bool:
+        return server.is_referee(discord_member)
+
     async def execute(self, command) -> None:
         """Attempts to execute the given command (if a command of its type is in channel_commands)"""
         for cmd_type in self.channel_commands:

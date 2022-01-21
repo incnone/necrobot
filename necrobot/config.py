@@ -139,6 +139,7 @@ class Config(object):
 
     # Admin -----------------------------------------------------------------------------------
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff', 'Necrobot']  # list of names of roles to give admin access
+    REFEREE_ROLE_NAMES = ['Referee']  # list of names of roles to give referee access
     STAFF_ROLE = 'CoNDOR Staff'
 
     # Channels --------------------------------------------------------------------------------

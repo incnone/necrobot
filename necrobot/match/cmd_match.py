@@ -557,6 +557,7 @@ class Postpone(CommandType):
         CommandType.__init__(self, bot_channel, 'postpone', 'f-unschedule', 'forceunschedule')
         self.help_text = 'Postpones the match. An admin can resume with `.f-begin`.'
         self.admin_only = True
+        self.ref_can_call = True
 
     @property
     def short_help_text(self):

@@ -200,6 +200,7 @@ class Reseed(CommandType):
         CommandType.__init__(self, race_room, 'reseed')
         self.help_text = 'Randomly generate a new seed for this race.'
         self.admin_only = True
+        self.ref_can_call = True
 
     async def _do_execute(self, cmd):
         await self.bot_channel.current_race.reseed()
