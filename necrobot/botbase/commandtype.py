@@ -1,5 +1,6 @@
 import asyncio
 import discord
+from typing import Union
 
 from necrobot.util import server
 from necrobot.util import console
@@ -66,10 +67,10 @@ class CommandType(object):
         """
         return name in self.command_name_list
 
-    def can_call_me(self, cmd) -> bool:
+    def can_call_me(self, user: discord.Member) -> bool:
         return not self.admin_only \
-               or self.bot_channel.is_admin(cmd.author) \
-               or (self.ref_can_call and self.bot_channel.is_referee(cmd.author))
+               or self.bot_channel.is_admin(user) \
+               or (self.ref_can_call and self.bot_channel.is_referee(user))
 
     async def execute(self, cmd: Command) -> None:
         """If the Command's command is this object's command, calls the (virtual) method _do_execute on it
@@ -80,7 +81,7 @@ class CommandType(object):
             The command to maybe execute.
         """
         if cmd.command in self.command_name_list \
-                and self.can_call_me(cmd) \
+                and self.can_call_me(cmd.author) \
                 and (not self.testing_command or Config.testing()):
             async with self.execution_id_lock:
                 self.execution_id += 1

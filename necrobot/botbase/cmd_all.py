@@ -52,7 +52,7 @@ class Help(CommandType):
             cmds_to_show = []
             for cmd_type in self.bot_channel.all_commands:
                 if cmd_type.show_in_help \
-                        and (not cmd_type.admin_only or self.bot_channel.is_admin(cmd.author)) \
+                        and cmd_type.can_call_me(cmd.author) \
                         and (not cmd_type.testing_command or Config.testing()):
                     cmds_to_show.append(cmd_type)
 
@@ -71,7 +71,7 @@ class Help(CommandType):
                 this_cmd_text = '\n`{2}{0}` -- {1}'.format(
                     cmd_type.mention,
                     cmd_type.short_help_text,
-                    '[A] ' if cmd_type.admin_only else ''
+                    '[R] ' if cmd_type.ref_can_call else '[A] ' if cmd_type.admin_only else ''
                 )
                 command_list_text += this_cmd_text[:cutoff]
 

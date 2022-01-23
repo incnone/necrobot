@@ -41,7 +41,7 @@ class BotChannel(object):
         return server.is_admin(discord_member) or self._virtual_is_admin(discord_member)
 
     @staticmethod
-    def is_referee(self, discord_member: discord.Member) -> bool:
+    def is_referee(discord_member: discord.Member) -> bool:
         return server.is_referee(discord_member)
 
     async def execute(self, command) -> None:

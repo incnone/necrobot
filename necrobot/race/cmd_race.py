@@ -211,6 +211,7 @@ class Pause(CommandType):
         CommandType.__init__(self, race_room, 'pause', 'p')
         self.help_text = 'Pause the race timer.'
         self.admin_only = True
+        self.ref_can_call = True
 
     async def _do_execute(self, cmd):
         await self.bot_channel.current_race.pause()
@@ -221,6 +222,7 @@ class Unpause(CommandType):
         CommandType.__init__(self, race_room, 'unpause')
         self.help_text = 'Unpause the race timer.'
         self.admin_only = True
+        self.ref_can_call = True
 
     async def _do_execute(self, cmd):
         await self.bot_channel.current_race.unpause()

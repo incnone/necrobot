@@ -26,9 +26,12 @@ class AlertStaff(CommandType):
                 'Error: Couldn\'t find the staff role. Please contact incnone.'
             )
 
-        await cmd.channel.send(
-            'Alerting {}.'.format(staff_role.mention)
-        )
+        ref_role = server.find_role(Config.REFEREE_ROLE)
+
+        if ref_role is None:
+            await cmd.channel.send(f'Alerting {staff_role.mention}.')
+        else:
+            await cmd.channel.send(f'Alerting {staff_role.mention}, {ref_role.mention}.')
 
         notifications_channel = server.find_channel(Config.NOTIFICATIONS_CHANNEL_NAME)
         if notifications_channel is None:
@@ -291,6 +294,7 @@ class CancelRace(CommandType):
         self.help_text = '`{0} N`: Cancel the `N`-th uncanceled race; `{0}` cancels the current race, if one is ' \
                          'ongoing.'.format(self.mention)
         self.admin_only = True
+        self.ref_can_call = True
 
     async def _do_execute(self, cmd):
         if len(cmd.args) > 1:

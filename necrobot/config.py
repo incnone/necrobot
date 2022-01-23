@@ -129,7 +129,7 @@ class DebugLevel(IntEnum):
 
 
 class Config(object):
-    GRUDGEDOR = True
+    GRUDGEDOR = False
 
     # General----------------------------------------------------------------------------------
     CONFIG_FILE = 'data/necrobot_config'
@@ -141,6 +141,7 @@ class Config(object):
     ADMIN_ROLE_NAMES = ['Admin', 'CoNDOR Staff', 'Necrobot']  # list of names of roles to give admin access
     REFEREE_ROLE_NAMES = ['Referee']  # list of names of roles to give referee access
     STAFF_ROLE = 'CoNDOR Staff'
+    REFEREE_ROLE = 'Referee'
 
     # Channels --------------------------------------------------------------------------------
     MAIN_CHANNEL_ID = None
