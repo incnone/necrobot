@@ -309,11 +309,11 @@ class CondorMgr(Manager, metaclass=Singleton):
             return
 
         alert_format_str = 'Reminder: You\'re scheduled to cawmentate **{racer_1}** - **{racer_2}**, ' \
-                           'which is scheduled to begin in {minutes} minutes.\n\n'
+                           'which is scheduled to begin {timestamp}.\n\n'
         alert_text = alert_format_str.format(
             racer_1=match.racer_1.display_name,
             racer_2=match.racer_2.display_name,
-            minutes=int((match.time_until_match.total_seconds() + 30) // 60)
+            timestamp=match.discord_rel_timestamp
         )
 
         league_tag = match.league_tag
@@ -338,11 +338,9 @@ class CondorMgr(Manager, metaclass=Singleton):
         ----------
         match: Match
         """
-        alert_format_str = "The match {em}**{racer_1}** - **{racer_2}** is scheduled to begin in {minutes} " \
-                           "minutes. :timer: \n" \
+        alert_format_str = "The match {em}**{racer_1}** - **{racer_2}** is scheduled to begin {timestamp}. :timer: \n" \
                            "{stream}"
 
-        minutes_until_match = int((match.time_until_match.total_seconds() + 30) // 60)
         cawmentator = await match.get_cawmentator()
         if cawmentator is not None:
             stream = 'Cawmentary: <http://www.twitch.tv/{0}>'.format(cawmentator.twitch_name)
@@ -354,7 +352,7 @@ class CondorMgr(Manager, metaclass=Singleton):
                 em=emotes.get_emote_str(match.league_tag),
                 racer_1=match.racer_1.display_name,
                 racer_2=match.racer_2.display_name,
-                minutes=minutes_until_match,
+                timestamp=match.discord_rel_timestamp,
                 stream=stream
             )
         )

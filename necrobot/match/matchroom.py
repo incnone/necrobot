@@ -344,10 +344,7 @@ class MatchRoom(BotChannel):
             alert_str += member_2.mention + ', '
 
         if alert_str:
-            minutes_until_match = int((self.match.time_until_match.total_seconds() + 30) // 60)
-            await self.write('{0}: The match is scheduled to begin in {1} minutes.'.format(
-                alert_str[:-2], int(minutes_until_match))
-            )
+            await self.write(f'{alert_str[:-2]}: The match is scheduled to begin {self.match.discord_rel_timestamp}.')
 
     async def force_new_race(self) -> None:
         """Begin a new race, canceling the old one if necessary"""

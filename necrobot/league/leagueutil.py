@@ -164,7 +164,7 @@ async def get_nextrace_displaytext(match_list: list) -> str:
             display_text += '\n'
             continue
 
-        display_text += ': {0} \n'.format(timestr.timedelta_to_str(match.suggested_time - utcnow, punctuate=True))
+        display_text += f': {timestr.discord_timestamp_for_match(match.suggested_time)} \n'
         match_cawmentator = await match.get_cawmentator()
         if match_cawmentator is not None:
             display_text += '    Cawmentary: <http://www.twitch.tv/{0}> \n'.format(match_cawmentator.twitch_name)

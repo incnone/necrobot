@@ -235,6 +235,10 @@ class Match(object):
     def time_until_match(self) -> datetime.timedelta or None:
         return (self.suggested_time - pytz.utc.localize(datetime.datetime.utcnow())) if self.is_scheduled else None
 
+    @property
+    def discord_rel_timestamp(self) -> datetime.timedelta or None:
+        return f'<t:{int(self.suggested_time.timestamp())}:R>' if self.is_scheduled else None
+
     async def commit(self) -> None:
         """Write the match to the database."""
         await self._commit(self)

@@ -1,5 +1,6 @@
 import calendar
 import datetime
+import pytz
 
 
 def timedelta_to_str(td, punctuate=False):
@@ -21,6 +22,19 @@ def timedelta_to_str(td, punctuate=False):
         return output_str[:-2] + '.'
     else:
         return output_str[:-2]
+
+
+def discord_timestamp_for_match(dt: datetime.datetime) -> str:
+    suppress_date_delta = datetime.timedelta(hours=18)
+
+    delta = dt - pytz.utc.localize(datetime.datetime.utcnow())
+    timestamp = int(dt.timestamp())
+    if delta < datetime.timedelta(seconds=0):
+        return f'Right now! :runner: :checkered_flag: (Started <t:{timestamp}:R>)'
+    elif delta < suppress_date_delta:
+        return f'<t:{timestamp}:t> (<t:{timestamp}:R>)'
+    else:
+        return f'<t:{timestamp}:F>'
 
 
 def str_full_12h(dt):
