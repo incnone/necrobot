@@ -381,7 +381,8 @@ class MatchRoom(BotChannel):
 
     async def add_cawmentator_permissions(self) -> None:
         cawmentator = await self.match.get_cawmentator()
-        if cawmentator is not None and not self.is_racer_id(cawmentator.member.id):
+        if cawmentator is not None and not self.is_racer_id(cawmentator.member.id) \
+                and not self.is_referee(cawmentator.member) and not self.is_admin(cawmentator.member):
             await self.channel.set_permissions(
                 cawmentator.member,
                 read_messages=True,
