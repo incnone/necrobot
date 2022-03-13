@@ -27,7 +27,8 @@ class ForceCommand(CommandType):
         user = server.find_member(discord_name=username)
         if user is None:
             await cmd.channel.send(
-                "Couldn't find the user `{0}`.".format(username)
+                f"Couldn't find the user `{username}`. "
+                f"(Recall that you need to use the user's Discord name or nickname.)"
             )
             return
 
