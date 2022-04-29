@@ -51,7 +51,7 @@ class RaceRoom(BotChannel):
             cmd_race.Pause(self),
             cmd_race.Unpause(self),
             cmd_race.Reseed(self),
-            cmd_race.ChangeRules(self),
+            cmd_race.ChangeRules(self, admin_only=False),
 
             cmd_publicrace.Rematch(self),
             cmd_publicrace.Kick(self),

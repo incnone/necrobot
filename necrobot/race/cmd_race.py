@@ -229,10 +229,10 @@ class Unpause(CommandType):
 
 
 class ChangeRules(CommandType):
-    def __init__(self, race_room):
+    def __init__(self, race_room, admin_only=not Config.GRUDGEDOR):
         CommandType.__init__(self, race_room, 'changerules')
         self.help_text = 'Change the rules for the race. Takes the same parameters as `.make`.'
-        self.admin_only = not Config.GRUDGEDOR
+        self.admin_only = admin_only
 
     async def _do_execute(self, cmd):
         try:
