@@ -14,12 +14,18 @@ class NDChar(Enum):
     Bard = 9
     Story = 10
     All = 11
+
     Nocturna = 12
     Diamond = 13
     Multichar = 14
     Tempo = 15
     Mary = 16
     Reaper = 17
+
+    Klarinetta = 18
+    Chaunter = 19
+    Suzu = 20
+
     Coh = 101
     Link = 102
     Zelda = 103
