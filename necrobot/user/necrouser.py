@@ -23,6 +23,7 @@ class NecroUser(object):
         self._discord_id = None         # type: Optional[int]
         self._discord_name = None       # type: Optional[str]
         self._discord_member = None     # type: Optional[discord.Member]
+        self._pronouns = None           # type: Optional[str]
         self._twitch_name = None        # type: Optional[str]
         self._rtmp_name = None          # type: Optional[str]
         self._timezone = None           # type: Optional[pytz.timezone]
@@ -35,12 +36,12 @@ class NecroUser(object):
         return self.user_id == other.user_id
 
     def __repr__(self):
-        if self.rtmp_name is not None:
-            name_str = 'RTMP: ' + self.rtmp_name
-        elif self.discord_name is not None:
+        if self.discord_name is not None:
             name_str = 'Discord: ' + self.discord_name
         elif self.twitch_name is not None:
             name_str = 'Twitch: ' + self.twitch_name
+        elif self.rtmp_name is not None:
+            name_str = 'RTMP: ' + self.rtmp_name
         else:
             name_str = '<unnamed>'
         return 'User {uid} ({name})'.format(uid=self._user_id, name=name_str)
@@ -121,6 +122,10 @@ class NecroUser(object):
         return self.discord_member
 
     @property
+    def pronouns(self) -> Optional[str]:
+        return self._pronouns
+
+    @property
     def rtmp_name(self) -> str:
         return self._rtmp_name
 
@@ -145,42 +150,27 @@ class NecroUser(object):
         return self._user_prefs
 
     @property
-    def infoname(self) -> str:
+    def name_and_info_text(self) -> str:
+        text = self.display_name
+        if self.pronouns is not None:
+            text += f' [{self.pronouns}]'
         if self.user_info is not None:
-            return '{0} ({1})'.format(self.display_name, self.user_info)
-        else:
-            return self.display_name
-
-    @property
-    def infotext(self) -> str:
-        return '    Twitch: {0}\n' \
-               '  Timezone: {1}' \
-               .format(
-                    self.twitch_name,
-                    self.timezone
-               )
-        # if self.twitch_name == self.rtmp_name:
-        #     return '  Twitch/RTMP: {0}\n' \
-        #            '     Timezone: {1}'.format(
-        #             self.rtmp_name,
-        #             self.timezone)
-        # else:
-        #     return '    Twitch: {0}\n' \
-        #            '      RTMP: {1}\n' \
-        #            '  Timezone: {2}'.format(
-        #             self.twitch_name,
-        #             self.rtmp_name,
-        #             self.timezone)
+            text += f' ({self.user_info})'
+        return text
 
     @property
     def infobox(self) -> str:
-        return '```\n' \
-               '{0}\n' \
-               '{1}```'\
-                .format(
-                    strutil.tickless(self.infoname),
-                    strutil.tickless(self.infotext)
-                )
+        text = f'```\n'
+        text += f'{self.name_and_info_text}\n'
+
+        if self.twitch_name is not None:
+            text += f'    Twitch: {self.twitch_name}\n'
+
+        if self.timezone is not None:
+            text += f'  Timezone: {self.timezone}\n'
+
+        text += '```'
+        return text
 
     def set(
         self,
@@ -189,6 +179,7 @@ class NecroUser(object):
         discord_name: str = None,
         twitch_name: str = None,
         rtmp_name: str = None,
+        pronouns: str = None,
         timezone: str = None,
         user_info: str = None,
         user_prefs: UserPrefs = None,
@@ -208,6 +199,8 @@ class NecroUser(object):
             This user's twitch name. Case-insensitive.
         rtmp_name: str
             This user's RTMP name. Case-insensitive.
+        pronouns: str
+            This user's pronouns.
         timezone: str
             The user's timezone as a string, e.g., 'Asia/Tokyo'.
         user_info: str
@@ -246,6 +239,9 @@ class NecroUser(object):
             changed_any = True
         if rtmp_name is not None and rtmp_name != self._rtmp_name:
             self._rtmp_name = rtmp_name
+            changed_any = True
+        if pronouns is not None and pronouns != self._pronouns:
+            self._pronouns = None if pronouns == '' else pronouns
             changed_any = True
         if timezone is not None:
             if timezone not in pytz.common_timezones:

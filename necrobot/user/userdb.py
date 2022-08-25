@@ -62,6 +62,7 @@ async def write_user(necro_user: NecroUser) -> None:
         necro_user.discord_name,
         necro_user.twitch_name,
         necro_user.rtmp_name,
+        necro_user.pronouns,
         necro_user.timezone_str,
         necro_user.user_info,
         necro_user.user_prefs.daily_alert,
@@ -87,7 +88,8 @@ async def write_user(necro_user: NecroUser) -> None:
                discord_id=%s, 
                discord_name=%s, 
                twitch_name=%s, 
-               rtmp_name=%s, 
+               rtmp_name=%s,
+               pronouns=%s, 
                timezone=%s, 
                user_info=%s, 
                daily_alert=%s, 
@@ -143,7 +145,8 @@ async def get_all_users_with_any(names: Iterable[str]):
                user_info, 
                daily_alert, 
                race_alert, 
-               user_id 
+               user_id,
+               pronouns 
             FROM users 
             WHERE LOWER(discord_name) IN ({fm})
             OR LOWER(twitch_name) IN ({fm})
@@ -269,7 +272,8 @@ async def _get_users_helpfn(
                user_info, 
                daily_alert, 
                race_alert, 
-               user_id 
+               user_id,
+               pronouns
             FROM users 
             WHERE {0}
             """.format(where_query),

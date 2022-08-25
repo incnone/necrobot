@@ -82,23 +82,12 @@ async def get_league_stats(league_tag: str, user_id: int) -> LeagueStats:
 
 async def get_big_infotext(user: NecroUser, stats: LeagueStats) -> str:
     return textwrap.dedent(
+        f"""
+        {user.name_and_info_text}
+             Twitch: {user.twitch_name}
+           Timezone: {user.timezone}
+             Record: {stats.wins}-{stats.losses}
+           Best win: {stats.best_win_str}
+           Avg. win: {stats.avg_win_str}
         """
-        {discord_name} ({userinfo})
-               RTMP: {rtmp_name}
-             Twitch: {twitch_name}
-           Timezone: {timezone}
-             Record: {wins}-{losses}
-           Best win: {best_win}
-           Avg. win: {avg_win}
-        """.format(
-            discord_name=user.display_name,
-            userinfo=user.user_info,
-            rtmp_name=user.rtmp_name,
-            twitch_name=user.twitch_name,
-            timezone=user.timezone,
-            wins=stats.wins,
-            losses=stats.losses,
-            best_win=stats.best_win_str,
-            avg_win=stats.avg_win_str
-        )
     )

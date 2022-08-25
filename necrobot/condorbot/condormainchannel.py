@@ -27,6 +27,7 @@ class CondorMainChannel(BotChannel):
 
             cmd_user.RTMP(self),
             cmd_user.SetInfo(self),
+            cmd_user.SetPronouns(self),
             cmd_user.Timezone(self),
             cmd_user.Twitch(self),
             cmd_user.UserInfo(self),

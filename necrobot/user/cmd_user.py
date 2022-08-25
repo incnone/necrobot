@@ -131,6 +131,37 @@ class SetInfo(CommandType):
             '{0}: Updated your user info.'.format(cmd.author.mention))
 
 
+class SetPronouns(CommandType):
+    def __init__(self, bot_channel):
+        CommandType.__init__(self, bot_channel, 'setpronouns')
+        self.help_text = f'Set pronouns. Usage is `{0} <pronouns>`. Pronoun text is limited to 64 characters. Use ' \
+                         f'`{0}` alone to remove your pronoun data.'\
+            .format(self.mention)
+
+    async def _do_execute(self, cmd: Command):
+        user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)
+        if user is None:
+            await cmd.channel.send(
+                'Error: Unable to find the user. This isn\'t supposed to happen...')
+            return
+
+        if len(cmd.args) == 0:
+            # remove pronouns
+            user.set(pronouns='')
+            await cmd.channel.send(
+                f'Removed pronoun data for user {cmd.author.mention}.')
+            return
+        elif len(cmd.arg_string) > 64:
+            await cmd.channel.send(
+                'Error: pronoun data is limited to 64 characters.')
+            return
+        else:
+            user.set(pronouns=cmd.arg_string)
+            await cmd.channel.send(
+                f'Set your pronouns to `{cmd.arg_string}`.')
+            return
+
+
 class Timezone(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'timezone')

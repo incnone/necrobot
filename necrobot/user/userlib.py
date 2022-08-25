@@ -150,6 +150,7 @@ def _get_user_from_db_row(user_row):
         twitch_name=user_row[2],
         rtmp_name=user_row[3],
         timezone=user_row[4],
+        pronouns=user_row[9],
         user_info=user_row[5],
         user_prefs=UserPrefs(daily_alert=bool(user_row[6]), race_alert=bool(user_row[7])),
         commit=False
