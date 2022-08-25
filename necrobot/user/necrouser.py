@@ -250,7 +250,7 @@ class NecroUser(object):
                 self._timezone = pytz.timezone(timezone)
                 changed_any = True
         if user_info is not None and user_info != self._user_info:
-            self._user_info = user_info
+            self._user_info = None if user_info == '' else user_info
             changed_any = True
         if user_prefs is not None and user_prefs != self._user_prefs:
             self._user_prefs.merge_prefs(user_prefs)
