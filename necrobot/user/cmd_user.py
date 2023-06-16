@@ -134,9 +134,9 @@ class SetInfo(CommandType):
 class SetPronouns(CommandType):
     def __init__(self, bot_channel):
         CommandType.__init__(self, bot_channel, 'setpronouns')
-        self.help_text = f'Set pronouns. Usage is `{0} <pronouns>`. Pronoun text is limited to 64 characters. Use ' \
-                         f'`{0}` alone to remove your pronoun data.'\
-            .format(self.mention)
+        self.help_text = 'Set pronouns. Usage is `{0} <pronouns>`. Pronoun text is limited to 64 characters. Use ' \
+                         '`{0}` alone to remove your pronoun data.' \
+                         .format(self.mention)
 
     async def _do_execute(self, cmd: Command):
         user = await userlib.get_user(discord_id=int(cmd.author.id), register=True)

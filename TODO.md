@@ -5,6 +5,10 @@ Current version: 0.13
 ## Current TODO
 
 ### General
+- Make `.caw next` do something reasonable
+- Add useful role functionality, maybe w/reaction roles, for challenge roles
+- Add functionality for automatic role assignment (for, e.g., league roles)
+- Delete or erase unmade matches file when it is used
 - Better code for managing non-unique username issues
 - Replace NoneType returns with exceptions where appropriate
 - More efficient database requests (especially on Condorbot startup)
