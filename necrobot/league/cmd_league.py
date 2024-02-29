@@ -732,8 +732,25 @@ class SetMatchRules(CommandType):
 
 async def _do_cawmentary_command(cmd: Command, cmd_type: CommandType, add: bool):
     # Parse arguments
+
+    selected_match = cmd.arg_string
+    next_arguments = {'next', 'nextrace', 'nextmatch'}
+    if (selected_match.lower() in next_arguments):
+        try:
+            selected_match = await leagueutil.get_upcoming_and_current()[0]
+            if (selected_match is None):
+                await cmd.channel.send(
+                'Can\'t add cawmentary as there are no scheduled matches!'
+                )
+                return
+        except necrobot.exception.NecroException as e:
+            await cmd.channel.send(
+                'Error: {0}.'.format(e)
+            )
+            return
+
     try:
-        match = await leagueutil.find_match(cmd.arg_string, finished_only=False)  # Only selects unfinished matches
+        match = await leagueutil.find_match(selected_match, finished_only=False)  # Only selects unfinished matches
     except necrobot.exception.NecroException as e:
         await cmd.channel.send(
             'Error: {0}.'.format(e)
