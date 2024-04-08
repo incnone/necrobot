@@ -26,6 +26,8 @@ class NDChar(Enum):
     Chaunter = 19
     Suzu = 20
 
+    Miku = 21
+
     Coh = 101
     Link = 102
     Zelda = 103
